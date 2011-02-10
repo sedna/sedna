@@ -24,7 +24,7 @@
 ###############################################################################
 sedna-err:SE1000
 
-    Environment error. This error is caused by environment (operating system).
+    Environment error. This error is caused by the environment (operating system).
 
 
 ###############################################################################
@@ -467,7 +467,7 @@ sedna-err:SE1014
     Cannot extend temporary file.
 sedna-err:SE1015
 
-    There is no enough memory to initialize buffers.
+    There is not enough memory to initialize buffers.
 sedna-err:SE1016
 
     Cannot lock buffer memory.
@@ -482,16 +482,16 @@ sedna-err:SE1019
     There is no transaction with this id.
 sedna-err:SE1020
 
-    Transaction's limit on locked blocks in memory is exceeded.
+    The limit on the transaction on locked blocks in memory has been exceeded.
 sedna-err:SE1021
 
-    Cannot lock block in memory because it is not in memory.
+    Cannot lock the block in memory, because it is not in memory.
 sedna-err:SE1022
 
-    Cannot unlock block because it is not in memory.
+    Cannot unlock block, because it is not in memory.
 sedna-err:SE1023
 
-    Unexpected arguments in call to SM.
+    Unexpected arguments in call to Storage Manager.
 
 
 
@@ -508,13 +508,13 @@ sedna-err:SE1033
     Error setting up signal handler.
 sedna-err:SE1034
 
-    Connection with SM lost.
+    Connection with Storage Manager lost.
 sedna-err:SE1035
 
     Memory mapping error.
 sedna-err:SE1036
 
-    Cannot (un)swap blocks (address is out of bounds).
+    Cannot (un)swap blocks, because the address is out of bounds.
 sedna-err:SE1037
 
     Cannot open buffer memory.
@@ -523,7 +523,7 @@ sedna-err:SE1038
     Cannot close buffer memory.
 sedna-err:SE1039
 
-    Error waiting for VMM thread to shutdown.
+    Error waiting for the Virtual Memory Manager thread to shutdown.
 sedna-err:SE1040
 
     Cannot determine enough address space segment.
@@ -582,162 +582,162 @@ sedna-err:SE2006
     No document with this name.
 sedna-err:SE2007
 
-    Left sibling is not an attribute
+    Left sibling is not an attribute.
 sedna-err:SE2008
 
     Valid URI expected.
 sedna-err:SE2009
 
-   Size of text should be greater then zero
+   Size of text should be greater than zero.
 sedna-err:SE2010
 
-   Invalid result of the delete undeep argument: sequence contains non-persistent or document nodes
+   Invalid result of the delete undeep argument: sequence contains non-persistent or document nodes.
 sedna-err:SE2011
 
-   Invalid result of the delete  argument: sequence contains atomic values
+   Invalid result of the delete argument: sequence contains atomic values.
 sedna-err:SE2012
 
-   Invalid result of the delete argument: sequence contains temporary nodes 
+   Invalid result of the delete argument: sequence contains temporary nodes.
 sedna-err:SE2013
 
-   Invalid result of the second insert argument: sequence contains atomic values or temporary nodes
+   Invalid result of the second insert argument: sequence contains atomic values or temporary nodes.
 sedna-err:SE2014
 
-   Invalid result of the first insert argument: bad sequence of nodes
+   Invalid result of the first insert argument: bad sequence of nodes.
 sedna-err:SE2015
 
-   Invalid result of the first insert argument: sequence contains atomic values
+   Invalid result of the first insert argument: sequence contains atomic values.
 sedna-err:SE2016
 
-  Attempt to insert element before attribute
+  Attempt to insert element before attribute.
 sedna-err:SE2017
 
-  Attempt to insert the node to it's descendant
+  Attempt to insert the node to its descendant.
 sedna-err:SE2018
 
-  Invalid result of the second insert argument: sequence contains either attribute, namespace, comment, PI or temporary node
+  Invalid result of the second insert argument: sequence contains either attribute, namespace, comment, PI or temporary node.
 sedna-err:SE2019
 
-   Invalid result of the second insert argument: sequence contains atomic values
+   Invalid result of the second insert argument: sequence contains atomic values.
 sedna-err:SE2020
 
-   Invalid result of the update argument: sequence contains atomic values or one of these nodes: tempory, text, comment,PI,namespace,document
+   Invalid result of the update argument: sequence contains atomic values or one of these nodes: temporary, text, comment, PI, namespace, document.
 sedna-err:SE2021
 
-Invalid result of the update argument: sequence contains atomic values
+   Invalid result of the update argument: sequence contains atomic values.
 sedna-err:SE2022
 
-  this node test is not yet implemented
+  This node test is not yet implemented.
 sedna-err:SE2023
 
-  [nid_assign] The length of prefix exceeds PSTRMAXSIZE
+  [nid_assign] The length of prefix exceeds PSTRMAXSIZE.
 sedna-err:SE2024
 
-  trying to store string exceeding maximum permited size
+  Trying to store a string that exceeds the maximum permitted size.
 sedna-err:SE2025
 
-  checkTreeConsistency:Ancestor-descendant error
+  checkTreeConsistency:Ancestor-descendant error.
 sedna-err:SE2026
 
-  checkTreeConsistency:First child pointer
+  checkTreeConsistency:First child pointer.
 sedna-err:SE2027
 
-  checkTreeConsistency:sibling pointer errors
+  checkTreeConsistency:sibling pointer errors.
 sedna-err:SE2028
 
-  checkTreeConsistency:nid comparison error
+  checkTreeConsistency:nid comparison error.
 sedna-err:SE2029
 
-  checkTreeConsistency:wrong descriptor's order
+  checkTreeConsistency:wrong descriptor's order.
 sedna-err:SE2030
 
-  checkTreeConsistency:Bad indirection table
+  checkTreeConsistency:Bad indirection table.
 sedna-err:SE2031
 
-  atomic value as input for test engine
+  Atomic value as input for test engine.
 sedna-err:SE2032
 
-  trying to create mixed content in the element whose value is used as key
+  Trying to create mixed content in the element whose value is used as key.
 sedna-err:SE2033
 
-    Index with the same name already exists.
+    An index with the same name already exists.
 sedna-err:SE2034
 
-    Invalid index type (xs:string, xs:integer, xs:float, xs:double, xs:date, xs:time, xs:dateTime, xs_yearMonthDuration, xs_dateTimeDuration are supported).
+    Invalid index type, only xs:string, xs:integer, xs:float, xs:double, xs:date, xs:time, xs:dateTime, xs_yearMonthDuration, xs_dateTimeDuration are supported.
 sedna-err:SE2035
 
-    Invalid mode in index_scan_between function
+    Invalid mode in index_scan_between function.
 sedna-err:SE2036
 
-    Document node deletion is prohibited by this function use DROP DOCUMENT in metadata API
+    Document node deletion is prohibited by this function, use DROP DOCUMENT in metadata API.
 sedna-err:SE2037
 
-    The size of string is limited by 4 GB
+    The size of string is limited to 4 GB.
 sedna-err:SE2038
 
-   An attempt to insert attribute node after element
+   An attempt to insert attribute node after element.
 ########### sql ####################
 sedna-err:SE2100
 
-  SQL:Bad connect option 
+  SQL:Bad connect option.
 sedna-err:SE2101
 
-  SQL:Bad handle
+  SQL:Bad handle.
 sedna-err:SE2102
 
-  SQL:Failed to get executor
+  SQL:Failed to get executor.
 sedna-err:SE2103
 
-  SQL:Unknown handle type
+  SQL:Unknown handle type.
 sedna-err:SE2104
 
-  SQL:Invalid handle type
+  SQL:Invalid handle type.
 sedna-err:SE2105
 
-  SQL:Failed to prepare statement
+  SQL:Failed to prepare statement.
 sedna-err:SE2106
 
-  SQL:Failed to execute prepared statement
+  SQL:Failed to execute prepared statement.
 sedna-err:SE2107
 
-  SQL:Not enough parameters for prepared statement
+  SQL:Not enough parameters for prepared statement.
 sedna-err:SE2108
 
-  SQL:Disconnect failed
+  SQL:Disconnect failed.
 sedna-err:SE2109
 
-  SQL:Commit failed
+  SQL:Commit failed.
 sedna-err:SE2110
 
-  SQL:Rollback failed
+  SQL:Rollback failed.
 sedna-err:SE2111
 
-  SQL:Connect failed
+  SQL:Connect failed.
 sedna-err:SE2112
 
-  SQL:Execute failed
+  SQL:Execute failed.
 sedna-err:SE2113
 
-  SQL Connection support disabled
+  SQL Connection support disabled.
 
 ########### udf ####################
 sedna-err:SE2200
 
-  External function initialization error
+  External function initialization error.
 sedna-err:SE2201
 
-  External function invocation error
+  External function invocation error.
 sedna-err:SE2202
 
-  External function de-initialization error
+  External function de-initialization error.
 sedna-err:SE2203
 
-  External function load error
+  External function load error.
 
 ########### concerning sockets ####################
 sedna-err:SE2999
 
-    Sedna Client-Server Protocol used in your application does not support this feature. Use protocol of recent version.
+    Sedna Client-Server Protocol used in your application does not support this feature. Use the protocol of the most recent version.
 
 sedna-err:SE3000
 
@@ -750,13 +750,13 @@ sedna-err:SE3002
     Failed to get local host name.
 sedna-err:SE3003
 
-    Failed to connect the host specified.
+    Failed to connect to the specified host.
 sedna-err:SE3004
 
-    Failed to bind the socket to the port specified.
+    Failed to bind the socket to the specified port.
 sedna-err:SE3005
 
-    Failed to set the socket into the listening mode
+    Failed to set the socket into the listening mode.
 sedna-err:SE3006
 
     Failed to send a message.
@@ -771,7 +771,7 @@ sedna-err:SE3009
     Unknown message from client.
 sedna-err:SE3010
 
-    Can't duplicate socket handle.
+    Cannot duplicate socket handle.
 
 sedna-err:SE3011
 
@@ -781,53 +781,53 @@ sedna-err:SE3012
     Message length exceeds available size.
 sedna-err:SE3013
 
-    Can't get file from client to be loaded.
+    Cannot get file from the client to be loaded.
 sedna-err:SE3014
 
     Wrong client-server protocol version.
 sedna-err:SE3015
 
-    Too long login/password/db_name.
+    Too long login/password/databasename.
 sedna-err:SE3016
 
     Failed to initialize socket library.
 
 sedna-err:SE3017
 
-    Can't open file with data to load.
+    Cannot open file with data to load.
 sedna-err:SE3018
 
-    Can't read file with data to load.
+    Cannot read file with data to load.
 sedna-err:SE3019
 
-    Can't close file with data to load.
+    Cannot close file with data to load.
 sedna-err:SE3020
 
-    Can't close tmp file.
+    Cannot close tmp file.
 sedna-err:SE3021
 
-    Can't delete tmp file.
+    Cannot delete tmp file.
 sedna-err:SE3022
 
     Invalid argument.
 sedna-err:SE3023
 
-    dbname is too long.
+    Database name is too long.
 sedna-err:SE3024
 
-    login is too long.
+    Login name (user name) is too long.
 sedna-err:SE3025
 
-    password is too long.
+    Password is too long.
 sedna-err:SE3026
 
-    url is too long.
+    URL is too long.
 sedna-err:SE3027
 
     Failed to set socket option.
 sedna-err:SE3028
 
-    Connection with server is closed or have not been established yet.
+    Connection with server is closed or has not been established yet.
 sedna-err:SE3029
 
     This function call is prohibited as the connection is in the autocommit mode.
@@ -850,29 +850,29 @@ sedna-err:SE3033
     Failed to shutdown SSMMsg service (message service).
 sedna-err:SE3034
 
-    Can't send message via SSMMsg
-########### conserning SSMMsg service ####################
+    Cannot send message via SSMMsg
+########### concerning SSMMsg service ####################
 
 ########### concerning connection with gov ####################
 
 sedna-err:SE3040
 
-    Connection with Gov lost.
+    Connection with GOVERNOR lost.
 sedna-err:SE3043
     
-    Can not register session in Gov.
+    Can not register session in GOVERNOR.
 sedna-err:SE3044
     
-    Can not unregister session in Gov.
+    Can not unregister session in GOVERNOR.
 sedna-err:SE3045
     
-    Can not register SM in Gov.
+    Can not register Storage Manager in GOVERNOR.
 sedna-err:SE3046
 
-    Can't create new session (sessions number exceeds permissible threshold )
+    Cannot create new session, because the number of sessions exceeds the permissible amount.
 sedna-err:SE3047
 
-    Can't open session (client failed to send authentication parameters on time)
+    Cannot open session, because the client failed to send the authentication parameters on time.
 
 
 ########### concerning connection with gov ####################
@@ -888,7 +888,7 @@ sedna-err:SE3053
     Authentication failed.
 sedna-err:SE3054
 
-    Can't run session: system is busy
+    Cannot run session: system is busy.
 
 ########### concerning security ####################
 sedna-err:SE3060
@@ -905,11 +905,11 @@ sedna-err:SE3063
     Failed to release ACL.
 sedna-err:SE3064
 
-    You do not have enough permissions (you have to be root in UNIX and a member of Administrators group in Windows to run the application).
+    You do not have enough permissions: you have to be root in UNIX or a member of the Administrators group in Windows to be able to run the application.
 
 sedna-err:SE3065
 
-    You do not have necessary privileges on this database object.
+    You do not have the necessary privileges on this database object.
 
 sedna-err:SE3066
 
@@ -919,7 +919,7 @@ sedna-err:SE3067
     User name is not specified.
 sedna-err:SE3068
 
-    This statement is not supported because Sedna' database security level is "off". (To support this statement create database with -db-security option "authentication".)
+    This statement is not supported, because the database security level of Sedna is "off". To support this statement create a database with -db-security option "authentication".
 
 sedna-err:SE3069
 
@@ -947,10 +947,10 @@ sedna-err:SE3076
     User is not allowed to revoke this role, or the grantee does not have this role.
 sedna-err:SE3077
 
-    User is not allowed to alter specified user.
+    User is not allowed to alter the specified user.
 sedna-err:SE3078
 
-    User is not allowed to drop specified user.
+    User is not allowed to drop the specified user.
 sedna-err:SE3079
 
     User with this name already exists.
@@ -981,10 +981,10 @@ sedna-err:SE3204
     Trigger action must always return a result.
 sedna-err:SE3205
 
-    Trigger action tries to update a document/collection that is currently updating by the outer update statement.
+    Trigger action tries to update a document/collection that is currently being updated by the outer update statement.
 sedna-err:SE3206
 
-    Cannot execute trigger action, since current cascade level exceeds permissible threshold.
+    Cannot execute trigger action, since the current cascade level exceeds the permissible level.
 
 ######################################################################
 ### Static query analysis error
@@ -998,209 +998,209 @@ sedna-err:SE4002
 
 sedna-err:SE4003
 
-    Unexpected number of statements given 
+    Unexpected number of statements given.
 sedna-err:SE4004
 
-    Scheme part unknown error   
+    Scheme part unknown error.
 sedna-err:SE4005
 
-    Invalid list after scheme processing
+    Invalid list after scheme processing.
 sedna-err:SE4006
 
-    Static query analisis error
+    Static query analysis error.
 sedna-err:SE4007
 
-    Too long statement
+    Too long statement.
 sedna-err:SE4008
 
-    Wrong logical plan representation
+    Wrong logical plan representation.
 sedna-err:SE4009
 
-    Too long input query
+    Too long input query.
 
 ######################################################################
 ### OS primitives errors
 ######################################################################
 sedna-err:SE4010
 
-    Can't create semaphore
+    Cannot create semaphore.
 sedna-err:SE4011
 
-    Can't release semaphore
+    Cannot release semaphore.
 sedna-err:SE4012
 
-    Can't open semaphore
+    Cannot open semaphore.
 sedna-err:SE4013
 
-    Can't close semaphore
+    Cannot close semaphore.
 sedna-err:SE4014
 
-    Can't up semaphore
+    Cannot up semaphore.
 sedna-err:SE4015
 
-    Can't down semaphore
+    Cannot down semaphore.
 sedna-err:SE4016
 
-    Can't create shared memory
+    Cannot create shared memory.
 sedna-err:SE4020
 
-    Can't release shared memory
+    Cannot release shared memory.
 sedna-err:SE4021
 
-    Can't open shared memory
+    Cannot open shared memory.
 sedna-err:SE4022
 
-    Can't close shared memory
+    Cannot close shared memory.
 sedna-err:SE4023
 
-    Can't attach to shared memory
+    Cannot attach to shared memory.
 sedna-err:SE4024
 
-    Can't deattach from shared memory
+    Cannot deattach from shared memory.
 sedna-err:SE4025
 
-    Can't create pipe
+    Cannot create pipe.
 sedna-err:SE4030
 
-    Can't close pipe
+    Cannot close pipe.
 sedna-err:SE4031
 
-    Can't read pipe
+    Cannot read pipe.
 sedna-err:SE4032
 
-    Can't write pipe
+    Cannot write pipe.
 sedna-err:SE4040
 
-    Can't create file
+    Cannot create file.
 
 sedna-err:SE4041
 
-    Can't delete file
+    Cannot delete file.
 
 sedna-err:SE4042
 
-    Can't open file
+    Cannot open file.
 sedna-err:SE4043
 
-    Can't close file
+    Cannot close file.
 sedna-err:SE4044
 
-    Can't read file
+    Cannot read file.
 sedna-err:SE4045
 
-    Can't write file
+    Cannot write file.
 sedna-err:SE4046
 
-    Can't set file pointer
+    Cannot set file pointer.
 sedna-err:SE4047
 
-    Can't set end of file
+    Cannot set end of file.
 sedna-err:SE4048
 
-    Can't create directory
+    Cannot create directory.
 sedna-err:SE4049
 
-    Can't copy file
+    Cannot copy file.
 sedna-err:SE4050
 
-    Can't get file size
+    Cannot get file size.
 sedna-err:SE4051
 
-    Can't get disk sector size
+    Cannot get disk sector size.
 sedna-err:SE4052
  
-    Can't get unique file name
+    Cannot get unique file name.
 sedna-err:SE4053
 
-    Can't open directory
+    Cannot open directory.
 sedna-err:SE4054
 
-    Can't close directory
+    Cannot close directory.
 sedna-err:SE4055
 
-    Can't create directory
+    Cannot create directory.
 sedna-err:SE4060
 
-    Can't create thread
+    Cannot create thread.
 sedna-err:SE4061
 
-    Can't suspend thread
+    Cannot suspend thread.
 sedna-err:SE4062
 
-    Can't resume thread
+    Cannot resume thread.
 sedna-err:SE4063
 
-    Can't close thread
+    Cannot close thread.
 sedna-err:SE4064
 
-    Can't exit thread
+    Cannot exit thread.
 sedna-err:SE4065
 
-    Can't sleep thread
+    Cannot sleep thread.
 sedna-err:SE4070
 
-    Can't create process
+    Cannot create process.
 sedna-err:SE4071
 
-    Can't terminate process
+    Cannot terminate process.
 sedna-err:SE4072
 
-    Can't set environment variable
+    Cannot set environment variable.
 sedna-err:SE4073
 
-    Can't get environment variable
+    Cannot get environment variable.
 sedna-err:SE4074
 
-    Can't create memory mapping
+    Cannot create memory mapping.
 sedna-err:SE4075
 
-    Can't release memory mapping
+    Cannot release memory mapping.
 sedna-err:SE4076
 
-    Can't open memory mapping
+    Cannot open memory mapping.
 sedna-err:SE4077
 
-    Can't close memory mapping
+    Cannot close memory mapping.
 sedna-err:SE4078
 
-    Can't perform memory mapping
+    Cannot perform memory mapping.
 sedna-err:SE4079
 
-    Can't perform memory unmapping
+    Cannot perform memory unmapping.
 sedna-err:SE4080
 
-    Can't set handles property
+    Cannot set handles property.
 sedna-err:SE4081
 
-    Can't get process' image path
+    Cannot get image path of the process.
 sedna-err:SE4082
 
-    Bad query encoding
+    Bad query encoding.
 sedna-err:SE4083
 
-    Can't read directory
+    Cannot read directory.
 
 ###########################################################################
 #  Logical log errors
 ###########################################################################
 sedna-err:SE4150
 
-   Logical log read buffer too small
+   Logical log read buffer is too small.
 sedna-err:SE4151
 
-   Too small shared memory size for logical log
+   The shared memory size for logical log is too small.
 sedna-err:SE4152
 
-   Bad parameters: start LSN less then end LSN
+   Bad parameters: the start LSN is less than the end LSN.
 sedna-err:SE4153
 
-   Bad checkpoint record given
+   Bad checkpoint record given.
 sedna-err:SE4154
 
-   Bad record from logical log given
+   Bad record from logical log given.
 sedna-err:SE4155
 
-   Bad transaction identifier given
+   Bad transaction identifier given.
 sedna-err:SE4156
 
    Too large record for logical log
@@ -1210,74 +1210,74 @@ sedna-err:SE4156
 ############################################################################
 sedna-err:SE4200
 
-   There is no database with the specified name
+   There is no database with the specified name.
 sedna-err:SE4201
 
-   Not Well-Formed Config file
+   Not Well-Formed Config file.
 sedna-err:SE4202
 
-   SM startup failure: SEDNA server is not running
+   Storage Manager startup failure: Sedna server is not running.
 sedna-err:SE4203
 
-   Can't send message via SSMMsg
+   Cannot send message via SSMMsg.
 sedna-err:SE4204
 
-   Database with the same name is already running
+   Database with the same name is already running.
 sedna-err:SE4205
 
-   Failed to run SM in the background mode (use '-background-mode off' for detailed diagnostics)
+   Failed to run Storage Manager in the background mode; use "-background-mode off" for detailed diagnostics.
 sedna-err:SE4206
 
-   Failed to initialize system parameters    
+   Failed to initialize system parameters.
 sedna-err:SE4207
 
-   Failed to set up ctrl handler 
+   Failed to set up ctrl handler.
 sedna-err:SE4208
 
-   Failed to shutdown SM: SEDNA server is not running
+   Failed to shutdown Storage Manager: Sedna server is not running.
 sedna-err:SE4209
 
-   Failed to shutdown SM
+   Failed to shutdown Storage Manager.
 sedna-err:SE4210
 
     Error waiting for checkpoint thread to shutdown.
 sedna-err:SE4211
 
-    Failed to create the database
+    Failed to create the database.
 sedna-err:SE4212
 
-    Database files format is incompatible with SEDNA binaries
+    Database files format is incompatible with SEDNA binaries.
 
 ############################################################################
 # Create and Drop DataBase Utilities errors
 ############################################################################
 sedna-err:SE4300
 
-   Path is not valid
+   Path is not valid.
 sedna-err:SE4301
 
-   Can not initialize system structures
+   Cannot initialize system structures.
 sedna-err:SE4302
 
-   Can not create persistent heap
+   Cannot create persistent heap.
 sedna-err:SE4303
 
-   Can not allocate memory from persistent heap
+   Cannot allocate memory from persistent heap.
 sedna-err:SE4304
 
-   Can not close persistent heap
+   Cannot close persistent heap.
 sedna-err:SE4305
 
-    Can not release system structures
+    Cannot release system structures.
 sedna-err:SE4306
 
-    Can not back up PH
+    Cannot back up PH (persistent heap).
 sedna-err:SE4307
 
     Invalid database name.
 sedna-err:SE4308
 
-    Failed to drop a database
+    Failed to drop a database.
 
 
 ############################################################################
@@ -1289,41 +1289,41 @@ sedna-err:SE4400
     SEDNA server is not running. Did you forget to run se_gov command?
 sedna-err:SE4401
 
-    Failed to run GOVERNOR in the background mode (use '-background-mode off' for detailed diagnostics)
+    Failed to run GOVERNOR in the background mode; use "-background-mode off" for detailed diagnostics.
 sedna-err:SE4402
   
-    Failed to run GOVERNOR
+    Failed to run GOVERNOR.
 sedna-err:SE4403
 
-    Failed to set up ctrl handler for GOVERNOR
+    Failed to set up ctrl handler for GOVERNOR.
 sedna-err:SE4404
 
-    Error occured during closing GOVERNOR
+    Error occured during closing GOVERNOR.
 sedna-err:SE4405
 
-    Session can't be closed
+    Session cannot be closed.
 sedna-err:SE4406
 
-    There is no any sign of the SEDNA server running in the system
+    There is no sign of the SEDNA server running in the system.
 sedna-err:SE4408
 
-    Failed to run GOVERNOR: SEDNA server is running
+    Failed to run GOVERNOR: SEDNA server is running.
 sedna-err:SE4409
 
-    Failed to open session: database is not started
+    Failed to open session: database is not started.
 sedna-err:SE4410
  
-    Can't rename last soft fault directory
+    Cannot rename last soft fault directory.
 
 sedna-err:SE4411
 
-    Can't set sedna data variable
+    Cannot set sedna data variable.
 sedna-err:SE4412
 
-    The number of database config files exceeds the maximum freshold
+    The number of database config files exceeds the maximum allowable number of config files.
 sedna-err:SE4413
 
-    Can't create session process
+    Cannot create session process.
 
 
 ############################################################################
@@ -1331,47 +1331,47 @@ sedna-err:SE4413
 ############################################################################
 sedna-err:SE4500
 
-   bad logical record given from logical log
+   Bad logical record given from logical log.
 sedna-err:SE4501
 
-   Can't recover database by logical log
+   Cannot recover database by logical log.
 sedna-err:SE4510
 
-   Hot-backup utility error
+   Hot-backup utility error.
 
 ############################################################################
 # Transaction general errors 
 ############################################################################
 sedna-err:SE4600
 
-   One of the command line argumets is too long
+   One of the command line arguments is too long.
 sedna-err:SE4601
 
-   Command line arguments are not correct
+   Command line arguments are not correct.
 sedna-err:SE4602
 
-   Can't get current working directory absolute path
+   Cannot get current working directory absolute path.
 sedna-err:SE4603
 
-   Can't get absolute path to the file
+   Cannot get absolute path to the file.
 sedna-err:SE4604
 
-   Can't change working directory
+   Cannot change working directory.
 sedna-err:SE4605
 
-   Initialization of persistent heap failed
+   Initialization of persistent heap failed.
 sedna-err:SE4606
 
-   Release of persistent heap failed
+   Release of persistent heap failed.
 sedna-err:SE4607
 
-   Can't run transaction: system is busy
+   Cannot run transaction: system is busy.
 sedna-err:SE4608
 
-   Transaction is rolled back because server is stopping
+   Transaction is rolled back, because server is stopping.
 sedna-err:SE4609
 
-   The database does not exist
+   The database does not exist.
 sedna-err:SE4610
 
    There is no transaction to commit.
@@ -1383,7 +1383,7 @@ sedna-err:SE4612
    Commit current transaction before beginning a new one.
 sedna-err:SE4613
 
-   Since version 0.6 se_trn is an internal process and cannot be run manually. Use se_term instead.
+   Since version 0.6 of sedna the command se_trn is an internal process and cannot be run manually. Use se_term instead.
 sedna-err:SE4614
 
    There is no next item of the user's query.
@@ -1392,7 +1392,7 @@ sedna-err:SE4615
    Begin transaction before executing a query.
 sedna-err:SE4616
 
-   Can't load a document because the session is loading another document. Finish current loading before beginning a new one.
+   Cannot load a document, because the session is loading another document. Finish current loading before beginning a new one.
 sedna-err:SE4617
 
    Failed to set session option (invalid value)
@@ -1406,25 +1406,25 @@ sedna-err:SE4618
 ######################################################################
 sedna-err:SE4700
 
-   Unknown resource identifier type 
+   Unknown resource identifier type.
 sedna-err:SE4701
 
-   Internal Lock Manager error
+   Internal Lock Manager error.
 sedna-err:SE4702
 
-   The resorce's name length is too long
+   The length of the resource name is too long.
 sedna-err:SE4703
 
-   The transaction is a victim of deadlock resolution procedure
+   The transaction is a victim of deadlock resolution procedure.
 sedna-err:SE4704
 
-   Unknown reply from Lock Manager
+   Unknown reply from Lock Manager.
 sedna-err:SE4705
 
-   Deadlock is detected
+   Deadlock is detected.
 sedna-err:SE4706
 
-   Cannot perform update operations in Read-Only mode
+   Cannot perform update operations in read-only mode.
 
 ######################################################################
 ### Static (semantic) analyzer errors (SA)
@@ -1461,7 +1461,7 @@ sedna-err:SE5014
     Not a constant.
 sedna-err:SE5015
 
-    Not a proper QName.
+    Not a proper QName (qualified name).
 sedna-err:SE5016
 
     Unknown item type.
@@ -1494,7 +1494,7 @@ sedna-err:SE5027
     Constant value is not compatible with the type definition.
 sedna-err:SE5028
 
-    Constant is not a proper QName.
+    Constant is not a proper QName (qualified name).
 sedna-err:SE5030
 
     Not a type specifier.
@@ -1572,13 +1572,13 @@ sedna-err:SE5060
     Unexpected default empty order declaration in XQuery prolog.
 sedna-err:SE5061
 
-    Malformed ascending/descending order declaration in order by clause.
+    Malformed ascending/descending order declaration in ORDER BY clause.
 sedna-err:SE5062
 
-    Malformed empty greatest / empty least declaration in order by clause.
+    Malformed empty greatest / empty least declaration in ORDER BY clause.
 sedna-err:SE5063
 
-    Malformed stable order by.
+    Malformed stable ORDER BY.
 sedna-err:SE5064
 
     Order modifier expected.
@@ -1587,7 +1587,7 @@ sedna-err:SE5065
     Order specification expected.
 sedna-err:SE5066
 
-    Orderspecs expected.
+    Order specifications expected.
 sedna-err:SE5067
 
     Malformed name-value pair in Sedna-specific option declaration.
@@ -1658,7 +1658,7 @@ sedna-err:SE5502
 
 sedna-err:SE6000
 
-    User statement is too large (maximum size allowed is 2 Mb).
+    User statement is too large: the maximum size allowed is 2 Mb.
 
 ######################################################################
 ### fn:error error (user defined)
@@ -1675,11 +1675,11 @@ sedna-err:SE9000
 
 sedna-err:SE2039
 
-   Invalid result of the second insert argument: sequence contains non-persistent or document nodes
+   Invalid result of the second insert argument: sequence contains non-persistent or document nodes.
 
 sedna-err:SE3207
 
-    XPath expression after the 'ON' keyword is invalid.
+    XPath expression after the "ON" keyword is invalid.
 sedna-err:SE3208
 
     The trigger variable is used but undefined in this context.
@@ -1697,10 +1697,10 @@ sedna-err:SE3211
     No trigger with this name.
 sedna-err:SE2040
 
-   Too many childs by schema.
+   Too many children by schema.
 sedna-err:SE4620
 
-   Transaction has been rolled back due to timeout or hard stop request.
+   Transaction has been rolled back as a result of a timeout or hard stop request.
 
 sedna-err:SE4801
 
@@ -1710,7 +1710,7 @@ sedna-err:SE4802
    Cannot release wu.
 sedna-err:SE2041
 
-   Result is cut, because its size exceeds max allowed size (set by client).
+   Result is cut, because its size exceeds the maximum allowed size set by the client.
 sedna-err:SE4901
 
    Internal LFS error.
@@ -1725,19 +1725,19 @@ sedna-err:SE4621
    Property is unknown.
 sedna-err:SE4622
 
-    This statement is not supported because Sedna' database security level is "authentication". (To support this statement create database with -db-security option "authorization".)
+    This statement is not supported because the database security level of Sedna is "authentication". To support this statement create database with -db-security option "authorization".
 sedna-err:SE5200
 
-   Internal Runtime Configuration utility error
+   Internal Runtime Configuration utility error.
 sedna-err:SE4623
 
-   Cannot set keep alive session timeout
+   Cannot set keep alive session timeout.
 sedna-err:SE4624
 
-   Session was closed since keep alive timeout has been expired
+   Session was closed, because the keep alive timeout has been reached.
 sedna-err:SE3081
 
-   Can't open file with long query to execute
+   Cannot open a file with a long query to execute.
 err:XQDY0096
 
    It is a dynamic error the node-name of a node constructed by a computed element constructor has any of the following properties: its namespace prefix is xmlns, its namespace URI is http://www.w3.org/2000/xmlns/, its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace, its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
