@@ -438,14 +438,18 @@ inline void restore_serialized_xptr(const xptr &serialized, tuple_cell &result)
     int size1 = GET_FREE_SPACE(serialized);
     if(size1 < sizeof(tuple_cell))
     {
-        memcpy(&result, XADDR(serialized), size1);
+	tuple_cell tc;
+        memcpy(&tc, XADDR(serialized), size1);
         xptr data = ((seq_blk_hdr*)XADDR(BLOCKXPTR(serialized)))->nblk + sizeof(seq_blk_hdr);
         CHECKP(data);
-        memcpy(((char*)&result) + size1, XADDR(data), sizeof(tuple_cell) - size1);
+        memcpy(((char*)&tc) + size1, XADDR(data), sizeof(tuple_cell) - size1);
+	result = tc;
     }
     else
     {
-	memcpy(&result, XADDR(serialized), sizeof(tuple_cell));
+	tuple_cell tc;
+	memcpy(&tc, XADDR(serialized), sizeof(tuple_cell));
+	result = tc;
     }
 }
 
@@ -490,7 +494,7 @@ void PPFnDistinctValues::serialize (tuple& t, xptr v1, const void *Udata)
     memcpy(XADDR(v1), &tc, sizeof(tuple_cell));
 }
 
-void PPFnDistinctValues::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void *Udata)
+void PPFnDistinctValues::serialize_2_blks(tuple& t, xptr& v1, shft size1, xptr& v2, const void *Udata)
 {
     tuple_cell tc = t.cells[0];
     WRITEP(v1);
