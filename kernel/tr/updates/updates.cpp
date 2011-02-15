@@ -302,7 +302,11 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
 
         case text: {
             if (CommonTextNode(node).isEmpty()) {
-                throw SYSTEM_EXCEPTION("BAD DATA!!!");
+                if (IS_DATA_BLOCK(node)) {
+                    throw SYSTEM_EXCEPTION("BAD DATA!!!");
+                } else {
+                    return left;
+                }
             } else {
                 result = insert_text(left, right, parent, text_source_node(node));
             }
