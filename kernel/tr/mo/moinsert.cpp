@@ -178,12 +178,14 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
     schema_node_cptr parent_snode;
     enum text_insert_t { ti_new_node, ti_addtext_after, ti_addtext_before } insert_type = ti_new_node;
 
-    if (source.size < 1 && IS_DATA_BLOCK(parent)) throw USER_EXCEPTION(SE2009);
+    if (source.size < 1 && (IS_DATA_BLOCK(parent))) throw USER_EXCEPTION(SE2009);
     if (source.size > STRMAXSIZE) throw USER_EXCEPTION(SE2037);
 
     check_common_constraints(left_sib, right_sib, parent);
     find_relatives(node_info);
     parent_snode = getSchemaNode(node_info.parent);
+
+//    if (source.size < 1 && parent != XNULL && parent_snode->type != virtual_root) throw USER_EXCEPTION(SE2009);
 
     microoperation_begin(node_info.parent);
 

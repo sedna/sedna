@@ -1505,10 +1505,9 @@ void PPTextConstructor::do_next (tuple &t)
             text_source = text_source_mem(at_value, strlen(at_value));
         }
         xptr newcomm;
-        if (cont_parind==XNULL || deep_copy || text_source.size == 0)
+        if (cont_parind==XNULL || deep_copy || text_source.size == 0) {
             newcomm = insert_text(XNULL, XNULL, get_virtual_root(), text_source);
-        else
-        {
+        } else {
             if (cont_leftind!=XNULL)
                 newcomm = insert_text(indirectionDereferenceCP(cont_leftind),XNULL,XNULL, text_source);
             else
@@ -1518,7 +1517,6 @@ void PPTextConstructor::do_next (tuple &t)
         }
         //Result
         t.copy(tuple_cell::node(newcomm));
-
     }
     else
     {
