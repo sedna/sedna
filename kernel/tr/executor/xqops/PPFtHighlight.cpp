@@ -11,11 +11,11 @@
 
 PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
                              operation_info _info_,
-                             PPOpIn _query_,
                              PPOpIn _seq_,
+                             PPOpIn _query_,
                              bool _hl_fragment_) : PPIterator(_cxt_, _info_, "PPFtHighlight"),
-                                                   seq(_seq_),
                                                    query(_query_),
+                                                   seq(_seq_),
                                                    hl_fragment(_hl_fragment_),
                                                    fthl(NULL)
 {
@@ -23,12 +23,12 @@ PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
 
 PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
                              operation_info _info_,
-                             PPOpIn _query_,
                              PPOpIn _seq_,
+                             PPOpIn _query_,
                              PPOpIn _options_,
                              bool _hl_fragment_) : PPIterator(_cxt_, _info_, "PPFtHighlight"),
-                                                   seq(_seq_),
                                                    query(_query_),
+                                                   seq(_seq_),
                                                    options(_options_),
                                                    hl_fragment(_hl_fragment_),
                                                    fthl(NULL)
@@ -121,6 +121,7 @@ void PPFtHighlight::do_next(tuple &t)
 			if (!t.is_eos())
 				throw XQUERY_EXCEPTION(SE1071);
 		}
+		else
 			fthl = new FtHighlighter(NULL, hl_fragment, &seq);
 
 		query.op->next(t);
