@@ -9,14 +9,15 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/PPBase.h"
-#include "tr/ft/ft_index_data.h"
-#include "tr/ft/ft_cache.h"
-#include "tr/ft/query/ft_query.h"
-#ifdef SE_ENABLE_DTSEARCH
-#include "tr/ft/FTsearch.h"
-#endif
 
 //TODO: remove PPFtIndexScan2
+
+//don't want to inculude ftc_cache.h/FTSearch.h here
+class FtQueryProcessor;
+#ifdef SE_ENABLE_DTSEARCH
+class SednaSearchJob;
+class SednaSearchJob2;
+#endif
 
 class PPFtIndexScan : public PPIterator
 {
@@ -65,7 +66,6 @@ protected:
 #ifdef SE_ENABLE_DTSEARCH
 	SednaSearchJob2 *sj;
 #endif
-	ftc_scan_result *ftc_res;
 
 private:   
     virtual void do_open   ();

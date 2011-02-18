@@ -94,7 +94,7 @@ struct FtsScanData
 {
 	FtPartitionScanner scanner;
 	xptr doc_stats;
-	ft_uint_t cur_acc_i;
+	ft_acc_uint_t cur_acc_i;
 	ftp_ind_t cur_ind;
 
 	//start scan
@@ -104,17 +104,17 @@ struct FtsScanData
 		doc_stats = fts_data->doc_stats;
 		if (!scanner.get_next_occur(&cur_acc_i, &cur_ind))
 		{
-			cur_acc_i = FT_UINT_NULL;
+			cur_acc_i = FT_ACC_UINT_NULL;
 			cur_ind = 0;
 		}
 	}
 
 	bool at_end()
 	{
-		return cur_acc_i == FT_UINT_NULL;
+		return cur_acc_i == FT_ACC_UINT_NULL;
 	}
 
-	ft_uint_t get_cur_acc_i()
+	ft_acc_uint_t get_cur_acc_i()
 	{
 		return cur_acc_i;
 	}
@@ -129,7 +129,7 @@ struct FtsScanData
 	{
 		if (!scanner.get_next_occur(&cur_acc_i, &cur_ind))
 		{
-			cur_acc_i = FT_UINT_NULL;
+			cur_acc_i = FT_ACC_UINT_NULL;
 			cur_ind = 0;
 		}
 	}
@@ -137,9 +137,9 @@ struct FtsScanData
 	//returns number of skipped occurs
 	int skip_node()
 	{
-		const ft_uint_t old_acc_i = cur_acc_i;
+		const ft_acc_uint_t old_acc_i = cur_acc_i;
 		int noccurs = 0;
-		while (cur_acc_i != FT_UINT_NULL && old_acc_i == cur_acc_i)
+		while (cur_acc_i != FT_ACC_UINT_NULL && old_acc_i == cur_acc_i)
 		{
 			next_occur();
 			noccurs++;
@@ -147,10 +147,10 @@ struct FtsScanData
 		return noccurs;
 	}
 
-	uint64_t get_doc_len(ft_uint_t acc_i)
+	uint64_t get_doc_len(ft_acc_uint_t acc_i)
 	{
 		bt_key bkey;
-		bkey.setnew((int64_t)acc_i);
+		bkey.setnew((int64_t)acc_i); //FIXME
 
 		bt_cursor_tmpl<uint64_t> cur = bt_find_tmpl<uint64_t>(doc_stats, bkey);
 		return cur.bt_next_obj(); //FIXME: depends on the fact that null object for uint64_t is 0 (in btstruct.h)

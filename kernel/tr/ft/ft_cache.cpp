@@ -474,7 +474,7 @@ bool FtCacheScanner::scan_occurs()
 		ome = om->rb_successor(ome);
 		if (ome == NULL)
 		{
-			this->cur_acc_i = FT_UINT_NULL;
+			this->cur_acc_i = FT_ACC_UINT_NULL;
 			return true;
 		}
 		doc_data = id->get_doc_data(ome->obj.doc);
@@ -500,7 +500,7 @@ void FtCacheScanner::init_word(const char *word)
 		om = NULL;
 		ome = NULL;
 		cur_occur = NULL;
-		this->cur_acc_i = FT_UINT_NULL;
+		this->cur_acc_i = FT_ACC_UINT_NULL;
 	}
 }
 int FtCacheScanner::cur_word_ind()
@@ -534,7 +534,7 @@ int FtCacheScanner::skip_acc()
 	ome = om->rb_successor(ome);
 	if (ome == NULL)
 	{
-		this->cur_acc_i = FT_UINT_NULL;
+		this->cur_acc_i = FT_ACC_UINT_NULL;
 		cur_occur = NULL;
 		return noccurs;
 	}
@@ -556,7 +556,7 @@ bool FtCacheScanner::acci_deleted(uint64_t acc_i)
 	return false;
 }
 
-uint64_t FtCacheScanner::get_doc_len(ft_uint_t acc_i)
+uint64_t FtCacheScanner::get_doc_len(ft_acc_uint_t acc_i)
 {
 	ftc_index_data *id = ftc_index_data::get(ftc_idx);
 	ftc_doc_t doc = id->find_doc(FT_UINT_TO_XPTR(acc_i)); //FIXME
@@ -578,8 +578,7 @@ void ftc_scan_result::scan_word(const char *word)
 	fts_sd.init(&id->ft_data, word);
 }
 
-//try to get next result, returns true if successful, false if this functions needs to be called again
-bool ftc_scan_result::get_next_result_step(ft_uint_t *res, int *noccurs)
+bool ftc_scan_result::get_next_occur_step(ft_acc_uint_t *acc_i, int *word_ind)
 {
 	if (ftc_s.at_end())
 	{
@@ -588,79 +587,10 @@ bool ftc_scan_result::get_next_result_step(ft_uint_t *res, int *noccurs)
 		{
 			if (fts_sd.at_end())
 			{
-				*res = FT_UINT_NULL;
+				*acc_i = FT_ACC_UINT_NULL;
 				return true;
 			}
-			ft_uint_t a_i = fts_sd.get_cur_acc_i();
-			*noccurs = fts_sd.skip_node();
-
-			//check if document was deleted
-			if (ftc_s.acci_deleted(a_i))
-				continue;
-
-			*res = a_i;
-			return true;
-		}
-	}
-	else //if (ftc_s.at_end())
-	{
-		if (fts_sd.at_end())
-		{
-			*res = ftc_s.get_cur_acc_i();
-			*noccurs = ftc_s.skip_acc();
-			return true;
-		}
-		//fts_sd has some nodes
-		if (fts_sd.get_cur_acc_i() == ftc_s.get_cur_acc_i())
-		{
-			//acc in fts_sd may be deleted but it affect only noccurs
-			*res = ftc_s.get_cur_acc_i();
-			*noccurs = ftc_s.skip_acc();
-			if (ftc_s.acci_deleted(fts_sd.get_cur_acc_i()))
-				fts_sd.skip_node();
-			else
-				*noccurs += fts_sd.skip_node();
-			return true;
-		}
-		else if (fts_sd.get_cur_acc_i() < ftc_s.get_cur_acc_i())
-		{
-			ft_uint_t a_i = fts_sd.get_cur_acc_i();
-			*noccurs = fts_sd.skip_node();
-
-			//check if document was deleted
-			if (ftc_s.acci_deleted(a_i))
-				return false;
-
-			*res = a_i;
-			return true;
-		}
-		else //(fts_sd.get_cur_acc_i() > ftc_s.cur_acc_i())
-		{
-			*res = ftc_s.get_cur_acc_i();
-			*noccurs = ftc_s.skip_acc();
-			return true;
-		}
-	}
-	U_ASSERT(false);
-}
-
-void ftc_scan_result::get_next_result(uint64_t *res, int *noccurs)
-{
-	while (!this->get_next_result_step(res, noccurs)) ;
-}
-bool ftc_scan_result::get_next_occur_step(ft_uint_t *acc_i, int *word_ind)
-{
-	if (ftc_s.at_end())
-	{
-		//no more entries in cache for this word
-		while (true)
-		{
-			if (fts_sd.at_end())
-			{
-				*acc_i = FT_UINT_NULL;
-				return true;
-			}
-			ft_uint_t a_i = fts_sd.get_cur_acc_i();
+			ft_acc_uint_t a_i = fts_sd.get_cur_acc_i();
 
 			//check if document was deleted
 			if (ftc_s.acci_deleted(a_i))
@@ -739,9 +669,9 @@ bool ftc_scan_result::get_next_occur_step(ft_uint_t *acc_i, int *word_ind)
 	}
 	U_ASSERT(false);
 }
-void ftc_scan_result::get_next_occur(ft_uint_t *acc_i, int *word_ind)
+void ftc_scan_result::get_next_occur(ft_acc_uint_t *acc_i, ft_word_ind_t *word_ind)
 {
-	if (*acc_i != FT_UINT_NULL)
+	if (*acc_i != FT_ACC_UINT_NULL)
 	{
 		//skip acc-s so that cur_acc >= *acc
 		while (!fts_sd.at_end() && fts_sd.get_cur_acc_i() < *acc_i)
@@ -757,7 +687,7 @@ void ftc_scan_result::get_next_occur(ft_uint_t *acc_i, int *word_ind)
 	while (!this->get_next_occur_step(acc_i, word_ind)) ;
 }
 
-uint64_t ftc_scan_result::get_doc_len(ft_uint_t acc_i)
+uint64_t ftc_scan_result::get_doc_len(ft_acc_uint_t acc_i)
 {
 	uint64_t r = ftc_s.get_doc_len(acc_i);
 	if (r > 0)

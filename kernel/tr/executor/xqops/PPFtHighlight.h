@@ -9,17 +9,17 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/PPBase.h"
-#include "tr/ft/FTsearch.h"
 
+class FtHighlighter;
 class PPFtHighlight : public PPIterator
 {
 protected:
-    PPOpIn query, seq, index;
+    PPOpIn query, seq, options;
 
 	bool first_time;
-	SednaSearchJob *sj;
-	ft_custom_tree_t* ptr;
 	bool hl_fragment;
+
+	FtHighlighter *fthl;
 
 private:   
     virtual void do_open   ();
@@ -41,7 +41,7 @@ public:
                   operation_info _info_,
                   PPOpIn _seq_,
                   PPOpIn _query_,
-                  PPOpIn _index_,
+                  PPOpIn _options_,
                   bool _hl_fragment_);
 
     virtual ~PPFtHighlight();

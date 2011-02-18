@@ -147,10 +147,10 @@ public:
     virtual void visit(PPXptr* op);
 
 #ifdef SE_ENABLE_DTSEARCH
-    virtual void visit(PPFtHighlight* op);
     virtual void visit(PPFtScan* op);
 #endif
 #ifdef SE_ENABLE_FTSEARCH
+    virtual void visit(PPFtHighlight* op);
     virtual void visit(PPFtIndexScan* op);
     virtual void visit(PPFtIndexScan2* op);
     virtual void visit(PPFtIndexDict* op);

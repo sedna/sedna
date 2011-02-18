@@ -851,11 +851,6 @@ void PPExplainVisitor::visit(PPXptr* op)
 
 
 #ifdef SE_ENABLE_DTSEARCH
-void PPExplainVisitor::visit(PPFtHighlight* op)
-{
-    insertOperationElement("PPFtHighlight", left, parent, op);
-    insertAttributeHelper("fragment-highlight", XNULL, left, bool2string(op->is_highlight_fragment()));
-}
 void PPExplainVisitor::visit(PPFtScan* op)
 {
     insertOperationElement("PPFtScan", left, parent, op);
@@ -865,6 +860,11 @@ void PPExplainVisitor::visit(PPFtScan* op)
 
 
 #ifdef SE_ENABLE_FTSEARCH
+void PPExplainVisitor::visit(PPFtHighlight* op)
+{
+    insertOperationElement("PPFtHighlight", left, parent, op);
+    insertAttributeHelper("fragment-highlight", XNULL, left, bool2string(op->is_highlight_fragment()));
+}
 void PPExplainVisitor::visit(PPFtIndexScan* op)
 {
     insertOperationElement("PPFtIndexScan", left, parent, op);

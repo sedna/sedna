@@ -490,7 +490,7 @@ void FtPartitionScanner::merge(ft_partition_data *dest_partition, bool merge_del
 	b.finalize(dest_partition);
 }
 
-bool FtPartitionScanner::get_next_occur(ft_uint_t *acc_i, ftp_ind_t *ind)
+bool FtPartitionScanner::get_next_occur(ft_acc_uint_t *acc_i, ftp_ind_t *ind)
 {
 	if (ncurw < 1)
 		return false;

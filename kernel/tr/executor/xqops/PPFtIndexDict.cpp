@@ -5,6 +5,9 @@
 
 #include "common/sedna.h"
 
+#include "tr/ft/ft_index_data.h"
+#include "tr/ft/ft_cache.h"
+
 #include "tr/executor/xqops/PPFtIndexDict.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/strings/opt_parser.h"

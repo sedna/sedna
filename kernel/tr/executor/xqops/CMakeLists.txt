@@ -13,11 +13,11 @@ set(xqops_SRC PPAbsPath.cpp PPAccessors.cpp PPAggrFuncs.cpp PPAxisAncestor.cpp
         PPVariable.cpp PPXptr.cpp PPExplain.cpp)
 
 if (ENABLE_FTSEARCH)
-    list(APPEND xqops_SRC PPFtIndexScan.cpp PPFtIndexDict.cpp)
+    list(APPEND xqops_SRC PPFtIndexScan.cpp PPFtIndexDict.cpp PPFtHighlight.cpp)
 endif (ENABLE_FTSEARCH)
 
 if (ENABLE_DTSEARCH)
-    list(APPEND xqops_SRC PPFtScan.cpp PPFtHighlight.cpp)
+    list(APPEND xqops_SRC PPFtScan.cpp)
 endif (ENABLE_DTSEARCH)
 
 if (SQL_CONNECTION)

@@ -13,12 +13,14 @@
 #include "tr/structures/rbtree.h"
 #include "tr/structures/schema.h"
 
-typedef uint64_t ft_uint_t;
+typedef uint64_t ft_acc_uint_t; //accesor xptrs stored as unsigned integers
 #define FT_XPTR_TO_UINT(x) (x.to_logical_int())
 #define FT_UINT_TO_XPTR(x) (logical_int_to_xptr(x))
 //#define FT_XPTR_TO_UINT(x) (x.to_uint64())
 //#define FT_UINT_TO_XPTR(x) (uint64_to_xptr(x))
-#define FT_UINT_NULL (FT_XPTR_TO_UINT(XNULL))
+#define FT_ACC_UINT_NULL (FT_XPTR_TO_UINT(XNULL))
+
+typedef int ft_word_ind_t;
 
 //this length is in bytes, not characters
 //words with length more than this are truncated
@@ -117,13 +119,13 @@ public:
 class FtScanner
 {
 protected:
-	ft_uint_t cur_acc_i;
+	ft_acc_uint_t cur_acc_i;
 public:
-	ft_uint_t get_cur_acc_i() const {
+	ft_acc_uint_t get_cur_acc_i() const {
 		return cur_acc_i;
 	}
 	bool at_end() const {
-		return (cur_acc_i == FT_UINT_NULL);
+		return (cur_acc_i == FT_ACC_UINT_NULL);
 	}
 };
 
