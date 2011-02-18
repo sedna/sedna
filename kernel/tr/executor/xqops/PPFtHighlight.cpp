@@ -6,34 +6,32 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPFtHighlight.h"
-#include "tr/ft/FTsearch.h"
+#include "tr/ft/ft_util.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 
 PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
                              operation_info _info_,
-                             PPOpIn _seq_,
                              PPOpIn _query_,
+                             PPOpIn _seq_,
                              bool _hl_fragment_) : PPIterator(_cxt_, _info_, "PPFtHighlight"),
                                                    seq(_seq_),
                                                    query(_query_),
                                                    hl_fragment(_hl_fragment_),
-                                                   sj(NULL), 
-                                                   ptr(NULL)
+                                                   fthl(NULL)
 {
 }
 
 PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
                              operation_info _info_,
-                             PPOpIn _seq_,
                              PPOpIn _query_,
-                             PPOpIn _index_,
+                             PPOpIn _seq_,
+                             PPOpIn _options_,
                              bool _hl_fragment_) : PPIterator(_cxt_, _info_, "PPFtHighlight"),
                                                    seq(_seq_),
                                                    query(_query_),
-                                                   index(_index_),
+                                                   options(_options_),
                                                    hl_fragment(_hl_fragment_),
-                                                   sj(NULL), 
-                                                   ptr(NULL)
+                                                   fthl(NULL)
 {
 }
 PPFtHighlight::~PPFtHighlight()
@@ -48,15 +46,15 @@ PPFtHighlight::~PPFtHighlight()
         delete query.op;
         query.op = NULL;
     }
-	if (index.op)
+	if (options.op)
     {
-        delete index.op;
-        index.op = NULL;
+        delete options.op;
+        options.op = NULL;
     }
-	if (sj)
+	if (fthl)
 	{
-		delete sj;
-		sj = NULL;
+		delete fthl;
+		fthl = NULL;
 	}
 }
 
@@ -64,8 +62,8 @@ void PPFtHighlight::do_open()
 {
 	seq.op->open();
     query.op->open();
-	if (index.op)
-		index.op->open();
+	if (options.op)
+		options.op->open();
 
     first_time = true;
 }
@@ -74,18 +72,13 @@ void PPFtHighlight::do_reopen()
 {
 	seq.op->reopen();
     query.op->reopen();
-	if (index.op)
-		index.op->reopen();
+	if (options.op)
+		options.op->reopen();
 
-	if (sj)
+	if (fthl)
 	{
-		delete sj;
-		sj = NULL;
-	}
-	if (ptr)
-	{
-		delete_ft_custom_tree(ptr);
-		ptr = NULL;
+		delete fthl;
+		fthl = NULL;
 	}
 
     first_time = true;
@@ -95,19 +88,13 @@ void PPFtHighlight::do_close()
 {
 	seq.op->close();
     query.op->close();
-	if (index.op)
-		index.op->close();
-	if (sj != NULL)
+	if (options.op)
+		options.op->close();
+	if (fthl != NULL)
 	{
-		delete sj;
-		sj = NULL;
+		delete fthl;
+		fthl = NULL;
 	}
-	if (ptr)
-	{
-		delete_ft_custom_tree(ptr);
-		ptr = NULL;
-	}
-	
 }
 
 void PPFtHighlight::do_next(tuple &t)
@@ -116,28 +103,25 @@ void PPFtHighlight::do_next(tuple &t)
 	{
 		tuple_cell tc;
 
-		if (index.op)
+		U_ASSERT(fthl == NULL);
+
+		if (options.op)
 		{
-			sj=se_new SednaSearchJob(true, hl_fragment);
-			index.op->next(t);
+			options.op->next(t);
 			if (t.is_eos())
 				throw XQUERY_EXCEPTION(SE1071);
 			tc = t.cells[0];
 			if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
 				throw XQUERY_EXCEPTION(SE1071);
+
+			op_str_buf buf(tc);
+			fthl = new FtHighlighter(buf.c_str(), hl_fragment, &seq);
 	
-			ftc_index_t ftc_idx;
-			ft_index_cell_cptr ft_idx = find_ft_index(op_str_buf(tc).c_str(), &ftc_idx); //FIXME: op_str_buf may be destroyed too soon
-			if (!ft_idx.found())
-				throw USER_EXCEPTION(SE1061);
-			sj->set_index(&*ft_idx);
-			index.op->next(t);
+			options.op->next(t);
 			if (!t.is_eos())
 				throw XQUERY_EXCEPTION(SE1071);
-
 		}
-		else
-			sj=se_new SednaSearchJob(&seq, ft_xml_hl, NULL, true, hl_fragment);
+			fthl = new FtHighlighter(NULL, hl_fragment, &seq);
 
 		query.op->next(t);
 		if (t.is_eos())
@@ -146,7 +130,7 @@ void PPFtHighlight::do_next(tuple &t)
 		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
 			throw XQUERY_EXCEPTION(SE1071);
 
-		sj->set_request(tc);
+		fthl->set_request(tc);
 		query.op->next(t);
 		if (!t.is_eos())
 			throw XQUERY_EXCEPTION(SE1071);
@@ -154,38 +138,12 @@ void PPFtHighlight::do_next(tuple &t)
 		first_time = false;
 	}
 
-	if (index.op)
-	{
-		while (true)
-		{
-			seq.op->next(t);
-			if (t.is_eos())
-				break;
-			tuple_cell tc = t.cells[0];
-			sj->set_file_cond_for_node(tc);
-
-			sj->get_next_result(t);
-			if (!t.is_eos())
-			{
-				tuple tmp(1);
-				sj->get_next_result(tmp);
-				if (!tmp.is_eos())
-				{
-					delete sj;
-					sj = NULL;
-					throw XQUERY_EXCEPTION2(SE1071, "problem with dtsearch"); //FIXME: change exception code
-				}
-				break;
-			}
-		}
-	}
-	else
-		sj->get_next_result(t);
+	fthl->get_next_result(t);
 
 	if (t.is_eos())
 	{
-		delete sj;
-		sj = NULL;
+		delete fthl;
+		fthl = NULL;
 		first_time = true;
 	}
 }
@@ -193,12 +151,12 @@ void PPFtHighlight::do_next(tuple &t)
 PPIterator*  PPFtHighlight::do_copy(dynamic_context *_cxt_)
 {
 	PPFtHighlight *res;
-	if (index.op)
+	if (options.op)
 	{
-		res = se_new PPFtHighlight(_cxt_, info, seq, query, index, hl_fragment);
+		res = se_new PPFtHighlight(_cxt_, info, seq, query, options, hl_fragment);
 	    res->seq.op = seq.op->copy(_cxt_);
 	    res->query.op = query.op->copy(_cxt_);
-		res->index.op = index.op->copy(_cxt_);
+		res->options.op = options.op->copy(_cxt_);
 	}
 	else
 	{
@@ -215,6 +173,6 @@ void PPFtHighlight::do_accept(PPVisitor &v)
     v.push  (this);
     seq.op->accept(v);
     query.op->accept(v);
-    if(index.op) index.op->accept(v);
+    if(options.op) options.op->accept(v);
     v.pop();
 }

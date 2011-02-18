@@ -8,9 +8,13 @@
 #include "tr/executor/xqops/PPFtIndexScan.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/strings/opt_parser.h"
+#include "tr/ft/ft_index_data.h"
+#include "tr/ft/ft_cache.h"
+#include "tr/ft/query/ft_query.h"
 #ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTsearch.h"
 #endif
+
 
 PPFtIndexScan::PPFtIndexScan(dynamic_context *_cxt_,
                              operation_info _info_,
@@ -291,11 +295,10 @@ PPFtIndexScan2::PPFtIndexScan2(dynamic_context *_cxt_,
                                PPOpIn _idx_name_,
                                PPOpIn _query_) : PPIterator(_cxt_, _info_, "PPFtIndexScan2"),
                                                  idx_name(_idx_name_),
-                                                 query(_query_),
+                                                 query(_query_)
 #ifdef SE_ENABLE_DTSEARCH
-                                                 sj(NULL),
+                                                 ,sj(NULL)
 #endif
-                                                 ftc_res(NULL)
 {
 	max_results.op = NULL;
 	field_weights.op = NULL;
@@ -308,11 +311,10 @@ PPFtIndexScan2::PPFtIndexScan2(dynamic_context *_cxt_,
                                PPOpIn _max_results_) : PPIterator(_cxt_, _info_, "PPFtIndexScan2"),
                                                        idx_name(_idx_name_),
                                                        query(_query_),
-                                                       max_results(_max_results_),
+                                                       max_results(_max_results_)
 #ifdef SE_ENABLE_DTSEARCH
-                                                       sj(NULL),
+                                                       ,sj(NULL)
 #endif
-                                                       ftc_res(NULL)
 {
 	field_weights.op = NULL;
 }
@@ -326,11 +328,10 @@ PPFtIndexScan2::PPFtIndexScan2(dynamic_context *_cxt_,
                                                          idx_name(_idx_name_),
                                                          query(_query_),
                                                          max_results(_max_results_),
-                                                         field_weights(_field_weights_),
+                                                         field_weights(_field_weights_)
 #ifdef SE_ENABLE_DTSEARCH
-                                                         sj(NULL),
+                                                         ,sj(NULL)
 #endif
-                                                         ftc_res(NULL)
 {
 }
 
@@ -363,11 +364,6 @@ PPFtIndexScan2::~PPFtIndexScan2()
 		sj = NULL;
 	}
 #endif
-	if (ftc_res)
-	{
-		delete ftc_res;
-		ftc_res = NULL;
-	}
 }
 
 void PPFtIndexScan2::do_open()
@@ -398,11 +394,6 @@ void PPFtIndexScan2::do_reopen()
 		sj = NULL;
 	}
 #endif
-	if (ftc_res)
-	{
-		delete ftc_res;
-		ftc_res = NULL;
-	}
 
     first_time = true;
 }
@@ -422,11 +413,6 @@ void PPFtIndexScan2::do_close()
 		sj = NULL;
 	}
 #endif
-	if (ftc_res != NULL)
-	{
-		delete ftc_res;
-		ftc_res = NULL;
-	}
 }
 
 void PPFtIndexScan2::do_next(tuple &t)

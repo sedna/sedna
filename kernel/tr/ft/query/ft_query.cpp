@@ -11,6 +11,52 @@
 
 #include <math.h>
 
+FtWordIndexList::~FtWordIndexList()
+{
+	if (buf != NULL)
+	{
+		free(buf);
+		buf = NULL;
+	}
+}
+
+void FtWordIndexList::merge(FtWordIndexList *lists, int nlists)
+{
+	ft_word_ind_t **p = (ft_word_ind_t **)malloc(nlists * sizeof(ft_word_ind_t *));
+	size_t *left = (size_t *)malloc(nlists * sizeof(size_t));
+
+	this->clear();
+
+	for (int i = 0; i < nlists; i++)
+	{
+		p[i] = lists[i].get_inds();
+		left[i] = lists[i].get_inds_count();
+	}
+
+	//TODO: init limit
+
+	while (true)
+	{
+		int mini = -1;
+		for (int i = 0; i < nlists; i++)
+			if (left[i] > 0 && (mini == -1 || *(p[mini]) > *(p[i])))
+				mini = i;
+		if (mini == -1)
+			break;
+		const ft_word_ind_t ind = *(p[mini]);
+		for (int i = 0; i < nlists; i++)
+			if (left[i] > 0 && *(p[i]) == ind)
+			{
+				left[i]--;
+				p[i]++;
+			}
+			this->add_ind(ind);
+	}
+
+	free(p);
+	free(left);
+}
+
 ft_float doc_length_norm(int64_t len)
 {
 	return 1.0f / sqrtf(len);
@@ -20,31 +66,43 @@ FtQueryTerm::~FtQueryTerm()
 {
 }
 
-void FtQueryTerm::do_open()
+void FtQueryTerm::do_init()
 {
 	this->score_count = 1;
-	ftc_scan.scan_word(term_buf);
 }
-void FtQueryTerm::init(ft_float *_scores)
+void FtQueryTerm::do_open()
 {
-	this->scores = _scores;
+	ftc_scan.scan_word(term_buf);
+	next_acc_i = FT_ACC_UINT_NULL;
+	ftc_scan.get_next_occur(&next_acc_i, &next_ind);
 }
 uint64_t FtQueryTerm::get_next_result()
 {
-	uint64_t res;
-	int noccurs;
-	ftc_scan.get_next_result(&res, &noccurs);
-	if (res != FT_UINT_NULL)
+	if (next_acc_i == FT_ACC_UINT_NULL)
+		return FT_ACC_UINT_NULL;
+	uint64_t res = next_acc_i;
+	int noccurs = 0;
+	if (this->word_list != NULL)
+		this->word_list->clear();
+
+	while (next_acc_i == res)
 	{
-		this->scores[0] = sqrtf(noccurs) * doc_length_norm(ftc_scan.get_doc_len(res));
-		this->doc_freq++;
+		noccurs++;
+		if (this->word_list != NULL)
+			this->word_list->add_ind(next_ind);
+
+		ftc_scan.get_next_occur(&next_acc_i, &next_ind);
 	}
+
+	this->scores[0] = sqrtf(noccurs) * doc_length_norm(ftc_scan.get_doc_len(res));
+	this->doc_freq++;
+
 	return res;
 }
 void FtQueryTerm::close()
 {
 	//count remaining terms to update doc_freq for scoring
-	while (this->get_next_result() != FT_UINT_NULL) ;
+	while (this->get_next_result() != FT_ACC_UINT_NULL) ;
 }
 ft_float FtQueryTerm::ft_get_score(ft_float *scores)
 {
@@ -53,7 +111,7 @@ ft_float FtQueryTerm::ft_get_score(ft_float *scores)
 	ft_float tf_and_doc_norm = scores[0];
 	return tf_and_doc_norm * idf * idf;
 }
-void FtQueryTerm::get_next_occur(ft_uint_t *acc, int *word_ind)
+void FtQueryTerm::get_next_occur(ft_acc_uint_t *acc, ft_word_ind_t *word_ind)
 {
 	ftc_scan.get_next_occur(acc, word_ind);
 }
@@ -63,18 +121,17 @@ FtQueryTermInElement::~FtQueryTermInElement()
 {
 }
 
-void FtQueryTermInElement::do_open()
+void FtQueryTermInElement::do_init()
 {
 	this->score_count = 1;
+}
+void FtQueryTermInElement::do_open()
+{
 	ftc_scan.scan_word(term_buf);
 	ftc_scan_opentag.scan_word(opentag_buf);
 	ftc_scan_closetag.scan_word(closetag_buf);
-}
-void FtQueryTermInElement::init(ft_float *_scores)
-{
-	this->scores = _scores;
 
-	opentag_acc_i = FT_UINT_NULL;
+	opentag_acc_i = FT_ACC_UINT_NULL;
 	opentag_ind = 0;
 	ftc_scan_opentag.get_next_occur(&opentag_acc_i, &opentag_ind);
 
@@ -84,20 +141,24 @@ void FtQueryTermInElement::init(ft_float *_scores)
 
 	U_ASSERT(closetag_acc_i == opentag_acc_i); //FIXME: all tags must be closed now
 
-	next_acc_i = FT_UINT_NULL; //needed for get_next_result()
+	next_acc_i = FT_ACC_UINT_NULL; //needed for get_next_result()
 }
 uint64_t FtQueryTermInElement::get_next_result()
 {
-	if (next_acc_i == FT_UINT_NULL)
+	if (next_acc_i == FT_ACC_UINT_NULL)
 		this->get_next_occur(&next_acc_i, &next_ind);
-	if (next_acc_i == FT_UINT_NULL)
-		return FT_UINT_NULL;
+	if (next_acc_i == FT_ACC_UINT_NULL)
+		return FT_ACC_UINT_NULL;
 
-	ft_uint_t res = next_acc_i;
+	ft_acc_uint_t res = next_acc_i;
 	int noccurs = 0;
+	if (this->word_list != NULL)
+		this->word_list->clear();
 	while (next_acc_i == res)
 	{
 		noccurs++;
+		if (this->word_list != NULL)
+			this->word_list->add_ind(next_ind);
 		this->get_next_occur(&next_acc_i, &next_ind);
 	}
 
@@ -109,7 +170,7 @@ uint64_t FtQueryTermInElement::get_next_result()
 void FtQueryTermInElement::close()
 {
 	//count remaining terms to update doc_freq for scoring
-	while (this->get_next_result() != FT_UINT_NULL) ;
+	while (this->get_next_result() != FT_ACC_UINT_NULL) ;
 }
 ft_float FtQueryTermInElement::ft_get_score(ft_float *scores)
 {
@@ -118,18 +179,18 @@ ft_float FtQueryTermInElement::ft_get_score(ft_float *scores)
 	ft_float tf_and_doc_norm = scores[0];
 	return tf_and_doc_norm * idf * idf;
 }
-void FtQueryTermInElement::get_next_occur(ft_uint_t *acc, int *word_ind)
+void FtQueryTermInElement::get_next_occur(ft_acc_uint_t *acc, ft_word_ind_t *word_ind)
 {
-	if (opentag_acc_i == FT_UINT_NULL)
+	if (opentag_acc_i == FT_ACC_UINT_NULL)
 	{
-		*acc = FT_UINT_NULL;
+		*acc = FT_ACC_UINT_NULL;
 		return;
 	}
 	ftc_scan.get_next_occur(acc, word_ind);
 
 	while (true)
 	{
-		if (*acc == FT_UINT_NULL)
+		if (*acc == FT_ACC_UINT_NULL)
 			return;
 
 		//FIXME: assumes (opentag_acc_i == closetag_acc_i)
@@ -153,9 +214,9 @@ void FtQueryTermInElement::get_next_occur(ft_uint_t *acc, int *word_ind)
 		ftc_scan_closetag.get_next_occur(&closetag_acc_i, &closetag_ind);
 
 		U_ASSERT(closetag_acc_i == opentag_acc_i); //FIXME: all tags must be closed now
-		if (opentag_acc_i == FT_UINT_NULL)
+		if (opentag_acc_i == FT_ACC_UINT_NULL)
 		{
-			*acc = FT_UINT_NULL;
+			*acc = FT_ACC_UINT_NULL;
 			return;
 		}
 	}
@@ -164,7 +225,7 @@ void FtQueryTermInElement::get_next_occur(ft_uint_t *acc, int *word_ind)
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-FtQueryAnd::FtQueryAnd(ftc_index_t idx, int _nops) : ftc_idx(idx), nops(_nops)
+FtQueryAnd::FtQueryAnd(ftc_index_t idx, int _nops) : ftc_idx(idx), nops(_nops), op_word_lists(NULL)
 {
 	U_ASSERT(nops > 1);
 	ops = (FtQuery **)malloc(nops * sizeof(FtQuery*));
@@ -174,8 +235,10 @@ FtQueryAnd::~FtQueryAnd()
 {
 	for (int i = 0; i < nops; i++)
 		delete ops[i];
-	delete ops;
-	delete op_results;
+	free(ops);
+	free(op_results);
+	if (op_word_lists != NULL)
+		delete[] op_word_lists;
 }
 
 void FtQueryAnd::set_operand(int op_idx, FtQuery *op)
@@ -183,22 +246,30 @@ void FtQueryAnd::set_operand(int op_idx, FtQuery *op)
 	ops[op_idx] = op;
 }
 
-void FtQueryAnd::do_open()
+void FtQueryAnd::do_init()
 {
 	this->score_count = 0;
 	for (int i = 0; i < nops; i++)
 	{
-		ops[i]->open();
+		ops[i]->init();
 		this->score_count += ops[i]->score_count;
 	}
 }
-void FtQueryAnd::init(float *_scores)
+void FtQueryAnd::do_open()
 {
 	int p = 0;
-	this->scores = _scores;
+	if (this->word_list != NULL)
+	{
+		if (op_word_lists != NULL)
+			delete[] op_word_lists;
+		op_word_lists = new FtWordIndexList[nops];
+	}
 	for (int i = 0; i < nops; i++)
 	{
-		ops[i]->init(&this->scores[p]);
+		if (this->word_list != NULL)
+			ops[i]->open(&this->scores[p], &op_word_lists[i]);
+		else
+			ops[i]->open(&this->scores[p], NULL);
 		p += ops[i]->score_count;
 		op_results[i] = ops[i]->get_next_result();
 	}
@@ -209,21 +280,21 @@ uint64_t FtQueryAnd::get_next_result()
 {
 	U_ASSERT(nops > 1);
 	int i = 1;
-	if (op_results[0] == FT_UINT_NULL)
-		return FT_UINT_NULL;
+	if (op_results[0] == FT_ACC_UINT_NULL)
+		return FT_ACC_UINT_NULL;
 	while (i < nops)
 	{
 		while (op_results[i] < op_results[i-1])
 		{
 			op_results[i] = ops[i]->get_next_result();
-			if (op_results[i] == FT_UINT_NULL)
-				return FT_UINT_NULL;
+			if (op_results[i] == FT_ACC_UINT_NULL)
+				return FT_ACC_UINT_NULL;
 		}
 		if (op_results[i] > op_results[i-1])
 		{
 			op_results[0] = ops[0]->get_next_result();
-			if (op_results[0] == FT_UINT_NULL)
-				return FT_UINT_NULL;
+			if (op_results[0] == FT_ACC_UINT_NULL)
+				return FT_ACC_UINT_NULL;
 			i = 1;
 		}
 		else
@@ -231,6 +302,10 @@ uint64_t FtQueryAnd::get_next_result()
 	}
 
 	uint64_t res = op_results[0];
+
+	if (this->word_list != NULL)
+		this->word_list->merge(op_word_lists, nops);
+
 	for (int i = 0; i < nops; i++)
 	{
 		U_ASSERT(op_results[i] == res);
@@ -281,30 +356,30 @@ void FtQueryPhrase::set_term(int op_idx, FtQueryTermBase *t)
 	term_ops[op_idx] = t;
 }
 
-void FtQueryPhrase::do_open()
+void FtQueryPhrase::do_init()
 {
 	this->score_count = 1;
 	for (int i = 0; i < nops; i++)
 	{
-		term_ops[i]->open();
+		term_ops[i]->init();
 		this->score_count += term_ops[i]->score_count;
 	}
 }
 
-void FtQueryPhrase::init(ft_float *_scores)
+void FtQueryPhrase::do_open()
 {
 	int p = 1;
-	this->scores = _scores;
 	for (int i = 0; i < nops; i++)
 	{
-		term_ops[i]->init(&this->scores[p]);
+		term_ops[i]->open(&this->scores[p], NULL);
 		p += term_ops[i]->score_count;
-		op_results[i] = FT_UINT_NULL;
+		op_results[i] = FT_ACC_UINT_NULL;
 		term_ops[i]->get_next_occur(&op_results[i], &op_word_inds[i]);
 	}
 	U_ASSERT(p == this->score_count);
 }
 
+//scan term_ops until next phrase occur is found, if op_results/op_word_inds already match a phrase - nothing is changed
 bool FtQueryPhrase::next_occur()
 {
 	//TODO: set initial value for second argument to get_next_occur to improve performance
@@ -312,7 +387,7 @@ bool FtQueryPhrase::next_occur()
 
 	U_ASSERT(nops > 1);
 	int i = 1;
-	if (op_results[0] == FT_UINT_NULL)
+	if (op_results[0] == FT_ACC_UINT_NULL)
 		return false;
 
 	while (i < nops)
@@ -322,7 +397,7 @@ bool FtQueryPhrase::next_occur()
 			op_results[i] = op_results[i-1];
 			op_word_inds[i] = 0; //FIXME
 			term_ops[i]->get_next_occur(&op_results[i], &op_word_inds[i]);
-			if (op_results[i] == FT_UINT_NULL)
+			if (op_results[i] == FT_ACC_UINT_NULL)
 				return false;
 			U_ASSERT(op_results[i] >= op_results[i-1]);
 		}
@@ -332,7 +407,7 @@ label_a:
 			op_results[0] = op_results[i];
 			op_word_inds[0] = 0; //FIXME
 			term_ops[0]->get_next_occur(&op_results[0], &op_word_inds[0]);
-			if (op_results[0] == FT_UINT_NULL)
+			if (op_results[0] == FT_ACC_UINT_NULL)
 				return false;
 			i = 1;
 			continue;
@@ -343,7 +418,7 @@ label_a:
 		{
 			op_word_inds[i] = op_word_inds[i-1]+1;
 			term_ops[i]->get_next_occur(&op_results[i], &op_word_inds[i]);
-			if (op_results[i] == FT_UINT_NULL)
+			if (op_results[i] == FT_ACC_UINT_NULL)
 				return false;
 			goto label_a;
 		}
@@ -352,7 +427,7 @@ label_a:
 		{
 			//FIXME: set op_word_inds[0]
 			term_ops[0]->get_next_occur(&op_results[0], &op_word_inds[0]);
-			if (op_results[0] == FT_UINT_NULL)
+			if (op_results[0] == FT_ACC_UINT_NULL)
 				return false;
 			i = 1;
 			continue;
@@ -366,16 +441,24 @@ label_a:
 uint64_t FtQueryPhrase::get_next_result()
 {
 	if (!next_occur())
-		return FT_UINT_NULL;
+		return FT_ACC_UINT_NULL;
 
-	ft_uint_t res = op_results[0];
-	int noccurs = 1;
+	ft_acc_uint_t res = op_results[0];
+	int noccurs = 0;
+	if (this->word_list != NULL)
+		this->word_list->clear();
+
 	while (op_results[0] == res)
 	{
+		noccurs++;
+		//XXX: this relies on the fact that op_word_inds are sorted and contain no gaps
+		//     (ok for phrases but will fail if next_occur() is changed to match something more fuzzy)
+		if (this->word_list != NULL)
+			for (int i = 0; i < nops; i++)
+				this->word_list->add_ind_if_last(op_word_inds[i]); //phrases may overlap so add_ind() won't do
+
 		term_ops[0]->get_next_occur(&op_results[0], &op_word_inds[0]);
-		if (next_occur() && op_results[0] == res)
-			noccurs++;
-		else
+		if (!(next_occur() && op_results[0] == res))
 			break;
 	}
 
@@ -425,11 +508,11 @@ void FtQueryProcessor::get_next_result(tuple &t)
 	//TODO: make ranking optional
 	if (!query_opened)
 	{
-		query->open();
+		query->init();
 		if (scores_buf != NULL)
 			delete[] scores_buf;
 		scores_buf = new ft_float[query->score_count];
-		query->init(scores_buf);
+		query->open(scores_buf, NULL);
 
 		query_opened = true;
 
@@ -439,7 +522,7 @@ void FtQueryProcessor::get_next_result(tuple &t)
 		while (true)
 		{
 			uint64_t res = query->get_next_result();
-			if (res == FT_UINT_NULL)
+			if (res == FT_ACC_UINT_NULL)
 				break;
 			sw.write_uint(res);
 			sw.write((char*)scores_buf, sizeof(ft_float) * query->score_count);
@@ -490,7 +573,7 @@ void FtQueryProcessor::get_next_result(tuple &t)
 
 
 /*	uint64_t res = query->get_next_result();
-	if (res == FT_UINT_NULL)
+	if (res == FT_ACC_UINT_NULL)
 		t.set_eos();
 	else
 		t.copy(tuple_cell::node(indirectionDereferenceCP(FT_UINT_TO_XPTR(res))));

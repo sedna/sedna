@@ -134,10 +134,10 @@ public:
 
     /* Full text search functions */
 #ifdef SE_ENABLE_DTSEARCH
-    virtual void visit(PPFtHighlight* op)                = 0;
     virtual void visit(PPFtScan* op)                     = 0;
 #endif
 #ifdef SE_ENABLE_FTSEARCH
+    virtual void visit(PPFtHighlight* op)                = 0;
     virtual void visit(PPFtIndexScan* op)                = 0;
     virtual void visit(PPFtIndexScan2* op)               = 0;
     virtual void visit(PPFtIndexDict* op)                = 0;

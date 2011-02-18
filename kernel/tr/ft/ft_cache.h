@@ -81,9 +81,9 @@ public:
 	void next_occur();
 	//returns number of skipped occurs
 	int skip_acc();
-	bool acci_deleted(ft_uint_t acc_i);
+	bool acci_deleted(ft_acc_uint_t acc_i);
 
-	uint64_t get_doc_len(ft_uint_t acc_i);
+	uint64_t get_doc_len(ft_acc_uint_t acc_i);
 };
 
 //TODO: remove this class
@@ -95,18 +95,16 @@ private:
 	struct FtsScanData fts_sd;
 	FtCacheScanner ftc_s;
 
-	inline bool get_next_result_step(uint64_t *res, int *noccurs);
-	inline bool get_next_occur_step(ft_uint_t *acc, int *word_ind);
+	inline bool get_next_occur_step(ft_acc_uint_t *acc, int *word_ind);
 public:
 	ftc_scan_result(ftc_index_t idx) : ftc_idx(idx), ftc_s(idx) {}
 	ftc_index_t get_ftc_idx() { return this->ftc_idx; }
 	void scan_word(const char *word);
-	void get_next_result(uint64_t *res, int *noccurs);
 
 	//see FtQueryTerm::get_next_occur description
-	void get_next_occur(ft_uint_t *acc_i, int *word_ind);
+	void get_next_occur(ft_acc_uint_t *acc_i, ft_word_ind_t *word_ind);
 
-	uint64_t get_doc_len(ft_uint_t acc_i); //FIXME: move outsize of this class
+	uint64_t get_doc_len(ft_acc_uint_t acc_i); //FIXME: move outsize of this class
 };
 
 int ftc_get_doc_count(ftc_index_t idx);

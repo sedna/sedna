@@ -9,11 +9,9 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/PPBase.h"
-#include "tr/ft/ft_index_data.h"
-#include "tr/ft/ft_cache.h"
-#ifdef SE_ENABLE_DTSEARCH
-#include "tr/ft/FTsearch.h"
-#endif
+
+//don't want to inculude ftc_cache.h here
+class ftc_scan_words_result;
 
 class PPFtIndexDict : public PPIterator
 {
