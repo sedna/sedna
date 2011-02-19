@@ -6,7 +6,7 @@
 package ru.ispras.sedna.driver;
 
 /**
- * Provides interface for managing transactions and connections. It is not guranteed to be thread safe. 
+ * Provides interface for managing transactions and connections. It is not guaranteed to be thread safe.
  * @see ru.ispras.sedna.driver.DatabaseManager
  */
 public interface SednaConnection {
@@ -20,14 +20,14 @@ public interface SednaConnection {
      * </pre>
      *
      * @throws DriverException if the transaction has not begun successfully.
-     * Exception contains details about the problem occured.
+     * Exception contains details about the problem occurred.
      */
     public void begin() throws DriverException;
 
     /**
      * Closes Sedna connection.
      * @throws DriverException if Sedna server has not managed to close connection properly.
-     * Exception contains details about the problem occured.
+     * Exception contains details about the problem occurred.
      */
     public void close() throws DriverException;
 
@@ -40,8 +40,8 @@ public interface SednaConnection {
      *     con.commit();
      * </pre>
      *
-     * @throws DriverException if the transaction has not been commited successfully.
-     * Exception contains details about the problem occured.
+     * @throws DriverException if the transaction has not been committed successfully.
+     * Exception contains details about the problem occurred.
      */
     public void commit() throws DriverException;
 
@@ -55,7 +55,7 @@ public interface SednaConnection {
      * </pre>
      *
      * @throws DriverException if the transaction has not been rollback successfully.
-     * Exception contains details about the problem occured.
+     * Exception contains details about the problem occurred.
      */
     public void rollback() throws DriverException;
 
@@ -63,7 +63,7 @@ public interface SednaConnection {
      * Creates {@link ru.ispras.sedna.driver.SednaStatement} object that allows to execute queries, updates
      * and to load XML documents into the Sedna database.
      * @throws DriverException if driver failed to create statement.
-     * Exception contains details about the problem occured.
+     * Exception contains details about the problem occurred.
      * @return new {@link ru.ispras.sedna.driver.SednaStatement} instance
      */
     public SednaStatement createStatement() throws DriverException;
@@ -74,7 +74,7 @@ public interface SednaConnection {
      * You can turn trace output on/off using this method
      * @param doTrace set to true if you want to get trace output (default case). Set to false otherwise.
      * @throws DriverException if failed to set trace output.
-     * Exception contains details about the problem occured.
+     * Exception contains details about the problem occurred.
      */
     public void setTraceOutput(boolean doTrace) throws DriverException;
 
@@ -90,21 +90,34 @@ public interface SednaConnection {
      *     con.setDebugMode(true);
      *     con.begin();
      *     SednaStatement st1 = con.createStatement();
-     *     boolean call_res = st1.execute("doc(\"region\")/regions/*");
+     *     boolean call_res = st1.execute("doc('region')/regions/*");
      *     con.commit();
      *     con.close();
-     *
      *  } catch (DriverException e) {
      *          System.out.println(e.toString());
      *          System.out.println(e.getDebugInfo());
      *  }
      * </pre>
      *
-     * @param debug set to true if you want to set connection into debug mode,
-     * otherwise set to false (default case).
-     * @throws DriverException If some problems occured while trying to set session mode
+     * @param debug set to <code>true</code> if you want to set connection into debug mode,
+     * otherwise set to <code>false</code> (default case).
+     * @throws DriverException If some problems occurred while trying to set session mode
      */
     public void setDebugMode(boolean debug) throws DriverException;
+
+
+    /**
+     * Changes the mode of the next transactions. Transaction can be set to run as <i>read-only</i> or <i>update-transactions</i>.
+     * <i>Read-only</i> transactions have one major benefit: they never wait for other transactions (they do not have
+     * to acquire any document/collection locks). However they might access slightly obsolete state of the database
+     * (for example, they probably would not see the most recent committed updates). You should use <i>read-only</i>
+     * transactions in a highly concurrent environment. Notice that the current transaction, if any, will be forcefully
+     * committed.
+     * @param mode set to <code>true</code> if you want to run next transactions in read-only mode,
+     * otherwise set to <code>false</code> (default case).
+     * @throws DriverException If some problems occurred while trying to set session mode
+     */
+    public void setReadonlyMode(boolean mode) throws DriverException;
 
 
     /**

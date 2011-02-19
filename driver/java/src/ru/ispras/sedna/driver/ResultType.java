@@ -1,6 +1,7 @@
 /*
  * File:  ResultType.java
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2004-2011 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 package ru.ispras.sedna.driver;
@@ -23,8 +24,8 @@ public final class ResultType {
 
     /**
      * Creates a new instance of the <code>ResultType</code> specified by code:
-     * either "sxml" or "xml". 
-     * @param code string representaion of the result type
+     * either "sxml" or "xml".
+     * @param code string representation of the result type
      */
     private ResultType(String code) {
         this.code = code;
