@@ -140,6 +140,7 @@ prepare_source() {
     cd $FILE_BASE/kernel/tr/xqp &&
     chmod +x release.sh &&
     ./release.sh &&
+    cd "$OLDDIR" &&
     cd $FILE_BASE/kernel/tr/ft/query &&
     chmod +x release.sh &&
     ./release.sh &&
