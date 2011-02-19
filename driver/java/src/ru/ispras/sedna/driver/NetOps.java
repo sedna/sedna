@@ -1,6 +1,7 @@
 /*
  * File:  NetOps.java
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2004-2011 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 package ru.ispras.sedna.driver;
@@ -11,8 +12,7 @@ import java.nio.*;
 import java.nio.charset.*;
 
 /**
- * Static functions to organize message exchange between
- * client application and Sedna server
+ * Static functions to organize message exchange between client application and the Sedna server
  */
 class NetOps {
     /* This driver supports version 3.0 of the Sedna Client/Server protocol */
@@ -55,12 +55,9 @@ class NetOps {
     final static int se_UpdateSucceeded                = 340;
     final static int se_UpdateFailed                   = 350;
     final static int se_TransactionRollbackBeforeClose = 520;
-    //final static int se_ShowTime                       = 451;
     final static int se_ResultEnd                      = 375;
-    //final static int se_LastQueryTime                  = 452;
     final static int se_ItemPart                       = 360;
     final static int se_ItemEnd                        = 370;
-    //final static int se_ExecuteSchemeProgram           = 95;
     final static int se_CloseConnectionOk              = 510;
     final static int se_CloseConnection                = 500;
     final static int se_BulkLoadSucceeded              = 440;
@@ -70,14 +67,14 @@ class NetOps {
     final static int se_BulkLoadFailed                 = 450;
     final static int se_BulkLoadError                  = 400;
     final static int se_BulkLoadEnd                    = 420;
-    //final static int se_Authenticate                   = 90;
     final static int se_SetSessionOptions              = 530;
     final static int se_SetSessionOptionsOk            = 540;
-    //final static int se_ResetSessionOptions            = 550;
-    //final static int se_ResetSessionOptionsOk          = 560;
 
+    /* Session option switches  */
     final static int se_Session_Debug_Off              = 0;
     final static int se_Session_Debug_On               = 1;
+    final static int se_Session_Readonly_On            = 2;
+    final static int se_Session_Readonly_Off           = 3;
 
     /**
      * Bulk loads data to the server from the given input stream.
@@ -183,12 +180,12 @@ class NetOps {
         String previousFileName = null;
 
         try {
-
             while (true) {
                 if (fis != null) {
                     fis.close();
                     fis = null;
                 }
+
                 fis = new FileInputStream(fileName);
                 loadStream(fis, bufInputStream, outputStream);
                 NetOps.readMsg(msg, bufInputStream);
@@ -196,9 +193,7 @@ class NetOps {
                 if (msg.instruction == se_BulkLoadFileName) {
                     previousFileName = fileName;
                     fileName = new String(msg.body, 5, msg.length - 5);
-                    continue;
-                }
-                else if ( msg.instruction == se_BulkLoadSucceeded ||
+                } else if ( msg.instruction == se_BulkLoadSucceeded ||
                         msg.instruction == se_UpdateSucceeded ) {
                     return false;
                 } else if (msg.instruction == se_BulkLoadFailed ||
@@ -226,23 +221,18 @@ class NetOps {
         }
         finally {
             try {
-                if (fis != null) {
-                    fis.close();
-                }
-            } catch (IOException e) {
-                /* Give up on closing */
-            }
+                if (fis != null) fis.close();
+            } catch (IOException ignore) {}
         }
     }
 
 
     static void driverErrOut(String str) {
-        if (Debug.DEBUG) {
+        if (Debug.DEBUG)
             System.err.println(str);
-        }
     }
 
-    static int readInt(BufferedInputStream bufInputStream)
+    private static int readInt(BufferedInputStream bufInputStream)
             throws DriverException {
         int call_res, integer;
         byte int_array[] = new byte[4];
@@ -294,7 +284,7 @@ class NetOps {
      * @param msg initial message from the server which may contain debug info
      * @param is connection stream with the server to read messages from
      * @param item buffer to write information into
-     * @return if there were any inforamtion returns <code>true</code> and appends it to the <i>item</i> buffer,
+     * @return if there were any information returns <code>true</code> and appends it to the <i>item</i> buffer,
      * otherwise returns <code>false</code>.
      * @throws DriverException if failed to get debug information or something wrong with connection
      */
@@ -308,7 +298,7 @@ class NetOps {
 
         int debug_type = net_int2int(msg.body);
 
-        gotDebug = ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == se_QueryDebug)) ?  true : false;
+        gotDebug = ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == se_QueryDebug));
 
         /* Read debug information if any */
         while ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == se_QueryDebug))
@@ -319,7 +309,7 @@ class NetOps {
 
             try {
                 item.append(charBuf.flip());
-            } catch (OutOfMemoryError e) {}
+            } catch (OutOfMemoryError ignore) {}
 
             charBuf.clear();
 
@@ -335,11 +325,11 @@ class NetOps {
      * @param msg initial message from the server which may contain trace info
      * @param is connection stream with the server to read messages from
      * @param item buffer to write information into
-     * @return if there were any inforamtion returns <code>true</code> and appends it to the <i>item</i> buffer,
+     * @return if there were any information returns <code>true</code> and appends it to the <i>item</i> buffer,
      * otherwise returns <code>false</code>.
      * @throws DriverException if failed to get trace information or something wrong with connection
      */
-    static boolean readTrace(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException
+    private static boolean readTrace(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException
     {
 
         ByteBuffer  byteBuf;
@@ -350,7 +340,7 @@ class NetOps {
 
         int debug_type = net_int2int(msg.body);
 
-        gotTrace = (msg.instruction == NetOps.se_DebugInfo) && (debug_type == NetOps.se_QueryTrace) ?  true : false;
+        gotTrace = (msg.instruction == NetOps.se_DebugInfo) && (debug_type == NetOps.se_QueryTrace);
 
         // read debug information if any 
         while ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == NetOps.se_QueryTrace))
@@ -361,7 +351,7 @@ class NetOps {
 
             try {
                 item.append(charBuf.flip());
-            } catch (OutOfMemoryError e) {}
+            } catch (OutOfMemoryError ignore) {}
 
             charBuf.clear();
 
@@ -377,7 +367,7 @@ class NetOps {
      * Reads complete item from the stream connected with server.
      * @param is connection stream with the server to read item from
      * @param doTraceOutput either read trace information or not
-     * @return {@link ru.ispras.sedna.driver.NetOps.StringItem} which encapsulates text represention of the item
+     * @return {@link ru.ispras.sedna.driver.NetOps.StringItem} which encapsulates text representation of the item
      * and provides information if there is next item.
      * @throws DriverException if failed to get item or something wrong with connection
      */
@@ -385,7 +375,7 @@ class NetOps {
             throws DriverException {
 
         NetOps.Message     msg   = new NetOps.Message();
-        NetOps.StringItem sitem  = new NetOps.StringItem();
+        NetOps.StringItem  sitem = new NetOps.StringItem();
         boolean gotTrace, gotDebug;
         sitem.item = new StringBuffer();
         StringBuffer debugInfo = new StringBuffer();
@@ -397,11 +387,7 @@ class NetOps {
         NetOps.readMsg(msg, is);
 
         gotDebug = NetOps.readDebugInfo(msg, is, debugInfo);
-
-        if (doTraceOutput)
-            gotTrace = NetOps.readTrace(msg, is, sitem.item);
-        else
-            gotTrace = false;
+        gotTrace = doTraceOutput && NetOps.readTrace(msg, is, sitem.item);
 
         if (msg.instruction == NetOps.se_ItemEnd) {
             /* If we got se_ItemEnd before se_ItemPart/se_ItemStart
@@ -431,7 +417,7 @@ class NetOps {
 
                 try {
                     sitem.item.append(charBuf.flip());
-                } catch (OutOfMemoryError e) {}
+                } catch (OutOfMemoryError ignore) {}
 
                 charBuf.clear();
             }
@@ -450,7 +436,7 @@ class NetOps {
         return sitem;
     }
 
-    static void writeInt(int i, BufferedOutputStream bufOutputStream)
+    private static void writeInt(int i, BufferedOutputStream bufOutputStream)
             throws IOException {
         bufOutputStream.write(0xff & (i >> 24));
         bufOutputStream.write(0xff & (i >> 16));
@@ -500,18 +486,17 @@ class NetOps {
 
     /**
      * @param body byte array which contains text to retrieve error code from
-     * @return error code rerieved from the text representation
+     * @return error code retrieved from the text representation
      */
     static int getErrorCode(byte[] body) {
         return net_int2int(body);
     }
 
-    static int net_int2int(byte[] body) {
-        int integer = (((body[0] & 0xff) << 24)
+    private static int net_int2int(byte[] body) {
+        return (((body[0] & 0xff) << 24)
                 | ((body[1] & 0xff) << 16)
                 | ((body[2] & 0xff) << 8)
                 | (body[3] & 0xff));
-        return integer;
     }
 
     /**

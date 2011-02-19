@@ -1,6 +1,7 @@
 /*
  * File:  SednaSerializedResultImpl.java
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2004-2011 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 package ru.ispras.sedna.driver;
@@ -26,10 +27,6 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
         this.doTraceOutput  = doTraceOutput;
     }
 
-    /**
-     * @return string item if success, null if the end of the sequence
-     * @throws DriverException exception if errors
-     */
     public String next() throws DriverException {
         String         tmpItem;
         NetOps.Message msg = new NetOps.Message();
@@ -63,11 +60,6 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
         return tmpItem;
     }
 
-    /**
-     * @param writer a <code>java.io.Writer</code> object to write an result item to.
-     * @return 0 - if success, -1 - if end of the sequence
-     * @throws DriverException on errors
-     */
     public int next(Writer writer) throws DriverException {
         NetOps.Message msg = new NetOps.Message();
 

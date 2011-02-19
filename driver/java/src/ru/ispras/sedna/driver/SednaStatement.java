@@ -1,6 +1,7 @@
 /*
  * File:  SednaStatement.java
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2004-2011 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 package ru.ispras.sedna.driver;
@@ -11,7 +12,7 @@ import java.io.*;
  * Provides interface methods for loading documents
  * into the database, executing statements of the database language.
  * and retrieving results that statements produce.
- * {@link ru.ispras.sedna.driver.SednaStatement} instance is creatd with 
+ * {@link ru.ispras.sedna.driver.SednaStatement} instance is created with
  * {@link SednaConnection#createStatement()} method
  * @see SednaConnection#createStatement
  */
@@ -37,7 +38,7 @@ public interface SednaStatement {
      * and the result can be obtained using {@link ru.ispras.sedna.driver.SednaSerializedResult} object.
      * In case of statements that do not produce the result (such as updates or bulk load), this method
      * returns <code>false</code>.
-     * @throws DriverException if some error occured during the statement execution.
+     * @throws DriverException if some error occurred during the statement execution.
      * @throws IOException if failed to read from the given input stream.
      * @see ru.ispras.sedna.driver.SednaSerializedResult
      */
@@ -61,7 +62,7 @@ public interface SednaStatement {
      * and the result can be obtained using {@link ru.ispras.sedna.driver.SednaSerializedResult} object.
      * In case of statements that do not produce the result (such as updates or bulk load), this method
      * returns <code>false</code>.
-     * @throws DriverException if some error occured during the statement execution.
+     * @throws DriverException if some error occurred during the statement execution.
      * @see ru.ispras.sedna.driver.SednaSerializedResult
      */
     public boolean execute(String queryText) throws DriverException;
@@ -76,7 +77,7 @@ public interface SednaStatement {
      * and the result can be obtained using {@link SednaSerializedResult} object returned by
      * {@link SednaStatement#getSerializedResult()} method. In case of statements that do not produce
      * the result (such as updates or bulk load), this method returns <code>false</code>.
-     * @throws DriverException if some error occured during the statement execution..
+     * @throws DriverException if some error occurred during the statement execution..
      * @throws java.io.IOException if failed to read from the given input stream.
      * @see ru.ispras.sedna.driver.SednaSerializedResult
      */
@@ -93,7 +94,7 @@ public interface SednaStatement {
      * and the result can be obtained using {@link SednaSerializedResult} object returned by
      * {@link SednaStatement#getSerializedResult()} method. In case of statements that do not produce
      * the result (such as updates or bulk load), this method returns <code>false</code>.
-     * @throws DriverException if some error occured during the statement execution.
+     * @throws DriverException if some error occurred during the statement execution.
      * @see ru.ispras.sedna.driver.SednaSerializedResult
      */
     public boolean execute(String queryText, ResultType resultType)
@@ -103,33 +104,33 @@ public interface SednaStatement {
      * Loads XML document from the input stream as a stand-alone document into the Sedna database.
      * See {@link SednaStatement#loadDocument(InputStream, String, String)} for example of code.
      * @param in input stream to read XML document from
-     * @param doc_name name of the document in database
+     * @param docName name of the document in database
      * @throws DriverException in case of error during the bulk load
      * @throws java.io.IOException if failed to read from the given input stream.
      */
-    public void loadDocument(InputStream in, String doc_name)
+    public void loadDocument(InputStream in, String docName)
             throws DriverException, IOException;
     /**
      * Loads XML document as a stand-alone document into the Sedna database.
      * See {@link SednaStatement#loadDocument(InputStream, String, String)} for example of code.
-     * @param xmldoc XML document as a string
-     * @param doc_name name of the document in database
+     * @param xmlDoc XML document as a string
+     * @param docName name of the document in database
      * @throws DriverException in case of error during bulk load
      * @throws java.io.IOException if failed to read from the given input stream.
      */
-    public void loadDocument(String xmldoc, String doc_name)
+    public void loadDocument(String xmlDoc, String docName)
             throws DriverException, IOException;
 
     /**
      * Loads XML document into the collection of documents in Sedna database.
      * See {@link SednaStatement#loadDocument(InputStream, String, String)} for example of code.
-     * @param xmldoc XML document as a string
-     * @param doc_name name of the document in database
-     * @param col_name name of the existing collection in database the document will be loaded into
+     * @param xmlDoc XML document as a string
+     * @param docName name of the document in database
+     * @param colName name of the existing collection in database the document will be loaded into
      * @throws DriverException in case of error during bulk load
      * @throws java.io.IOException if failed to read from the given input stream.
      */
-    public void loadDocument(String xmldoc, String doc_name, String col_name)
+    public void loadDocument(String xmlDoc, String docName, String colName)
             throws DriverException, IOException;
 
     /**
@@ -143,18 +144,18 @@ public interface SednaStatement {
      *     con.begin();
      *     SednaStatement st1 = con.createStatement();
      *     st1.execute("CREATE COLLECTION 'col'");
-     *     st1.loadDocument((InputStream)new FileInputStream("E:/data/region.xml"), "target", "col");
+     *     st1.loadDocument((InputStream) new FileInputStream("E:/data/region.xml"), "target", "col");
      *     System.out.println("Document has been loaded into collection");
      *     con.close();
      * </pre>
      *
      * @param in input stream to read XML document from
-     * @param doc_name name of the document in the database
-     * @param col_name name of the existing collection in database the document will be loaded into
+     * @param docName name of the document in the database
+     * @param colName name of the existing collection in database the document will be loaded into
      * @throws DriverException in case of error during bulk load
      * @throws IOException if failed to read from the given input stream.
      */
-    public void loadDocument(InputStream in, String doc_name, String col_name)
+    public void loadDocument(InputStream in, String docName, String colName)
             throws DriverException, IOException;
 
     /**
@@ -168,12 +169,9 @@ public interface SednaStatement {
      *      SednaStatement st1 = con.createStatement();
      *
      *      // Execute XQuery query.
-     *      boolean call_res = st1.execute("doc(\"region\")/regions/*");
+     *      boolean res = st1.execute("doc('region')/regions/*");
      *
-     *      // If call_res is true the statement was not an update
-     *      // and we can use SednaSerializedResult object
-     *      if (call_res)
-     *      {
+     *      if (res) {
      *          System.out.println("Result:");
      *          SednaSerializedResult pr1 = st1.getSerializedResult();
      *          item  = pr1.next();

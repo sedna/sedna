@@ -1,6 +1,7 @@
 /*
  * File:  SednaStatementImpl.java
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2004-2011 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 package ru.ispras.sedna.driver;
@@ -8,6 +9,10 @@ package ru.ispras.sedna.driver;
 import java.io.*;
 import java.lang.System;
 
+/**
+ * Implementation of the {@link ru.ispras.sedna.driver.SednaStatement} for the
+ * client/server protocol 3.0
+ */
 class SednaStatementImpl implements SednaStatement {
 
     private SednaSerializedResultImpl serializedResult = null;
@@ -24,33 +29,15 @@ class SednaStatementImpl implements SednaStatement {
         this.doTraceOutput = doTraceOutput;
     }
 
-    /** 
-     * @param in stream to get query from
-     * @return <code>true</code> if PlaneResult of this Statement is a result of a query,
-     * <code>false</code> if it was Update
-     * @throws DriverException on an execution error
-     */
     public boolean execute(InputStream in)
             throws DriverException, IOException {
         return execute(in, ResultType.XML);
     }
 
-    /** 
-     * @param queryText query as a String
-     * @return <code>true</code> if PlaneResult of this Statement is a result of a query,
-     * <code>false</code> if it was Update
-     * @throws DriverException on an execution error
-     */
     public boolean execute(String queryText) throws DriverException {
         return execute(queryText, ResultType.XML);
     }
 
-    /** 
-     * @param in stream to get query from
-     * @return <code>true</code> if PlaneResult of this Statement is a result of a query,
-     * <code>false</code> if it was Update
-     * @throws DriverException on an execution error
-     */
     public boolean execute(InputStream in, ResultType resultType)
             throws DriverException, IOException {
 
@@ -81,13 +68,6 @@ class SednaStatementImpl implements SednaStatement {
         return executeResponseAnalyze(msg);
     }
 
-    /** 
-     * @param queryText query as a String
-     * @param resultType query as a String
-     * @return <code>true</code> if PlaneResult of this Statement is a result of a query,
-     * <code>false</code> if it was Update
-     * @throws DriverException on an error
-     */
     public boolean execute(String queryText, ResultType resultType)
             throws DriverException {
 
@@ -135,8 +115,6 @@ class SednaStatementImpl implements SednaStatement {
 
         } catch (UnsupportedEncodingException uex) {
             throw new DriverException(ErrorCodes.SE5502, "");
-        } catch (DriverException de) {
-            throw de;
         }
     }
 
@@ -194,11 +172,11 @@ class SednaStatementImpl implements SednaStatement {
 
     public void loadDocument(InputStream in, String doc_name)
             throws DriverException, IOException {
-        String         queryText = "LOAD STDIN '" + doc_name + "'";
+        String queryText = "LOAD STDIN '" + doc_name + "'";
         NetOps.Message msg       = new NetOps.Message();
 
         msg.instruction = NetOps.se_Execute;
-        msg.length      = queryText.length() + 6;    // body containes: result format (sxml=1 or xml=0) - 1 byte)
+        msg.length      = queryText.length() + 6;    // body contains: result format (sxml=1 or xml=0) - 1 byte)
 
         msg.body[0] = 0;    // result format code
         msg.body[1] = 0;    // string format

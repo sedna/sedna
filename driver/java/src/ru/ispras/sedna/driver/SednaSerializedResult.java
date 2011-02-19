@@ -1,6 +1,7 @@
 /*
  * File:  SednaSerializedResult.java
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2004-2011 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 package ru.ispras.sedna.driver;
@@ -23,11 +24,10 @@ import java.io.*;
  *    SednaStatement st1 = con.createStatement();
  *    SednaStatement st2 = con.createStatement();
  *
- *    boolean call_res = st1.execute("doc(\"region\")/regions/*");
- *    call_res = st2.execute("doc(\"b\")/regions/a");
+ *    boolean call_res = st1.execute("doc('region')/regions/*");
+ *    call_res = st2.execute("doc('b')/regions/a");
  *
- *    if (call_res)
- *    {
+ *    if (call_res) {
  *        SednaSerializedResult pr1 = st1.getSerializedResult();
  *    }
  * </pre>
@@ -39,7 +39,7 @@ public interface SednaSerializedResult {
     /**
      * Used to iterate over the XQuery statement result sequence.
      * @return next item of the result of the XQuery statement or null if the sequence has ended.
-     * @throws DriverException if some error occured while tring to get result item from server.
+     * @throws DriverException if some error occurred while trying to get result item from server.
      * @see ru.ispras.sedna.driver.SednaStatement#getSerializedResult()
      */
     public String next() throws DriverException;
@@ -49,7 +49,7 @@ public interface SednaSerializedResult {
      * Next item of the XQuery statement result will be written into the <code>writer</code>.
      * @param writer a <code>java.io.Writer</code> object to write an result item to. 
      * @return 0 if an item was retrieved and written successful, and 1 if the result sequence has ended.
-     * @throws DriverException if some error occured while tring to get result item from server.
+     * @throws DriverException if some error occurred while trying to get result item from server.
      * @see ru.ispras.sedna.driver.SednaStatement#getSerializedResult()
      */
     public int next(Writer writer) throws DriverException;
