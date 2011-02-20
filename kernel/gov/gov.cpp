@@ -221,12 +221,11 @@ int main(int argc, char** argv)
         }
         /////////////// BACKGROUND MODE ////////////////////////////////////////
 
+      if (event_logger_start_daemon(el_convert_log_level(cfg.gov_vars.el_level), SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
+          throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
       gov_table = new info_table();
       gov_table->init(&cfg);
-
-      if (event_logger_start_daemon(el_convert_log_level(cfg.gov_vars.el_level), SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
-          throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
       log_out_system_information();
 
