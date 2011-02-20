@@ -35,13 +35,13 @@ public class DatabaseManager {
                                                 String dbName,
                                                 String login,
                                                 String password) throws DriverException {
-        if(urlString == null || urlString.isEmpty())
+        if(urlString == null || urlString.length() == 0)
             throw new IllegalArgumentException("URL string is null or empty");
-        if(dbName == null || dbName.isEmpty())
+        if(dbName == null || dbName.length() == 0)
             throw new IllegalArgumentException("Database name string is null or empty");
-        if(login == null || login.isEmpty())
+        if(login == null || login.length() == 0)
             throw new IllegalArgumentException("Login string is null or empty");
-        if(password == null || password.isEmpty())
+        if(password == null || password.length() == 0)
             throw new IllegalArgumentException("Password string is null or empty");
 
         InputStream         inputStream;
