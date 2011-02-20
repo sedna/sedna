@@ -56,7 +56,6 @@ namespace sedna
     bool XQueryDriver::parse(const char *query)
     {
         bool res;
-        std::string err_msg;
         std::istringstream query_stream(query);
         XQueryLexer lex(*this, &query_stream);
         XQueryParser parser(*this);
