@@ -58,7 +58,7 @@ public class DatabaseManager {
                 try {
                     socketPort = Integer.parseInt(urlString.substring(urlString.indexOf(":") + 1, urlString.length()));
                 } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("URL string contains invalid port number", e);
+                    throw new IllegalArgumentException("URL string contains invalid port number");
                 }
                 if(socketPort < 0) {
                     throw new IllegalArgumentException("URL string contains negative port number");
