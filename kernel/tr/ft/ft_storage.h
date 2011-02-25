@@ -41,7 +41,9 @@ private:
 			pb.create_new();
 		}
 	}
+	bool pers;
 public:
+	FtsUpdater(bool _pers) : pb(_pers), pers(_pers) {}
 	//updates are performed as such:
 	// 1. begin_update is called
 	// 2. del_document/add_document is called for each deleted/updated/inserted node in ascending xptr order

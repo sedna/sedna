@@ -341,7 +341,7 @@ void sblob_delete(xptr ptr)
 
 void sblob_test()
 {
-	SblobWriter w;
+	SblobWriter w(false);
 	xptr addr = w.create_new();
 	int64_t numcnt = 0;
 	uint64_t x, t;

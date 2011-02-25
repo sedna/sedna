@@ -76,7 +76,7 @@ void FtQueryTerm::do_open()
 	next_acc_i = FT_ACC_UINT_NULL;
 	ftc_scan.get_next_occur(&next_acc_i, &next_ind);
 }
-uint64_t FtQueryTerm::get_next_result()
+ft_acc_uint_t FtQueryTerm::get_next_result()
 {
 	if (next_acc_i == FT_ACC_UINT_NULL)
 		return FT_ACC_UINT_NULL;
@@ -143,7 +143,7 @@ void FtQueryTermInElement::do_open()
 
 	next_acc_i = FT_ACC_UINT_NULL; //needed for get_next_result()
 }
-uint64_t FtQueryTermInElement::get_next_result()
+ft_acc_uint_t FtQueryTermInElement::get_next_result()
 {
 	if (next_acc_i == FT_ACC_UINT_NULL)
 		this->get_next_occur(&next_acc_i, &next_ind);
@@ -276,7 +276,7 @@ void FtQueryAnd::do_open()
 	U_ASSERT(p == this->score_count);
 }
 
-uint64_t FtQueryAnd::get_next_result()
+ft_acc_uint_t FtQueryAnd::get_next_result()
 {
 	U_ASSERT(nops > 1);
 	int i = 1;
@@ -438,7 +438,7 @@ label_a:
 	return true;
 }
 
-uint64_t FtQueryPhrase::get_next_result()
+ft_acc_uint_t FtQueryPhrase::get_next_result()
 {
 	if (!next_occur())
 		return FT_ACC_UINT_NULL;
@@ -489,6 +489,8 @@ FtQueryProcessor::~FtQueryProcessor()
 		delete query;
 	if (scores_buf != NULL)
 		delete[] scores_buf;
+	if (wl != NULL)
+		delete wl;
 	if (ss != NULL)
 		delete ss;
 }
@@ -521,7 +523,7 @@ void FtQueryProcessor::get_next_result(tuple &t)
 		xptr scores = sw.create_new();
 		while (true)
 		{
-			uint64_t res = query->get_next_result();
+			ft_acc_uint_t res = query->get_next_result();
 			if (res == FT_ACC_UINT_NULL)
 				break;
 			sw.write_uint(res);
@@ -578,4 +580,35 @@ void FtQueryProcessor::get_next_result(tuple &t)
 	else
 		t.copy(tuple_cell::node(indirectionDereferenceCP(FT_UINT_TO_XPTR(res))));
 */
+}
+
+
+void FtQueryProcessor::open()
+{
+	query->init();
+	if (scores_buf != NULL)
+		delete[] scores_buf;
+	scores_buf = new ft_float[query->score_count];
+	if (wl == NULL)
+		wl = new FtWordIndexList();
+	query->open(scores_buf, wl);
+
+	query_opened = true;
+}
+void FtQueryProcessor::close()
+{
+	query->close();
+
+	query_opened = false;
+}
+void FtQueryProcessor::get_next_result_hl(xptr *r_acc, FtWordIndexList **r_wl)
+{
+	ft_acc_uint_t res = query->get_next_result();
+	if (res == FT_ACC_UINT_NULL)
+	{
+		*r_acc = XNULL;
+		return;
+	}
+	*r_acc = FT_UINT_TO_XPTR(res);
+	*r_wl = this->wl;
 }

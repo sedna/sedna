@@ -7,23 +7,36 @@
 #define _FT_UTIL_H
 
 #include "tr/executor/base/tuple.h"
+#include "tr/ft/ft_types.h"
 
 #ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTsearch.h"
 #endif
 
-class PPOpIn; //don't want PPBase.h here
+struct PPOpIn; //don't want PPBase.h here
+class FtQueryProcessor; //don't want ft_query.h either
+class FtcTempIndex; //or ft_cache.h
 
 class FtHighlighter
 {
 private:
 	PPOpIn* seq;
+
+	bool hl_fragment;
+
+	ft_index_impl impl;
+	char *stemming;
+	char *use_index;
+
+	FtQueryProcessor *ftqp;
+	FtcTempIndex *ftc_ind;
 #ifdef SE_ENABLE_DTSEARCH
 	SednaSearchJob *sj;
-	bool use_index;
 #endif
 public:
-	FtHighlighter(const char *options, bool hl_fragment, PPOpIn* _seq_);
+	FtHighlighter(bool hl_fragment, PPOpIn* _seq_);
+	~FtHighlighter();
+	void set_options(const char *options);
 	void set_request(tuple_cell &tc);
 	void get_next_result(tuple &t);
 };

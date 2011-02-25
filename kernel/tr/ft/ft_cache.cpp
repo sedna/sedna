@@ -8,14 +8,13 @@
 #include "tr/ft/ft_index_data.h"
 #include <inttypes.h>
 #include "tr/mo/indirection.h"
+#include "tr/ft/ft_index.h" //FIXME: remove after ft_idx_delete is moved to storage
 
 //XXX: assumes that deref-ed FTC_PTR's are valid until cache is flushed.
 //FIXME: all structs here will have aliasing problems.
-#ifdef FTC_ALLOCATOR_IS_MALLOC_ALLOCATOR
-MallocAllocator m_alloc;
-#else
-#error bad FTC_ALLOCATOR
-#endif
+//FIXME: don't use MallocAllocator for indexes
+
+FTC_ALLOCATOR m_alloc;
 
 FTC_PTR ftc_indexes = FTC_NULL;
 struct ftc_doc_data
@@ -53,10 +52,14 @@ struct ftc_index_data
 #pragma warning( default : 4200 )
 #endif
 
-    //need ft_index_sem
-	static FTC_PTR create(const char *name, const struct FtsData *ft_data)
+	bool is_persistent()
 	{
-		FTC_PTR ptr = m_alloc.alloc(sizeof(ftc_index_data) + strlen(name) + 1); //TODO: check null
+		return this->name[0] != '\x0';
+	}
+    //need ft_index_sem
+	static ftc_index_t create(const char *name, const struct FtsData *ft_data)
+	{
+		FTC_ALLOCATOR::ptr_t ptr = m_alloc.alloc(sizeof(ftc_index_data) + strlen(name) + 1); //TODO: check null
 		ftc_index_data *id = ((ftc_index_data*)m_alloc.deref(ptr));
 		new (&id->ind_alloc) FTC_ALLOCATOR(); //FIXME
 		id->stemmer = NULL;
@@ -64,6 +67,21 @@ struct ftc_index_data
 		id->reset();
 		strcpy(id->name, name);
 		id->ft_data = *ft_data; //FIXME: add some explicit copy function
+		U_ASSERT(id->is_persistent());
+		return m_alloc.deref(ptr);
+	}
+	static ftc_index_t create_tmp()
+	{
+		void* ptr = malloc(sizeof(ftc_index_data) + 1); //TODO: check null
+		ftc_index_data *id = (ftc_index_data*)ptr;
+		new (&id->ind_alloc) FTC_ALLOCATOR(); //FIXME
+		id->stemmer = NULL;
+		id->has_stemmer = false;
+		id->reset();
+		id->name[0] = '\x0';
+		new (&id->ft_data) FtsData();
+		fts_create(&id->ft_data);
+		U_ASSERT(!id->is_persistent());
 		return ptr;
 	}
 	void reset()
@@ -75,7 +93,7 @@ struct ftc_index_data
 	}
 	static inline ftc_index_data *get(ftc_index_t idx)
 	{
-		return (ftc_index_data *)m_alloc.deref(idx);
+		return (ftc_index_data *)(idx);
 	}
 	//add document to the cache, returns null if fails to allocate memory
 	ftc_doc_t create_doc(const xptr &acc)
@@ -243,17 +261,49 @@ struct ftc_index_data
 ftc_index_t ftc_get_index(const char *name, struct FtsData *fts_data)
 {
 	if (ftc_indexes == FTC_NULL)
-		ftc_indexes = FTC_MAP::init(&m_alloc); //TODO: check null!
+		ftc_indexes = FTC_VMAP::init(&m_alloc); //TODO: check null!
 
-	FTC_MAP *m = FTC_MAP::get_map(ftc_indexes, m_alloc);
-	FTC_PTR *e = m->find(name);
+	FTC_VMAP *m = FTC_VMAP::get_map(ftc_indexes, m_alloc);
+	void **e = m->find(name);
 	if (e == NULL)
 	{
-		FTC_PTR data = ftc_index_data::create(name, fts_data);
+		void *data = ftc_index_data::create(name, fts_data);
 		m->put(name, data);
 		return data;
 	}
 	return *e;
+}
+
+ftc_index_t ftc_create_temp_index()
+{
+	void *data = ftc_index_data::create_tmp();
+	return data;
+}
+
+void ftc_delete_temp_index(ftc_index_t idx)
+{
+	ftc_index_data *id = ftc_index_data::get(idx);
+	ft_idx_delete(&id->ft_data);
+	id->ind_alloc.release();
+	free(idx);
+}
+
+void FtcTempIndex::set_stemming(const char *stemming)
+{
+	ftc_index_data *id = ftc_index_data::get(ftc_ind);
+	U_ASSERT(!id->has_stemmer);
+	if (stemming != NULL)
+		id->stemmer = FtStemmer::get(stemming);
+	id->has_stemmer = true;
+}
+
+void FtcTempIndex::clear()
+{
+	ftc_index_data *id = ftc_index_data::get(ftc_ind);
+	ft_idx_delete(&id->ft_data);
+	fts_create(&id->ft_data);
+	id->ind_alloc.release();
+	id->reset();
 }
 
 
@@ -294,7 +344,7 @@ FtStemmer *ftc_get_stemmer(ftc_index_t idx)
 {
 	ftc_index_data *id = ftc_index_data::get(idx);
 
-	if (id->stemmer == NULL && !id->has_stemmer)
+	if (id->stemmer == NULL && !id->has_stemmer && id->is_persistent())
 	{
 		ft_index_cell_cptr idc = find_ft_index(id->name, NULL);
 
@@ -318,7 +368,7 @@ void flush_index(ftc_index_data *id)
 {
 	FTC_WORDMAP *wm = FTC_WORDMAP::get_map(id->words, id->ind_alloc);
 	FTC_WORDMAP::pers_sset_entry *wme = wm->rb_minimum(FTC_WORDMAP::get_entry(wm->root, id->ind_alloc));
-	FtsUpdater updater;
+	FtsUpdater updater(id->is_persistent());
 	d_printf1("ftc_flush start\n");
 	updater.begin_update(&id->ft_data);
 
@@ -368,9 +418,12 @@ void flush_index(ftc_index_data *id)
 	updater.end_update(&id->ft_data);
 	d_printf1("ftc_flush end\n");
 
-	ft_index_cell_cptr idc = find_ft_index(id->name, NULL);
-	idc.modify();
-	idc->fts_data = id->ft_data;
+	if (id->is_persistent())
+	{
+		ft_index_cell_cptr idc = find_ft_index(id->name, NULL);
+		idc.modify();
+		idc->fts_data = id->ft_data;
+	}
 
 
 	id->ind_alloc.release();
@@ -386,8 +439,8 @@ void ftc_flush()
 {
 	if (ftc_indexes == FTC_NULL)
 		return;
-	FTC_MAP *m = FTC_MAP::get_map(ftc_indexes, m_alloc);
-	FTC_MAP::pers_sset_entry *e = m->rb_minimum(FTC_MAP::get_entry(m->root, m_alloc));
+	FTC_VMAP *m = FTC_VMAP::get_map(ftc_indexes, m_alloc);
+	FTC_VMAP::pers_sset_entry *e = m->rb_minimum(FTC_VMAP::get_entry(m->root, m_alloc));
 	while (e != NULL)
 	{
 		flush_index(ftc_index_data::get(e->obj));
@@ -512,7 +565,8 @@ int FtCacheScanner::cur_word_ind()
 void FtCacheScanner::next_occur()
 {
 	ftc_index_data *id = ftc_index_data::get(ftc_idx);
-	cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(ome->obj.first);
+	if (cur_occur != NULL)
+		cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(cur_occur->next);
 	scan_occurs();
 }
 

@@ -284,7 +284,7 @@ ft_index_cell_xptr create_ft_index(
 					in_buf.clear();
 					FTSerializer::getSharedInstance()->printNodeToBuffer(tmp, &in_buf, idc->ftype, idc->custom_tree);
 					//idc->serial_put(tmp, tmp_indir, in_buf);
-					ft_index_update(ft_insert, tmp_indir, &in_buf, &idc->fts_data, ftc_idx);
+					ft_index_update(ft_insert, tmp_indir, &in_buf, ftc_idx);
 
 					tmp=getNextDescriptorOfSameSort(tmp);
 				}
@@ -386,7 +386,7 @@ static void ft_update_seq(xptr_sequence *seq, ft_index_cell_object *idc, ftc_ind
 			else //ft_insert
 				idc->serial_put(node, node_indir, in_buf);
 			*/
-			ft_index_update(ft_insert, node_indir, &in_buf, &idc->fts_data, ftc_idx);
+			ft_index_update(ft_insert, node_indir, &in_buf, ftc_idx);
 		}
 	}
 }

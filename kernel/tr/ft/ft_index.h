@@ -19,9 +19,11 @@ enum ft_index_op_t
 };
 
 //op must be insert
-void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, struct FtsData *ft_data, ftc_index_t ftc_idx);
+void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ftc_index_t ftc_idx);
 void ft_index_delete_doc(ftc_index_t ftc_idx, xptr acc);
 void ft_idx_delete(struct FtsData *ft_data);
+
+void ft_highlight(op_str_buf *in_buf, stmt_str_buf *out_buf, ft_word_ind_t *inds, size_t inds_count, bool hl_fragment);
 
 
 #endif

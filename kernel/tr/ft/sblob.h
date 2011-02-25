@@ -34,7 +34,7 @@ private:
 	static const int max_data_in_block = (PAGE_SIZE - sizeof(struct sblob_blk_hdr));
 	void alloc_new_blk();
 public:
-	SblobWriter(bool _pers = true) : pers(_pers), last_block(XNULL), last_block_avail(0), buf_pos(0), nbytes_written(0), nblocks(0) {}
+	SblobWriter(bool _pers) : pers(_pers), last_block(XNULL), last_block_avail(0), buf_pos(0), nbytes_written(0), nblocks(0) {}
 	xptr create_new();
 	void flush();
 	void write(const char *data, int len);
