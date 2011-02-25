@@ -79,7 +79,7 @@ public:
 	virtual void close() = 0;
 	//get score for some document, based on scores returned by get_next_result, called after close() i.e. when scanning is done
 	virtual ft_float ft_get_score(ft_float *scores) = 0;
-	virtual uint64_t get_next_result() = 0;
+	virtual ft_acc_uint_t get_next_result() = 0;
 	virtual ~FtQuery() {}
 };
 class FtQueryTermBase : public FtQuery
@@ -115,7 +115,7 @@ public:
 	FtQueryTerm(ftc_index_t idx) : ftc_idx(idx), ftc_scan(idx) {}
 	virtual ~FtQueryTerm();
 
-	virtual uint64_t get_next_result();
+	virtual ft_acc_uint_t get_next_result();
 	virtual void close();
 	virtual ft_float ft_get_score(ft_float *scores);
 
@@ -145,7 +145,7 @@ public:
 	FtQueryTermInElement(ftc_index_t idx) : ftc_idx(idx), ftc_scan(idx), ftc_scan_opentag(idx), ftc_scan_closetag(idx) {}
 	virtual ~FtQueryTermInElement();
 
-	virtual uint64_t get_next_result();
+	virtual ft_acc_uint_t get_next_result();
 	virtual void close();
 	virtual ft_float ft_get_score(ft_float *scores);
 
@@ -169,7 +169,7 @@ public:
 
 	void set_operand(int op_idx, FtQuery *op);
 
-	virtual uint64_t get_next_result();
+	virtual ft_acc_uint_t get_next_result();
 	virtual void close();
 	virtual ft_float ft_get_score(ft_float *scores);
 };
@@ -192,7 +192,7 @@ public:
 
 	void set_term(int op_idx, FtQueryTermBase *t);
 
-	virtual uint64_t get_next_result();
+	virtual ft_acc_uint_t get_next_result();
 	virtual void close();
 	virtual ft_float ft_get_score(ft_float *scores);
 };
@@ -202,15 +202,24 @@ class FtQueryProcessor
 private:
 	ftc_index_t ftc_idx;
 	FtQuery *query;
-	bool query_opened;
+	bool query_opened; //FIXME: rename/don't use in get_next_result
 	ft_float *scores_buf;
+	FtWordIndexList *wl;
 	sequence_sorter ssr;
 	sorted_sequence *ss;
 public:
-	FtQueryProcessor(ftc_index_t idx) : ftc_idx(idx), query(NULL), scores_buf(NULL), ss(NULL) {}
+	FtQueryProcessor(ftc_index_t idx) : ftc_idx(idx), query(NULL), scores_buf(NULL), wl(NULL), ss(NULL) {}
 	~FtQueryProcessor();
 	void set_query(str_cursor *cur);
+
+	//FIXME: make 1 function with options?
 	void get_next_result(tuple &t);
+
+	//FIXME: rigth now these 2 functions can only be used with get_next_result_hl
+	void open();     //(re)start processing (from start) after index was modified
+	void close();    //stop processing, must be called before modifying index
+	//returns word list, doesn't sort results by scores
+	void get_next_result_hl(xptr *acc, FtWordIndexList **wl);
 };
 
 

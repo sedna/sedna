@@ -62,7 +62,7 @@ void FtsUpdater::end_update(struct FtsData *dest)
 		FtPartitionScanner s;
 		s.init(p, nmerge);
 		//FIXME: some disk space can be saved if partitions are deleted during merge
-		s.merge(&dest->partitions[mergeto], mergeto > 0);
+		s.merge(&dest->partitions[mergeto], mergeto > 0, pers);
 		dest->npartitions = mergeto+1;
 		for (int i = 0; i < nmerge; i++)
 			ft_delete_partition(&p[i]);

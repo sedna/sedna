@@ -115,14 +115,15 @@ void PPFtHighlight::do_next(tuple &t)
 				throw XQUERY_EXCEPTION(SE1071);
 
 			op_str_buf buf(tc);
-			fthl = new FtHighlighter(buf.c_str(), hl_fragment, &seq);
+			fthl = new FtHighlighter(hl_fragment, &seq);
+			fthl->set_options(buf.c_str());
 	
 			options.op->next(t);
 			if (!t.is_eos())
 				throw XQUERY_EXCEPTION(SE1071);
 		}
 		else
-			fthl = new FtHighlighter(NULL, hl_fragment, &seq);
+			fthl = new FtHighlighter(hl_fragment, &seq);
 
 		query.op->next(t);
 		if (t.is_eos())

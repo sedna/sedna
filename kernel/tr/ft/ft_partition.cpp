@@ -188,6 +188,9 @@ bool FtPartitionReader::acci_in_del_list(const uint64_t acc_i)
 
 void FtPartitionBuilder::create_new()
 {
+	//TODO
+	if (!pers)
+		throw USER_EXCEPTION2(SE1003, "temporary ft-partitions are not supported");
 	//FIXME: create some persistent xptr set implementation
 	U_ASSERT(xmlscm_type_size(xs_integer) == sizeof(xptr));
 
@@ -408,9 +411,9 @@ void FtPartitionScanner::init(const ft_partition_data *partitions, int npartitio
 	find_smallest_acc();
 }
 
-void FtPartitionScanner::merge(ft_partition_data *dest_partition, bool merge_del_list)
+void FtPartitionScanner::merge(ft_partition_data *dest_partition, bool merge_del_list, bool pers)
 {
-	FtPartitionBuilder b;
+	FtPartitionBuilder b(pers);
 
 	b.create_new();
 

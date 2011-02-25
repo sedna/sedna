@@ -14,13 +14,28 @@
 #include "tr/ft/string_map.h" //FIXME: remove (need allocator), don't use MallocAllocator
 
 #define FTC_ALLOCATOR MallocAllocator
-#define FTC_ALLOCATOR_IS_MALLOC_ALLOCATOR
 
 typedef FTC_ALLOCATOR::ptr_t ftc_doc_t;
-typedef FTC_ALLOCATOR::ptr_t ftc_index_t;
+typedef void* ftc_index_t;
 
 //ft_index_sem must be accuired!
 ftc_index_t ftc_get_index(const char *name, struct FtsData *fts_data);
+
+ftc_index_t ftc_create_temp_index();
+void ftc_delete_temp_index(ftc_index_t idx);
+class FtcTempIndex
+{
+private:
+	ftc_index_t ftc_ind;
+public:
+	//TODO: make sure ftc_create_temp_index doesnt throw exceptions and ftc_delete_temp_index is ok when ftc_ind is null
+	FtcTempIndex() {ftc_ind = ftc_create_temp_index(); }
+	~FtcTempIndex() { ftc_delete_temp_index(ftc_ind); }
+	ftc_index_t get() { return ftc_ind; }
+
+	void set_stemming(const char *stemming);
+	void clear();
+};
 
 //returned doc may become invalid after any operation with index
 ftc_doc_t ftc_add_new_doc(ftc_index_t idx, xptr acc);
@@ -39,6 +54,7 @@ void ftc_flush();
 #define FTC_PTR      FTC_ALLOCATOR::ptr_t
 #define FTC_NULL     FTC_ALLOCATOR::null_ptr()
 //TODO: move these to cpp
+#define FTC_VMAP     string_map<void*, FTC_ALLOCATOR>
 #define FTC_MAP      string_map<FTC_ALLOCATOR::ptr_t, FTC_ALLOCATOR>
 #define FTC_WORDMAP  string_map<ftc_word_data, FTC_ALLOCATOR>
 #define FTC_OCCURMAP string_map<ftc_occur_data, FTC_ALLOCATOR>

@@ -1072,6 +1072,8 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 	fragment_start_word_num = -1;
 	last_eff_ch = 0;
 
+	//FIXME: I have no idea what's the difference between current_word and current_word_tok, and why 2 passes are needed here
+
 	while (cur_ch != EOF_ch)
 	{
 		if (cur_ch == SednaConvertJob::opentag_code)

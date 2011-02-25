@@ -40,6 +40,7 @@ class FtPartitionSblobWriter : public FtPartitionSblobCursor
 private:
 	SblobWriter data_writer;
 public:
+	FtPartitionSblobWriter(bool _pers) : data_writer(_pers) {}
 	xptr create_new();
 	void finalize() { set_st_word(); data_writer.flush(); }
 	int64_t bytes_written() { return data_writer.bytes_written(); }
@@ -103,11 +104,13 @@ public:
 class FtPartitionBuilder
 {
 private:
+	bool pers;
 	struct ft_partition_data p_data;
 	FtPartitionSblobWriter sblob_writer;
 
 	void start_word(const char *word);
 public:
+	FtPartitionBuilder(bool _pers) : pers(_pers), sblob_writer(_pers) {}
 	//create empty partition, which can be filled with del_doc and add_*/set_* methods,
 	//arguments of these methods must be in ascending order during calls
 	void create_new();
@@ -157,7 +160,7 @@ public:
 	//scan postings of some word
 	void init(const ft_partition_data *partitions, int npartitions, const char *word);
 
-	void merge(ft_partition_data *dest_partition, bool merge_del_list);
+	void merge(ft_partition_data *dest_partition, bool merge_del_list, bool pers);
 	bool at_end() { return ncurw == 0; }
 
 	//read next posting for current word
