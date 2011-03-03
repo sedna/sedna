@@ -41,6 +41,7 @@ Number [0-9]+
 %%
 
 "CONTAINS" { return ftq_token::CONTAINS; }
+"OR"       { return ftq_token::OR; }
 "\""       { return ftq_token::QUOT; }
 "'"        { return ftq_token::APOS; }
 ":"        { return ftq_token::COLON; }

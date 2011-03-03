@@ -56,6 +56,43 @@ void FtWordIndexList::merge(FtWordIndexList *lists, int nlists)
 	free(p);
 	free(left);
 }
+void FtWordIndexList::merge2(FtWordIndexList *lists, int nlists, ft_acc_uint_t *listv, ft_acc_uint_t v)
+{
+	ft_word_ind_t **p = (ft_word_ind_t **)malloc(nlists * sizeof(ft_word_ind_t *));
+	size_t *left = (size_t *)malloc(nlists * sizeof(size_t));
+
+	this->clear();
+
+	for (int i = 0; i < nlists; i++)
+		if (listv[i] == v)
+		{
+			p[i] = lists[i].get_inds();
+			left[i] = lists[i].get_inds_count();
+		}
+
+	//TODO: init limit
+
+	while (true)
+	{
+		int mini = -1;
+		for (int i = 0; i < nlists; i++)
+			if (listv[i] == v && left[i] > 0 && (mini == -1 || *(p[mini]) > *(p[i])))
+				mini = i;
+		if (mini == -1)
+			break;
+		const ft_word_ind_t ind = *(p[mini]);
+		for (int i = 0; i < nlists; i++)
+			if (listv[i] == v && left[i] > 0 && *(p[i]) == ind)
+			{
+				left[i]--;
+				p[i]++;
+			}
+			this->add_ind(ind);
+	}
+
+	free(p);
+	free(left);
+}
 
 ft_float doc_length_norm(int64_t len)
 {
@@ -334,6 +371,109 @@ ft_float FtQueryAnd::ft_get_score(ft_float *scores)
 	U_ASSERT(p == this->score_count);
 	return res;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//TODO: move all common suff from FtQueryAnd/FtQueryOr to superclass
+
+FtQueryOr::FtQueryOr(ftc_index_t idx, int _nops) : ftc_idx(idx), nops(_nops), op_word_lists(NULL)
+{
+	U_ASSERT(nops > 1);
+	ops = (FtQuery **)malloc(nops * sizeof(FtQuery*));
+	op_results = (uint64_t *)malloc(nops * sizeof(uint64_t));
+}
+FtQueryOr::~FtQueryOr()
+{
+	for (int i = 0; i < nops; i++)
+		delete ops[i];
+	free(ops);
+	free(op_results);
+	if (op_word_lists != NULL)
+		delete[] op_word_lists;
+}
+
+void FtQueryOr::set_operand(int op_idx, FtQuery *op)
+{
+	ops[op_idx] = op;
+}
+
+void FtQueryOr::do_init()
+{
+	this->score_count = 0;
+	for (int i = 0; i < nops; i++)
+	{
+		ops[i]->init();
+		this->score_count += ops[i]->score_count;
+	}
+}
+void FtQueryOr::do_open()
+{
+	int p = 0;
+	if (this->word_list != NULL)
+	{
+		if (op_word_lists != NULL)
+			delete[] op_word_lists;
+		op_word_lists = new FtWordIndexList[nops];
+	}
+	for (int i = 0; i < nops; i++)
+	{
+		if (this->word_list != NULL)
+			ops[i]->open(&this->scores[p], &op_word_lists[i]);
+		else
+			ops[i]->open(&this->scores[p], NULL);
+		p += ops[i]->score_count;
+		op_results[i] = ops[i]->get_next_result();
+	}
+	U_ASSERT(p == this->score_count);
+}
+
+ft_acc_uint_t FtQueryOr::get_next_result()
+{
+	U_ASSERT(nops > 1);
+	ft_acc_uint_t res = op_results[0];
+
+	for (int i = 1; i < nops; i++)
+		if (op_results[i] != FT_ACC_UINT_NULL && (res == FT_ACC_UINT_NULL || res > op_results[i]))
+			res = op_results[i];
+
+	if (res == FT_ACC_UINT_NULL)
+		return FT_ACC_UINT_NULL;
+
+	if (this->word_list != NULL)
+		this->word_list->merge2(op_word_lists, nops, op_results, res);
+
+	for (int i = 0; i < nops; i++)
+	{
+		if (op_results[i] == res)
+			op_results[i] = ops[i]->get_next_result();
+	}
+	return res;
+}
+void FtQueryOr::close()
+{
+	//FIXME: FtQueryOr doesn't update doc_freq, so no need to finish scanning here
+	//       need to specify behaviour of FtQuery classes to make sure it's ok
+	for (int i = 0; i < nops; i++)
+	{
+		ops[i]->close();
+	}
+}
+ft_float FtQueryOr::ft_get_score(ft_float *scores)
+{
+	int p = 0;
+	ft_float res = 0;
+	for (int i = 0; i < nops; i++)
+	{
+		res += ops[i]->ft_get_score(&this->scores[p]);
+		p += ops[i]->score_count;
+	}
+	U_ASSERT(p == this->score_count);
+	return res;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
 
 
 FtQueryPhrase::FtQueryPhrase(int _nops) : nops(_nops)

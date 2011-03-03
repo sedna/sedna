@@ -187,7 +187,7 @@ FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok, c
 	}
 }
 
-FtQuery* ft_parse_query_and(struct ft_parser_state *ps, char *in_tag, ftq_token_type end_tok);
+FtQuery* ft_parse_query_or(struct ft_parser_state *ps, char *in_tag, ftq_token_type end_tok);
 FtQuery* ft_parse_query_single(struct ft_parser_state *ps, char *in_tag)
 {
 	token_ptr tok = ps->scanner.peek();
@@ -214,7 +214,7 @@ FtQuery* ft_parse_query_single(struct ft_parser_state *ps, char *in_tag)
 	if (tok->type == ftq_token::BR_OPEN)
 	{
 		ps->scanner.next();
-		FtQuery *q = ft_parse_query_and(ps, in_tag, ftq_token::BR_CLOSE);
+		FtQuery *q = ft_parse_query_or(ps, in_tag, ftq_token::BR_CLOSE);
 		tok = ps->scanner.peek();
 		if (tok->type == ftq_token::BR_CLOSE)
 			ps->scanner.next();
@@ -232,7 +232,7 @@ FtQuery* ft_parse_query_and(struct ft_parser_state *ps, char *in_tag, ftq_token_
 	while (true)
 	{
 		token_ptr tok = ps->scanner.peek();
-		if (tok->type == ftq_token::END || tok->type == end_tok)
+		if (tok->type == ftq_token::END || tok->type == ftq_token::OR || tok->type == end_tok)
 			break;
 
 		FtQuery *q = ft_parse_query_single(ps, in_tag);
@@ -253,6 +253,45 @@ FtQuery* ft_parse_query_and(struct ft_parser_state *ps, char *in_tag, ftq_token_
 	}
 }
 
+FtQuery* ft_parse_query_or(struct ft_parser_state *ps, char *in_tag, ftq_token_type end_tok)
+{
+	std::vector<FtQuery *> ops;
+	token_ptr tok;
+	bool first = true;
+
+	while (true)
+	{
+		token_ptr tok = ps->scanner.peek();
+		if (tok->type == ftq_token::END || tok->type == end_tok)
+			break;
+
+		if (!first)
+		{
+			if (tok->type != ftq_token::OR)
+				throw USER_EXCEPTION2(SE3022, "unexpected token");
+			tok = ps->scanner.next();
+		}
+		first = false;
+
+		FtQuery *q = ft_parse_query_and(ps, in_tag, end_tok);
+		if (q != NULL)
+			ops.push_back(q);
+	}
+
+	if (ops.size() == 0)
+		throw USER_EXCEPTION2(SE3022, "empty query");
+	if (ops.size() == 1)
+		return ops[0];
+	else
+	{
+		FtQueryOr *q = new FtQueryOr(ps->ftc_idx, ops.size());
+		for (int i = 0; i < ops.size(); i++)
+			q->set_operand(i, ops[i]);
+		return q;
+	}
+}
+
+
 FtQuery *ft_parse_query(str_cursor *cur, ftc_index_t idx)
 {
 	ft_parser_state ps;
@@ -262,7 +301,7 @@ FtQuery *ft_parse_query(str_cursor *cur, ftc_index_t idx)
 
 	ps.scanner.init(&reader);
 
-	FtQuery *q = ft_parse_query_and(&ps, NULL, ftq_token::END);
+	FtQuery *q = ft_parse_query_or(&ps, NULL, ftq_token::END);
 
 	ps.scanner.destroy();
 

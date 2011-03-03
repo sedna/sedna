@@ -72,6 +72,13 @@ void str_buf_base::move_to_estr()
 		m_flags |= f_text_in_estr_buf;
 		return;
 	}
+	if (m_len == 0)
+	{
+		m_ptr = m_estr.append_mstr("");
+		m_ttype = text_source_t::text_estr;
+		m_flags |= f_text_in_estr_buf;
+		return;
+	}
 	switch (m_ttype)
 	{
 	case text_source_t::text_mem:
