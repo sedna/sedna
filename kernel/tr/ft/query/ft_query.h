@@ -184,6 +184,7 @@ private:
 	FtQuery **ops;
 	uint64_t *op_results;
 	FtWordIndexList *op_word_lists;
+	ft_float *scores_buf; //buffer for sub-ops
 
 	virtual void do_init();
 	virtual void do_open();

@@ -11,6 +11,9 @@
 
 #include <math.h>
 
+//value used to fill scores to indicate no match
+const ft_float no_score = 0;
+
 FtWordIndexList::~FtWordIndexList()
 {
 	if (buf != NULL)
@@ -365,7 +368,7 @@ ft_float FtQueryAnd::ft_get_score(ft_float *scores)
 	ft_float res = 0;
 	for (int i = 0; i < nops; i++)
 	{
-		res += ops[i]->ft_get_score(&this->scores[p]);
+		res += ops[i]->ft_get_score(&scores[p]);
 		p += ops[i]->score_count;
 	}
 	U_ASSERT(p == this->score_count);
@@ -377,7 +380,7 @@ ft_float FtQueryAnd::ft_get_score(ft_float *scores)
 
 //TODO: move all common suff from FtQueryAnd/FtQueryOr to superclass
 
-FtQueryOr::FtQueryOr(ftc_index_t idx, int _nops) : ftc_idx(idx), nops(_nops), op_word_lists(NULL)
+FtQueryOr::FtQueryOr(ftc_index_t idx, int _nops) : ftc_idx(idx), nops(_nops), op_word_lists(NULL), scores_buf(NULL)
 {
 	U_ASSERT(nops > 1);
 	ops = (FtQuery **)malloc(nops * sizeof(FtQuery*));
@@ -391,6 +394,8 @@ FtQueryOr::~FtQueryOr()
 	free(op_results);
 	if (op_word_lists != NULL)
 		delete[] op_word_lists;
+	if (this->scores_buf != NULL)
+		free(this->scores_buf);
 }
 
 void FtQueryOr::set_operand(int op_idx, FtQuery *op)
@@ -410,6 +415,9 @@ void FtQueryOr::do_init()
 void FtQueryOr::do_open()
 {
 	int p = 0;
+	if (this->scores_buf != NULL)
+		free(this->scores_buf);
+	this->scores_buf = (ft_float *)malloc(sizeof(ft_float) * this->score_count);
 	if (this->word_list != NULL)
 	{
 		if (op_word_lists != NULL)
@@ -419,9 +427,9 @@ void FtQueryOr::do_open()
 	for (int i = 0; i < nops; i++)
 	{
 		if (this->word_list != NULL)
-			ops[i]->open(&this->scores[p], &op_word_lists[i]);
+			ops[i]->open(&this->scores_buf[p], &op_word_lists[i]);
 		else
-			ops[i]->open(&this->scores[p], NULL);
+			ops[i]->open(&this->scores_buf[p], NULL);
 		p += ops[i]->score_count;
 		op_results[i] = ops[i]->get_next_result();
 	}
@@ -443,11 +451,23 @@ ft_acc_uint_t FtQueryOr::get_next_result()
 	if (this->word_list != NULL)
 		this->word_list->merge2(op_word_lists, nops, op_results, res);
 
+	int p = 0;
 	for (int i = 0; i < nops; i++)
 	{
 		if (op_results[i] == res)
+		{
+			for (int t=0; t < ops[i]->score_count; t++)
+				this->scores[p+t] = this->scores_buf[p+t];
 			op_results[i] = ops[i]->get_next_result();
+		}
+		else
+		{
+			for (int t=0; t < ops[i]->score_count; t++)
+				this->scores[p+t] = no_score;
+		}
+		p += ops[i]->score_count;
 	}
+	U_ASSERT(p == this->score_count);
 	return res;
 }
 void FtQueryOr::close()
@@ -463,9 +483,18 @@ ft_float FtQueryOr::ft_get_score(ft_float *scores)
 {
 	int p = 0;
 	ft_float res = 0;
+	bool skip;
 	for (int i = 0; i < nops; i++)
 	{
-		res += ops[i]->ft_get_score(&this->scores[p]);
+		skip = true;
+		for (int t = 0; t < ops[i]->score_count; t++)
+			if (scores[p+t] != no_score)
+			{
+				skip = false;
+				break;
+			}
+		if (!skip)
+			res += ops[i]->ft_get_score(&scores[p]);
 		p += ops[i]->score_count;
 	}
 	U_ASSERT(p == this->score_count);
