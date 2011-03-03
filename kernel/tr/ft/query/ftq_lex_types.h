@@ -19,6 +19,7 @@ struct ftq_token
 		COLON,
 		BR_OPEN,
 		BR_CLOSE,
+		OR,
 		_ERROR_,
 	};
 };

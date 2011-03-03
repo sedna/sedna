@@ -47,6 +47,8 @@ public:
 
 	//clear list & merge sevetal lists into it
 	void merge(FtWordIndexList *lists, int nlists);
+	//special variant of merge for FtQueryOr, merges only lists[i], for which listv[i] == v
+	void merge2(FtWordIndexList *lists, int nlists, ft_acc_uint_t *listv, ft_acc_uint_t v);
 
 	ft_word_ind_t *get_inds() {
 		return buf;
@@ -173,6 +175,29 @@ public:
 	virtual void close();
 	virtual ft_float ft_get_score(ft_float *scores);
 };
+
+class FtQueryOr : public FtQuery
+{
+private:
+	ftc_index_t ftc_idx;
+	int nops;
+	FtQuery **ops;
+	uint64_t *op_results;
+	FtWordIndexList *op_word_lists;
+
+	virtual void do_init();
+	virtual void do_open();
+public:
+	FtQueryOr(ftc_index_t idx, int nops);
+	virtual ~FtQueryOr();
+
+	void set_operand(int op_idx, FtQuery *op);
+
+	virtual ft_acc_uint_t get_next_result();
+	virtual void close();
+	virtual ft_float ft_get_score(ft_float *scores);
+};
+
 //TODO: FtQueryPhrase should not ignore term scores
 class FtQueryPhrase : public FtQuery
 {
