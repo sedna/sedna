@@ -138,6 +138,8 @@ void PPFtIndexScan::do_next(tuple &t)
 		bool opt_dtsSearchAnyWords = false;
 		bool opt_dtsSearchAllWords = false;
 #endif
+		bool sort = true;
+		bool count_only = false;
 		tuple_cell tc;
 
 		idx_name.op->next(t);
@@ -173,10 +175,14 @@ void PPFtIndexScan::do_next(tuple &t)
 			opts.set_tc(&tc);
 			while (opts.next_opt())
 			{
+				if (ft_idx->impl == ft_ind_native && !strcmp(opts.opt_name(), "nosort"))
+					sort = !opts.opt_value_as_bool(); //TODO: make avaiable for dtSearch too, remove PPFtIndexScan2, sort dtSearch results by default
+				else if (ft_idx->impl == ft_ind_native && !strcmp(opts.opt_name(), "count_only"))
+					count_only = opts.opt_value_as_bool();
 #ifdef SE_ENABLE_DTSEARCH
-				if (!strcmp(opts.opt_name(), "dtsSearchAnyWords"))
+				else if (ft_idx->impl == ft_ind_dtsearch && !strcmp(opts.opt_name(), "dtsSearchAnyWords"))
 					opt_dtsSearchAnyWords = opts.opt_value_as_bool();
-				else if (!strcmp(opts.opt_name(), "dtsSearchAllWords"))
+				else if (ft_idx->impl == ft_ind_dtsearch && !strcmp(opts.opt_name(), "dtsSearchAllWords"))
 					opt_dtsSearchAllWords = opts.opt_value_as_bool();
 				else
 #endif
@@ -211,6 +217,7 @@ void PPFtIndexScan::do_next(tuple &t)
 			ftq = new FtQueryProcessor(ftc_idx);
 			str_cursor *query_cur = get_text_cursor(text_source_tuple_cell(tc));
 			ftq->set_query(query_cur);
+			ftq->set_sort(sort);
 			delete query_cur;
 			break;
 			}
@@ -223,6 +230,16 @@ void PPFtIndexScan::do_next(tuple &t)
 			throw XQUERY_EXCEPTION(SE1071);
 
 		first_time = false;
+
+		if (count_only && ft_idx->impl == ft_ind_native)
+		{
+			int64_t cnt = ftq->count_results();
+			delete ftq;
+			ftq = NULL;
+
+			t.copy(tuple_cell::atomic(cnt));
+			return;
+		}
 	}
 
 	//FIXME
@@ -239,7 +256,10 @@ void PPFtIndexScan::do_next(tuple &t)
 	}
 	else
 	{
-		ftq->get_next_result(t);
+		if (ftq == NULL)
+			t.set_eos();
+		else
+			ftq->get_next_result(t);
 		if (t.is_eos())
 		{
 			delete ftq;
@@ -248,7 +268,10 @@ void PPFtIndexScan::do_next(tuple &t)
 		}
 	}
 #else
-	ftq->get_next_result(t);
+	if (ftq == NULL)
+		t.set_eos();
+	else
+		ftq->get_next_result(t);
 	if (t.is_eos())
 	{
 		delete ftq;

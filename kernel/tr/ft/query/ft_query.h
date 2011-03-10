@@ -227,19 +227,25 @@ class FtQueryProcessor
 {
 private:
 	ftc_index_t ftc_idx;
+
 	FtQuery *query;
+	bool sort;
+
 	bool query_opened; //FIXME: rename/don't use in get_next_result
 	ft_float *scores_buf;
 	FtWordIndexList *wl;
 	sequence_sorter ssr;
 	sorted_sequence *ss;
+
 public:
-	FtQueryProcessor(ftc_index_t idx) : ftc_idx(idx), query(NULL), scores_buf(NULL), wl(NULL), ss(NULL) {}
+	FtQueryProcessor(ftc_index_t idx) : ftc_idx(idx), query(NULL), sort(true), scores_buf(NULL), wl(NULL), ss(NULL) {}
 	~FtQueryProcessor();
 	void set_query(str_cursor *cur);
+	void set_sort(bool _sort) { sort = _sort; }
 
 	//FIXME: make 1 function with options?
 	void get_next_result(tuple &t);
+	int64_t count_results(); //can only be used instead of get_next_result()
 
 	//FIXME: rigth now these 2 functions can only be used with get_next_result_hl
 	void open();     //(re)start processing (from start) after index was modified
