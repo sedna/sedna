@@ -47,15 +47,23 @@ public:
 
 	void get_next()
 	{
-		Token *tok = new Token();
+		while (true)
+		{
+			Token *tok = new Token();
 
-		tok->type = (ftq_token_type)ftq_lex(this->yyscanner);
-		tok->leng = ftq_get_leng(this->yyscanner);
-		tok->text = new char[tok->leng+1];
-		memcpy(tok->text, ftq_get_text(this->yyscanner), tok->leng);
-		tok->text[tok->leng] = '\x0';
+			tok->type = (ftq_token_type)ftq_lex(this->yyscanner);
+			tok->leng = ftq_get_leng(this->yyscanner);
+			tok->text = new char[tok->leng+1];
+			memcpy(tok->text, ftq_get_text(this->yyscanner), tok->leng);
+			tok->text[tok->leng] = '\x0';
 
-		tokens.push_back(token_ptr(tok));
+			//ignore stuff that lexer failed to recognize
+			if (tok->type != ftq_token::_ERROR_)
+			{
+				tokens.push_back(token_ptr(tok));
+				return;
+			}
+		}
 	}
 
 	token_ptr peek()
@@ -191,6 +199,7 @@ FtQuery* ft_parse_query_or(struct ft_parser_state *ps, char *in_tag, ftq_token_t
 FtQuery* ft_parse_query_single(struct ft_parser_state *ps, char *in_tag)
 {
 	token_ptr tok = ps->scanner.peek();
+
 	if (tok->type == ftq_token::QUOT || tok->type == ftq_token::APOS)
 	{
 		ps->scanner.next();
