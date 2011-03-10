@@ -453,7 +453,7 @@ PPOpIn l2pFnFloor(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PP
 
 PPOpIn l2pFnFtHighlight(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
-#ifdef SE_ENABLE_DTSEARCH
+#ifdef SE_ENABLE_FTSEARCH
     if (tr_globals::is_ft_disabled)
         throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
@@ -476,7 +476,7 @@ PPOpIn l2pFnFtHighlight(dynamic_context *dyn_cxt, const operation_info &opi, arr
 
 PPOpIn l2pFnFtHighlightBlocks(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
-#ifdef SE_ENABLE_DTSEARCH
+#ifdef SE_ENABLE_FTSEARCH
     if (tr_globals::is_ft_disabled)
         throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
 
