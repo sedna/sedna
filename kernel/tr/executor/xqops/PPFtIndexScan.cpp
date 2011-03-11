@@ -184,9 +184,8 @@ void PPFtIndexScan::do_next(tuple &t)
 					opt_dtsSearchAnyWords = opts.opt_value_as_bool();
 				else if (ft_idx->impl == ft_ind_dtsearch && !strcmp(opts.opt_name(), "dtsSearchAllWords"))
 					opt_dtsSearchAllWords = opts.opt_value_as_bool();
-				else
 #endif
-				throw USER_EXCEPTION2(SE3022, (std::string("Invalid ftindex-scan option: '") + opts.opt_name() + "'").c_str());
+				else throw USER_EXCEPTION2(SE3022, (std::string("Invalid ftindex-scan option: '") + opts.opt_name() + "'").c_str());
 			}
 
 			options.op->next(t);
