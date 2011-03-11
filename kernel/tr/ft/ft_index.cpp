@@ -14,11 +14,21 @@
 #include "tr/strings/utf8.h"
 #include <wctype.h>
 
+#include <map>
+//TODO: store tags separately, with 2 indexes, consider to store all tags (may be needed for nested contains)
+//FIXME: get rid of stl here
+
 //for expat
 #define SEPARATOR '>'
 
-struct ft_parse_data
+struct tag_info
 {
+	int d;
+	int start_ind;
+};
+class ft_parse_data
+{
+public:
 	char word_buf[FT_MAX_WORD_LENGTH+1]; //+1 is because ftc_add_word wants a null terminated string
 	int word_len;
 	int word_ind;
@@ -28,9 +38,12 @@ struct ft_parse_data
 	ftc_doc_t cur_doc;
 	ft_index_op_t op;
 	FtStemmer *stemmer;
+	std::map<std::string,tag_info> tagmap;
+
+	ft_parse_data() {}
 };
 
-static void process_word(struct ft_parse_data *parse_data)
+static void process_word(ft_parse_data *parse_data)
 {
 	if (parse_data->word_len > 0)
 	{
@@ -51,40 +64,61 @@ static void process_word(struct ft_parse_data *parse_data)
 
 static void p_start(void *state, const char *el, const char **attr)
 {
-	struct ft_parse_data *parse_data = (struct ft_parse_data *)state;
+	ft_parse_data *parse_data = (ft_parse_data *)state;
 	//tags should break words
 	process_word(parse_data);
 
-	U_ASSERT(parse_data->word_len == 0);
-	size_t len = strlen(el);
-	if (len > FT_MAX_WORD_LENGTH-1)
-		len = FT_MAX_WORD_LENGTH-1;
-	memcpy(parse_data->word_buf, el, len);
-	parse_data->word_buf[len] = FT_TAG_OPEN_MARKER;
-	parse_data->word_buf[len+1] = '\x0';
-	ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind);
+	std::map<std::string,tag_info>::iterator it = parse_data->tagmap.find(el);
+	if (it == parse_data->tagmap.end())
+	{
+		tag_info ti;
+		ti.start_ind = parse_data->word_ind;
+		ti.d = 1;
+		parse_data->tagmap.insert(std::pair<std::string, tag_info>(el, ti));
+	}
+	else
+	{
+		it->second.d++;
+	}
 }
 
 static void p_end(void *state, const char *el)
 {
-	struct ft_parse_data *parse_data = (struct ft_parse_data *)state;
+	ft_parse_data *parse_data = (ft_parse_data *)state;
 	//tags should break words
 	process_word(parse_data);
 
-	U_ASSERT(parse_data->word_len == 0);
-	size_t len = strlen(el);
-	if (len > FT_MAX_WORD_LENGTH-1)
-		len = FT_MAX_WORD_LENGTH-1;
-	memcpy(parse_data->word_buf, el, len);
-	parse_data->word_buf[len] = FT_TAG_CLOSE_MARKER;
-	parse_data->word_buf[len+1] = '\x0';
-	ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind);
+	std::map<std::string,tag_info>::iterator it = parse_data->tagmap.find(el);
+
+	if (it->second.d > 1)
+		it->second.d--;
+	else
+	{
+		int start_ind = it->second.start_ind;
+		parse_data->tagmap.erase(it);
+
+		U_ASSERT(parse_data->word_len == 0);
+		size_t len = strlen(el);
+		if (len > FT_MAX_WORD_LENGTH-1)
+			len = FT_MAX_WORD_LENGTH-1;
+		memcpy(parse_data->word_buf, el, len);
+		parse_data->word_buf[len] = FT_TAG_OPEN_MARKER;
+		parse_data->word_buf[len+1] = '\x0';
+		ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, start_ind);
+
+		if (len > FT_MAX_WORD_LENGTH-1)
+			len = FT_MAX_WORD_LENGTH-1;
+		memcpy(parse_data->word_buf, el, len);
+		parse_data->word_buf[len] = FT_TAG_CLOSE_MARKER;
+		parse_data->word_buf[len+1] = '\x0';
+		ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind);
+	}
 }
 
 //assumes that s contains full characters (i.e. multibyte chars are not splited between calls)
 static void p_data(void *state, const char *s, int len)
 {
-	struct ft_parse_data *parse_data = (struct ft_parse_data *)state;
+	ft_parse_data *parse_data = (ft_parse_data *)state;
 	int ch;
 	while ((ch=utf8_getch(&s, &len)) != UTF8_EOF)
 	{
@@ -102,7 +136,7 @@ static void p_data(void *state, const char *s, int len)
 
 static void p_finish(void *state)
 {
-	struct ft_parse_data *parse_data = (struct ft_parse_data *)state;
+	ft_parse_data *parse_data = (ft_parse_data *)state;
 
 	//it's actually impossible now, because we always index one node, so data should end with a close tag
 	process_word(parse_data);
@@ -118,7 +152,7 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ftc_index
 	//FIXME: check exception & rollback
 	if (!p) throw USER_ENV_EXCEPTION("Couldn't allocate memory for parser\n",true);
 
-	struct ft_parse_data *parse_data = (struct ft_parse_data *)malloc(sizeof(struct ft_parse_data));
+	ft_parse_data *parse_data = new ft_parse_data();
 	parse_data->word_len = 0;
 	parse_data->word_ind = 0;
 	parse_data->word_count = 0;
@@ -159,7 +193,7 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ftc_index
 
 	ftc_finalize_doc(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_count);
 
-	free(parse_data);
+	delete parse_data;
 	XML_ParserFree(p);
 }
 
@@ -188,7 +222,7 @@ struct ft_parse_data_hl
 	char out_buf[HL_BUF];
 	int out_buf_cnt;
 
-	int cur_ind;
+	size_t cur_ind;
 	int word_ind;
 
 	int ht0;
