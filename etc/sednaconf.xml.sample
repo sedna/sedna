@@ -15,7 +15,7 @@
   <sedna_data>/var/lib/sedna</sedna_data>
 
   <!-- 
-       Left bounf of range for identifiers of system resources.
+       Left bound of range for identifiers of system resources.
        If you run multiple Sedna instances this value MUST differ
        between them with enough delta (e.g. +10000 for each next
        instance)

@@ -164,19 +164,38 @@ cat > $TARGET/etc/sednaconf.xml <<EOF
 
 <sednaconf>
 
-  <!-- Path to database files -->
+  <!--
+       Path to the database files:
+        - path must exist;
+        - path must be absolute;
+        - on Windows use '/' for separating directories (example: c:/sedna)
+  -->
   <sedna_data>`pwd`/$TARGET</sedna_data>
 
-  <!-- Left bounf of range for identifiers of system resources -->
+  <!--
+       Left bound of range for identifiers of system resources.
+       If you run multiple Sedna instances this value MUST differ
+       between them with enough delta (e.g. +10000 for each next
+       instance)
+       Default: 1500
+  -->
   <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>
 
-  <!-- Sedna server listening port number -->
+  <!--
+       Sedna server listening port number. If you run multiple
+       Sedna instances this value MUST differ between them.
+       Default: 5050
+  -->
   <listener_port>5050</listener_port>
 
-  <!-- Sedna server ping port number -->
+  <!--
+       Sedna server ping port number. If you run multiple
+       Sedna instances this value MUST differ between them.
+       Default: 5151
+  -->
   <ping_port>5151</ping_port>
 
-  <!-- Event logging level 
+  <!-- Event logging level
        0 -           event logging is off
        1 -           log only fatal errors when system goes down
        2 -           log all errors/warnings (e.g. errors in queries)
@@ -197,7 +216,7 @@ cat > $TARGET/etc/sednaconf.xml <<EOF
        Make sure that you have enough process stack size
        before increasing this parameter.
   -->
-  <session_stack_depth>5000</session_stack_depth>
+  <session_stack_depth>4000</session_stack_depth>
 
 </sednaconf>
 EOF
