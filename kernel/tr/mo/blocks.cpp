@@ -68,8 +68,10 @@ xptr createBlock(schema_node_cptr schema_node, xptr prev_block_xptr, const xptr 
         vmm_alloc_tmp_block(&block_xptr);
     }
 
+#ifdef DEBUG_MO_LOG
     elog(EL_DBG, ("MOLOG: createBlock(0x%llx, 0x%llx, 0x%llx, %d) = 0x%llx", schema_node.ptr().to_logical_int(),
             prev_block_xptr.to_logical_int(), undo_hint.to_logical_int(), child_count_hint, block_xptr.to_logical_int()));
+#endif
 
     /* Update siblings' pointers */
     if (prev_block_xptr == XNULL) {
@@ -117,7 +119,9 @@ xptr createBlock(schema_node_cptr schema_node, xptr prev_block_xptr, const xptr 
 
 void deleteBlockVirtually(xptr block_xptr)
 {
+#ifdef DEBUG_MO_LOG
     elog(EL_DBG, ("MOLOG: deleteBlock(0x%llx)", block_xptr.to_logical_int()));
+#endif
 
     if (IS_DATA_BLOCK(block_xptr)) {
         CHECKP(block_xptr);
