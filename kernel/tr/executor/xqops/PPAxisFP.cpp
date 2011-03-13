@@ -228,7 +228,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
             }
             else
             {
-                base=getPreviousDONode(cur);
+                cur=getPreviousDONode(base);
                 while (true)
                 {
                     if (cur==XNULL || (cfun(getSchemaNode(cur),uri,name,type) && nid_cmp_effective(cur,base)!=-2))
