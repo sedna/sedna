@@ -676,6 +676,11 @@ const int ssr_inds[ssr_n] = {0, 1};
 
 void FtQueryProcessor::get_next_result(tuple &t)
 {
+	if (query == NULL)
+	{
+		t.set_eos();
+		return;
+	}
 	//TODO: make scoring optional
 	if (!query_opened)
 	{
@@ -761,6 +766,9 @@ int64_t FtQueryProcessor::count_results()
 {
 	int64_t count = 0;
 
+	if (query == NULL)
+		return 0;
+
 	query->init();
 	if (scores_buf != NULL)
 		delete[] scores_buf;
@@ -781,6 +789,8 @@ int64_t FtQueryProcessor::count_results()
 
 void FtQueryProcessor::open()
 {
+	if (query == NULL)
+		return;
 	query->init();
 	if (scores_buf != NULL)
 		delete[] scores_buf;
@@ -793,12 +803,19 @@ void FtQueryProcessor::open()
 }
 void FtQueryProcessor::close()
 {
+	if (query == NULL)
+		return;
 	query->close();
 
 	query_opened = false;
 }
 void FtQueryProcessor::get_next_result_hl(xptr *r_acc, FtWordIndexList **r_wl)
 {
+	if (query == NULL)
+	{
+		*r_acc = XNULL;
+		return;
+	}
 	ft_acc_uint_t res = query->get_next_result();
 	if (res == FT_ACC_UINT_NULL)
 	{
