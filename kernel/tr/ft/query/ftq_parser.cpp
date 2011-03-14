@@ -250,7 +250,7 @@ FtQuery* ft_parse_query_and(struct ft_parser_state *ps, char *in_tag, ftq_token_
 	}
 
 	if (ops.size() == 0)
-		throw USER_EXCEPTION2(SE3022, "empty query");
+		return NULL;
 	if (ops.size() == 1)
 		return ops[0];
 	else
@@ -288,7 +288,7 @@ FtQuery* ft_parse_query_or(struct ft_parser_state *ps, char *in_tag, ftq_token_t
 	}
 
 	if (ops.size() == 0)
-		throw USER_EXCEPTION2(SE3022, "empty query");
+		return NULL;
 	if (ops.size() == 1)
 		return ops[0];
 	else
