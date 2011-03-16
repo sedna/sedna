@@ -38,6 +38,7 @@ public:
 	ftc_doc_t cur_doc;
 	ft_index_op_t op;
 	FtStemmer *stemmer;
+	FtsData *ft_data;
 	std::map<std::string,tag_info> tagmap;
 
 	ft_parse_data() {}
@@ -51,7 +52,18 @@ static void process_word(ft_parse_data *parse_data)
 		parse_data->word_buf[parse_data->word_len] = 0;
 
 		if (parse_data->stemmer != NULL)
+		{
 			word = parse_data->stemmer->stem_word(word, parse_data->word_len);
+			if (parse_data->ft_data->stem_type == ftst_both)
+			{
+				int l = parse_data->word_len;
+				if (l >= FT_MAX_WORD_LENGTH)
+					l = FT_MAX_WORD_LENGTH-1;
+				parse_data->word_buf[l] = FT_NOSTEM_MARKER;
+				parse_data->word_buf[l+1] = '\x0';
+				ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind);
+			}
+		}
 
 		ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, word, parse_data->word_ind);
 
@@ -98,20 +110,25 @@ static void p_end(void *state, const char *el)
 		parse_data->tagmap.erase(it);
 
 		U_ASSERT(parse_data->word_len == 0);
-		size_t len = strlen(el);
-		if (len > FT_MAX_WORD_LENGTH-1)
-			len = FT_MAX_WORD_LENGTH-1;
-		memcpy(parse_data->word_buf, el, len);
-		parse_data->word_buf[len] = FT_TAG_OPEN_MARKER;
-		parse_data->word_buf[len+1] = '\x0';
-		ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, start_ind);
+		U_ASSERT(parse_data->word_ind >= start_ind);
 
-		if (len > FT_MAX_WORD_LENGTH-1)
-			len = FT_MAX_WORD_LENGTH-1;
-		memcpy(parse_data->word_buf, el, len);
-		parse_data->word_buf[len] = FT_TAG_CLOSE_MARKER;
-		parse_data->word_buf[len+1] = '\x0';
-		ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind);
+		if (parse_data->word_ind > start_ind)
+		{
+			size_t len = strlen(el);
+			if (len > FT_MAX_WORD_LENGTH-1)
+				len = FT_MAX_WORD_LENGTH-1;
+			memcpy(parse_data->word_buf, el, len);
+			parse_data->word_buf[len] = FT_TAG_OPEN_MARKER;
+			parse_data->word_buf[len+1] = '\x0';
+			ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, start_ind);
+
+			if (len > FT_MAX_WORD_LENGTH-1)
+				len = FT_MAX_WORD_LENGTH-1;
+			memcpy(parse_data->word_buf, el, len);
+			parse_data->word_buf[len] = FT_TAG_CLOSE_MARKER;
+			parse_data->word_buf[len+1] = '\x0';
+			ftc_upd_word(parse_data->cur_idx, parse_data->cur_doc, parse_data->word_buf, parse_data->word_ind);
+		}
 	}
 }
 
@@ -162,6 +179,7 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ftc_index
 	parse_data->cur_doc = ftc_get_doc(ftc_idx, acc);
 	parse_data->op = op;
 	parse_data->stemmer = ftc_get_stemmer(ftc_idx);
+	parse_data->ft_data = ftc_get_fts_data(ftc_idx);
 
 	XML_SetUserData(p, parse_data);
 	XML_SetReturnNSTriplet(p,XML_TRUE);
@@ -324,7 +342,8 @@ static void hl_fragment_handle_word_start(struct ft_parse_data_hl *parse_data, i
 {
 	if ((parse_data->last_eff_ch == '.' && iswupper(ch)) || parse_data->last_eff_ch == 0)
 	{ //sentence start
-		if (parse_data->word_ind >= parse_data->ht0 - hl_max_words_before && parse_data->word_ind <= parse_data->ht0 - hl_min_words_before)
+		if (parse_data->word_ind >= parse_data->ht0 - hl_max_words_before &&
+			(parse_data->word_ind <= parse_data->ht0 - hl_min_words_before || (parse_data->word_ind <= parse_data->ht0 && !parse_data->in_fragment)))
 		{
 			hl_clear(parse_data);
 			parse_data->in_fragment = true;

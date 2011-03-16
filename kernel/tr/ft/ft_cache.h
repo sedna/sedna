@@ -21,7 +21,7 @@ typedef void* ftc_index_t;
 //ft_index_sem must be accuired!
 ftc_index_t ftc_get_index(const char *name, struct FtsData *fts_data);
 
-ftc_index_t ftc_create_temp_index();
+ftc_index_t ftc_create_temp_index(ft_stem_type ftst);
 void ftc_delete_temp_index(ftc_index_t idx);
 class FtcTempIndex
 {
@@ -29,7 +29,7 @@ private:
 	ftc_index_t ftc_ind;
 public:
 	//TODO: make sure ftc_create_temp_index doesnt throw exceptions and ftc_delete_temp_index is ok when ftc_ind is null
-	FtcTempIndex() {ftc_ind = ftc_create_temp_index(); }
+	FtcTempIndex(ft_stem_type ftst) {ftc_ind = ftc_create_temp_index(ftst); }
 	~FtcTempIndex() { ftc_delete_temp_index(ftc_ind); }
 	ftc_index_t get() { return ftc_ind; }
 
@@ -43,6 +43,7 @@ ftc_doc_t ftc_add_new_doc(ftc_index_t idx, xptr acc);
 ftc_doc_t ftc_get_doc(ftc_index_t idx, xptr acc);
 
 FtStemmer *ftc_get_stemmer(ftc_index_t idx);
+FtsData *ftc_get_fts_data(ftc_index_t idx);
 
 //delete document from index
 void ftc_del_doc(ftc_index_t index, const xptr acc);

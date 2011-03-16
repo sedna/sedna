@@ -97,12 +97,12 @@ struct ft_parser_state
 	FtStemmer *stemmer;
 };
 
-FtQueryTermBase *create_term(ftc_index_t idx, const char *in_tag)
+FtQueryTermBase *create_term(ftc_index_t idx, const char *in_tag, bool stem)
 {
 	if (in_tag == NULL)
-		return new FtQueryTerm(idx);
+		return new FtQueryTerm(idx, stem);
 
-	FtQueryTermInElement *q = new FtQueryTermInElement(idx);
+	FtQueryTermInElement *q = new FtQueryTermInElement(idx, stem);
 
 	int in_tag_len = strlen(in_tag);
 	if (in_tag_len >= FT_MAX_WORD_LENGTH)
@@ -122,9 +122,9 @@ FtQueryTermBase *create_term(ftc_index_t idx, const char *in_tag)
 
 //parse a WORD token from lexer into a set FtQueryTerm-s and append them to a vector
 template <typename T>
-static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector<T*> *vec, const char *in_tag)
+static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector<T*> *vec, const char *in_tag, bool stem)
 {
-	FtQueryTermBase *q = create_term(ps->ftc_idx, in_tag);
+	FtQueryTermBase *q = create_term(ps->ftc_idx, in_tag, stem);
 	const char *p = tok->text;
 	int len = tok->leng, word_len = 0;
 	bool overfl = false;
@@ -143,7 +143,8 @@ static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector
 			{
 				U_ASSERT(word_len <= FT_MAX_WORD_LENGTH);
 				q->term_buf[word_len] = 0;
-				if (ps->stemmer != NULL)
+				//FIXME: move this to FtQueryTerm*
+				if (ps->stemmer != NULL && (stem || ftc_get_fts_data(q->get_ftc_idx())->stem_type != ftst_both))
 				{
 					const char *stemmed_term = ps->stemmer->stem_word(q->term_buf, word_len);
 					strncpy(q->term_buf, stemmed_term, FT_MAX_WORD_LENGTH);
@@ -153,7 +154,7 @@ static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector
 				if (ch == UTF8_EOF)
 					q = NULL;
 				else
-					q = create_term(ps->ftc_idx, in_tag);
+					q = create_term(ps->ftc_idx, in_tag, stem);
 				word_len = 0;
 				overfl = false;
 			}
@@ -175,7 +176,15 @@ FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok, c
 
 
 		if (tok->type == ftq_token::WORD || tok->type == ftq_token::NUMBER)
-			ft_parse_term(ps, tok, &terms, in_tag);
+		{
+			if (ps->scanner.peek()->type == ftq_token::TILDE_MOD)
+			{
+				ft_parse_term(ps, tok, &terms, in_tag, true);
+				ps->scanner.next();
+			}
+			else
+				ft_parse_term(ps, tok, &terms, in_tag, false);
+		}
 
 		//we allow pharase to end abruptly
 		if (tok->type == start_tok || tok->type == ftq_token::END)

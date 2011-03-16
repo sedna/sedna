@@ -104,6 +104,7 @@ class FtQueryTerm : public FtQueryTermBase
 private:
 	ftc_index_t ftc_idx;
 	ftc_scan_result ftc_scan;
+	bool stem;
 
 	ft_acc_uint_t next_acc_i;
 	ft_word_ind_t next_ind;
@@ -114,7 +115,7 @@ public:
 	virtual ftc_index_t get_ftc_idx() {return this->ftc_idx; }
 	virtual uint64_t get_doc_len(ft_acc_uint_t acc_i) { return ftc_scan.get_doc_len(acc_i); }
 
-	FtQueryTerm(ftc_index_t idx) : ftc_idx(idx), ftc_scan(idx) {}
+	FtQueryTerm(ftc_index_t idx, bool _stem) : ftc_idx(idx), ftc_scan(idx), stem(_stem) {}
 	virtual ~FtQueryTerm();
 
 	virtual ft_acc_uint_t get_next_result();
@@ -129,6 +130,7 @@ class FtQueryTermInElement: public FtQueryTermBase
 private:
 	ftc_index_t ftc_idx;
 	ftc_scan_result ftc_scan, ftc_scan_opentag, ftc_scan_closetag;
+	bool stem;
 
 	ft_acc_uint_t opentag_acc_i, closetag_acc_i;
 	int opentag_ind, closetag_ind;
@@ -144,7 +146,7 @@ public:
 	virtual ftc_index_t get_ftc_idx() {return this->ftc_idx; }
 	virtual uint64_t get_doc_len(ft_acc_uint_t acc_i) { return ftc_scan.get_doc_len(acc_i); }
 
-	FtQueryTermInElement(ftc_index_t idx) : ftc_idx(idx), ftc_scan(idx), ftc_scan_opentag(idx), ftc_scan_closetag(idx) {}
+	FtQueryTermInElement(ftc_index_t idx, bool _stem) : ftc_idx(idx), ftc_scan(idx), ftc_scan_opentag(idx), ftc_scan_closetag(idx), stem(_stem) {}
 	virtual ~FtQueryTermInElement();
 
 	virtual ft_acc_uint_t get_next_result();

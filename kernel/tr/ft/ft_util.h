@@ -26,6 +26,7 @@ private:
 
 	ft_index_impl impl;
 	char *stemming;
+	ft_stem_type ftst;
 	char *use_index;
 
 	FtQueryProcessor *ftqp;

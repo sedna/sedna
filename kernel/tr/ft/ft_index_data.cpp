@@ -443,6 +443,13 @@ void ft_index_cell_object::parse_options(const char * options)
 				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
 			stemming = cat_strcpy(this, op.opt_value());
 		}
+		else if (!strcmp(op.opt_name(), "stemtype"))
+		{
+			if (!strcmp(op.opt_value(), "both"))
+				fts_data.stem_type = ftst_both;
+			else
+				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
+		}
 	}
 }
 

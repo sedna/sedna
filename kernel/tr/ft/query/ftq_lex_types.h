@@ -20,6 +20,7 @@ struct ftq_token
 		BR_OPEN,
 		BR_CLOSE,
 		OR,
+		TILDE_MOD,
 		_ERROR_,
 	};
 };
