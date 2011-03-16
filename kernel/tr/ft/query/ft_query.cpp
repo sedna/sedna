@@ -112,6 +112,14 @@ void FtQueryTerm::do_init()
 }
 void FtQueryTerm::do_open()
 {
+	if (!stem && ftc_get_fts_data(ftc_idx)->stem_type == ftst_both)
+	{
+		int l = strlen(term_buf);
+		if (l >= FT_MAX_WORD_LENGTH)
+			l = FT_MAX_WORD_LENGTH-1;
+		term_buf[l] = FT_NOSTEM_MARKER;
+		term_buf[l+1] = '\x0';
+	}
 	ftc_scan.scan_word(term_buf);
 	next_acc_i = FT_ACC_UINT_NULL;
 	ftc_scan.get_next_occur(&next_acc_i, &next_ind);
@@ -167,6 +175,15 @@ void FtQueryTermInElement::do_init()
 }
 void FtQueryTermInElement::do_open()
 {
+	if (!stem && ftc_get_fts_data(ftc_idx)->stem_type == ftst_both)
+	{
+		int l = strlen(term_buf);
+		if (l >= FT_MAX_WORD_LENGTH)
+			l = FT_MAX_WORD_LENGTH-1;
+		term_buf[l] = FT_NOSTEM_MARKER;
+		term_buf[l+1] = '\x0';
+	}
+
 	ftc_scan.scan_word(term_buf);
 	ftc_scan_opentag.scan_word(opentag_buf);
 	ftc_scan_closetag.scan_word(closetag_buf);

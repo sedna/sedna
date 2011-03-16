@@ -13,7 +13,7 @@
 #include "tr/crmutils/ftserializer.h"
 
 FtHighlighter::FtHighlighter(bool _hl_fragment_, PPOpIn* _seq_) : seq(_seq_), hl_fragment(_hl_fragment_),
-											impl(ft_ind_undefined), stemming(NULL),use_index(NULL),
+										impl(ft_ind_undefined), stemming(NULL),ftst(ftst_default),use_index(NULL),
 											ftqp(NULL), ftc_ind(NULL)
 #ifdef SE_ENABLE_DTSEARCH
 											,sj(NULL)
@@ -77,6 +77,13 @@ void FtHighlighter::set_options(const char *options)
 				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
 			stemming = strdup(op.opt_value());
 		}
+		else if (!strcmp(op.opt_name(), "stemtype"))
+		{
+			if (!strcmp(op.opt_value(), "both"))
+				ftst = ftst_both;
+			else
+				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
+		}
 		else if (!strcmp(op.opt_name(), "use_index"))
 		{
 			if (use_index != NULL)
@@ -105,7 +112,7 @@ void FtHighlighter::set_request(tuple_cell &tc)
 			throw USER_EXCEPTION2(SE1002, "use_index is not supported for ft_ind_native");
 
 		U_ASSERT(ftc_ind == NULL);
-		ftc_ind = new FtcTempIndex();
+		ftc_ind = new FtcTempIndex(ftst);
 
 		ftc_ind->set_stemming(stemming);
 

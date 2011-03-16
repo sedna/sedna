@@ -38,17 +38,20 @@ Word {WordChar}+
 WS [ \t\n\r]+
 Number [0-9]+
 
+%s after_word
+
 %%
 
-"CONTAINS" { return ftq_token::CONTAINS; }
-"OR"       { return ftq_token::OR; }
-"\""       { return ftq_token::QUOT; }
-"'"        { return ftq_token::APOS; }
-":"        { return ftq_token::COLON; }
-"("        { return ftq_token::BR_OPEN; }
-")"        { return ftq_token::BR_CLOSE; }
-{Number}   { return ftq_token::NUMBER; }
-{Word}     { return ftq_token::WORD; }
-{WS}+      { /* skip */ }
+"CONTAINS" { BEGIN(INITIAL); return ftq_token::CONTAINS; }
+"OR"       { BEGIN(INITIAL); return ftq_token::OR; }
+"\""       { BEGIN(INITIAL); return ftq_token::QUOT; }
+"'"        { BEGIN(INITIAL); return ftq_token::APOS; }
+":"        { BEGIN(INITIAL); return ftq_token::COLON; }
+"("        { BEGIN(INITIAL); return ftq_token::BR_OPEN; }
+")"        { BEGIN(INITIAL); return ftq_token::BR_CLOSE; }
+{Number}   { BEGIN(INITIAL); return ftq_token::NUMBER; }
+{Word}     { BEGIN(after_word); return ftq_token::WORD; }
+<after_word>"~" { BEGIN(INITIAL); return ftq_token::TILDE_MOD; }
+{WS}+      { BEGIN(INITIAL); /* skip */ }
 
-.|\n       { return ftq_token::_ERROR_; }
+.|\n       { BEGIN(INITIAL); return ftq_token::_ERROR_; }

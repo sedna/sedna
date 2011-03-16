@@ -19,8 +19,11 @@ struct FtsData
 	int npartitions;
 	int naccs;
 	xptr doc_stats;
+
+	//options
+	ft_stem_type stem_type;
 	
-	FtsData() : npartitions(0), naccs(0), doc_stats(XNULL) {}
+	FtsData() : npartitions(0), naccs(0), doc_stats(XNULL), stem_type(ftst_default) {}
 };
 
 class FtsUpdater

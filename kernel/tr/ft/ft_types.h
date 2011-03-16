@@ -35,6 +35,7 @@ typedef int ft_word_ind_t;
 #define FT_TAG_OPEN_MARKER     '*'
 #define FT_TAG_CLOSE_MARKER    '/'
 
+#define FT_NOSTEM_MARKER       '='
 
 typedef float ft_float;
 
@@ -52,6 +53,12 @@ enum ft_index_impl
     ft_ind_dtsearch,
     ft_ind_native,
 	ft_ind_undefined
+};
+
+enum ft_stem_type
+{
+	ftst_default,
+	ftst_both
 };
 
 struct ft_custom_cell

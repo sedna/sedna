@@ -41,8 +41,10 @@ struct ftc_index_data
 	struct FtsData ft_data;
 	int naccs;
 	FTC_ALLOCATOR ind_alloc;
+
 	FtStemmer *stemmer; //TODO: add some destructor and delete it + consider sharing stemmers between indexes
 	bool has_stemmer; //flag to avoid searching for stemmer more than once
+
 	int next_op_ind;
 #ifdef _MSC_VER
 #pragma warning( disable : 4200 )
@@ -70,7 +72,7 @@ struct ftc_index_data
 		U_ASSERT(id->is_persistent());
 		return m_alloc.deref(ptr);
 	}
-	static ftc_index_t create_tmp()
+	static ftc_index_t create_tmp(ft_stem_type ftst)
 	{
 		void* ptr = malloc(sizeof(ftc_index_data) + 1); //TODO: check null
 		ftc_index_data *id = (ftc_index_data*)ptr;
@@ -80,6 +82,7 @@ struct ftc_index_data
 		id->reset();
 		id->name[0] = '\x0';
 		new (&id->ft_data) FtsData();
+		id->ft_data.stem_type = ftst;
 		fts_create(&id->ft_data);
 		U_ASSERT(!id->is_persistent());
 		return ptr;
@@ -274,9 +277,9 @@ ftc_index_t ftc_get_index(const char *name, struct FtsData *fts_data)
 	return *e;
 }
 
-ftc_index_t ftc_create_temp_index()
+ftc_index_t ftc_create_temp_index(ft_stem_type ftst)
 {
-	void *data = ftc_index_data::create_tmp();
+	void *data = ftc_index_data::create_tmp(ftst);
 	return data;
 }
 
@@ -359,6 +362,12 @@ FtStemmer *ftc_get_stemmer(ftc_index_t idx)
 	}
 
 	return id->stemmer;
+}
+
+FtsData *ftc_get_fts_data(ftc_index_t idx)
+{
+	ftc_index_data *id = ftc_index_data::get(idx);
+	return &id->ft_data;
 }
 
 #include "common/errdbg/d_printf.h"
