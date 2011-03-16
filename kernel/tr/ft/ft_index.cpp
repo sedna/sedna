@@ -365,7 +365,7 @@ static void hl_fragment_handle_word_start(struct ft_parse_data_hl *parse_data, i
 	{//not sentence start
 		if (parse_data->word_ind <= parse_data->ht0)
 		{
-			if (parse_data->word_ind == parse_data->ht0 - hl_max_words_before) //FIXME
+			if (parse_data->word_ind >= parse_data->ht0 - hl_max_words_before && !parse_data->in_fragment)
 			{
 				//no need to call hl_clear - output must be clear here anyway
 				parse_data->in_fragment = true;
@@ -427,7 +427,8 @@ static void hl_data(void *state, const char *s, int len)
 			if (!parse_data->hl_fragment || parse_data->in_fragment)
 				hl_putch(parse_data, ch_orig);
 		}
-		parse_data->last_eff_ch = ch_orig;
+		if (!iswspace(ch_orig))
+			parse_data->last_eff_ch = ch_orig;
 	}
 }
 
