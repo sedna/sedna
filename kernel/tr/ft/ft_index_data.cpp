@@ -459,6 +459,16 @@ void ft_index_cell_object::write_options_str(op_str_buf *buf)
 	buf->append(impl_str());
 	if (stemming != NULL && stemming[0] != '\x0')
 		OptionsParser::append_option(buf, "stemming", stemming);
+	switch (fts_data.stem_type)
+	{
+	case ftst_default:
+		break;
+	case ftst_both:
+		OptionsParser::append_option(buf, "stemtype", "both");
+		break;
+	default:
+		throw USER_EXCEPTION2(SE3022, "unknown stem_type");
+	}
 }
 
 void ft_index_cell_object::serialize_info(xptr left_sib, xptr parent)
