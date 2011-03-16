@@ -90,6 +90,21 @@ void FtHighlighter::set_options(const char *options)
 				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
 			use_index = strdup(op.opt_value());
 		}
+		else if (!strcmp(op.opt_name(), "as_index"))
+		{
+			ft_index_cell_cptr idc(op.opt_value());
+			if (!idc.found())
+				throw USER_EXCEPTION2(SE3022, "full-text index not found");
+
+			this->impl = idc->impl;
+
+			if (stemming != NULL)
+				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
+			if (idc->stemming != NULL)
+				this->stemming = strdup(idc->stemming);
+
+			this->ftst = idc->fts_data.stem_type;
+		}
 		else
 			throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
 	}
@@ -129,8 +144,7 @@ void FtHighlighter::set_request(tuple_cell &tc)
 		if (use_index != NULL)
 		{
 			sj=se_new SednaSearchJob(true, hl_fragment);
-			ftc_index_t ftc_idx;
-			ft_index_cell_cptr ft_idx = find_ft_index(use_index, &ftc_idx);
+			ft_index_cell_cptr ft_idx = find_ft_index(use_index, NULL);
 			if (!ft_idx.found())
 				throw USER_EXCEPTION(SE1061);
 			sj->set_index(&*ft_idx);
