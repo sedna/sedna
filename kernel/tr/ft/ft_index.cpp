@@ -141,7 +141,7 @@ static void p_data(void *state, const char *s, int len)
 	{
 		if (ft_norm_char(&ch))
 		{
-			if (!parse_data->overfl)
+			if (ch != -1 && !parse_data->overfl)
 				parse_data->overfl = !CharsetHandler_utf8::utf8_putch(ch, parse_data->word_buf, &parse_data->word_len, FT_MAX_WORD_LENGTH);
 		}
 		else
@@ -247,6 +247,7 @@ struct ft_parse_data_hl
 	int last_eff_ch;
 	bool hit;
 	bool in_word;
+	int word_len; //if !in_word - value is undefined
 	bool done;
 	bool in_fragment;
 };
@@ -283,6 +284,8 @@ static void hl_putch(struct ft_parse_data_hl *parse_data, int ch)
 
 static void hl_word_end(struct ft_parse_data_hl *parse_data)
 {
+	if (parse_data->in_word && parse_data->hit && parse_data->word_len == 0)
+		return; //FIXME: now we include words that only consist of ignored word chars with the following hit
 	if (parse_data->hit && (!parse_data->hl_fragment || parse_data->in_fragment))
 	{
 		hl_puts(parse_data, opentag_str);
@@ -292,7 +295,8 @@ static void hl_word_end(struct ft_parse_data_hl *parse_data)
 	parse_data->hit = false;
 	if (parse_data->in_word)
 	{
-		parse_data->word_ind++;
+		if (parse_data->word_len > 0)
+			parse_data->word_ind++;
 		parse_data->in_word = false;
 	}
 }
@@ -416,8 +420,10 @@ static void hl_data(void *state, const char *s, int len)
 					parse_data->cur_ind++;
 				}
 				parse_data->in_word = true;
-
+				parse_data->word_len = 0;
 			}
+			if (ch != -1)
+				parse_data->word_len++;
 			if (!parse_data->hl_fragment || parse_data->in_fragment)
 				hl_putch(parse_data, ch_orig);
 		}
