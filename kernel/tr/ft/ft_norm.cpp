@@ -20,6 +20,12 @@ bool ft_norm_char(int *ch)
 	int c_cl, c_type, c_case;
 	c_cl = ucp_findchar(*ch, &c_type, &c_case);
 
+	if (c_type == ucp_Mn)
+	{
+		*ch = -1;
+		return true;
+	}
+
 	if (c_case != 0 && (c_type == ucp_Lt || c_type == ucp_Lu))
 		*ch = c_case;
 

@@ -161,7 +161,9 @@ ft_float FtQueryTerm::ft_get_score(ft_float *scores)
 }
 void FtQueryTerm::get_next_occur(ft_acc_uint_t *acc, ft_word_ind_t *word_ind)
 {
-	ftc_scan.get_next_occur(acc, word_ind);
+	*acc = next_acc_i;
+	*word_ind = next_ind;
+	ftc_scan.get_next_occur(&next_acc_i, &next_ind);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
