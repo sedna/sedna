@@ -512,7 +512,7 @@ void se_get_in_scope_namespaces(Node node, std::vector<xmlns_ptr> &result, dynam
         }
     }
 */
-    while (node.getNodeType() != virtual_root) {
+    if (!node.isNull()) while (node.getNodeType() != virtual_root) {
         node.checkp();
         schema_node_cptr scm = node.getSchemaNode();
 

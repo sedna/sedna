@@ -8,6 +8,11 @@
 CatalogMemoryContext *CATALOG_TEMPORARY_CONTEXT = NULL;
 CatalogMemoryContext *CATALOG_COMMON_CONTEXT = NULL;
 
+void * local_space_base = NULL;
+#define catalog_space_base local_space_base
+
+/* As soon as persistent context is the same as temporary */
+
 #ifdef CATMEM_TRACE
 unsigned allocated_objects = 0;
 unsigned deallocated_objects = 0;

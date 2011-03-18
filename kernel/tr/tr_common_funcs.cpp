@@ -425,7 +425,6 @@ void on_kernel_recovery_statement_begin()
 void on_kernel_recovery_statement_end()
 {
     tr_globals::estr_global.clear();
-    if (pe_local_aspace->free_all) pe_local_aspace->free_all();
     vmm_delete_tmp_blocks();
 }
 

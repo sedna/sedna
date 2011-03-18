@@ -323,10 +323,10 @@ public:
         temp_docs.push_back(n);
     }
 
-    void add_cdata_section_element(const std::string &element)
+    void add_cdata_section_element(xsd::QName qName)
     {
         st_cxt->get_serialization_options()
-          ->cdataSectionElements.insert(element);
+          ->cdataSectionElements.insert(qName);
     }
 
     void global_variables_open();

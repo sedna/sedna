@@ -135,6 +135,13 @@ public :
 #define CONTEXT_MAGIC 0xC0C0C0C0
 
 /*
+  These are two variables, that can be used as root for contexts
+*/
+
+extern void * local_space_base;
+extern void * catalog_space_base;
+
+/*
  * This class represents some type of memory context.
  * That is: it allocates and frees memory by chunks of size TEMP_CHUNK_SIZE.
  *

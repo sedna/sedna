@@ -16,43 +16,17 @@
 
 using namespace std;
 
-////////////////////////////////////////////////////////////////////////////////
-/// PathExpr memory management
-////////////////////////////////////////////////////////////////////////////////
-
-void * pe_malloc(size_t size)
-{
-    return cat_malloc_context(CATALOG_TEMPORARY_CONTEXT, size);
-};
-
-void pe_free(void *) { };
-void pe_free_all() { };
-
-void * cat_pe_malloc(size_t size)
-{
-    return cat_malloc_context(CATALOG_PERSISTENT_CONTEXT, size);
-};
-
-void cat_pe_free(void *) { };
-void cat_pe_free_all() { };
-
-PathExprMemoryManager pe_local_memory_manager = { pe_malloc, pe_free, pe_free_all, NULL };
-PathExprMemoryManager pe_catalog_memory_manager = { cat_pe_malloc, cat_pe_free, cat_pe_free_all, NULL };
-
-PathExprMemoryManager * pe_local_aspace = &pe_local_memory_manager;
-PathExprMemoryManager * pe_catalog_aspace = &pe_catalog_memory_manager;
-
 ///////////////////////////////////////////////////////////////////////////////
 /// PathExpr program logic
 ///////////////////////////////////////////////////////////////////////////////
-void *create_PathExpr(const PathExprDistr &distr, PathExprMemoryManager * mm)
+void * create_PathExpr(const PathExprDistr &distr, void * memory_parent)
 {
-    PathExpr *path = (PathExpr*)mm->alloc(sizeof(PathExpr));
+    PathExpr *path = cat_malloc(memory_parent, sizeof(PathExpr));
     path->size = distr.size();
     if (path->size == 0) path->nto = NULL;
     else
     {
-        path->nto = (NodeTestOr*)mm->alloc(sizeof(NodeTestOr) * path->size);
+        path->nto = cat_malloc ( NodeTestOr*)mm->alloc(sizeof(NodeTestOr) * path->size);
 
         for (size_t i = 0; i < path->size; i++)
         {
@@ -65,62 +39,14 @@ void *create_PathExpr(const PathExprDistr &distr, PathExprMemoryManager * mm)
     return path;
 }
 
-void delete_PathExpr(PathExpr *path)
-{
-    for (size_t i = 0; i < path->size; i++)
-    {
-        NodeTestOr &nto = path->nto[i];
-        for (size_t j = 0; j < nto.size; j++)
-        {
-            NodeTest &nt = nto.nt[j];
-
-            switch (nt.type)
-            {
-                case node_test_wildcard_ncname_star:
-                    {
-                        xs_NCName_release(nt.data.ncname_prefix, pe_free);
-                        nt.data.ncname_prefix = NULL;
-                        xs_anyURI_release(nt.data.uri, pe_free);
-                        nt.data.uri = NULL;
-                        break;
-                    }
-                case node_test_wildcard_star_ncname:
-                    {
-                        xs_NCName_release(nt.data.ncname_local, pe_free);
-                        nt.data.ncname_local = NULL;
-                        break;
-                    }
-                case node_test_qname:
-                case node_test_element:
-                case node_test_attribute:
-                case node_test_document:
-                    {
-                        xs_NCName_release(nt.data.ncname_prefix, pe_free);
-                        nt.data.ncname_prefix = NULL;
-                        xs_anyURI_release(nt.data.uri, pe_free);
-                        nt.data.uri = NULL;
-                        xs_NCName_release(nt.data.ncname_local, pe_free);
-                        nt.data.ncname_local = NULL;
-                        break;
-                    }
-                default: ;
-            }
-        }
-        pe_free(nto.nt);
-    }
-    pe_free(path->nto);
-    pe_free(path);
-}
-
-
 std::string
 NodeTest::to_string(const NodeTestType& type, const NodeTestData& data)
 {
     string res;
     switch (type)
     {
-        case node_test_processing_instruction: res += "processing-instruction(";
-                                               res += xs_NCName2string(data.ncname_local);
+        case node_test_processing_instruction: res += "processing-instruction(" + xsd::NCName(data.ncname_local).;
+                                               res += ;
                                                res += ")";
                                                break;
 
@@ -467,7 +393,7 @@ void set_node_test_parameters(scheme_list *lst,
     set_node_test_type_and_data(lst, nt.type, nt.data, mm);
 }
 
-PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, PathExprMemoryManager * mm)
+PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, void * memory_parent)
 {
     size_t i = 0, j = 0;
     PathExprDistr distr(path_lst->size(), 0);
@@ -483,7 +409,7 @@ PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, PathExprMemor
         distr[i] = node_test_or_lst->size();
     }
 
-    PathExpr *path_expr = (PathExpr*)create_PathExpr(distr, mm);
+    PathExpr *path_expr = (PathExpr*)create_PathExpr(distr, memory_parent);
 
     for (i = 0; i < path_lst->size(); i++)
     {

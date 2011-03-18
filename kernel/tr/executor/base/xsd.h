@@ -13,7 +13,7 @@
 #include "common/sedna.h"
 #include "common/xptr.h"
 
-#include "tr/structures/schema.h"
+#include "tr/structures/xmlns.h"
 
 class dynamic_context;
 
@@ -52,119 +52,158 @@ xs:unsignedByte         1                   uint8_t
 xs:positiveInteger      8                   uint64_t
 **/
 
-///
-/// XML Schema Part 2 NCName Functions
-///
-/// xs_NCName is a string, that could be created in main memory or persistent heap (PH).
-/// So we have to provide facilities for doing this. Moreover, we could not just add
-/// 'bool persistent' parameter to functions because while constructing XPath expressions
-/// we should aware of memory being allocated. For this purpose we provide addition 
-/// functions like 'PathExpr_pers_malloc' and 'PathExpr_malloc' that we could pass as 
-//// paramters to xs_NCName_create.
 
-char *xs_NCName_create(const char* value, void* (*alloc_func)(size_t));
-void  xs_NCName_release(char *ncname, void (*free_func)(void*));
-std::string  xs_NCName2string(const char *ncname);
-void  xs_NCName_print_to_lr(const char *ncname, std::ostream& str);
+/*
+  XML Schema Datatypes
 
-///
-/// XML Schema Part 2 anyURI Functions
-///
-/// xs_anyURI is a string, that could be created in main memory or persistent heap (PH).
-/// So we have to provide facilities for doing this. Moreover, we could not just add
-/// 'bool persistent' parameter to functions because while constructing XPath expressions
-/// we should aware of memory being allocated. For this purpose we provide addition 
-/// functions like 'PathExpr_pers_malloc' and 'PathExpr_malloc' that we could pass as 
-//// paramters to xs_anyURI_create.
-char *xs_anyURI_create(const char* value, void* (*alloc_func)(size_t));
-void  xs_anyURI_release(char *uri, void (*free_func)(void*));
-void  xs_anyURI_print(const char *uri, std::ostream& str);
-void  xs_anyURI_print_to_lr(const char *uri, std::ostream& str);
+*/
 
+namespace xsd {
 
-///
-/// XML Schema Part 2 QName (qualified name from Namespaces in XML standard) Functions
-///
-/// xs_QName is a string, that could be created in main memory or persistent heap (PH).
-/// So we have to provide facilities for doing this. Moreover, we could not just add
-/// 'bool persistent' parameter to functions because while constructing XPath expressions
-/// we should aware of memory being allocated. For this purpose we provide addition 
-/// functions like 'PathExpr_pers_malloc' and 'PathExpr_malloc' that we could pass as 
-/// paramters to xs_QName_create.
-/// when xmlns is known use this function
-char *xs_QName_create(xmlns_ptr xmlns,
-                      const char *local_part, 
-                      void* (*alloc_func)(size_t));
-/// backs up xs:QName() function
-char *xs_QName_create(const char *uri,
-                      const char *prefix,
-                      const char *local,
-                      void* (*alloc_func)(size_t),
-                      dynamic_context *cxt);
-/// backs up fn:QName() function (prefix_and_local constains prefix and local part separated by ':')
-char *xs_QName_create(const char* uri,
-                      const char* prefix_and_local, 
-                      void* (*alloc_func)(size_t),
-                      dynamic_context *cxt);
-/// backs up fn:resolve-QName() function (prefix_and_local constains prefix and local part separated by ':')
-char *xs_QName_create(const char* prefix_and_local,
-                      const xptr& elem_node,
-                      void* (*alloc_func)(size_t),
-                      dynamic_context *cxt);
+/*
+ *
+ * Serialize returns the serialized form of NCName within the memory context, defined by parent.
+ * If no memory context defined, uses malloc.
+ */
 
+typedef counted_ptr<char, de_free<char> > counted_cstr;
 
-void  xs_QName_release(char *qname, void (*free_func)(void*));
-const char *xs_QName_get_prefix(const char* qname);
-const char *xs_QName_get_uri(const char* qname);
-const char *xs_QName_get_local_name(const char* qname);
-xmlns_ptr xs_QName_get_xmlns(const char* qname);
+class Name {
+  private:
+    char * name;
+  public:
+    ~Name() {};
+    /* deserializes name */
+    Name(const char * value) : name(value) { };
+    /* creates new name */
+    Name(const char * value, void * memory_parent);
 
-std::string xs_QName2string(const char* prefix,
-                            const char* local);
+    Name(const Name & from) { this->name = from.name; };
 
-void xs_QName_print_to_lr(const char* prefix, 
-                          const char* local,
-                          const char* uri,
-                          std::ostream& str);
+    Name & operator=(Name & to);
 
+    void toLR(std::ostream& os) const;
+    std::string toString() const;
+    char const * serialize(void * parent);
 
+    inline const char * getValue() const { return name.get(); };
+    inline bool valid() const { return name.get() != NULL; };
+};
 
-inline bool _xs_QName_equal(const char* uri1, const char *local1, const char *uri2, const char *local2)
-{
-    if (uri1 != uri2)
-    {
-        if (uri1 == NULL || uri2 == NULL) return false;
-        if (strcmp(uri1, uri2) != 0) return false;
-    }
+/// XML Schema Part 2 NCName
 
-    return strcmp(local1, local2) == 0;
+class NCName : public Name {
+  public:
+    static void * defaultContext;
+
+    NCName(const char * value) : Name(value) {};
+//    NCName(const char * value, void * memory_parent) : Name(value) {};
+    NCName(const NCName & from) : Name(from) {};
+
+    static NCName checkQuietly(const char * name);
+    static NCName check(const char * name);
+};
+
+/// XML Schema Part 2 anyURI
+
+class AnyURI : public Name {
+  public:
+    static void * defaultContext;
+
+    AnyURI(const char * value) : Name(value) {};
+    AnyURI(const AnyURI & from) : Name(from) {};
+
+    static AnyURI checkQuietly(const char * uri);
+    static AnyURI check(const char * uri);
+};
+
+/// XML Schema Part 2 QName (qualified name from Namespaces in XML standard)
+
+class QName {
+  private:
+    xmlns_ptr ns;
+    counted_cstr localName;
+
+    QName(); // invalid!
+    QName(xmlns_ptr ns, const char * localName);
+    QName(xmlns_ptr ns, const char * localName, size_t len);
+  public:
+    static void * defaultContext;
+
+    ~QName() {};
+    QName(const QName & from) { this->ns = from.ns; this->localName = from.localName; }
+
+    void toLR(std::ostream& os) const;
+    const char * serialize(void * parent) const;
+    std::string getColonizedName() const;
+
+    inline xmlns_ptr getXmlNs() const { return ns; };
+    inline const char * getUri() const { return ns == NULL_XMLNS ? "" : ns->get_uri(); };
+    inline const char * getPrefix() const { return ns == NULL_XMLNS ? "" : ns->get_prefix(); };
+    inline const char * getLocalName() const { return localName.get(); };
+
+    inline bool emptyUri() const { return ns == NULL_XMLNS || ns->empty_uri(); };
+
+    inline bool valid() const { return localName.get() != NULL; };
+
+    inline bool equals(const QName & to) const {
+        return same_xmlns_uri(ns, to.ns) && strcmp(localName.get(), to.localName.get());
+    };
+
+    /* operators are overloaded to store class in set */
+
+    inline bool operator==(const QName &against) const { return equals(against); };
+
+    inline bool operator<(const QName &against) const {
+        int cmp;
+
+        // This comparison should at first check validity, then
+        // compare by ns (if they exists) then by localname
+
+        cmp = (valid() ? 1 : 0) - (against.valid() ? 1 : 0);
+
+        if (cmp != 0 || !valid()) {
+          // If both qnames are invalid, return false (we consider them equal in this case)
+            return cmp < 0 || valid();
+        }
+
+        cmp = (emptyUri() ? 1 : 0) - (against.emptyUri() ? 1 : 0);
+
+        if (cmp != 0) {
+            return cmp < 0;
+        }
+
+        // QNames ns's are either both null or not
+        if (!emptyUri()) {
+            cmp = strcmp(getUri(), against.getUri());
+
+            if (cmp != 0) {
+                return cmp < 0;
+            }
+        }
+
+        U_ASSERT(valid() && against.valid()); // to make sure localnames are not NULL
+
+        cmp = strcmp(localName.get(), against.localName.get());
+
+        return cmp < 0;
+    };
+
+    static QName deserialize(const char* serializedForm);
+    static QName createNsCn(xmlns_ptr ns, const char * prefixAndLocal, bool quietly = false);
+    static QName createUCn(const char * uri, const char * prefixAndLocal, bool quietly = false);
+    static QName createUPL(const char * uri, const char * prefix, const char * localName, bool quietly = false);
+    static QName createResolveCn(const char * prefixAndLocal, xptr node, dynamic_context *cxt, bool quietly = false);
+};
+
 }
 
-inline bool _xs_QName_not_equal(const char* uri1, const char *local1, const char *uri2, const char *local2)
-{
-    if (strcmp(local1, local2) != 0) return true;
+/*
 
-    if (uri1 == NULL || uri2 == NULL)
-    {
-        if (uri1 == uri2) return false;
-        else return true;
-    }
-
-    return strcmp(uri1, uri2) != 0;
-}
-
-/// This function is used for Sequence Type implementation and intended to be faster
-/// than creating xs:QNames from prefix and local part and calling dm:node-name (bla-bla-bla)
-/// Parameters:
-/// uri could be NULL
-/// node must be element or attribute and CHECKP should be called on node already
-bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node);
-
-
-/// Separates prefix and local name from the QName in text 
-/// representaion: prefix:local. Allocates memory for prefix with malloc.
-/// Changes qname to point to the local name start.
-void separateLocalAndPrefix(char*& prefix, const char*& qname);
-
+// Separates prefix and local name from the QName in text
+// representaion: prefix:local. Allocates memory for prefix with malloc.
+// Changes qname to point to the local name start.
+// void separateLocalAndPrefix(char*& prefix, const char*& qname);
+*/
 
 #endif /* __XSD_H */

@@ -19,6 +19,9 @@
 #include "tr/structures/schema.h"
 #include "tr/structures/system_tables.h"
 
+namespace xpath {
+
+class dynamic_context;
 
 enum Axis
 {
@@ -51,42 +54,38 @@ enum NodeTestType
 
 struct NodeTestData
 {
-    char* uri;
-    char* ncname_prefix;
-    char* ncname_local;
+    xsd::AnyURI uri;
+    xsd::NCName prefix;
+    xsd::NCName local;
 };
 
-struct NodeTest
-{
-    Axis axis;
-    NodeTestType type;
-    NodeTestData data;
+struct NodeTest {
+    xpath::Axis axis;
+    xpath::NodeTestType type;
+    xpath::NodeTestData data;
 
-    std::string to_string() const;
-    static std::string to_string(const NodeTestType& type, const NodeTestData& data);
-    void print_to_lr(std::ostream& str);
+    std::string toString() const;
+    void toLR(std::ostream& str) const;
 };
 
+typedef std::vector<xpath::NodeTest *> NodeTestList;
 
-struct NodeTestOr
-{
-    NodeTest *nt;  // NodeTest array
-    size_t size;   // size
+struct NodeTestUnion {
+    NodeTestList nodes;
 
-    std::string to_string() const;
-    void print_to_lr(std::ostream& str);
+    std::string toString() const;
+    void toLR(std::ostream& str) const;
 };
-
 
 typedef std::vector<size_t> PathExprDistr;
 
-struct PathExpr
-{
-    NodeTestOr *nto;  // NodeTestOr array
-    size_t size;      // size
+typedef std::vector<xpath::NodeTestOr *> NodeTestUnionList;
 
-    std::string to_string() const;
-    void print_to_lr(std::ostream& str);
+struct AbsPathExpression {
+    NodeTestUnionList nodeUnion;
+
+    std::string toString() const;
+    void toLR(std::ostream& str) const;
 };
 
 
@@ -120,31 +119,18 @@ public:
                                              const char* op_name);
 };
 
+void * create_PathExpr(const PathExprDistr &distr, void * memory_parent);
 
-struct PathExprMemoryManager {
-    void * (*alloc)(size_t);
-    void (*free)(void*);
-    void (*free_all)();
-    void * (*realloc)(void*, size_t);
-};
 
-extern PathExprMemoryManager* pe_local_aspace;
-extern PathExprMemoryManager* pe_catalog_aspace;
-
-void *create_PathExpr(const PathExprDistr &distr, PathExprMemoryManager * mm);
-//void delete_PathExpr(PathExpr *expr);
-
-class dynamic_context;
-void PathExpr2lr(PathExpr *path, std::ostream& str);
-PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, PathExprMemoryManager * mm);
-PathExpr *lr2PathExpr(dynamic_context *cxt, const char *str, PathExprMemoryManager * mm);
-
-PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to);
-
-void set_node_test_type_and_data(scheme_list *lst,
-                                 NodeTestType &nt_type, //out parameter
-                                 NodeTestData &nt_data, //out parameter
-                                 PathExprMemoryManager * mm);
+// void PathExpr2lr(PathExpr *path, std::ostream& str);
+//PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, void * memory_parent);
+//PathExpr *lr2PathExpr(dynamic_context *cxt, const char *str, void * memory_parent);
+//PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to);
+//void set_node_test_type_and_data(scheme_list *lst,
+//                                 NodeTestType &nt_type, //out parameter
+//                                 NodeTestData &nt_data, //out parameter
+//                                 void * memory_parent);
+}
 
 #endif /* _XPATH_H */
 
