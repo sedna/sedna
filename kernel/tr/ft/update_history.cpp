@@ -7,7 +7,7 @@
 #include "tr/ft/sequence_sorter.h"
 
 
-const sequence_sorter::sort_type update_history::ssr_types[ssr_n] = {sequence_sorter::st_xptr, sequence_sorter::st_pos, sequence_sorter::st_uint64};
+tc_sort_type *update_history::ssr_types[ssr_n] = {&st_xptr::inst, &st_pos::inst, &st_uint64::inst};
 const int update_history::ssr_inds[ssr_n] = {0, 0, 1};
 
 update_history::update_history() : ssr()

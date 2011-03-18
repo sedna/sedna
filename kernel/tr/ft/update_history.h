@@ -17,7 +17,7 @@ class update_history
 private:
 	sequence_sorter ssr;
 	static const int ssr_n = 3;
-	static const sequence_sorter::sort_type ssr_types[ssr_n];
+	static tc_sort_type *ssr_types[ssr_n];
 	static const int ssr_inds[ssr_n];
 
 	enum update_type {ut_insert, ut_update, ut_delete};

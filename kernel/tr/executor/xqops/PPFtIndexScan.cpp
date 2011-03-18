@@ -140,6 +140,7 @@ void PPFtIndexScan::do_next(tuple &t)
 #endif
 		bool sort = true;
 		bool count_only = false;
+		bool filter_el = false;
 		tuple_cell tc;
 
 		idx_name.op->next(t);
@@ -177,6 +178,8 @@ void PPFtIndexScan::do_next(tuple &t)
 			{
 				if (ft_idx->impl == ft_ind_native && !strcmp(opts.opt_name(), "nosort"))
 					sort = !opts.opt_value_as_bool(); //TODO: make avaiable for dtSearch too, remove PPFtIndexScan2, sort dtSearch results by default
+				else if (ft_idx->impl == ft_ind_native && !strcmp(opts.opt_name(), "filter_el"))
+					filter_el = opts.opt_value_as_bool(); //FIXME: make avaiable for dtSearch too
 				else if (ft_idx->impl == ft_ind_native && !strcmp(opts.opt_name(), "count_only"))
 					count_only = opts.opt_value_as_bool();
 #ifdef SE_ENABLE_DTSEARCH
@@ -217,6 +220,7 @@ void PPFtIndexScan::do_next(tuple &t)
 			str_cursor *query_cur = get_text_cursor(text_source_tuple_cell(tc));
 			ftq->set_query(query_cur);
 			ftq->set_sort(sort);
+			ftq->set_filter_el(filter_el);
 			delete query_cur;
 			break;
 			}
