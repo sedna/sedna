@@ -16,11 +16,11 @@ struct ftq_token
 		QUOT,
 		APOS,
 		CONTAINS,
-		COLON,
 		BR_OPEN,
 		BR_CLOSE,
 		OR,
 		TILDE_MOD,
+		BOOST_MOD,
 		_ERROR_,
 	};
 };

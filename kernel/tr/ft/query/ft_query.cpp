@@ -142,7 +142,7 @@ ft_acc_uint_t FtQueryTerm::get_next_result()
 		ftc_scan.get_next_occur(&next_acc_i, &next_ind);
 	}
 
-	this->scores[0] = sqrtf(noccurs) * doc_length_norm(ftc_scan.get_doc_len(res));
+	this->scores[0] = sqrtf(noccurs * this->score_boost) * doc_length_norm(ftc_scan.get_doc_len(res));
 	this->doc_freq++;
 
 	return res;
@@ -221,7 +221,7 @@ ft_acc_uint_t FtQueryTermInElement::get_next_result()
 		this->get_next_occur(&next_acc_i, &next_ind);
 	}
 
-	this->scores[0] = sqrtf(noccurs) * doc_length_norm(ftc_scan.get_doc_len(res));
+	this->scores[0] = sqrtf(noccurs * this->score_boost) * doc_length_norm(ftc_scan.get_doc_len(res));
 	this->doc_freq++;
 
 	return res;
@@ -648,7 +648,7 @@ ft_acc_uint_t FtQueryPhrase::get_next_result()
 			break;
 	}
 
-	this->scores[0] = sqrtf(noccurs) * doc_length_norm(term_ops[0]->get_doc_len(res));
+	this->scores[0] = sqrtf(noccurs * this->score_boost) * doc_length_norm(term_ops[0]->get_doc_len(res));
 	this->doc_freq++;
 	return res;
 }
