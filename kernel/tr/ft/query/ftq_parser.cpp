@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <deque>
+#include <stdlib.h>
 
 class Token
 {
@@ -122,9 +123,10 @@ FtQueryTermBase *create_term(ftc_index_t idx, const char *in_tag, bool stem)
 
 //parse a WORD token from lexer into a set FtQueryTerm-s and append them to a vector
 template <typename T>
-static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector<T*> *vec, const char *in_tag, bool stem)
+static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector<T*> *vec, const char *in_tag, bool stem, double boost)
 {
 	FtQueryTermBase *q = create_term(ps->ftc_idx, in_tag, stem);
+	q->set_boost((ft_float)boost);
 	const char *p = tok->text;
 	int len = tok->leng, word_len = 0;
 	bool overfl = false;
@@ -154,7 +156,10 @@ static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector
 				if (ch == UTF8_EOF)
 					q = NULL;
 				else
+				{
 					q = create_term(ps->ftc_idx, in_tag, stem);
+					q->set_boost((ft_float)boost);
+				}
 				word_len = 0;
 				overfl = false;
 			}
@@ -167,7 +172,7 @@ static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector
 		delete q;
 }
 
-FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok, const char *in_tag)
+FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok, const char *in_tag, double boost)
 {
 	std::vector<FtQueryTermBase *> terms;
 	while (true)
@@ -179,11 +184,19 @@ FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok, c
 		{
 			if (ps->scanner.peek()->type == ftq_token::TILDE_MOD)
 			{
-				ft_parse_term(ps, tok, &terms, in_tag, true);
+				ft_parse_term(ps, tok, &terms, in_tag, true, boost);
 				ps->scanner.next();
 			}
+			else if (ps->scanner.peek()->type == ftq_token::BOOST_MOD)
+			{
+				token_ptr b_tok = ps->scanner.next();
+				U_ASSERT(b_tok->text[0] == ':');
+				int mod = atoi(b_tok->text+1);
+
+				ft_parse_term(ps, tok, &terms, in_tag, true, boost * mod);
+			}
 			else
-				ft_parse_term(ps, tok, &terms, in_tag, false);
+				ft_parse_term(ps, tok, &terms, in_tag, false, boost);
 		}
 
 		//we allow pharase to end abruptly
@@ -204,15 +217,15 @@ FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok, c
 	}
 }
 
-FtQuery* ft_parse_query_or(struct ft_parser_state *ps, char *in_tag, ftq_token_type end_tok);
-FtQuery* ft_parse_query_single(struct ft_parser_state *ps, char *in_tag)
+FtQuery* ft_parse_query_or(struct ft_parser_state *ps, char *in_tag, ftq_token_type end_tok, double boost);
+FtQuery* ft_parse_query_single(struct ft_parser_state *ps, char *in_tag, double boost)
 {
 	token_ptr tok = ps->scanner.peek();
 
 	if (tok->type == ftq_token::QUOT || tok->type == ftq_token::APOS)
 	{
 		ps->scanner.next();
-		FtQuery *q = ft_parse_phrase(ps, tok->type, in_tag);
+		FtQuery *q = ft_parse_phrase(ps, tok->type, in_tag, boost);
 		return q;
 	}
 
@@ -223,16 +236,26 @@ FtQuery* ft_parse_query_single(struct ft_parser_state *ps, char *in_tag)
 			token_ptr tag = tok;
 			ps->scanner.next(); //tag
 			tok = ps->scanner.next(); //contains
-			return ft_parse_query_single(ps, tag->text);
+			return ft_parse_query_single(ps, tag->text, boost);
+		}
+		else if (ps->scanner.peekn(2)->type == ftq_token::CONTAINS && ps->scanner.peekn(1)->type == ftq_token::BOOST_MOD)
+		{
+			token_ptr tag = tok;
+			ps->scanner.next(); //tag
+			token_ptr b_tok = ps->scanner.next();
+			U_ASSERT(b_tok->text[0] == ':');
+			int mod = atoi(b_tok->text+1);
+			tok = ps->scanner.next(); //contains
+			return ft_parse_query_single(ps, tag->text, boost * mod);
 		}
 		else
-			return ft_parse_phrase(ps, tok->type, in_tag);
+			return ft_parse_phrase(ps, tok->type, in_tag, boost);
 	}
 
 	if (tok->type == ftq_token::BR_OPEN)
 	{
 		ps->scanner.next();
-		FtQuery *q = ft_parse_query_or(ps, in_tag, ftq_token::BR_CLOSE);
+		FtQuery *q = ft_parse_query_or(ps, in_tag, ftq_token::BR_CLOSE, boost);
 		tok = ps->scanner.peek();
 		if (tok->type == ftq_token::BR_CLOSE)
 			ps->scanner.next();
@@ -242,7 +265,7 @@ FtQuery* ft_parse_query_single(struct ft_parser_state *ps, char *in_tag)
 	throw USER_EXCEPTION2(SE3022, "unexpected token in query");
 }
 
-FtQuery* ft_parse_query_and(struct ft_parser_state *ps, char *in_tag, ftq_token_type end_tok)
+FtQuery* ft_parse_query_and(struct ft_parser_state *ps, char *in_tag, ftq_token_type end_tok, double boost)
 {
 	std::vector<FtQuery *> ops;
 	token_ptr tok;
@@ -253,7 +276,7 @@ FtQuery* ft_parse_query_and(struct ft_parser_state *ps, char *in_tag, ftq_token_
 		if (tok->type == ftq_token::END || tok->type == ftq_token::OR || tok->type == end_tok)
 			break;
 
-		FtQuery *q = ft_parse_query_single(ps, in_tag);
+		FtQuery *q = ft_parse_query_single(ps, in_tag, boost);
 		if (q != NULL)
 			ops.push_back(q);
 	}
@@ -271,7 +294,7 @@ FtQuery* ft_parse_query_and(struct ft_parser_state *ps, char *in_tag, ftq_token_
 	}
 }
 
-FtQuery* ft_parse_query_or(struct ft_parser_state *ps, char *in_tag, ftq_token_type end_tok)
+FtQuery* ft_parse_query_or(struct ft_parser_state *ps, char *in_tag, ftq_token_type end_tok, double boost)
 {
 	std::vector<FtQuery *> ops;
 	token_ptr tok;
@@ -291,7 +314,7 @@ FtQuery* ft_parse_query_or(struct ft_parser_state *ps, char *in_tag, ftq_token_t
 		}
 		first = false;
 
-		FtQuery *q = ft_parse_query_and(ps, in_tag, end_tok);
+		FtQuery *q = ft_parse_query_and(ps, in_tag, end_tok, boost);
 		if (q != NULL)
 			ops.push_back(q);
 	}
@@ -319,7 +342,7 @@ FtQuery *ft_parse_query(str_cursor *cur, ftc_index_t idx)
 
 	ps.scanner.init(&reader);
 
-	FtQuery *q = ft_parse_query_or(&ps, NULL, ftq_token::END);
+	FtQuery *q = ft_parse_query_or(&ps, NULL, ftq_token::END, 1);
 
 	ps.scanner.destroy();
 

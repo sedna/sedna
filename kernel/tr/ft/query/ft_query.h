@@ -63,11 +63,15 @@ class FtQuery
 private:
 	virtual void do_init() = 0;
 	virtual void do_open() = 0;
+protected:
+	ft_float score_boost;
+	FtQuery() : score_boost(1) {}
 public:
 	int doc_freq; //number of found acc-s
 	int score_count; //initialized by init(), number of scores returned by get_next_result()
 	ft_float *scores; //buffer for storing scores, it's contens are updated by get_next_result
 	FtWordIndexList *word_list; //buffer for storing word indexes, it's contens are updated by get_next_result
+	void set_boost(ft_float boost) { this->score_boost = boost; }
 	//initialize after all parameters are set
 	void init() { do_init(); }
 	//start a search, must be called after init

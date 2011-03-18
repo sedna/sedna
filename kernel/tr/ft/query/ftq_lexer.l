@@ -46,12 +46,12 @@ Number [0-9]+
 "OR"       { BEGIN(INITIAL); return ftq_token::OR; }
 "\""       { BEGIN(INITIAL); return ftq_token::QUOT; }
 "'"        { BEGIN(INITIAL); return ftq_token::APOS; }
-":"        { BEGIN(INITIAL); return ftq_token::COLON; }
 "("        { BEGIN(INITIAL); return ftq_token::BR_OPEN; }
 ")"        { BEGIN(INITIAL); return ftq_token::BR_CLOSE; }
 {Number}   { BEGIN(INITIAL); return ftq_token::NUMBER; }
 {Word}     { BEGIN(after_word); return ftq_token::WORD; }
 <after_word>"~" { BEGIN(INITIAL); return ftq_token::TILDE_MOD; }
+<after_word>":"{Number} { BEGIN(INITIAL); return ftq_token::BOOST_MOD; }
 {WS}+      { BEGIN(INITIAL); /* skip */ }
 
 .|\n       { BEGIN(INITIAL); return ftq_token::_ERROR_; }
