@@ -6,7 +6,7 @@ set(xqops_SRC PPAbsPath.cpp PPAccessors.cpp PPAggrFuncs.cpp PPAxisAncestor.cpp
         PPFnGetProperty.cpp PPFnDateTimeFuncs.cpp PPFnDeepEqual.cpp PPFnDocAvailable.cpp
         PPFunCall.cpp PPGeneralComparison.cpp PPIf.cpp PPIndexScan.cpp PPIntersect.cpp
         PPLast.cpp PPLet.cpp PPNil.cpp PPNodeComparison.cpp PPNodeOps.cpp PPNumericFuncs.cpp
-        PPOrderBy.cpp PPPatMatch.cpp PPPred.cpp PPQName.cpp PPRange.cpp PPReturn.cpp
+        PPOrderBy.cpp PPOrderBy_serializer.cpp PPPatMatch.cpp PPPred.cpp PPQName.cpp PPRange.cpp PPReturn.cpp
         PPSelect.cpp PPSequence.cpp PPSeqChecker.cpp PPSequenceOps.cpp PPSequenceTypes.cpp
         PPSpaceSequence.cpp PPStore.cpp PPStringFuncs.cpp PPStringsCompare.cpp PPSubsMatch.cpp
         PPSXptr.cpp PPTest.cpp PPTuple.cpp PPUnion.cpp PPUriFuncs.cpp PPVarDecl.cpp

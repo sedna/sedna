@@ -110,6 +110,7 @@ void sorted_sequence::next(tuple& t)
 	if (!top)
 	{
 		top=merge_tree->rb_minimum(merge_tree->root);
+
 		if(!top)
 		{
 			t.set_eos();
@@ -201,7 +202,7 @@ void sorted_sequence::add(tuple& p)
 		}
 		else
 		{
-			//1.b.c ptr fits into existing block
+			//1.b.c ptr doesn't fit into existing block
 			set_next_block_in_chain(ptr_place);
 			ptr_blk_arr.push_back(BLOCKXPTR(ptr_place));
 		}
@@ -223,7 +224,7 @@ void sorted_sequence::add(tuple& p)
 		throw USER_EXCEPTION2(SE1003, "Failed to add big item to sequence");
 	if (fp<size)
 	{
-		//2.3.a case of data that doesn't fits to block
+		//2.3.a case of data that doesn't fit to block
 		xptr tmp=get_free_block();
 		xptr param=tmp+sizeof(seq_blk_hdr);
 		serialize2FN(p,val_place,fp,param,Udata);
@@ -242,16 +243,18 @@ void sorted_sequence::add(tuple& p)
 
     seq_size++;
 	//3. checking if the memory is full
-	if (blk_cnt<MAX_BLOCKS_IN_CHAIN)
-		return;
-	//4. sort the sequence
-	in_mem_sort();
-	//5. order
-	in_mem_order_data();
-	//6. place to stack
-	merge_stack(false);
-	//7. fix memory
-	unlock_memory();
+	if (blk_cnt<MAX_BLOCKS_IN_CHAIN) {
+	    return;
+	} else {
+	    //4. sort the sequence
+	    in_mem_sort();
+	    //5. order
+	    in_mem_order_data();
+	    //6. place to stack
+	    merge_stack(false);
+	    //7. fix memory
+	    unlock_memory();
+	}
 }
 xptr sorted_sequence::get_free_block()
 {
@@ -265,6 +268,9 @@ xptr sorted_sequence::get_free_block()
 	else
 	{
 		vmm_alloc_tmp_block(&blk);
+
+
+
 	}
 	blk_cnt++;
 	seq_blk_hdr::init(XADDR(blk));

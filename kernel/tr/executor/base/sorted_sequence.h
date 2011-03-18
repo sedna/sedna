@@ -22,11 +22,16 @@ typedef void (*serialize_fn)(tuple& t,xptr v1, const void *);
 typedef void (*serialize_2_blks_fn)(tuple& t,xptr& v1,shft size1,xptr& v2, const void *);
 typedef void (*deserialize_fn)(tuple&,xptr& v1, const void *);
 typedef void (*deserialize_2_blks_fn)(tuple& t,xptr& v1,shft size1,xptr& v2, const void *);
+
+#ifndef _data_ptr_
+#define _data_ptr_
 struct data_ptr
 {
 	xptr value;
 	shft size;
 };
+#endif
+
 static inline void  get_val(xptr ptr,xptr& val)
 {
 	CHECKP(ptr);

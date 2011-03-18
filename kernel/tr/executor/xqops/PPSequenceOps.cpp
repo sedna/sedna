@@ -509,8 +509,7 @@ void PPFnDistinctValues::deserialize(tuple& t, xptr& v1, const void *Udata)
     CHECKP(v1);
 
     tuple_cell tc;
-    memcpy(&tc, XADDR(v1), sizeof(tuple_cell));
-    t.copy(tc);
+    memcpy(&tc, XADDR(v1), sizeof(tuple_cell));    t.copy(tc);
 }
 
 void PPFnDistinctValues::deserialize_2_blks(tuple& t, xptr& v1, shft size1, xptr& v2, const void *Udata)
