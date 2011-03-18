@@ -232,6 +232,7 @@ private:
 
 	FtQuery *query;
 	bool sort;
+	bool filter_el;
 
 	bool query_opened; //FIXME: rename/don't use in get_next_result
 	ft_float *scores_buf;
@@ -240,10 +241,11 @@ private:
 	sorted_sequence *ss;
 
 public:
-	FtQueryProcessor(ftc_index_t idx) : ftc_idx(idx), query(NULL), sort(true), scores_buf(NULL), wl(NULL), ss(NULL) {}
+	FtQueryProcessor(ftc_index_t idx) : ftc_idx(idx), query(NULL), sort(true), filter_el(false), scores_buf(NULL), wl(NULL), ss(NULL) {}
 	~FtQueryProcessor();
 	void set_query(str_cursor *cur);
 	void set_sort(bool _sort) { sort = _sort; }
+	void set_filter_el(bool _filter_el) { filter_el = _filter_el; }
 
 	//FIXME: make 1 function with options?
 	void get_next_result(tuple &t);

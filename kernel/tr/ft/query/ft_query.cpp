@@ -330,7 +330,6 @@ void FtQueryAnd::do_open()
 		else
 			ops[i]->open(&this->scores[p], NULL);
 		p += ops[i]->score_count;
-		op_results[i] = ops[i]->get_next_result();
 	}
 	U_ASSERT(p == this->score_count);
 }
@@ -339,6 +338,10 @@ ft_acc_uint_t FtQueryAnd::get_next_result()
 {
 	U_ASSERT(nops > 1);
 	int i = 1;
+
+	for (int i = 0; i < nops; i++)
+		op_results[i] = ops[i]->get_next_result();
+
 	if (op_results[0] == FT_ACC_UINT_NULL)
 		return FT_ACC_UINT_NULL;
 	while (i < nops)
@@ -365,11 +368,6 @@ ft_acc_uint_t FtQueryAnd::get_next_result()
 	if (this->word_list != NULL)
 		this->word_list->merge(op_word_lists, nops);
 
-	for (int i = 0; i < nops; i++)
-	{
-		U_ASSERT(op_results[i] == res);
-		op_results[i] = ops[i]->get_next_result();
-	}
 	return res;
 }
 void FtQueryAnd::close()
@@ -690,7 +688,7 @@ void FtQueryProcessor::set_query(str_cursor *cur)
 }
 
 const int ssr_n = 2;
-const sequence_sorter::sort_type ssr_types[ssr_n] = {sequence_sorter::st_uint64_desc, sequence_sorter::st_uint64};
+tc_sort_type *ssr_types[ssr_n] = {&st_uint64_desc::inst, &st_uint64::inst};
 const int ssr_inds[ssr_n] = {0, 1};
 
 void FtQueryProcessor::get_next_result(tuple &t)
@@ -711,9 +709,11 @@ void FtQueryProcessor::get_next_result(tuple &t)
 
 		query_opened = true;
 
+		if (this->filter_el && !this->sort)
+			throw USER_EXCEPTION2(SE3022, "ftindex-scan: filter_el is not supported without sort");
+
 		if (this->sort)
 		{
-
 			//get all results and sort them
 			SblobWriter sw(false);
 			xptr scores = sw.create_new();
@@ -730,23 +730,78 @@ void FtQueryProcessor::get_next_result(tuple &t)
 			SblobReader r;
 			r.init(scores);
 
-			ssr.create_sorted_sequence(ssr_n, ssr_types, ssr_inds);
-			while (!r.eos())
+			if (filter_el)
 			{
-				tuple t(2);
-				uint64_t res = r.read_uint();
-				r.read_bytes((char*)scores_buf, sizeof(ft_float) * query->score_count);
+				sequence_sorter ssr1;
+				tc_sort_type *ss1_t[3] = {&st_xptr_do::inst, &st_uint64::inst, &st_uint64::inst};
+				const int ss1_i[3] = {0, 1, 2};
+				ssr1.create_sorted_sequence(3, ss1_t, ss1_i);
 
-				ft_float score = query->ft_get_score(scores_buf);
+				while (!r.eos())
+				{
+					tuple t(3);
+					uint64_t res = r.read_uint();
+					r.read_bytes((char*)scores_buf, sizeof(ft_float) * query->score_count);
 
-				double score_d = (double)score;
-				int64_t score_i = *(int64_t*)&score_d; //FIXME: add float/double to sequence_sorter
-				t.cells[0] = tuple_cell::atomic((int64_t)score_i);
-				t.cells[1] = tuple_cell::atomic((int64_t)res);
-				ssr.add(t);
+					ft_float score = query->ft_get_score(scores_buf);
+
+					double score_d = (double)score;
+					int64_t score_i = *(int64_t*)&score_d; //FIXME: add float/double to sequence_sorter
+					t.cells[0] = tuple_cell::node(indirectionDereferenceCP(FT_UINT_TO_XPTR(res)));
+					t.cells[1] = tuple_cell::atomic((int64_t)score_i);
+					t.cells[2] = tuple_cell::atomic((int64_t)res);
+					ssr1.add(t);
+				}
+				sorted_sequence *ss1 = ssr1.get_sorted_sequence();
+				ss1->lazy_sort();
+
+				ssr.create_sorted_sequence(ssr_n, ssr_types, ssr_inds);
+				tuple pred_rt(3);
+				pred_rt.set_eos();
+				while (true)
+				{
+					tuple rt(3);
+					ss1->next(rt);
+
+					if (!pred_rt.is_eos())
+					{
+						if (rt.is_eos() ||
+							!(pred_rt.cells[0].get_node() == rt.cells[0].get_node() || nid_cmp_effective(pred_rt.cells[0].get_node(),rt.cells[0].get_node())==-2))
+						{
+							tuple t(2);
+							t.cells[0] = pred_rt.cells[1];
+							t.cells[1] = pred_rt.cells[2];
+							ssr.add(t);
+						}
+					}
+					if (rt.is_eos())
+						break;
+					pred_rt = rt;
+				}
+				delete ss1;
+				ss = ssr.get_sorted_sequence();
+				ss->lazy_sort();
 			}
-			ss = ssr.get_sorted_sequence();
-			ss->lazy_sort();
+			else
+			{
+				ssr.create_sorted_sequence(ssr_n, ssr_types, ssr_inds);
+				while (!r.eos())
+				{
+					tuple t(2);
+					uint64_t res = r.read_uint();
+					r.read_bytes((char*)scores_buf, sizeof(ft_float) * query->score_count);
+
+					ft_float score = query->ft_get_score(scores_buf);
+
+					double score_d = (double)score;
+					int64_t score_i = *(int64_t*)&score_d; //FIXME: add float/double to sequence_sorter
+					t.cells[0] = tuple_cell::atomic((int64_t)score_i);
+					t.cells[1] = tuple_cell::atomic((int64_t)res);
+					ssr.add(t);
+				}
+				ss = ssr.get_sorted_sequence();
+				ss->lazy_sort();
+			}
 		}
 	}
 
