@@ -257,8 +257,6 @@ void catalog_before_commit(bool is_commit)
 
 void catalog_after_commit(bool is_commit)
 {
-    if (pe_catalog_aspace->free_all) pe_catalog_aspace->free_all();
-
     cs_initp();
     catalog_unlock_metadata();
 }
@@ -268,6 +266,7 @@ void catalog_update_nid();
 void catalog_on_transaction_begin()
 {
     CATALOG_TEMPORARY_CONTEXT = new CatalogMemoryContext(DEF_CHUNK_SIZE);
+    local_space_base = cat_malloc_context_(CATALOG_TEMPORARY_CONTEXT, 32);
 
     cs_initp();
 

@@ -85,8 +85,6 @@ on_kernel_statement_end(PPQueryEssence *&qep_tree)
         tr_globals::estr_global.clear();
         executor_globals::on_kernel_statement_end();
 
-        if (pe_local_aspace->free_all) pe_local_aspace->free_all();
-
         system_tables_on_kernel_statement_end();
 
         /* TMPNIDBLK must be nulled when the last temp node is deleted. */

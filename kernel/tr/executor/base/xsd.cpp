@@ -12,300 +12,252 @@
 #include "tr/structures/nodeinterface.h"
 #include "tr/executor/base/dm_accessors.h"
 
-///
-/// XML Schema Part 2 NCName Functions
-///
-char *xs_NCName_create(const char* value, void* (*alloc_func)(size_t))
+
+using namespace xsd;
+
+
+void Name::toLR(std::ostream& os) const
 {
-    char *ncname = (char*)alloc_func(strlen(value) + 1);
-    strcpy(ncname, value);
-    return ncname;
+    os << "\"";
+
+    if (NULL != name.get()) {
+        os << name.get();
+    }
+
+    os << "\"";
 }
 
-void xs_NCName_release(char *ncname, void (*free_func)(void*))
+std::string Name::toString() const
 {
-    free_func(ncname);
+    if (name != NULL && *name) {
+        return name;
+    } else {
+        return std::string();
+    }
 }
 
-std::string xs_NCName2string(const char *ncname)
+Name::Name(const char* value, void* memory_parent) : name(NULL)
 {
-    std::string res;
-    if (ncname && *ncname)
-        res = ncname;
-    return res;
+    if (value != NULL) {
+        name = (char *) cat_malloc(memory_parent, strlen(value) + 1);
+        strcpy(name.get(), value);
+    }
+};
+
+char * Name::serialize(void * parent)
+{
+    return valid() ? cat_strcpy(parent, name.get()) : NULL;
 }
 
-void  xs_NCName_print_to_lr(const char *ncname, std::ostream& str)
+NCName NCName::check(const char* name)
 {
-    str << "\"";
-    if (ncname && *ncname)
-        str << ncname;
-    str << "\"";
+    if (check_constraints_for_xs_NCName(name)) {
+        return NCName(name);
+    } else {
+//        TODO: USER_EXCEPTION;
+    }
 }
 
-
-///
-/// XML Schema Part 2 anyURI Functions
-///
-char *xs_anyURI_create(const char* value, void* (*alloc_func)(size_t))
+NCName NCName::checkQuietly(const char* name)
 {
-    char *uri = (char*)alloc_func(strlen(value) + 1);
-    strcpy(uri, value);
-    return uri;
+    if (check_constraints_for_xs_NCName(name)) {
+        return NCName(name);
+    }
 }
 
-void xs_anyURI_release(char *uri, void (*free_func)(void*))
+AnyURI AnyURI::check(const char* uri)
 {
-    free_func(uri);
+    return AnyURI(uri);
 }
 
-void xs_anyURI_print(const char *uri, std::ostream& str)
+AnyURI AnyURI::checkQuietly(const char* uri)
 {
-    if (uri && *uri)
-        str << uri;
+    return AnyURI(uri);
 }
 
-void xs_anyURI_print_to_lr(const char *uri, std::ostream& str)
+QName::QName() : ns(NULL_XMLNS), localName(NULL) { }
+
+QName::QName(xmlns_ptr ns, const char* aLocalName) : ns(ns), localName(NULL)
 {
-    str << "\"";
-    if (uri && *uri)
-        str << uri;
-    str << "\"";
+    localName = (char *) malloc(strlen(localName) + 1);
+    strcpy(localName, aLocalName);
 }
 
-
-
-///
-/// XML Schema Part 2 QName (qualified name from Namespaces in XML standard) Functions
-///
-static void _xs_QName_encode(xmlns_ptr source, void *dest)
+QName::QName(xmlns_ptr ns, const char* aLocalName, size_t len) : ns(ns), localName(NULL)
 {
-    for (unsigned i = 0; i < sizeof(xmlns_ptr); i++)
-    {
-        if (((unsigned char*)&source)[i] == 0xFF)
-        {
-            ((unsigned char*)dest)[i] = 0xF0;
-            ((unsigned char*)dest)[i + sizeof(xmlns_ptr)] = 0x0F;
-        }
-        else
-        {
-            ((unsigned char*)dest)[i] = 0xFF;
-            ((unsigned char*)dest)[i + sizeof(xmlns_ptr)] = ~((unsigned char*)&source)[i];
+    localName = (char *) malloc(len + 1);
+    strncpy(localName, aLocalName, len);
+    localName[len] = 0;
+}
+
+const char* QName::serialize(void* parent) const
+{
+    U_ASSERT(sizeof(xmlns_ptr) == sizeof(uintptr_t));
+
+    char * str;
+
+    if (!valid()) {
+        return NULL;
+    }
+
+    size_t localNameLen = strlen(localName);
+    str = cat_malloc(parent, localNameLen + 2 * sizeof(uintptr_t) + 1);
+
+    uintptr_t a = ~ (uintptr_t) 0;
+    uintptr_t b = ~ (uintptr_t) ns;
+
+    memcpy(str, &a, sizeof(uintptr_t)); str += sizeof(uintptr_t);
+    char * c = str;
+    memcpy(str, &b, sizeof(uintptr_t)); str += sizeof(uintptr_t);
+    memcpy(str, localName.get(), localNameLen); str += localNameLen;
+    *str = '\0';
+
+    for (int i = 0; i < ((int) sizeof(uintptr_t)); i++) {
+        if (c[i] == '\0') {
+            * (uint8_t *) (c + i) = 0xf0;
+            * (uint8_t *) (c + i - sizeof(uintptr_t)) = 0x0f;
         }
     }
 }
 
-static xmlns_ptr _xs_QName_decode(const void *source)
+QName QName::deserialize(const char* serializedForm)
 {
-    return (xmlns_ptr) ((uintptr_t) (*(uintptr_t *)source ^ *((uintptr_t *)source + 1)));
+    U_ASSERT(sizeof(xmlns_ptr) == sizeof(uintptr_t));
+
+    size_t len = strlen(serializedForm);
+    uintptr_t a, b;
+    xmlns_ptr ns;
+
+    memcpy(&a, serializedForm, sizeof(uintptr_t));
+    memcpy(&b, serializedForm + sizeof(uintptr_t), sizeof(uintptr_t));
+
+    ns = (xmlns_ptr) (a ^ b);
+
+    return QName(ns, serializedForm + 2 * sizeof(uintptr_t));
 }
 
-static int _xs_QName_separator_position(const char *prefix_and_local)
+std::string QName::getColonizedName() const
 {
-    int i = 0;
-
-    while (prefix_and_local[i] != '\0')
-        if (prefix_and_local[i] == ':') return i;
-        else i++;
-
-    return 0;
+    return getPrefix() + ":" + getLocalName();
 }
 
-char *xs_QName_create(xmlns_ptr xmlns,
-                      const char *local_part,
-                      void* (*alloc_func)(size_t))
+QName QName::createUPL(const char* uri, const char* prefix, const char* localName, bool quietly)
 {
-    U_ASSERT(local_part);
+    xmlns_ptr ns;
 
-    size_t lp_size = strlen(local_part);
-    char *qname = (char*)alloc_func(lp_size + 2 * sizeof(xmlns_ptr) + 1);
-    strcpy(qname + 2 * sizeof(xmlns_ptr), local_part);
-
-    _xs_QName_encode(xmlns, qname);
-
-    return qname;
-}
-
-char *xs_QName_create(const char *uri,
-                      const char *prefix,
-                      const char *local,
-                      void* (*alloc_func)(size_t),
-                      dynamic_context *cxt)
-{
-    xmlns_ptr ns = NULL_XMLNS;
-    if (uri && *uri)
-    {
-        U_ASSERT(prefix != NULL);
-        if (*prefix && !check_constraints_for_xs_NCName(prefix))
-            throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
+    if (uri != NULL && *uri != '\0') {
+        if (prefix != NULL && !check_constraints_for_xs_NCName(prefix)) {
+            if (quietly) { return QName(); } else {
+                throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
+            }
+        }
 
         ns = xmlns_touch(prefix, uri);
+    } else {
+        ns = NULL_XMLNS;
     }
 
-    if (!check_constraints_for_xs_NCName(local))
-        throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
-
-    return xs_QName_create(ns, local, alloc_func);
-}
-
-char *xs_QName_create(const char* uri,
-                      const char* prefix_and_local,
-                      void* (*alloc_func)(size_t),
-                      dynamic_context *cxt)
-{
-    U_ASSERT(prefix_and_local);
-
-    xmlns_ptr xmlns = NULL_XMLNS;
-    const char *local = NULL;
-    int pos = 0;
-    if (!uri) uri = "";
-
-    // XQuery spec doesn't say that we have to check lexical representation for uri (AF)
-
-    // separate prefix and local name
-    pos = _xs_QName_separator_position(prefix_and_local);
-    if (pos)
-        local = prefix_and_local + pos + 1;
-    else
-        local = prefix_and_local;
-
-    if (!check_constraints_for_xs_NCName(local))
-        throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
-
-    if (*uri) // uri is present
-    {
-        if (pos)
-            if (!check_constraints_for_xs_NCName(prefix_and_local, pos))
-                throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
-
-        xmlns = xmlns_touch(std::string(prefix_and_local, pos).c_str(), uri);
-    }
-    else
-    { // uri is empty...
-        if (pos) // ... and prefix is not empty
-            throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
-        // prefix is empty already (xmlns = NULL)
-    }
-
-    return xs_QName_create(xmlns, local, alloc_func);
-}
-
-char *xs_QName_create(const char* prefix_and_local,
-                      const xptr& elem_node,
-                      void* (*alloc_func)(size_t),
-                      dynamic_context *cxt)
-{
-    U_ASSERT(prefix_and_local);
-
-    // separate prefix and local name
-    int pos = _xs_QName_separator_position(prefix_and_local);
-
-    const char *src_prefix = NULL;
-    const char *src_local  = NULL;
-    if (!pos)
-    {
-        src_prefix = "";
-        pos = 1;
-        src_local = prefix_and_local;
-    }
-    else
-    {
-        src_prefix = prefix_and_local;
-        src_local  = prefix_and_local + pos + 1;
-
-        if (!check_constraints_for_xs_NCName(src_prefix, pos))
-            throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
-    }
-
-    if (!check_constraints_for_xs_NCName(src_local))
-        throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
-
-    std::vector<xmlns_ptr> xmlns;
-    se_get_in_scope_namespaces(elem_node, xmlns, cxt);
-    const char *tgt_prefix = NULL;
-
-    for (size_t i = 0; i < xmlns.size(); i++)
-    {
-        tgt_prefix = xmlns[i]->prefix;
-        if (strncmp(tgt_prefix, src_prefix, pos) == 0)
-        {
-            return xs_QName_create(xmlns[i], src_local, alloc_func);
+    if (!check_constraints_for_xs_NCName(localName)) {
+        if (quietly) { return QName(); } else {
+            throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
         }
     }
 
-    if (src_local == prefix_and_local)
-        return xs_QName_create(NULL_XMLNS, src_local, alloc_func);
-
-    throw XQUERY_EXCEPTION2(FONS0004, "Error in functions fn:resolve-QName");
+    return QName(ns, localName);
 }
 
-
-
-void xs_QName_release(char *qname, void (*free_func)(void*))
+QName QName::createNsCn(xmlns_ptr ns, const char* prefixAndLocal, bool quietly)
 {
-    // FIXME!!! (comment by AF)
-    // We should somehow release xml_ns structure here. Releasing depends on several
-    // things. If somebody is using this structure we could not release it, we should
-    // rather decrease a counter... There could be some problems with log(s) Leon says,
-    // but he couldn't clarify what are the problems...
-    // To my concern, finally, we should get somethins like this here:
-    //
-    //     xmlns_ptr xmlns = _xs_QName_decode(qname);
-    //     xml_ns::delete_namespace_node(xmlns);
-    //
-    // But now we are just freeing memory
-    free_func(qname);
-}
+    const char * localName = strchr(prefixAndLocal, ':') + 1;
 
-const char *xs_QName_get_prefix(const char* qname)
-{
-    xmlns_ptr xmlns = _xs_QName_decode(qname);
-    return (xmlns != NULL_XMLNS) ? xmlns->prefix : NULL;
-}
 
-const char *xs_QName_get_uri(const char* qname)
-{
-    xmlns_ptr xmlns = _xs_QName_decode(qname);
-    return (xmlns != NULL_XMLNS) ? xmlns->uri : NULL;
-}
-
-const char *xs_QName_get_local_name(const char* qname)
-{
-    return qname + 2 * sizeof(xmlns_ptr);
-}
-
-xmlns_ptr xs_QName_get_xmlns(const char* qname)
-{
-    return _xs_QName_decode(qname);
-}
-
-std::string
-xs_QName2string(const char* prefix,
-                                 const char* local)
-{
-    std::string res;
-    if (prefix && *prefix)
+    if ((ns == NULL_XMLNS && localName != NULL) || (ns != NULL_XMLNS && localName == NULL)) // Logical XOR =)
     {
-        res += xs_NCName2string(prefix);
-        res += ":";
+        if (quietly) { return QName(); } else {
+            throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
+        }
     }
-    res += xs_NCName2string(local);
-    return res;
+
+    if (ns != NULL_XMLNS && strncmp(ns->get_prefix(), prefixAndLocal, strlen(prefixAndLocal)) != 0) {
+        if (quietly) { return QName(); } else {
+            throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
+        }
+    }
+
+    return QName(ns, localName);
 }
 
-void xs_QName_print_to_lr(const char* prefix,
-                          const char* local,
-                          const char* uri,
-                          std::ostream& str)
+QName QName::createUCn(const char* uri, const char* prefixAndLocal, bool quietly)
 {
-    xs_anyURI_print_to_lr(uri, str);
-    str << " ";
-    xs_NCName_print_to_lr(local, str);
-    str << " ";
-    xs_NCName_print_to_lr(prefix, str);
+    const char * localName = strchr(prefixAndLocal, ':');
+
+    if (uri == NULL || *uri == '\0') {
+        if (localName != NULL) {
+            if (quietly) { return QName(); } else {
+                throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
+            }
+        }
+
+        return QName(NULL_XMLNS, prefixAndLocal);
+    } else if (localName == NULL) {
+        return QName(xmlns_touch("", uri), prefixAndLocal);
+    } else {
+        size_t prefixLen = localName - prefixAndLocal;
+        std::string prefix(prefixAndLocal, prefixLen);
+
+        return createUPL(uri, prefix.c_str(), localName + 1);
+    }
+}
+
+// TODO : reimplement
+
+static inline
+xmlns_ptr se_resolve_prefix(const char * prefix, Node node, dynamic_context* cxt)
+{
+    std::vector<xmlns_ptr> xmlns;
+    se_get_in_scope_namespaces(node, xmlns, cxt);
+
+    for (size_t i = 0; i < xmlns.size(); i++) {
+        if (strcmp(xmlns[i]->prefix, prefix) == 0) {
+            return xmlns[i];
+        }
+    }
+}
+
+QName QName::createResolveCn(const char* prefixAndLocal, xptr node, dynamic_context* cxt, bool quietly)
+{
+    const char * localName = strchr(prefixAndLocal, ':');
+
+    if (localName == NULL) {
+        return QName(NULL_XMLNS, prefixAndLocal);
+    } else {
+        size_t prefixLen = localName - prefixAndLocal;
+        std::string prefix(prefixAndLocal, prefixLen);
+
+        xmlns_ptr ns = se_resolve_prefix(prefix.c_str(), node, cxt);
+
+        if (ns == XNULL) {
+            if (quietly) { return QName(); } else {
+                throw XQUERY_EXCEPTION2(FONS0004, "Error in functions fn:resolve-QName");
+            }
+        }
+
+        return QName(ns, localName + 1);
+    }
+
+}
+
+void QName::toLR(std::ostream& os) const
+{
+    AnyURI(getUri()).toLR(os);
+    os << " ";
+    NCName(getLocalName()).toLR(os);
+    os << " ";
+    NCName(getPrefix()).toLR(os);
 }
 
 
+/*
 bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node)
 {
     xmlns_ptr node_ns = getSchemaNode(node)->get_xmlns();
@@ -313,35 +265,5 @@ bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node)
     const char * node_local = getSchemaNode(node)->get_name();
 
     return _xs_QName_not_equal(node_uri, node_local, uri, local);
-}
-
-void separateLocalAndPrefix(char*& prefix, const char* &qname)
-{
-    const char * sep = strchr(qname, ':');
-    if (sep == NULL) {
-        prefix = NULL;
-    } else {
-        size_t len = sep - qname;
-        prefix = se_new char[len+1];
-        memcpy(prefix, qname, len);
-        prefix[len] = '\0';
-        qname = sep+1;
-    }
-}
-
-/* Example of how no one should implement previous function
-void separateLocalAndPrefix(char*& prefix, const char*& qname)
-{
-    for (unsigned int i=0; i<strlen(qname); i++)
-    {
-        if (qname[i]==':')
-        {
-            prefix = se_new char[i + 1];
-            memcpy(prefix, qname, i);
-            prefix[i] = '\0';
-            qname=qname+i+1;
-            return;
-        }
-    }
 }
 */

@@ -6,6 +6,9 @@
 #ifndef _GLOBAL_OPTIONS_H_
 #define _GLOBAL_OPTIONS_H_
 
+#include "tr/structures/xmlns.h"
+#include "tr/executor/base/xsd.h"
+
 #include <set>
 #include <map>
 #include <string>
@@ -26,7 +29,7 @@ struct GlobalSerializationOptions {
     const char * indentSequence;
     bool indent;
 
-    typedef std::set<std::string> NameSet;
+    typedef std::set< xsd::QName > NameSet;
     NameSet cdataSectionElements;
 
     typedef std::set< std::pair<std::string, std::string> > Stringmap;

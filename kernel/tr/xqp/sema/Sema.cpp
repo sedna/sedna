@@ -1421,6 +1421,10 @@ namespace sedna
                     if (val != "xml" && val != "html")
                         drv->error(n.getLocation(), SE5071, val.c_str());
                 }
+                else if (key == "cdata-section-elements")
+                {
+                    // PASS
+                }
                 else
                     drv->error(n.getLocation(), SE5068, key.c_str());
             }

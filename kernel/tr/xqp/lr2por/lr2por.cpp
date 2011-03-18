@@ -2252,7 +2252,28 @@ namespace sedna
                 else if (it->first == "indent" && it->second == "no")
                     dyn_cxt->get_static_context()->set_output_indent(false);
                 else if (it->first == "cdata-section-elements") {
-                    dyn_cxt->add_cdata_section_element(it->second);
+                    size_t i = 0;
+
+                    const std::string & value = it->second;
+                    std::string::size_type start = 0, end = 0;
+
+                    end = it->second.find_first_not_of(' ', start);
+
+                    while (end != std::string::npos) {
+                        std::string::size_type len;
+
+                        start = it->second.find_first_not_of(' ', end);
+                        end = it->second.find_first_of(' ', start);
+
+                        if (end == std::string::npos) {
+                            len = value.length() - start;
+                        } else {
+                            len = end - start;
+                        }
+
+//                        const char * qname = xs_QName_create(value.substr(start, len), XNULL, pe_local_aspace->alloc);
+                        dyn_cxt->add_cdata_section_element(value.substr(start, len), xs_QName_get_xmlns());
+                    }
                 }
             }
         }

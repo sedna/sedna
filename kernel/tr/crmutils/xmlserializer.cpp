@@ -70,7 +70,6 @@ struct ElementContext {
 };
 
 
-
 XDMSerializer::XDMSerializer() {
     const xmlns_ptr ns = xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace");
     nsPrefixMap.insert(std::pair<std::string, xmlns_ptr>(std::string(ns->get_prefix()), ns));
@@ -369,7 +368,7 @@ void XMLSerializer::printText(t_item type, const text_source_t value)
 
     if (type == text) {
         indentNext = false;
-        if (elementContext != NULL && options != NULL && setContainsString(&(options->cdataSectionElements), elementContext->name)) {
+        if (elementContext != NULL && options != NULL && setContainsQName(&(options->cdataSectionElements), elementContext->name, elementContext->ns)) {
             (*crmout) << "<![CDATA[";
             // StringMatcher must substitute "]]>" with "]]>]]<![CDATA[<"
             filterText(stringFilter, crmout, pat_cdata, reader);
@@ -495,7 +494,7 @@ XMLSerializer::XMLSerializer() : docPISeqOpen(XML_docTagStart), docPISeqClose( X
     stringFilter.add_str("<","&lt;", pat_attribute | pat_element);
     stringFilter.add_str("&","&amp;", pat_attribute | pat_element);
     stringFilter.add_str("\"","&quot;", pat_attribute);
-    stringFilter.add_str("]]>", "]]>]]<![CDATA[<", pat_cdata);
+    stringFilter.add_str("]]>", "]]]]><![CDATA[>", pat_cdata);
 }
 
 SXMLSerializer::SXMLSerializer() :
