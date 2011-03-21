@@ -11,7 +11,7 @@ static inline void put_xuint(char *buf, uint64_t x)
 #ifdef BIG_ENDIAN_ORDER
 		memcpy(buf, &x, sizeof(x));
 #else
-		for (int i = 0; i < sizeof(x); i++)
+		for (size_t i = 0; i < sizeof(x); i++)
 			buf[sizeof(x)-1-i] = ((char*)&x)[i];
 #endif
 }
@@ -21,12 +21,16 @@ static inline xptr ss_read(const xptr v, char *buf, int len)
     CHECKP(v);
     int sz = GET_FREE_SPACE(v);
 
-	if (sz < len)
+    //if sz == len, v+len actually refers to next block, so we nee to use first branch to return correct value
+	if (sz <= len)
 	{
 		memcpy(buf, XADDR(v), sz);
 		const xptr nblk=((seq_blk_hdr*)XADDR(BLOCKXPTR(v)))->nblk+sizeof(seq_blk_hdr);
-		CHECKP(nblk);
-		memcpy(buf+sz, XADDR(nblk), len-sz);
+        if ((len-sz) > 0)
+		{
+			CHECKP(nblk);
+			memcpy(buf+sz, XADDR(nblk), len-sz);
+		}
 		return nblk + (len-sz);
 	}
 	else
@@ -83,7 +87,7 @@ size_t st_uint64::deserialize_tc(tuple_cell &tc, xptr *v, ss_data *data)
 #else
 	data->set_buf(sizeof(x));
 	*v = ss_read(*v, data->buf, sizeof(x));
-	for (int i = 0; i < sizeof(x); i++)
+	for (size_t i = 0; i < sizeof(x); i++)
 		((char*)&x)[i] = data->buf[sizeof(x)-1-i];
 #endif
 	tc = tuple_cell::atomic((int64_t)x);
@@ -118,7 +122,7 @@ size_t st_uint64_desc::deserialize_tc(tuple_cell &tc, xptr *v, ss_data *data)
 #else
 	data->set_buf(sizeof(x));
 	*v = ss_read(*v, data->buf, sizeof(x));
-	for (int i = 0; i < sizeof(x); i++)
+	for (size_t i = 0; i < sizeof(x); i++)
 		((char*)&x)[i] = data->buf[sizeof(x)-1-i];
 #endif
 	x = ~x;
@@ -154,7 +158,7 @@ size_t st_pos::deserialize_tc(tuple_cell &tc, xptr *v, ss_data *data)
 #else
 	data->set_buf(sizeof(x));
 	*v = ss_read(*v, data->buf, sizeof(x));
-	for (int i = 0; i < sizeof(x); i++)
+	for (size_t i = 0; i < sizeof(x); i++)
 		((char*)&x)[i] = data->buf[sizeof(x)-1-i];
 #endif
 	tc = tuple_cell::atomic((int64_t)x);
