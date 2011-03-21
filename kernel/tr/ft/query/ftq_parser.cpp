@@ -73,7 +73,7 @@ public:
 			get_next();
 		return tokens.front();
 	}
-	token_ptr peekn(int ind)
+	token_ptr peekn(size_t ind)
 	{
 		while (tokens.size() < ind+1)
 			get_next();
@@ -208,7 +208,7 @@ FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok, c
 				return terms[0];
 
 			FtQueryPhrase *q = new FtQueryPhrase(terms.size());
-			for (int i = 0; i < terms.size(); i++)
+			for (size_t i = 0; i < terms.size(); i++)
 				q->set_term(i, terms[i]);
 			return q;
 		}
@@ -288,7 +288,7 @@ FtQuery* ft_parse_query_and(struct ft_parser_state *ps, char *in_tag, ftq_token_
 	else
 	{
 		FtQueryAnd *q = new FtQueryAnd(ps->ftc_idx, ops.size());
-		for (int i = 0; i < ops.size(); i++)
+		for (size_t i = 0; i < ops.size(); i++)
 			q->set_operand(i, ops[i]);
 		return q;
 	}
@@ -326,7 +326,7 @@ FtQuery* ft_parse_query_or(struct ft_parser_state *ps, char *in_tag, ftq_token_t
 	else
 	{
 		FtQueryOr *q = new FtQueryOr(ps->ftc_idx, ops.size());
-		for (int i = 0; i < ops.size(); i++)
+		for (size_t i = 0; i < ops.size(); i++)
 			q->set_operand(i, ops[i]);
 		return q;
 	}
