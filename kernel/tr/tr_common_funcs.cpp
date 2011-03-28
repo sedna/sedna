@@ -182,8 +182,6 @@ void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active)
     d_printf1("Initializing logical log...");
     hl_logical_log_on_session_begin(log_files_path, rcv_active);
     d_printf1("OK\n");
-
-    is_ft_disabled = is_ro_mode;
 }
 
 void on_session_end(SSMMsg* &sm_server)
@@ -280,8 +278,6 @@ void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active
     d_printf1("Setting transaction mode for local lock manager...");
     set_tr_mode_lock_mgr(is_ro_mode);
     d_printf1("OK\n");
-
-    is_ft_disabled = is_ro_mode;
 
 #ifdef SE_ENABLE_TRIGGERS
     d_printf1("Triggers on transaction begin...");

@@ -55,7 +55,8 @@ public:
 	// 4. end_update is called
 	void begin_update(FtsData *_fts_data);
 	//end update and modify FtsData at pointer dest, so that it will become identical to FtsData at buffer provided in begin_update
-	void end_update(struct FtsData *dest);
+	//returs true if some changes were made
+	bool end_update(struct FtsData *dest);
 
 	void del_document(const xptr acc)
 	{

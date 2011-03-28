@@ -54,7 +54,6 @@ namespace tr_globals
 
     extern bool is_need_checkpoint_on_transaction_commit;
     extern bool is_ro_mode;       // may change during transaction execution!
-    extern bool is_ft_disabled;
     extern bool is_log_less_mode; // true, if we write only one record on every bulkload
 
     extern pping_client* ppc;
