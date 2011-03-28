@@ -594,9 +594,6 @@ namespace sedna
     {
 #ifdef SE_ENABLE_FTSEARCH
 
-        if (tr_globals::is_ft_disabled)
-            drv->error(SE1002, "full-text search support is disabled in RO-mode");
-
         childOffer off_name, off_path, off_options;
         PPAbsPath *pa;
         PathExpr *onp;
@@ -992,9 +989,6 @@ namespace sedna
     void lr2por::visit(ASTDropFtIndex &n)
     {
 #ifdef SE_ENABLE_FTSEARCH
-        if (tr_globals::is_ft_disabled)
-            drv->error(SE1002, "full-text search support is disabled in RO-mode");
-
         childOffer off_ind;
 
         n.index->accept(*this);

@@ -51,7 +51,6 @@ namespace tr_globals
 
     bool is_need_checkpoint_on_transaction_commit = false;
     bool is_ro_mode       = false;
-    bool is_ft_disabled   = false;
     bool is_log_less_mode = false;
 
     client_core*  client  = NULL;

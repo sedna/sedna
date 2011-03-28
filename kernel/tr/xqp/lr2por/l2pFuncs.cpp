@@ -454,9 +454,6 @@ PPOpIn l2pFnFloor(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PP
 PPOpIn l2pFnFtHighlight(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
 #ifdef SE_ENABLE_FTSEARCH
-    if (tr_globals::is_ft_disabled)
-        throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
-
     PPOpIn res;
 
     if (params.size() == 3)
@@ -477,9 +474,6 @@ PPOpIn l2pFnFtHighlight(dynamic_context *dyn_cxt, const operation_info &opi, arr
 PPOpIn l2pFnFtHighlightBlocks(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
 #ifdef SE_ENABLE_FTSEARCH
-    if (tr_globals::is_ft_disabled)
-        throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
-
     PPOpIn res;
 
     if (params.size() == 3)
@@ -500,9 +494,6 @@ PPOpIn l2pFnFtHighlightBlocks(dynamic_context *dyn_cxt, const operation_info &op
 PPOpIn l2pFnFtIndexScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
 #ifdef SE_ENABLE_FTSEARCH
-    if (tr_globals::is_ft_disabled) //FIXME: move this to PPFtIndexScan
-        throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
-
     PPOpIn res;
 
     if (params.size() == 3)
@@ -544,10 +535,8 @@ PPOpIn l2pFnFtIndexDict(dynamic_context *dyn_cxt, const operation_info &opi, arr
 
 PPOpIn l2pFnFtScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
+	//TODO: make PPFtScan for native indexes
 #ifdef SE_ENABLE_DTSEARCH
-    if (tr_globals::is_ft_disabled)
-        throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
-
     PPOpIn res;
 
     if (params.size() == 4)
@@ -568,8 +557,9 @@ PPOpIn l2pFnFtScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_P
 PPOpIn l2pFnFtWIndexScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
 #ifdef SE_ENABLE_FTSEARCH
-    if (tr_globals::is_ft_disabled)
-        throw USER_EXCEPTION2(SE1002, "full-text search support is disabled in RO-mode");
+	//TODO: remove PPFtIndexScan2
+	if (tr_globals::is_ro_mode)
+		throw USER_EXCEPTION2(SE1002, "dtSearch index search support is disabled in RO-mode");
 
     PPOpIn res;
 

@@ -207,6 +207,9 @@ void PPFtIndexScan::do_next(tuple &t)
 		{
 #ifdef SE_ENABLE_DTSEARCH
 		case ft_ind_dtsearch:
+			if (tr_globals::is_ro_mode)
+				throw USER_EXCEPTION2(SE1002, "dtSearch index search support is disabled in RO-mode");
+
 			sj=se_new SednaSearchJob();
 			sj->set_dtsSearchAnyWords(opt_dtsSearchAnyWords);
 			sj->set_dtsSearchAllWords(opt_dtsSearchAllWords);

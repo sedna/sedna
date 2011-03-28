@@ -17,10 +17,10 @@ void FtsUpdater::begin_update(struct FtsData *_fts_data)
 	empty = true;
 }
 
-void FtsUpdater::end_update(struct FtsData *dest)
+bool FtsUpdater::end_update(struct FtsData *dest)
 {
 	if (empty)
-		return;
+		return false;
 	ft_partition_data pdata;
 	pb.finalize(&pdata);
 
@@ -28,7 +28,7 @@ void FtsUpdater::end_update(struct FtsData *dest)
 	{
 		dest->npartitions = 1;
 		dest->partitions[0] = pdata;
-		return;
+		return true;
 	}
 
 	if (dest->npartitions == FTS_MAX_PARTITIONS || dest->partitions[dest->npartitions-1].sblob_blocks < 2*pdata.sblob_blocks)
@@ -77,4 +77,5 @@ void FtsUpdater::end_update(struct FtsData *dest)
 		dest->npartitions++;
 		dest->partitions[dest->npartitions-1] = pdata;
 	}
+	return true;
 }

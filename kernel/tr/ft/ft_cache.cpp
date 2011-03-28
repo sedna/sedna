@@ -424,10 +424,10 @@ void flush_index(ftc_index_data *id)
 
 		wme = wm->rb_successor(wme);
 	}
-	updater.end_update(&id->ft_data);
+	bool has_changes = updater.end_update(&id->ft_data);
 	d_printf1("ftc_flush end\n");
 
-	if (id->is_persistent())
+	if (id->is_persistent() && has_changes)
 	{
 		ft_index_cell_cptr idc = find_ft_index(id->name, NULL);
 		idc.modify();
