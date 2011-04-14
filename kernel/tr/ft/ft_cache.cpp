@@ -540,6 +540,7 @@ bool FtCacheScanner::scan_occurs()
 			return true;
 		}
 		doc_data = id->get_doc_data(ome->obj.doc);
+		cur_occur = (struct ftc_word_occur*)id->ind_alloc.deref(ome->obj.first);
 	}
 }
 
