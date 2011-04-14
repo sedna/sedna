@@ -87,7 +87,7 @@ struct ftlog_file
 	}
 	void write_xptr_sequence(xptr_sequence* seq);
 	//returns non-zero on success
-	xptr_sequence *read_xptr_sequence();
+	int read_update_xptr_sequence(update_history *h, update_history::update_type ut);
 	//returns non-zero on success
 	//buf_pos must be 0
 	int seek(lsn_t pos)

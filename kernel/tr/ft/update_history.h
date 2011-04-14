@@ -20,12 +20,12 @@ private:
 	static tc_sort_type *ssr_types[ssr_n];
 	static const int ssr_inds[ssr_n];
 
-	enum update_type {ut_insert, ut_update, ut_delete};
-	void add_node(const update_type ut, const xptr node);
 public:
 	update_history();
 
-	//seq must containt pointers to indirection
+	enum update_type {ut_insert, ut_update, ut_delete};
+	//node must contain pointer to indirection
+	void add_node(const update_type ut, const xptr node);
 	void add_insert_node(const xptr node);
 	void add_update_node(const xptr node);
 	void add_delete_node(const xptr node);

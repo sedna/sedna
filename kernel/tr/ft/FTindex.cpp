@@ -33,27 +33,24 @@ void ftlog_file::write_xptr_sequence(xptr_sequence* seq)
 	}
 }
 
-xptr_sequence *ftlog_file::read_xptr_sequence()
+int ftlog_file::read_update_xptr_sequence(update_history *h, update_history::update_type ut)
 {
-	xptr_sequence *seq;
 	int count, res;
 	res = this->read_data(&count, sizeof(count));
 	if (res == 0)
-		return NULL;
+		return 0;
 
-	seq = se_new xptr_sequence();
 	while (count-- > 0)
 	{
 		xptr ptr;
 		res = this->read_data(&ptr, sizeof(xptr));
 		if (res == 0)
 		{
-			delete seq;
-			return NULL;
+			return 0;
 		}
-		seq->add(ptr);
+		h->add_node(ut, ptr);
 	}
-	return seq;
+	return 1;
 }
 
 void ftlog_file::close_and_delete_file(const char *index_name)
@@ -349,63 +346,12 @@ void SednaIndexJob::rebuild_index(const char *index_name)
 	sij.create_index(&start_nodes);
 }
 
-//all must be sorted before call (and will remain sorted after the call)
-static void add_new(xptr_sequence *seq, xptr_sequence *to_add, xptr_sequence *all)
-{
-	//FIXME: very slow
-	xptr_sequence added;
-	xptr_sequence::iterator all_it, add_it;
-	xptr all_xptr = XNULL;
-
-	all_it = all->begin();
-	add_it = to_add->begin();
-	if (all_it != all->end())
-		all_xptr = *all_it;
-
-	to_add->sort_by_xptr();
-
-	while (add_it != to_add->end())
-	{
-		xptr add_xptr = *add_it;
-		add_it++;
-		while (all_it != all->end() && add_xptr > all_xptr)
-		{
-			all_it++;
-			if (all_it != all->end())
-				all_xptr = *all_it;
-		}
-		if (all_it != all->end() && all_xptr == add_xptr)
-			continue;
-
-		seq->add(add_xptr);
-		added.add(add_xptr);
-	}
-
-	if (added.size() > 0)
-	{
-		add_it = added.begin();
-		while (add_it != added.end())
-		{
-			xptr add_xptr = *add_it;
-			add_it++;
-			all->add(add_xptr);
-		}
-		added.clear();
-		all->sort_by_xptr();
-	}
-}
-
 //pre: log_file must be positioned right after FTLOG_HEADER record
 void SednaIndexJob::rollback_index(ftlog_file *log_file, const char *index_name)
 {
 	ftlog_record lrec;
 	ftlog_file::lsn_t cur_lsn;
-	ftlog_file::lsn_t last_lsn = ftlog_file::invalid_lsn;
-	xptr_sequence *seq;
-	xptr_sequence updated_and_deleted;
-	xptr_sequence inserted;
-	xptr_sequence all_nodes;
-	xptr_sequence new_nodes;
+	update_history uh;
 	bool ftindex_is_consistent = true;
 	cur_lsn = log_file->next_lsn;
 	RECOVERY_CRASH;
@@ -421,26 +367,27 @@ void SednaIndexJob::rollback_index(ftlog_file *log_file, const char *index_name)
 			rebuild_index(index_name);
 			return;
 		case FTLOG_UPDATE_START:
-		case FTLOG_DELETE_START:
-			seq = log_file->read_xptr_sequence();
-			if (seq == NULL)
+			if (!log_file->read_update_xptr_sequence(&uh, update_history::ut_update))
 			{
 				rebuild_index(index_name);
 				return;
 			}
-			add_new(&updated_and_deleted, seq, &all_nodes);
-			delete seq;
+			ftindex_is_consistent = false;
+			break;
+		case FTLOG_DELETE_START:
+			if (!log_file->read_update_xptr_sequence(&uh, update_history::ut_delete))
+			{
+				rebuild_index(index_name);
+				return;
+			}
 			ftindex_is_consistent = false;
 			break;
 		case FTLOG_INSERT_START:
-			seq = log_file->read_xptr_sequence();
-			if (seq == NULL)
+			if (!log_file->read_update_xptr_sequence(&uh, update_history::ut_insert))
 			{
 				rebuild_index(index_name);
 				return;
 			}
-			add_new(&inserted, seq, &all_nodes);
-			delete seq;
 			ftindex_is_consistent = false;
 			break;
 		case FTLOG_UPDATE_END:
@@ -454,11 +401,8 @@ void SednaIndexJob::rollback_index(ftlog_file *log_file, const char *index_name)
 		default:
 			throw SYSTEM_EXCEPTION("bad record in log");
 		}
-		last_lsn = cur_lsn;
 		cur_lsn = log_file->next_lsn;
 	}
-	all_nodes.clear();
-
 	if (!ftindex_is_consistent)
 	{
 		rebuild_index(index_name);
@@ -475,13 +419,21 @@ void SednaIndexJob::rollback_index(ftlog_file *log_file, const char *index_name)
 	ft_index_cell_cptr ft_idx = find_ft_index(index_name, &ftc_idx);
 	//TODO:check NULL
 
-	SednaIndexJob sij(&*ft_idx, true);
-	if (updated_and_deleted.size() > 0)
-		sij.update_index(&updated_and_deleted);
-	if (inserted.size() > 0)
-		sij.delete_from_index(&inserted);
-	updated_and_deleted.clear();
-	inserted.clear();
+	{
+		xptr_sequence *inserted, *updated, *deleted;
+		uh.get_update_sequences(&inserted, &updated, &deleted);
+
+		SednaIndexJob sij(&*ft_idx, true);
+
+		if (updated->size() > 0)
+			sij.update_index(updated);
+		if (deleted->size() > 0)
+			sij.update_index(deleted);
+		if (inserted->size() > 0)
+			sij.delete_from_index(inserted);
+
+		uh.free_update_sequences(inserted, updated, deleted);
+	}
 }
 void SednaIndexJob::rollback()
 {
