@@ -214,6 +214,15 @@ bool delete_node(xptr node_xptr, const delete_context_t * context)
     CHECKP(node_xptr);
 #endif /* SE_ENABLE_TRIGGERS */
 
+#ifdef SE_ENABLE_FTSEARCH
+	//TODO: full-text indexes updates need to be rewritten
+	xptr xnull = XNULL;
+	const xptr parent = nodeGetParent(node_xptr);
+	if (parent != XNULL)
+		init_ft_sequences(xnull, xnull, parent);
+	CHECKP(node_xptr);
+#endif /* SE_ENABLE_FTSEARCH */
+
     /* Delete node children */
 
     if (node_info.snode->has_children()) {
