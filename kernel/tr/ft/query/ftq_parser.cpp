@@ -179,8 +179,8 @@ FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok, c
 	{
 		token_ptr tok = ps->scanner.next();
 
-
-		if (tok->type == ftq_token::WORD || tok->type == ftq_token::NUMBER)
+		//treat keywords as words inside phrase
+		if (tok->type == ftq_token::WORD || tok->type == ftq_token::NUMBER || tok->type == ftq_token::CONTAINS || tok->type == ftq_token::OR)
 		{
 			if (ps->scanner.peek()->type == ftq_token::TILDE_MOD)
 			{
@@ -212,8 +212,8 @@ FtQuery *ft_parse_phrase(struct ft_parser_state *ps, ftq_token_type start_tok, c
 				q->set_term(i, terms[i]);
 			return q;
 		}
-		if (tok->type != ftq_token::WORD && tok->type != ftq_token::NUMBER)
-			throw USER_EXCEPTION2(SE3022, "unexpected token in query");
+
+		//other token types are ignored
 	}
 }
 

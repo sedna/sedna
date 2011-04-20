@@ -8,7 +8,7 @@
 
 #include "tr/ft/libstemmer/libstemmer.h"
 
-//returns true if char is alphanumeric (i.e. part of some word)
+//returns true if char could be a part of some word
 bool ft_norm_char(int *ch);
 
 class FtStemmer

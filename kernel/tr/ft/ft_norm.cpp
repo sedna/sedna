@@ -29,7 +29,7 @@ bool ft_norm_char(int *ch)
 	if (c_case != 0 && (c_type == ucp_Lt || c_type == ucp_Lu))
 		*ch = c_case;
 
-	return c_cl == ucp_L || c_cl == ucp_N;
+	return c_cl == ucp_L || c_cl == ucp_N || *ch == '_';
 }
 
 
