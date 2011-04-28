@@ -26,6 +26,8 @@
 
 #include "tr/idx/bstrieindex.h"
 #include "tr/idx/btreeindex.h"
+#include "tr/executor/base/ITupleSerializer.h"
+#include "tr/executor/base/SortedSequence.h"
 
 using namespace std;
 
@@ -252,75 +254,6 @@ void index_cell_object::delete_from_index(xptr key_node, xptr object_indir)
   Utilites for sorting values before index creation
 */
 
-class idx_buffer
-{
-private:
-    char* internal_buffer;
-    int   buffer_lgth;
-
-public:
-    idx_buffer (): internal_buffer(NULL) , buffer_lgth(0) {};
-    ~idx_buffer ()
-    {
-        if (buffer_lgth) {
-            delete[] internal_buffer;
-            internal_buffer = NULL;
-        }
-    };
-
-    inline void copy_to_buffer(xptr addr, shft size)
-    {
-       CHECKP(addr);
-       copy_to_buffer(XADDR(addr),size);
-    }
-
-    inline void copy_to_buffer(xptr addr, shft shift,shft size)
-    {
-        CHECKP(addr);
-        copy_to_buffer(XADDR(addr),shift,size);
-    }
-
-    inline char* get_buffer_pointer()
-    {
-        return internal_buffer;
-    }
-
-    void copy_data_ser_to_buffer(xptr v1,int sz);
-    void copy_to_buffer(const void* addr, shft size);
-    void copy_to_buffer(const void* addr, shft shift,shft size);
-    void copy_from_buffer(xptr addr, shft shift,shft size);
-    void expand_to_size(int size);
-};
-
-struct idx_user_data
-{
-private:
-    char* temps[2];
-    int   sizes[2];
-
-public:
-
-    idx_user_data()
-    {
-        temps[0] = NULL;
-        temps[1] = NULL;
-        sizes[0] = 0;
-        sizes[1] = 0;
-    }
-
-    ~idx_user_data()
-    {
-        if(buf != NULL)   { delete buf; buf = NULL; }
-        if(sizes[0]) { delete[] temps[0]; sizes[0] = 0; }
-        if(sizes[1]) { delete[] temps[1]; sizes[1] = 0; }
-    }
-
-    char* make_sure_temp_size(int n, int size);
-
-    xmlscm_type t;         /// Type of the index
-    idx_buffer* buf;       /// Pointer to the buffer used to serialize/deserialize
-};
-
 /* Throws invalid index type exception if we try to create index
  * with unsupported type */
 
@@ -331,12 +264,22 @@ check_index_key_type(xmlscm_type type) {
         throw USER_EXCEPTION2(SE2034, xmlscm_type2c_str(type));
 }
 
-int    idx_compare_less       (xptr v1,xptr v2, const void * Udata);
-int    idx_get_size           (tuple& t, const void * Udata);
-void   idx_serialize          (tuple& t,xptr v1, const void * Udata);
-void   idx_serialize_2_blks   (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
-void   idx_deserialize        (tuple &t, xptr& v1, const void * Udata);
-void   idx_deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
+//Declaration of serializer for SortedSequence
+
+class idx_serializer: public ITupleSerializer
+{
+private:
+    xmlscm_type key_type;
+
+    static tuple_cell get_tc(void* buf, xmlscm_type type, shft size);
+
+public:
+    idx_serializer(xmlscm_type t) { key_type = t; }
+
+    size_t serialize(const tuple &t, void *buf);
+    void deserialize(tuple &t, void *buf, size_t size);
+    int compare(void *buf1, size_t size1, void *buf2, size_t size2);
+};
 
 index_cell_xptr create_index(index_descriptor_t* index_dsc)
 {
@@ -359,11 +302,10 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
     doc_schema_node_cptr root_node = index_dsc->owner->get_schema_node();
     root_node.modify()->full_index_list->add(idc.ptr());
 
-    idx_user_data ud;
-    ud.t=index_dsc->keytype;
-    ud.buf=se_new idx_buffer();
-    sorted_sequence * ss = se_new sorted_sequence(idx_compare_less,
-      idx_get_size, idx_serialize, idx_serialize_2_blks, idx_deserialize, idx_deserialize_2_blks, &ud);
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    idx_serializer *serializer = new idx_serializer(index_dsc -> keytype);
+    SortedSequence *ss = new SortedSequence(serializer);
+
     tuple tup(2);
 
     // ALGORITHM: indexing data
@@ -425,7 +367,7 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
                         tup.cells[1] = tuple_cell::safenode_indir(obj_indir);
 
                         //XII. Insert created tuple into sorted sequence.
-                        ss->add(tup);
+                        ss -> add(tup);
                         counter1++;
                     } while (false);
 
@@ -436,7 +378,7 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
     }
 
     //XIII. Perfom sorting of the keys in ascending order.
-    ss->lazy_sort();
+    ss -> sort();
 
     idx::KeyValueMultimap * index_backend = idc->get_backend();
     index_backend->setSortedInsertionHint(false);
@@ -445,11 +387,13 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
 
     while (true)
     {
-        ss->next(tup);
+        ss -> next(tup);
         if (tup.is_eos())
         {
             delete ss;
             ss = NULL;
+            delete serializer;
+            serializer = NULL;
             break;
         }
         else
@@ -502,105 +446,48 @@ void drop_index (const char *index_title)
     }
 }
 
-/*** idx_buffer ***/
-
-void idx_buffer::copy_to_buffer(const void* addr, shft size)
-{
-    if (size > buffer_lgth)
-    {
-        if (buffer_lgth)
-        {
-            delete [] internal_buffer;
-        }
-        internal_buffer = se_new char[size];
-        buffer_lgth = size;
-    }
-    memcpy(internal_buffer, addr, size);
-}
-
-void idx_buffer::copy_from_buffer(xptr addr, shft shift, shft size)
-{
-    CHECKP(addr);
-    VMM_SIGNAL_MODIFICATION(addr);
-    memcpy(XADDR(addr), internal_buffer + shift, size);
-}
-
-void idx_buffer::expand_to_size(int size)
-{
-    if (size > buffer_lgth)
-    {
-        if (buffer_lgth)
-        {
-            char* buf = se_new char[size];
-            memcpy(buf, internal_buffer, buffer_lgth);
-            delete [] internal_buffer;
-            internal_buffer = buf;
-        }
-        else
-           internal_buffer = se_new char[size];
-        buffer_lgth = size;
-    }
-}
-
-void idx_buffer::copy_to_buffer(const void* addr, shft shift, shft size)
-{
-    if (size + shift > buffer_lgth)
-    {
-        if (buffer_lgth)
-        {
-            char* buf = se_new char[size+shift];
-            memcpy(buf, internal_buffer, shift);
-            delete [] internal_buffer;
-            internal_buffer = buf;
-        }
-        else
-            internal_buffer = se_new char[size+shift];
-        buffer_lgth = size + shift;
-    }
-    memcpy(internal_buffer + shift, addr, size);
-}
-
-void idx_buffer::copy_data_ser_to_buffer(xptr v1, int sz)
-{
-    if (sz > GET_FREE_SPACE(v1))
-    {
-        copy_to_buffer(v1, GET_FREE_SPACE(v1));
-        xptr nblk = ((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
-        CHECKP(nblk);
-        copy_to_buffer(XADDR(nblk), GET_FREE_SPACE(v1), sz-GET_FREE_SPACE(v1));
-    }
-    else
-    {
-        copy_to_buffer(v1, sz);
-    }
-}
-
-/*** idx_user_data ***/
-
-char* idx_user_data::make_sure_temp_size(int n, int size)
-{
-    int idx = n - 1;
-
-    if (size > sizes[idx])
-    {
-        if (sizes[idx])
-        {
-            char* buf = se_new char[size];
-            delete [] temps[idx];
-            temps[idx] = buf;
-        }
-        else
-           temps[idx] = se_new char[size];
-        sizes[idx] = size;
-    }
-    return temps[idx];
-}
-
 /*******************************************************************************************
 * Functions needed by sorted sequence implementation
 */
 
-static tuple_cell get_tc(void* buf, xmlscm_type type, shft size)
+size_t idx_serializer::serialize(const tuple &t, void *buf)
+{
+    CHECK_TIMER_FLAG;
+
+    shft sz = (shft) xmlscm_type_size(key_type);
+    if (!sz)
+        sz = t.cells[0].get_strlen();
+
+    memcpy((char *)buf, &sz, sizeof(shft));
+    xptr temp_value = t.cells[1].get_xptr();
+    memcpy((char *)buf + sizeof(shft), &temp_value, sizeof(xptr));
+
+    shft offset = sizeof(shft) + sizeof(xptr);
+
+    tuple_cell& tc = t.cells[0];
+    switch (key_type)
+    {
+        case xs_float                : {float value = tc.get_xs_float();  memcpy((char *)buf + offset, &value, sz); break;}
+        case xs_double               : {double value = tc.get_xs_double(); memcpy((char *)buf + offset, &value, sz); break;}
+        case xs_integer              : {int64_t value = tc.get_xs_integer(); memcpy((char *)buf + offset, &value, sz); break;}
+        case xs_string               :
+            {
+                tc = tuple_cell::make_sure_light_atomic(tc);
+                char* str = tc.get_str_mem();
+                memcpy((char *)buf + offset, str, sz);
+                break;
+            }
+        case xs_time                 :
+        case xs_date                 :
+        case xs_dateTime             : {xs_packed_datetime value = tc.get_xs_dateTime(); memcpy((char *)buf + offset, &value, sz); break;}
+        case xs_yearMonthDuration    :
+        case xs_dayTimeDuration      : {xs_packed_duration value = tc.get_xs_duration(); memcpy((char *)buf + offset, &value, sz); break;}
+        default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type.");
+    }
+    return offset + sz;
+}
+
+tuple_cell idx_serializer::get_tc(void* buf, xmlscm_type type, shft size)
 {
     switch (type)
     {
@@ -623,122 +510,38 @@ static tuple_cell get_tc(void* buf, xmlscm_type type, shft size)
     }
 }
 
-static void idx_get_size (xptr& v1, xptr& v2, int& s1, int&s2, const void * Udata, xptr& key)
-{
-    shft sz = 0;
-    CHECKP(v1);
-
-    if (GET_FREE_SPACE(v1)<sizeof(shft))
-    {
-        ((idx_user_data*)Udata)->buf->copy_to_buffer(v1,GET_FREE_SPACE(v1));
-        xptr v=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk;
-        CHECKP(v);
-        ((idx_user_data*)Udata)->buf->copy_to_buffer(v+sizeof(seq_blk_hdr),GET_FREE_SPACE(v1),sizeof(shft)-GET_FREE_SPACE(v1));
-        sz=*(shft*)(((idx_user_data*)Udata)->buf->get_buffer_pointer());
-
-        key = *((xptr*)(XADDR(v +
-                              sizeof(seq_blk_hdr) +
-                              sizeof(shft)-GET_FREE_SPACE(v1))));
-        CHECKP(v1);
-    }
-    else
-    {
-        sz=*((shft*)XADDR(v1));
-        if (GET_FREE_SPACE(v1)<sizeof(shft)+sizeof(xptr))
-        {
-            char buf[sizeof(xptr)];
-            memcpy(buf, XADDR(v1 + sizeof(shft)), GET_FREE_SPACE(v1) - sizeof(shft));
-            xptr v=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk;
-            CHECKP(v);
-            memcpy(buf + GET_FREE_SPACE(v1) - sizeof(shft),
-                   XADDR(v + sizeof(seq_blk_hdr)),
-                   sizeof(xptr) - (GET_FREE_SPACE(v1) - sizeof(shft)));
-            key = *((xptr*)buf);
-            CHECKP(v1);
-        }
-        else
-        {
-            key = *((xptr*) (XADDR(v1 + sizeof(shft))));
-        }
-    }
-    if (GET_FREE_SPACE(v1)<sizeof(shft)+sizeof(xptr)+sz)
-    {
-        if (GET_FREE_SPACE(v1)<=sizeof(shft)+sizeof(xptr))
-        {
-            xptr v=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk;
-            v1=v+sizeof(seq_blk_hdr)+(sizeof(shft)+sizeof(xptr)-GET_FREE_SPACE(v1));
-            v2=XNULL;
-            s1=sz;
-            s2=0;
-        }
-        else
-        {
-            xptr v=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk;
-            s1=GET_FREE_SPACE(v1)-(sizeof(shft)+sizeof(xptr));
-            v1=v1+(sizeof(shft)+sizeof(xptr));
-            v2=v+sizeof(seq_blk_hdr);
-            s2=sz-s1;
-        }
-    }
-    else
-    {
-        v1=v1+(sizeof(shft)+sizeof(xptr));
-        v2=XNULL;
-        s1=sz;
-        s2=0;
-    }
-}
-
-static inline xptr idx_get_ptr_to_complete_serialized_data(xptr v, /* out */ char** temp, int n, idx_user_data* ud, /* out */ int& s, /* out */ xptr& key)
-{
-    CHECKP(v);
-    xptr v1 = v;
-    xptr v2;
-    int s1 = 0, s2 = 0;
-
-    idx_get_size(v1, v2, s1, s2, ud, key);
-    s = s1 + s2;
-
-    if(v1 != XNULL && v2 != XNULL)
-    {
-        *temp = ud->make_sure_temp_size(n, s);
-        CHECKP(v1);
-        memcpy(*temp, XADDR(v1), s1);
-        CHECKP(v2);
-        memcpy(*temp + s1, XADDR(v2), s2);
-        return XNULL;
-    }
-    else
-    {
-        if(v1 == XNULL) return v2;
-        else return v1;
-    }
-}
-
-int idx_compare_less(xptr v1, xptr v2, const void * Udata)
+void idx_serializer::deserialize(tuple& t, void* buf, size_t size)
 {
     CHECK_TIMER_FLAG;
 
-    idx_user_data* ud = (idx_user_data*)Udata;
-    xmlscm_type type = ud->t;
+    shft sz = *((shft *)buf);
 
-    char* temp1 = NULL;
-    char* temp2 = NULL;
-    xptr addr1, addr2;
-    int s1, s2;
+    void *tmp = (char *)buf + sizeof(shft);
+    t.copy(
+        get_tc((char *)tmp + sizeof(xptr),
+                key_type,
+                sz
+        ),
+        tuple_cell::safenode_indir(*(xptr *)tmp));
+}
 
-    xptr key1;
-    xptr key2;
+int idx_serializer::compare(void* buf1, size_t size1, void* buf2, size_t size2)
+{
+    CHECK_TIMER_FLAG;
 
-    addr1 = idx_get_ptr_to_complete_serialized_data(v1, &temp1, 1, ud, s1, key1);
-    addr2 = idx_get_ptr_to_complete_serialized_data(v2, &temp2, 2, ud, s2, key2);
+    xptr key1 = *((xptr *)((char *)buf1 + sizeof(shft)));
+    xptr key2 = *((xptr *)((char *)buf2 + sizeof(shft)));
 
-    if(addr1 != XNULL) CHECKP(addr1);
-    tuple_cell tc1 = get_tc(addr1 != XNULL ? XADDR(addr1) : temp1, type, s1);
-    if(addr2 != XNULL) CHECKP(addr2);
-    tuple_cell tc2 = get_tc(addr2 != XNULL ? XADDR(addr2) : temp2, type, s2);
+    shft s1 = *((shft *)buf1);
+    shft s2 = *((shft *)buf2);
 
-    get_binary_op_res r = get_binary_op(xqbop_lt, type, type);
+    char *addr1 = (char *)buf1 + sizeof(shft) + sizeof(xptr);
+    char *addr2 = (char *)buf2 + sizeof(shft) + sizeof(xptr);
+
+    tuple_cell tc1 = get_tc(addr1, key_type, s1);
+    tuple_cell tc2 = get_tc(addr2, key_type, s2);
+
+    get_binary_op_res r = get_binary_op(xqbop_lt, key_type, key_type);
 
     bool result;
     if (r.collation)
@@ -746,8 +549,8 @@ int idx_compare_less(xptr v1, xptr v2, const void * Udata)
     else
         result = r.f.bf(tc1, tc2).get_xs_boolean();
 
-    if(result) return -1;
-    r = get_binary_op(xqbop_gt, type, type);
+    if (result) return -1;
+    r = get_binary_op(xqbop_gt, key_type, key_type);
 
     if (r.collation)
         result = r.f.bf_c(tc1, tc2, charset_handler->get_unicode_codepoint_collation()).get_xs_boolean();
@@ -758,145 +561,6 @@ int idx_compare_less(xptr v1, xptr v2, const void * Udata)
     if(key1 < key2) return -1;
     if(key2 < key1) return 1;
 
-    return 0;
-}
-
-int idx_get_size (tuple& t, const void * Udata)
-{
-    xmlscm_type tp=((idx_user_data*)Udata)->t;
-    return sizeof(shft)+sizeof(xptr)+((xmlscm_type_size(tp) == 0) ? t.cells[0].get_strlen() : xmlscm_type_size(tp));
-}
-
-void idx_serialize (tuple& t,xptr v1, const void * Udata)
-{
-    CHECK_TIMER_FLAG;
-
-    xmlscm_type type=((idx_user_data*)Udata)->t;
-    shft sz=(shft)xmlscm_type_size(type);
-    if (!sz)
-        sz=t.cells[0].get_strlen();
-    CHECKP(v1);
-    void * p=XADDR(v1);
-    VMM_SIGNAL_MODIFICATION(v1);
-
-#ifdef ALIGNMENT_REQUIRED
-    memcpy(p, &sz, sizeof(shft));
-    xptr temp_value = t.cells[1].get_xptr();
-    memcpy((char*)p+sizeof(shft), &temp_value, sizeof(xptr));
-#else
-    *((shft*)p)=sz;
-    *((xptr*)((char*)p+sizeof(shft)))=t.cells[1].get_xptr();
-#endif
-    shft offset=sizeof(shft)+sizeof(xptr);
-
-    tuple_cell& tc=t.cells[0];
-
-    switch (type)
-    {
-        case xs_float                : {float value = tc.get_xs_float();  memcpy((char*)p+offset, &value, sz); break;}
-        case xs_double               : {double value = tc.get_xs_double(); memcpy((char*)p+offset, &value, sz); break;}
-        case xs_integer              : {int64_t value = tc.get_xs_integer(); memcpy((char*)p+offset, &value, sz); break;}
-        case xs_string               :
-        {
-            tc = tuple_cell::make_sure_light_atomic(tc);
-            WRITEP(v1);
-            char* str = tc.get_str_mem();
-            memcpy((char*)p+offset, str, sz);
-            break;
-        }
-        case xs_time                 :
-        case xs_date                 :
-        case xs_dateTime             : {xs_packed_datetime value = tc.get_xs_dateTime(); memcpy((char*)p+offset, &value, sz); break;}
-        case xs_yearMonthDuration    :
-        case xs_dayTimeDuration      : {xs_packed_duration value = tc.get_xs_duration(); memcpy((char*)p+offset, &value, sz); break;}
-        default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type.");
-    }
-}
-
-void idx_serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata)
-{
-    idx_user_data* ud = (idx_user_data*)Udata;
-    idx_buffer* buffer = ud -> buf;
-    xmlscm_type type=ud->t;
-    shft sz=(shft)xmlscm_type_size(type);
-    if (!sz)
-        sz=t.cells[0].get_strlen();
-    buffer->copy_to_buffer(&sz,sizeof(shft));
-    xptr tmp=t.cells[1].get_xptr();
-    buffer->copy_to_buffer(&tmp, sizeof(shft),sizeof(xptr));
-    shft offset=sizeof(shft)+sizeof(xptr);
-    tuple_cell& tc=t.cells[0];
-
-    switch (type)
-    {
-        case xs_float                : {float value = tc.get_xs_float();  buffer->copy_to_buffer(&value, offset, sz); break;}
-        case xs_double               : {double value = tc.get_xs_double(); buffer->copy_to_buffer(&value, offset, sz);  break;}
-        case xs_integer              : {int64_t value = tc.get_xs_integer(); buffer->copy_to_buffer(&value, offset, sz); break;}
-        case xs_string               :
-        {
-            buffer->expand_to_size(offset+sz);
-            tc = tuple_cell::make_sure_light_atomic(tc);
-            char* str = tc.get_str_mem();
-            memcpy(buffer->get_buffer_pointer()+offset, str, sz);
-            break;
-        }
-        case xs_time                 :
-        case xs_date                 :
-        case xs_dateTime             : {xs_packed_datetime value = tc.get_xs_dateTime(); buffer->copy_to_buffer(&value, offset, sz); break;}
-        case xs_yearMonthDuration    :
-        case xs_dayTimeDuration      : {xs_packed_duration value = tc.get_xs_duration(); buffer->copy_to_buffer(&value, offset, sz); break;}
-        default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type.");
-    }
-
-    buffer->copy_from_buffer(v1, 0, size1);
-    buffer->copy_from_buffer(v2, size1, sz+sizeof(shft)+sizeof(xptr)-size1);
-}
-
-void idx_deserialize (tuple &t, xptr& v1, const void * Udata)
-{
-    CHECK_TIMER_FLAG;
-
-    idx_user_data* ud = (idx_user_data*)Udata;
-    idx_buffer* buffer = ud -> buf;
-    CHECKP(v1);
-    shft sz=*((shft*)XADDR(v1));
-
-#ifdef ALIGNMENT_REQUIRED
-    xptr v=v1+sizeof(shft);
-    buffer->copy_to_buffer(XADDR(v),sizeof(xptr)+sz);
-    t.copy(
-        get_tc( buffer->get_buffer_pointer()+sizeof(xptr),
-                ((idx_user_data*)Udata)->t,
-                sz
-               ),
-        tuple_cell::safenode_indir(*((xptr*)buffer->get_buffer_pointer())));
-#else
-    xptr v2=v1+sizeof(shft);
-    xptr v3=v2+sizeof(xptr);
-
-    tuple_cell key = get_tc( XADDR(v3),((idx_user_data*)Udata)->t,sz);
-    t.copy(key, tuple_cell::safenode_indir(*((xptr*)XADDR(v2))));
-#endif
-}
-
-void idx_deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata)
-{
-    idx_user_data* ud = (idx_user_data*)Udata;
-    idx_buffer* buffer = ud -> buf;
-    xptr vf=v1;
-    xptr vs=v2;
-    int s1,s2;
-    xptr key;
-    idx_get_size(vf,vs,s1,s2,Udata,key); /// idx_get_size is used here only to get (s1+s2)! vf and vs are not used further ...
-    buffer->copy_to_buffer(v1, size1);
-    vs=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
-    buffer->copy_to_buffer(vs, size1,s1+s2+sizeof(shft)+sizeof(xptr)-size1);
-    t.copy(
-            get_tc( buffer->get_buffer_pointer()+sizeof(shft)+sizeof(xptr),
-                    ((idx_user_data*)Udata)->t,
-                    s1+s2
-                   ),
-            tuple_cell::safenode_indir(*((xptr*)(buffer->get_buffer_pointer()+sizeof(shft)))));
 }
 
 /**********************************************************************************************************************************/

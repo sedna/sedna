@@ -12,10 +12,7 @@
 
 //FIXME: Don't forget to add Exception in serializer in case of tuple, which size exceeds block size
 
-#define ORB_STRING_PREFIX_SIZE  29                                      //Prefix size is selected to make serialized
-//representation of the tuple with xs:string
-//to be 8-byte aligned. It can improve performance.
-
+#define ORB_STRING_PREFIX_SIZE  29
 
 #define ORB_SERIALIZED_STRING_SIZE (sizeof(bool) + ORB_STRING_PREFIX_SIZE + sizeof(char))
 //All xs:string based types have ORB_SERIALIZED_STRING_SIZE
@@ -27,19 +24,18 @@
 //'false' means we are able to get the whole string using not
 //serialize tuple cell with this string.
 
-
 #define ORB_SERIALIZED_SIZE(t)  (xmlscm_type_size(t) == 0 ? ORB_SERIALIZED_STRING_SIZE : xmlscm_type_size(t))
 
 //Serializer used in order by operation
 struct orb_modifier {
     enum orb_empty_status {
-	ORB_EMPTY_GREATEST,
-	ORB_EMPTY_LEAST,
+        ORB_EMPTY_GREATEST,
+        ORB_EMPTY_LEAST,
     };
 
     enum orb_sort_order {
-	ORB_ASCENDING,
-	ORB_DESCENDING,
+        ORB_ASCENDING,
+        ORB_DESCENDING,
     };
 
     orb_sort_order   order;
@@ -48,12 +44,12 @@ struct orb_modifier {
 
     inline std::string to_string() const
     {
-	std::string res;
-	if(order == ORB_ASCENDING) res += "ascending";
-	else res += "descending";
-	if(status == ORB_EMPTY_GREATEST) res += " empty greatest";
-	else res += " empty least";
-	return res;
+        std::string res;
+        if (order == ORB_ASCENDING) res += "ascending";
+        else res += "descending";
+        if (status == ORB_EMPTY_GREATEST) res += " empty greatest";
+        else res += " empty least";
+        return res;
     }
 };
 
@@ -74,19 +70,19 @@ private:
     int bit_set_offset; //Offset of bit set in serialized representation
     arr_of_common_type *header;                     //Array of common types structures.
     arr_of_orb_modifier *modifiers;
-    int64_t *init_pos;	//Position of tuple in initial sequence
+    int64_t *init_pos;  //Position of tuple in initial sequence
 
-    sequence *sort;	//Pointer to the initial sequence that must be sorted; Used in string comparing
-    bool stable;	//Indicates if stable sort is requested
+    sequence *sort; //Pointer to the initial sequence that must be sorted; Used in string comparing
+    bool stable;    //Indicates if stable sort is requested
 
 public:
     TupleSerializer(int _bit_set_offset_,
-		    arr_of_orb_modifier *_modifiers_,
-		    arr_of_common_type *_header_,
-		    bool _stable_,
-		    sequence *_sort_,
-		    int64_t *pos
-		);
+                    arr_of_orb_modifier *_modifiers_,
+                    arr_of_common_type *_header_,
+                    bool _stable_,
+                    sequence *_sort_,
+                    int64_t *pos
+                   );
 
     //Inherited virtual interface methods:
     virtual size_t serialize(const tuple& t, void* buf);

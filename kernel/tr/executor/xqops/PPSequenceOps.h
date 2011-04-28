@@ -9,7 +9,8 @@
 
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
-#include "tr/executor/base/sorted_sequence.h"
+#include "tr/executor/base/ITupleSerializer.h"
+#include "tr/executor/base/SortedSequence.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnEmpty
@@ -101,7 +102,8 @@ class PPFnDistinctValues : public PPIterator
 protected:
     PPOpIn child;
     PPOpIn collation_child;
-    sorted_sequence *s;
+    ITupleSerializer *serializer;
+    SortedSequence *s;
     CollationHandler *handler;
     tuple_cell ret_val;
     bool has_NaN;
@@ -109,6 +111,7 @@ protected:
 
 private:
     void make_heavy_atomic(tuple &t);
+    int compare_tc(tuple_cell tc1, tuple_cell tc2);
 
     virtual void do_open   ();
     virtual void do_reopen ();
@@ -120,8 +123,6 @@ private:
 
     estr txt_data;
 
-    static int compare_tc(tuple_cell tc1, tuple_cell tc2);
-
 public:
     PPFnDistinctValues(dynamic_context *_cxt_,
                        operation_info _info_,
@@ -132,13 +133,6 @@ public:
                        PPOpIn _child_,
                        PPOpIn _collation_child_);
     virtual ~PPFnDistinctValues();
-
-    static int compare(xptr v1, xptr v2, const void * Udata);
-    static int get_size(tuple& t, const void * Udata);
-    static void serialize(tuple& t,xptr v1, const void * Udata);
-    static void serialize_2_blks(tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
-    static void deserialize(tuple &t, xptr& v1, const void * Udata);
-    static void deserialize_2_blks(tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
