@@ -29,26 +29,28 @@ using namespace std;
 
 static inline xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
 {
-    xmlscm_type t = evaluate_common_type(t1, t2);    
+    xmlscm_type t = evaluate_common_type(t1, t2);
     
-    if(t == xs_string  || is_derived_from_xs_string(t) || t == xs_anyURI)  
+    if (t == xs_string  || is_derived_from_xs_string(t) || t == xs_anyURI)
         return xs_string;
-    if(t == xs_integer || is_derived_from_xs_integer(t)) 
-        return xs_integer; 
+    if (t == xs_integer || is_derived_from_xs_integer(t))
+        return xs_integer;
     
-    switch(t)    
-    {   
-        case xs_time                  :
-        case xs_date                  :
-        case xs_dateTime              :
-        case xs_yearMonthDuration     : 
-        case xs_dayTimeDuration       : 
-        case xs_float                 : 
-        case xs_double                : 
-        case xs_decimal               : 
-        case xs_boolean               : return t;
-        default                       : throw XQUERY_EXCEPTION2(XPTY0004, "Non-comparable types found while sorting.");
-    }    
+    switch (t)
+    {
+    case xs_time                  :
+    case xs_date                  :
+    case xs_dateTime              :
+    case xs_yearMonthDuration     :
+    case xs_dayTimeDuration       :
+    case xs_float                 :
+    case xs_double                :
+    case xs_decimal               :
+    case xs_boolean               :
+        return t;
+    default                       :
+        throw XQUERY_EXCEPTION2(XPTY0004, "Non-comparable types found while sorting.");
+    }
 }
 
 
@@ -65,15 +67,15 @@ PPOrderBy::PPOrderBy(dynamic_context *_cxt_,
                      PPOpIn _child_,
                      arr_of_orb_modifier _modifiers_,
                      int _data_size_) : PPIterator(_cxt_, _info_, "PPOrderBy"),
-                                        stable(_stable_),
-                                        child(_child_),
-                                        modifiers(_modifiers_),
-                                        data_size(_data_size_),
-                                        data_cells(NULL),
-                                        sort_cells(NULL),
-                                        ss(NULL)
+        stable(_stable_),
+        child(_child_),
+        modifiers(_modifiers_),
+        data_size(_data_size_),
+        data_cells(NULL),
+        sort_cells(NULL),
+        ss(NULL)
 {
-    if(modifiers.size() != child.ts - data_size) 
+    if (modifiers.size() != child.ts - data_size)
         throw USER_EXCEPTION2(SE1003, "Number of modifiers must be equal to the expressions number.");
     
     sort_size = child.ts - data_size;
@@ -101,7 +103,7 @@ void PPOrderBy::do_open ()
     udata.pos       = 0;
     udata.header    = &types;
     udata.modifiers = &modifiers;
-    udata.size      = sizeof(int64_t);            
+    udata.size      = sizeof(int64_t);
     udata.stable    = stable;
 }
 
@@ -122,27 +124,27 @@ void PPOrderBy::do_close()
     udata.sort = NULL;
     if (ss != NULL)
     {
-	delete ss;
-	delete serializer;
-	ss = NULL, serializer = NULL;
+        delete ss;
+        delete serializer;
+        ss = NULL, serializer = NULL;
     }
 }
 
 void PPOrderBy::do_next (tuple &t)
 {
-        
-    if(first_time)
+
+    if (first_time)
     {
-        if(need_reinit)
+        if (need_reinit)
         {
             data_cells -> clear();
             sort_cells -> clear();
             if (serializer != NULL)
-	    {
-		delete serializer;
-		delete ss;
-		ss = NULL, serializer = NULL;
-	    }
+            {
+                delete serializer;
+                delete ss;
+                ss = NULL, serializer = NULL;
+            }
             pos = 0;
             udata.pos   = 0;
             udata.size  = sizeof(int64_t);
@@ -155,35 +157,35 @@ void PPOrderBy::do_next (tuple &t)
         tuple sort_tuple(sort_size);
         tuple source(child.ts);
 
-        for(i = 0; i < sort_size; i++) types.at(i).initialized = false;
+        for (i = 0; i < sort_size; i++) types.at(i).initialized = false;
 
         while (true)
         {
             child.op -> next(source);
             if (source.is_eos()) break;
 
-            for(i = 0; i < source.cells_number; i++)
-            {    
-                if(i < data_size) data_tuple.cells[i] = source.cells[i];
-                else                
+            for (i = 0; i < source.cells_number; i++)
+            {
+                if (i < data_size) data_tuple.cells[i] = source.cells[i];
+                else
                 {
-                    if(source.cells[i].is_eos()) 
+                    if (source.cells[i].is_eos())
                         sort_tuple.cells[i - data_size].set_eos();
                     else
                     {
                         tuple_cell tc = source.cells[i];
                         
-                        if(tc.is_atomic() && tc.get_atomic_type() == se_sequence)
+                        if (tc.is_atomic() && tc.get_atomic_type() == se_sequence)
                             throw XQUERY_EXCEPTION2(XPTY0004, "A sequence of more than one item is not allowed in order by specification.");
                         
                         tc = atomize(tc);
-                        sort_tuple.cells[i - data_size] = tc.get_atomic_type() == xs_untypedAtomic ? 
+                        sort_tuple.cells[i - data_size] = tc.get_atomic_type() == xs_untypedAtomic ?
                                                           cast_primitive_to_xs_string(tc) : tc ;
                         
                         orb_common_type* ct = &types.at(i - data_size);
                         xmlscm_type t = sort_tuple.cells[i - data_size].get_atomic_type();
                         
-                        if(ct->initialized)
+                        if (ct->initialized)
                             ct->xtype = get_least_common_type_with_gt(ct->xtype, t);
                         else
                         {
@@ -199,30 +201,30 @@ void PPOrderBy::do_next (tuple &t)
             sort_cells -> add(sort_tuple);
         }
         
-        for(i = 0; i < sort_size; i++)
+        for (i = 0; i < sort_size; i++)
         {
             orb_common_type* ct = &types.at(i);
-            if(!ct->initialized) continue;
+            if (!ct->initialized) continue;
             ct->size = ORB_SERIALIZED_SIZE(ct->xtype);
             udata.size += ct->size;
             need_to_sort = true;
         }
 
-        if(need_to_sort)
+        if (need_to_sort)
         {
             udata.bit_set_offset = udata.size;         // offset to the begining of the eos map in each serialized tuple
             udata.size += sort_size / 8;               // additional bytes for serialized bit_set which contains eos bitmap
-            if(sort_size % 8 != 0) udata.size++;
+            if (sort_size % 8 != 0) udata.size++;
 
-            if(udata.size > DATA_BLK_SIZE) 
+            if (udata.size > DATA_BLK_SIZE)
                 throw XQUERY_EXCEPTION2(SE1003, "Order by clause contains too many specifications.");
 
-	    //Creating serializer and sorted sequence
+            //Creating serializer and sorted sequence
 
-	    serializer = new TupleSerializer(udata.bit_set_offset, udata.modifiers, udata.header, udata.stable, udata.sort, &(udata.pos));
-	    ss = new SortedSequence(serializer);
+            serializer = new TupleSerializer(udata.bit_set_offset, udata.modifiers, udata.header, udata.stable, udata.sort, &(udata.pos));
+            ss = new SortedSequence(serializer);
 
-            for(i = 0; i < sort_cells->size(); i++)
+            for (i = 0; i < sort_cells->size(); i++)
             {
                 sort_cells -> get(sort_tuple, i);
                 ss -> add(sort_tuple);
@@ -236,33 +238,33 @@ void PPOrderBy::do_next (tuple &t)
     
     if (need_to_sort)
     {
-	ss -> next(t);
-	if (t.cells[0].get_atomic_type() != xs_integer && !t.is_eos())
-	    throw USER_EXCEPTION2(SE1003, "Incorrect serialization/deserialization.");
-	if (!t.is_eos())
-	{
-	    data_cells -> get(t, t.cells[0].get_xs_integer());
-	}
+        ss -> next(t);
+        if (t.cells[0].get_atomic_type() != xs_integer && !t.is_eos())
+            throw USER_EXCEPTION2(SE1003, "Incorrect serialization/deserialization.");
+        if (!t.is_eos())
+        {
+            data_cells -> get(t, t.cells[0].get_xs_integer());
+        }
     }
     else
     {
-	if (pos < data_cells -> size())
-	{
-	    data_cells -> get(t, pos);
-	}
-	pos++;
+        if (pos < data_cells -> size())
+        {
+            data_cells -> get(t, pos);
+        }
+        pos++;
     }
 
     if (t.is_eos() || pos > data_cells -> size()) {
         t.set_eos();
         first_time  = true;
         need_reinit = true;
-	if (ss != NULL)
-	{
-	    delete ss;
-	    delete serializer;
-	    ss = NULL, serializer = NULL;
-	}
+        if (ss != NULL)
+        {
+            delete ss;
+            delete serializer;
+            ss = NULL, serializer = NULL;
+        }
         data_cells -> clear();
         sort_cells -> clear();
     }
@@ -271,10 +273,10 @@ void PPOrderBy::do_next (tuple &t)
 PPIterator* PPOrderBy::do_copy(dynamic_context *_cxt_)
 {
     PPOrderBy *res = se_new PPOrderBy(_cxt_,
-                                      info, 
-                                      stable, 
-                                      child, 
-                                      modifiers, 
+                                      info,
+                                      stable,
+                                      child,
+                                      modifiers,
                                       data_size);
 
     res->child.op = child.op->copy(_cxt_);
@@ -299,14 +301,14 @@ void PPOrderBy::do_accept(PPVisitor &v)
 PPSTuple::PPSTuple(dynamic_context *_cxt_,
                    operation_info _info_,
                    const arr_of_PPOpIn &_ch_arr_) : PPIterator(_cxt_, _info_, "PPSTuple"),
-                                                    ch_arr(_ch_arr_),
-                                                    lt(1)
+        ch_arr(_ch_arr_),
+        lt(1)
 {
 }
 
 PPSTuple::~PPSTuple()
 {
-    for (i = 0; i < ch_arr.size(); i++) 
+    for (i = 0; i < ch_arr.size(); i++)
     {
         delete (ch_arr[i].op);
         ch_arr[i].op = NULL;
@@ -315,14 +317,14 @@ PPSTuple::~PPSTuple()
 
 void PPSTuple::do_open ()
 {
-    for (i = 0; i < ch_arr.size(); i++) 
+    for (i = 0; i < ch_arr.size(); i++)
         ch_arr[i].op->open();
     i = 0;
 }
 
 void PPSTuple::do_reopen()
 {
-    for (i = 0; i < ch_arr.size(); i++) 
+    for (i = 0; i < ch_arr.size(); i++)
         ch_arr[i].op->reopen();
     i = 0;
 }
@@ -334,9 +336,9 @@ void PPSTuple::do_close()
     i = 0;
     
     /// We clear on close due to these pointers can be used higher on tree in PPSLet.
-    /// We can not perform clearing within PPSLet cause the situation when PPSLet.next() 
+    /// We can not perform clearing within PPSLet cause the situation when PPSLet.next()
     /// was not called is possible.
-    while(seq_ptrs.size())
+    while (seq_ptrs.size())
     {
         sequence *st = seq_ptrs.back();
         delete st;
@@ -360,14 +362,14 @@ void PPSTuple::do_next(tuple &t)
             {
                 t.cells[i] = ch_arr[i].get(lt);
                 ch_arr[i].op->next(lt);
-                if(!lt.is_eos())
+                if (!lt.is_eos())
                 {
                     sequence* st = se_new sequence(1);
                     seq_ptrs.push_back(st); /// Save pointer. Memory will be freed in PPStuple.close().
                     tuple prev_lt(1);
                     prev_lt.copy(t.cells[i]);
                     st -> add(prev_lt);
-                    while(!lt.is_eos()) 
+                    while (!lt.is_eos())
                     {
                         st -> add(lt);
                         ch_arr[i].op->next(lt);
@@ -377,7 +379,7 @@ void PPSTuple::do_next(tuple &t)
             }
         }
     }
-    else 
+    else
     {
         t.set_eos();
         i = 0;

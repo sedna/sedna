@@ -185,6 +185,10 @@ void SortedSequence::freeAccumulator()
 void SortedSequence::finalizeAccumulator()
 {
     //In-block sorting accumulator (qsort)
+    if (elementsCount == 0)
+    {
+        return;
+    }
     xptr tmp_ptr, tmp_ptr_next;
     tmp_ptr = firstPtrBlock;
     while ( tmp_ptr != XNULL )
