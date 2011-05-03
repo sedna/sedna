@@ -33,6 +33,8 @@ static struct st_path * st_sp_add(struct st_path * sp, struct st_state_ext * sta
     int i;
     struct st_static_state_data * static_state;
 
+    U_ASSERT(SAME_PAGE(state->ptr, ph->page));
+
     if (sp->state_count == sp->__state_cap) {
         sp->__state_cap += STATE_GROW_DELTA;
         sp->states = (struct st_static_state_data *) realloc(sp->states, sizeof(struct st_static_state_data) * sp->__state_cap);
@@ -60,6 +62,15 @@ static struct st_path * st_sp_add(struct st_path * sp, struct st_state_ext * sta
         static_page = sp->pages + sp->page_count;
         static_page->page = ph->page;
         static_page->free_space = ph->free_space;
+        // if trie count > 1 then st_page would store space occupied by the first root only ; not the most hungry root.
+        if (ph->trie_count == 0) {
+            static_page->occupied_by_root = 0;
+        } else {
+            struct state_descriptor dsc;
+            read_state((char *) XADDR(ph->page) + ph->trie_offset, &dsc);   // (char *) XADDR(ph->page) + ph->trie_offset is used instead of get_root_state() because it's not declared there
+            static_page->occupied_by_root = dsc.len + dsc.edge_count * (sizeof(xptr_t) + sizeof(flags_t));
+        }
+
         static_page->parent_state = (sp->state_count > 1) ? (static_state - 1) : NULL;
 //        static_page->root_count = ph->trie_count;
 
@@ -277,6 +288,5 @@ struct st_path * st_find_state_path(const struct btrie * tree, const char * key,
     st_sp_done(result);
     return result;
 }
-
 
 
