@@ -47,6 +47,7 @@ bool btrie_enum_next(btrie_enum_t benum) {
         while (benum->stack_len > 0) {
             top = benum->stack + (benum->stack_len - 1);
             U_ASSERT(top->current_edge < top->edge_count);
+
             ++top->current_edge;
             if (top->current_edge == top->edge_count) {
                 --benum->stack_len;

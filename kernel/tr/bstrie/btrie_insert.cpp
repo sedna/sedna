@@ -247,8 +247,8 @@ void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_
 {
     int key_len = key_object_pair->key_length - key_pos;
     int prefix_len;
-    struct state_descriptor state_dsc;
-    struct state_descriptor new_state;
+    struct state_descriptor state_dsc = {};
+    struct state_descriptor new_state = {};
     char * buf =  tmp_buffer;
 
     result->buf2 = NULL;
@@ -274,7 +274,7 @@ void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_
             /* In the following two cases we need a new parent state for a given one to be created */
             struct state_descriptor par_state;
             if (key_len > 0) {
-                DEBUG_INFO("case 5 (P=(K-E) split)");
+//                DEBUG_INFO("case 5 (P=(K-E) split)");
 
 /*  - case 5 : (the most common one) the goal key and the prefix share common part, but there are parts of both left
                create new state as the parent of the given one, containing the common part of prefix
@@ -306,7 +306,7 @@ void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_
 
                 add_edge(&par_state, state_dsc.prefix[prefix_pos], (uint16_t) offset);
             } else {
-                DEBUG_INFO("case 3 (PK-E split)");
+//                DEBUG_INFO("case 3 (PK-E split)");
 
 /*  - case 3 : the goal key ends somewhere inside the prefix
                create new state as the parent of the given one */
@@ -327,7 +327,7 @@ void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_
             write_state(buf, &new_state);
             buf += new_state.len;
         } else if (key_len > 0) {
-            DEBUG_INFO("case 4  (K-E split)");
+//            DEBUG_INFO("case 4  (K-E split)");
 
             char new_key;
 
@@ -365,7 +365,7 @@ void st_new_state_prepare(struct st_tmp_trie * result, char * state, int prefix_
                 }
             }
         } else {
-            DEBUG_INFO("case 2  (no split)");
+//            DEBUG_INFO("case 2  (no split)");
 
 /*  - case 2 : there is already a state (final or not), that can be considered as goal
                add (or replace) object to this one */

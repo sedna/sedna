@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include "btrie.h"
+#include <stdint.h>
 
 void btrie_collect_stat(xptr entry_point);
 

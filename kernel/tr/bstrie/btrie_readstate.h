@@ -28,6 +28,7 @@ static char * read_state(const char * p, struct state_descriptor * d)
     d->flags = meta;
 
     if ((meta & STATE_LONG_JUMP) > 0) {
+	d->edge_count = 0;
         CAST_AND_READ(d->long_jump, s);
         d->len = (s - p);
         return s;
