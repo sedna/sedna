@@ -57,4 +57,6 @@ static int bisearch_char(char k, char * A, int n)
 }
 
 
+//void __debug_walkthrough(btrie_t tree);
+
 #endif /* __BTRIE_MISC_H */
