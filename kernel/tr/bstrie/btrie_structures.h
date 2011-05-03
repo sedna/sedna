@@ -69,8 +69,8 @@ struct st_key_object_pair {
 
 struct st_page_header {
     xptr_t page;        // page long pointer
-    int trie_count;     // number of ties with different roots
-    sptr_t * tries;     // in-page pointer (volid only while page is in memory)
+    int trie_count;     // number of tries with different roots
+    sptr_t * tries;     // in-page pointer (valid only while page is in memory)
 
     sptr_t trie_offset; // offset to trie from the beginning of page
     sptr_t data_end;    // offset to data end from the beginning of page
@@ -153,6 +153,7 @@ struct st_path {
 struct st_static_page_data {
     xptr_t page;
     sptr_t free_space;
+    sptr_t occupied_by_root; // space occupied by root state if there is only one trie in page; space occupied by the first trie root state otherwise
     sptr_t long_jump;
     struct st_static_state_data * parent_state;
 };
@@ -191,6 +192,9 @@ struct trie_segment_t {
     sptr_t len;
     sptr_t p;
     sptr_t parent_offset;
+    xptr_t long_jump_pointer;
+
+    int valid_index;
 };
 
 #endif /* _BTRIE_STRUCTURES_H */

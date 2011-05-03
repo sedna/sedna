@@ -298,4 +298,3 @@ void __debug_walkthrough_branch(char * buffer, char * prefix_append, char * stat
 }
 
 #endif /* EL_DEBUG == 1 */
-

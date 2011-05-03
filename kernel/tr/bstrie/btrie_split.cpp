@@ -15,7 +15,7 @@
 #define MAX_LINKS 256
 
 
-/** Returns the liniear size of the state at <p> */
+/** Returns the linear size of the state at <p> */
 inline
 static sptr_t st_get_local_state_length(const char * p, bool include_subtree)
 {
@@ -47,26 +47,40 @@ static sptr_t st_move_state_tree(char * dest, const char * src, sptr_t len)
 
 
 /** Copies tries, defined by <segments> from <source> buffer to page, defined by <page_header> */
-inline
-static void st_copy_tries(char * source, struct trie_segment_t * segments, struct st_page_header * page_header) {
-    char * dest = (char *) XADDR(page_header->page) + page_header->trie_offset;
-    char * root_links = (char *) page_header->tries;
-    int n = page_header->trie_count;
+static void st_copy_tries(char * source, struct trie_segment_t * segments, int segment_count, struct st_page_header * page_header) {
+    int m = 0; /* Actual trie count counter */
     sptr_t pos = 0;
 
+    for (int i = 0; i < segment_count; i++) {
+        if ((segments + i)->long_jump_pointer == XNULL) {
+            ++m;
+        }
+    }
+
+//    U_ASSERT(m > 0);
+
+    st_markup_page(page_header, m, page_header->page == XNULL);
     WRITE_PAGE(page_header->page);
 
-    for (int i = 0; i < n; i++) {
+    char * dest = (char *) XADDR(page_header->page) + page_header->trie_offset;
+    char * root_links = (char *) page_header->tries;
+
+    for (int i = 0; i < segment_count; i++) {
         struct trie_segment_t * trie = segments + i;
+        U_ASSERT(segments[i].valid_index < m);
+        if (trie->long_jump_pointer == XNULL)
+        {
+            memcpy(dest, source + trie->p, trie->len);
+            CAST_AND_WRITE(root_links, pos);
 
-        memcpy(dest, source + trie->p, trie->len);
-        CAST_AND_WRITE(root_links, pos);
-
-        pos += trie->len;
-        dest += trie->len;
+            pos += trie->len;
+            dest += trie->len;
+        }
     }
 
     page_header->data_end = page_header->trie_offset + pos;
+
+    st_write_page_header(page_header);
 }
 
 static void write_jump_list(struct state_descriptor * dsc, struct trie_segment_t * segments, xptr_t base, int n0, int n)
@@ -77,7 +91,12 @@ static void write_jump_list(struct state_descriptor * dsc, struct trie_segment_t
 
     for (int i = n0; i < n; i++) {
         char * dest = jumps + dsc->pointers[segments[i].id];
-        jump = base + st_trie_list_offset + (i - n0) * sizeof(sptr_t);
+        if (segments[i].long_jump_pointer != XNULL) {
+            jump = segments[i].long_jump_pointer;
+        } else {
+		U_ASSERT (segments[i].valid_index != -1);
+            jump = base + st_trie_list_offset + segments[i].valid_index * sizeof(sptr_t);
+        }
         CAST_AND_WRITE(dest, state);
         CAST_AND_WRITE(dest, jump);
     }
@@ -92,7 +111,8 @@ static void write_jump_list_2(char * parent_base, struct trie_segment_t * segmen
     for (int i = n0; i < n; i++) {
         U_ASSERT(segments[i].parent_offset != 0);
         char * dest = jumps + segments[i].parent_offset;
-        jump = base + st_trie_list_offset + (i - n0) * sizeof(sptr_t);
+        U_ASSERT (segments[i].valid_index != -1);
+        jump = base + st_trie_list_offset + segments[i].valid_index * sizeof(sptr_t);
         CAST_AND_WRITE(dest, state);
         CAST_AND_WRITE(dest, jump);
     }
@@ -124,6 +144,8 @@ static int write_segments(struct trie_segment_t * segments, int n, sptr_t len, x
 {
     struct st_page_header new_page_header;
     int break_point;
+    int m = 0;
+    int cc = 0;
 
     break_point = divide_segments(segments, n, len);
     /* FIXME: actually this can lead to an error, if break_point == 0. To fix it, segments MUST be sorted before division. */
@@ -132,15 +154,26 @@ static int write_segments(struct trie_segment_t * segments, int n, sptr_t len, x
         break_point = 1;
     }
 
+    for (int i = 0; i < n; i++) {
+	if (i == break_point) {
+		m = 0;
+	}
+
+        if (segments[i].long_jump_pointer == XNULL) {
+            segments[i].valid_index = m;
+            ++m;
+            ++cc;
+        }
+    }
+
+    U_ASSERT(cc > 1);
+
     new_page_header.page = *ltp;
-    st_markup_page(&new_page_header, break_point, *ltp == XNULL);
-    st_copy_tries(source, segments, &new_page_header);
-    st_write_page_header(&new_page_header);
+    st_copy_tries(source, segments, break_point, &new_page_header);
     *ltp = new_page_header.page;
 
-    st_markup_page(&new_page_header, n - break_point, true);
-    st_copy_tries(source, segments + break_point, &new_page_header);
-    st_write_page_header(&new_page_header);
+    new_page_header.page = XNULL;
+    st_copy_tries(source, segments + break_point, n - break_point, &new_page_header);
     *rtp = new_page_header.page;
 
     return break_point;
@@ -151,25 +184,39 @@ static int build_segments(char * source, sptr_t * pointers, char * buffer, struc
     int total_length = 0;
     sptr_t len;
     char * c = buffer;
+    struct state_descriptor dsc;
 
     for (int i = 0; i < n; i++) {
         sptr_t offset = pointers[i];
         char * state = source + offset;
-        len = st_move_state_tree(c, state, 0);
 
-        segments[i].p = (sptr_t) (c - buffer);
+        read_state(state, &dsc);
+        if ((dsc.flags & STATE_LONG_JUMP) > 0) {
+            len = 0;
+            segments[i].p = 0;
+            segments[i].long_jump_pointer = dsc.long_jump;
+            segments[i].valid_index = -1;
+        } else {
+            len = st_move_state_tree(c, state, 0);
+            segments[i].p = (sptr_t) (c - buffer);
+            segments[i].long_jump_pointer = XNULL;
+            segments[i].valid_index = 0;
+        }
         total_length += (segments[i].len = len);
         c += len;
         segments[i].parent_offset = 0;
+
     }
+    U_ASSERT(total_length <= PAGE_SIZE);
 
     return total_length;
 }
 
 static char source[PAGE_SIZE];
+static char root_buffer[MAX_STATE_SIZE + MAX_LINKS * (sizeof(xptr_t) + 1)];
 static struct trie_segment_t tries[MAX_LINKS];
 
-static xptr_t st_split_promote_root(struct st_page_header * root_page_hdr, int parent_free_space, xptr_t parent_position)
+static xptr_t st_split_promote_root(struct st_page_header * root_page_hdr, int parent_free_space, xptr_t parent_position, int cpage)
 {
     struct state_descriptor dsc;
     xptr_t rtp = XNULL, ltp = XNULL;
@@ -190,7 +237,7 @@ static xptr_t st_split_promote_root(struct st_page_header * root_page_hdr, int p
     root_length = dsc.len + n * (sizeof(xptr_t) + sizeof(flags_t));
 
     if (root_length <= parent_free_space) {
-        char * buf = (char *) malloc(root_length);
+        char * buf = root_buffer;
         struct st_tmp_trie trie = {};
         struct st_page_header * pghdr = root_page_hdr;
 
@@ -212,6 +259,7 @@ static xptr_t st_split_promote_root(struct st_page_header * root_page_hdr, int p
         read_state((char *) XADDR(parent_position), &dsc);
     } else {
         // TODO: PROMOTE ROOT!
+        U_ASSERT(cpage==0);
         parent_position = root_page_hdr->page;
         root_page_hdr->data_end = root_page_hdr->trie_offset + root_length;
     }
@@ -318,7 +366,10 @@ sptr_t find_parent_state(struct st_path * path, xptr_t page, xptr_t * parent_sta
 }
 
 extern
-void btrie_collect_stat(xptr entry_point);
+void btrie_collect_stat(xptr_t entry_point);
+extern
+bool btrie_data_end_check(xptr_t entry_point);
+
 
 #define MAX_CANDIDATES 16
 
@@ -407,31 +458,70 @@ xptr_t st_write_split_state(struct st_tmp_trie * new_state)
     return result;
 }
 
-xptr_t st_split(struct btrie tree, struct st_path * sp, int cpage)
+//returns cpage where we can free some space for further root promotion. If it's 0, then we need to promote whole trie's root in the new page.
+int st_search_for_initial_split_point (struct btrie tree, struct st_path * sp, int cpage, sptr_t needed_space)
 {
-    struct st_static_page_data * page = sp->pages + cpage;
-    struct st_page_header page_hdr;
-    xptr_t x;
-    xptr_t parent;
-
-    st_read_page_header(page->page, &page_hdr);
-
-    if (page_hdr.trie_count == 1) {
+        struct st_static_page_data * page = sp->pages + cpage;
+        struct st_page_header page_hdr;
+        sptr_t max_free_space = 0;
         xptr_t p;
         int free_space;
 
+        U_ASSERT(cpage >= 0);
+
+        if (cpage == 0) {
+            return 0;
+        }
+
+        st_read_page_header(page->page, &page_hdr);
+
+        U_ASSERT(page_hdr.trie_count > 0);
+        if (page_hdr.trie_count > 1) {
+            return cpage;
+        }
+
         free_space = find_parent_state(sp, page_hdr.page, &p);
 
-        DEBUG_INFO("pagesplit case A.1 (promote root)");
-        x = st_split_promote_root(&page_hdr, free_space, p);
+        if (page->occupied_by_root < free_space) {
+            return cpage;
+        }
+
+        needed_space = MAX(needed_space, page->occupied_by_root);
+        cpage = st_search_for_initial_split_point (tree, sp, cpage-1, needed_space);
+
+        return cpage;
+}
+
+
+xptr_t st_split(struct btrie tree, struct st_path * sp, int cpage)
+{
+    struct st_static_page_data * page;
+    struct st_page_header page_hdr;
+    xptr_t x;
+    xptr_t parent;
+    xptr_t p;
+    int free_space;
+    int original_cpage = cpage;
+
+    cpage = st_search_for_initial_split_point (tree, sp, cpage, 0);
+
+    page = sp->pages + cpage;
+    st_read_page_header(page->page, &page_hdr);
+    free_space = find_parent_state(sp, page_hdr.page, &p);
+
+//    checkTrieList(&page_hdr);
+
+    if (page_hdr.trie_count == 1) {
+//        DEBUG_INFO("pagesplit case A.1 (promote root)");
+        x = st_split_promote_root(&page_hdr, free_space, p, cpage);
     } else {
-        DEBUG_INFO("pagesplit case B (split root)");
+//        DEBUG_INFO("pagesplit case B (split root)");
         parent = page->parent_state->p;
         x = st_split_tries(parent, &page_hdr);
     }
 
+//    st_read_page_header(page_hdr.page, &page_hdr);
+//    checkTrieList(&page_hdr);
+
     return x;
 }
-
-
-
