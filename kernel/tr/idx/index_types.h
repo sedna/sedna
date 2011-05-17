@@ -17,7 +17,7 @@ typedef const char * lockid_t; /* FIXME: implement this! AND MOVE TO OTHER HEADE
 void index_on_session_begin();
 void index_on_session_end();
 
-enum index_backend_t { index_btree, index_bstrie };
+enum index_backend_t { index_btree = 0x100, index_bstrie = 0x200 };
 
 index_backend_t str2index_type(const char * str);
 

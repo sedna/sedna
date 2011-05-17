@@ -522,13 +522,13 @@ void hl_logical_log_index(index_descriptor_t *dsc, bool inserted)
     const char * doc_name = dsc->owner->get_name();
     // First character in doc_name stands for metadata cell type
 
-    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 5,
-                 obj_path_str.c_str(), obj_path_str.size() + 1,
-                 key_path_str.c_str(), key_path_str.size() + 1,
-                 &dsc->keytype, sizeof(dsc->keytype),
-                 dsc->index_title, strlen(dsc->index_title) + 1,
-                 doc_name, strlen(doc_name) + 1,
-                 &dsc->backend_type, sizeof(dsc->backend_type));
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 6,
+                 obj_path_str.c_str(),   obj_path_str.size() + 1,
+                 key_path_str.c_str(),   key_path_str.size() + 1,
+                 &dsc->keytype,          sizeof(dsc->keytype),
+                 dsc->index_title,       strlen(dsc->index_title) + 1,
+                 doc_name,               strlen(doc_name) + 1,
+                 &dsc->backend_type,     sizeof(dsc->backend_type));
 }
 
 #ifdef SE_ENABLE_FTSEARCH
