@@ -617,18 +617,12 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
 
     offs = sizeof(char) + sizeof(transaction_id);
 
-    obj_path = rec + offs;
-    offs += strlen(obj_path) + 1;
-    key_path = rec + offs;
-    offs += strlen(key_path) + 1;
-    memcpy(&key_type, rec + offs, sizeof(key_type));
-    offs += sizeof(key_type);
-    ind_name = rec + offs;
-    offs += strlen(ind_name) + 1;
-    doc_name = rec + offs;
-    offs += strlen(doc_name) + 1;
-    memcpy(&index_backend, rec + offs, sizeof(index_backend));
-    offs += sizeof(index_backend);
+    obj_path = rec + offs;                                     offs += strlen(obj_path) + 1;
+    key_path = rec + offs;                                     offs += strlen(key_path) + 1;
+    memcpy(&key_type, rec + offs, sizeof(key_type));           offs += sizeof(key_type);
+    ind_name = rec + offs;                                     offs += strlen(ind_name) + 1;
+    doc_name = rec + offs;                                     offs += strlen(doc_name) + 1;
+    memcpy(&index_backend, rec + offs, sizeof(index_backend)); offs += sizeof(index_backend);
 
     if ((isUNDO && (op == LL_DELETE_DOC_INDEX || op == LL_DELETE_COL_INDEX)) || (!isUNDO && (op == LL_INSERT_DOC_INDEX || op == LL_INSERT_COL_INDEX)))
     {
