@@ -3053,13 +3053,16 @@ section.
 \subsubsection{Managing Value Indices}
 \label{sec:managing-value-indices}
 
-Sedna supports value indices based on B-tree to index XML element content and
-attribute values. Below is the description of statements to manage indices.
+Sedna supports value indices to index XML element content and attribute values.
+Index could be based on two different structure types: B+ tree and BST
+(\emph{B}lock \emph{S}tring \emph{T}rie). Below is the description of
+statements to manage indices.
 
 \begin{verbatim}
 CREATE INDEX title-expr
 ON Path1 BY Path2
 AS type
+[USING tree-type]
 \end{verbatim}
 
 The \verb!CREATE INDEX! creates an index on nodes (specified by \verb!Path1!) by
@@ -3087,14 +3090,43 @@ following types are supported: \verb!xs:string!, \verb!xs:integer!,
 \verb!xs:float!, \verb!xs:double!, \verb!xs:date!, \verb!xs:time!,
 \verb!xs:dateTime!, \verb!xs_yearMonthDuration!, \verb!xs_dateTimeDuration!.
 
+\verb!tree-type! defines the structure that would be used for index storage.
+This argument is optional. Index is stored using B+ tree structure by default
+and it's a good choice in the general case. But there is one more implemented
+structure that could show great disk-space economy in certain situations. BST is
+based on prefix tree (or \emph{trie}) conception. Main distinguishing features
+are:
+\begin{enumerate}
+\item {BST can handle strings with any length.}
+\item {If you want  to index data by fields that contain strings with repeating
+prefixes (e.g: URLs, URIs) BST would be a good choice for you.}
+\end{enumerate}
+In the case of appropriate usage BST can store indexes up to 4 times more
+compressed with the same search speed in comparison with B+ tree.
+The following \verb!tree-type! are supported: \verb!"btree"! for B+ tree (default),
+\verb!"bstrie"! for BST.
+
+
 In the following example, people are indexed by the names of their cities. To
-generate the index keys, city names are cast to the \verb!xs:string! type.
+generate the index keys, city names are cast to the \verb!xs:string! type. B+
+tree is used for index storage.
 
 \begin{verbatim}
 CREATE INDEX "people"
 ON doc("auction")/site//person BY address/city
 AS xs:string
 \end{verbatim}
+
+The following example is exactly the same as the previous but uses BST for index
+storage:
+
+\begin{verbatim}
+CREATE INDEX "people"
+ON doc("auction")/site//person BY address/city
+AS xs:string
+USING "bstrie"
+\end{verbatim}
+
 
 To remove an index, use the following statement:
 \begin{verbatim}
