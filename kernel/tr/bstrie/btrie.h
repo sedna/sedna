@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <set>
 
 #include "btrie_unify.h"
 
@@ -29,6 +30,7 @@ enum error_codes {
 btrie_t  btrie_open(const xptr_t root);
 xptr_t   btrie_get_root(btrie_t bt);
 void     btrie_close(btrie_t bt);
+void	 btrie_drop(btrie_t bt);
 
 btrie_record_t btrie_find(const btrie_t tree, const char * key, size_t key_length);
 btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, const char * obj, size_t obj_length, bool replace);
