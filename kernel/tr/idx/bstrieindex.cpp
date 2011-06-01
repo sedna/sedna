@@ -305,7 +305,7 @@ BSTrieMultimap::~BSTrieMultimap()
 
 void BSTrieMultimap::dropTree()
 {
-    U_ASSERT(false);
+    btrie_drop(trie);
 }
 
 xptr BSTrieMultimap::getEntryPoint()

@@ -28,6 +28,40 @@ void btrie_close(btrie_t bt)
     free(bt);
 }
 
+void walkthrough_the_block (char * state, std::set<xptr_t> * pagesToFree, xptr_t p) {
+    state_descriptor dsc;
+    state = read_state(state, &dsc);
+
+    if ((dsc.flags & STATE_LONG_JUMP) > 0) {
+	xptr_t to = block_xptr(dsc.long_jump);
+        READ_PAGE(to);
+        READ_PAGE(p);
+        pagesToFree->insert(to);
+    } else {
+      for (int i = 0; i < dsc.edge_count; ++i) {
+            walkthrough_the_block(state + dsc.pointers[i], pagesToFree, p);
+      }
+    }
+}
+
+void btrie_drop(btrie_t bt)
+{
+    std::set<xptr_t> pagesToFree;
+    xptr_t current_page;
+    st_page_header page_header;
+
+    pagesToFree.insert(block_xptr(btrie_get_root(bt)));
+    while (!pagesToFree.empty()) {
+      current_page = *(pagesToFree.begin());
+      st_read_page_header(current_page, &page_header);
+      for (int i = 0; i < page_header.trie_count; ++i) {
+	walkthrough_the_block(get_root_state(&page_header) + page_header.tries[i], &pagesToFree, current_page);
+      }
+      vmm_delete_block(current_page);
+      pagesToFree.erase(block_xptr(current_page));
+    }
+}
+
 btrie_record_t btrie_find(const btrie_t tree, const char * key, size_t key_length)
 {
     struct st_path * states;
