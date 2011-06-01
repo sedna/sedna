@@ -108,12 +108,12 @@ bool BSTrieMultimap::insertPair(tuple_cell key, tuple_cell value)
     btrie_record_t item = btrie_find(trie, key_buf.get_buf(), key_buf.get_size());
 
     if (item == BTRNULL) {
-//        btrie_insert(trie, key_buf.get_buf(), key_buf.get_size(), (char *) &counter, sizeof(counter), true);
-        btrie_insert(trie, key_buf.get_buf(), key_buf.get_size(), NULL, 0, true);
+        btrie_insert(trie, key_buf.get_buf(), key_buf.get_size(), (char *) &counter, sizeof(counter), true);
+//        btrie_insert(trie, key_buf.get_buf(), key_buf.get_size(), NULL, 0, true);
     } else {
-//        btrie_get_object(item, (char *) &counter, sizeof(counter));
-//        ++counter;
-//        btrie_replace_object(item, (char *) &counter);
+        btrie_get_object(item, (char *) &counter, sizeof(counter));
+        ++counter;
+        btrie_replace_object(item, (char *) &counter);
     }
 
     return true;
