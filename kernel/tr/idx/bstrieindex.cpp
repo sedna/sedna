@@ -132,9 +132,9 @@ bool BSTrieMultimap::deletePair(tuple_cell key, tuple_cell value)
         btrie_get_object(item, (char *) &counter, sizeof(counter));
         --counter;
         if (counter == 0) {
-//            btrie_delete(trie, key_buf.get_buf(), key_buf.get_size());
+            btrie_delete(trie, key_buf.get_buf(), key_buf.get_size());
         } else {
-//            btrie_replace_object(item, (char *) &counter);
+            btrie_replace_object(item, (char *) &counter);
         }
     }
 
