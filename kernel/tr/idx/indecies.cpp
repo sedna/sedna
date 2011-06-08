@@ -560,7 +560,7 @@ int idx_serializer::compare(void* buf1, size_t size1, void* buf2, size_t size2)
 
     if(key1 < key2) return -1;
     if(key2 < key1) return 1;
-
+    return 0;
 }
 
 /**********************************************************************************************************************************/
