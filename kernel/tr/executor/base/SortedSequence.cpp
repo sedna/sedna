@@ -1,12 +1,13 @@
 #include "tr/executor/base/SortedSequence.h"
 #include <ctime>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 //Initialization and deinitialization
 
 void SortedSequence::init()
 {
-    srand ( std::time ( NULL ) );
-
     finalized = false;
 
     //Initializating accumulator
@@ -276,7 +277,8 @@ void SortedSequence::inBlockSort ( xptr p, int left, int right )
         int i = left, j = right;
 
         //Randomly choosing partition element
-        pivot_size = getVal ( pivot, p, left + rand() % ( right - left + 1 ) );
+        int pivot_ind = (left + right) / 2;
+        pivot_size = getVal ( pivot, p, pivot_ind );
 
         while ( i < j )
         {
