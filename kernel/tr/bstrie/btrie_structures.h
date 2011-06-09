@@ -182,7 +182,7 @@ struct btrie_enum {
     int stack_len;
     int stack_cap;
 
-    bool finished;
+    bool eot; //true if it's the end of tree
 };
 
 
