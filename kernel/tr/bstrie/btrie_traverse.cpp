@@ -18,6 +18,7 @@ void bt_enum_append_key(btrie_enum_t benum, const char * key, size_t len) {
         benum->key = (char *) realloc(benum->key, benum->key_cap);
     }
 
+//     U_ASSERT(len > 0);
     memcpy(benum->key + benum->key_len, key, len);
     benum->key_len += len;
     benum->key[benum->key_len] = '\0';
@@ -138,16 +139,22 @@ btrie_enum_t bt_enum_create(st_path* path)
         }
     }
 
+    U_ASSERT(result->key_len > 0);
+
     if ((state.flags & STATE_FINAL) == 0) {
         btrie_enum_next(result);
     }
+
+    result->eot = (state.flags & STATE_FINAL) == 0;
 
     return result;
 }
 
 void btrie_enum_close(btrie_enum_t benum)
 {
-    free(benum->key);
-    free(benum->stack);
-    free(benum);
+    if (benum != NULL) {
+      free(benum->key);
+      free(benum->stack);
+      free(benum);
+    }
 }

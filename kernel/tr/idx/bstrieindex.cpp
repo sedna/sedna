@@ -172,7 +172,7 @@ KeyValueIterator* BSTrieMultimap::find(tuple_cell key)
     bool equal;
     btrie_enum_t bte = btrie_find_prefix(trie, key_buf.get_buf(), key_buf.get_size(), &equal);
 
-    if (NULL_ENUM == bte) {
+    if (NULL_ENUM == bte || btrie_is_EOT(bte)) {
         return new BSTrieIterator(true);
     } else {
         BSTrieIterator * result = new BSTrieIterator(bte);

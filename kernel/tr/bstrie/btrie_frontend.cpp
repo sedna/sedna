@@ -258,7 +258,7 @@ size_t btrie_get_key_len(btrie_enum_t cursor) {
 }
 
 bool btrie_is_EOT(btrie_enum_t cursor) {
-    return cursor->finished;
+    return cursor->eot;
 }
 
 #if EL_DEBUG == 1
