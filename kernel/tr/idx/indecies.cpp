@@ -438,7 +438,8 @@ void index_cell_object::get_index_descriptor(index_descriptor_t * dsc) const
 void drop_index (const char *index_title)
 {
     index_cell_cptr idc(index_title, true);
-    if (idc.found()) {
+    if (idc.found())
+    {
         index_descriptor_t index_dsc;
         idc->get_index_descriptor(&index_dsc);
         hl_logical_log_index(&index_dsc, false);
@@ -456,7 +457,9 @@ size_t idx_serializer::serialize(const tuple &t, void *buf)
 
     shft sz = (shft) xmlscm_type_size(key_type);
     if (!sz)
+    {
         sz = t.cells[0].get_strlen();
+    }
 
     memcpy((char *)buf, &sz, sizeof(shft));
     xptr temp_value = t.cells[1].get_xptr();
@@ -545,21 +548,42 @@ int idx_serializer::compare(void* buf1, size_t size1, void* buf2, size_t size2)
 
     bool result;
     if (r.collation)
+    {
         result = r.f.bf_c(tc1, tc2, charset_handler->get_unicode_codepoint_collation()).get_xs_boolean();
+    }
     else
+    {
         result = r.f.bf(tc1, tc2).get_xs_boolean();
+    }
 
-    if (result) return -1;
+    if (result)
+    {
+        return -1;
+    }
     r = get_binary_op(xqbop_gt, key_type, key_type);
 
     if (r.collation)
+    {
         result = r.f.bf_c(tc1, tc2, charset_handler->get_unicode_codepoint_collation()).get_xs_boolean();
+    }
     else
+    {
         result = r.f.bf(tc1, tc2).get_xs_boolean();
-    if(result) return 1;
+    }
 
-    if(key1 < key2) return -1;
-    if(key2 < key1) return 1;
+    if (result)
+    {
+        return 1;
+    }
+
+    if(key1 < key2)
+    {
+        return -1;
+    }
+    if(key2 < key1)
+    {
+        return 1;
+    }
     return 0;
 }
 

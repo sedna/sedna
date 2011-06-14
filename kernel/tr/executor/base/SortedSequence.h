@@ -54,13 +54,16 @@ class SortedSequence
     public:
         char *value; //Value of the current element in chain
         size_t size; //Size of the current element in chain
-        void add ( void *buf, size_t size );
+        void add(void *buf, size_t size);
         void setEnd(); //Ends writing to chain and initializes value and size fields
         void next();  //Writing next tuple to value and it's size to field size
-        inline bool empty() { return toRead == 0; }
+        inline bool empty()
+        {
+            return toRead == 0;
+        }
 
         SortedSequence *parent; //Parent of SSChain, we will use it's block memory
-        SSChain ( SortedSequence *_parent_ );
+        SSChain(SortedSequence *_parent_);
         ~SSChain();
 
     private:
@@ -80,21 +83,21 @@ private:
     void reinitAccumulator();
     void freeAccumulator(); //Returns used in accumulator blocks
     void finalizeAccumulator(); //Sorts it and initializes new chain
-    void makeNewChain ( int ptrsInLast );
+    void makeNewChain(int ptrsInLast);
 
     xptr firstValBlock, firstPtrBlock; //Pointer to the first blocks holding values and pointers to them
     xptr valPlace, ptrPlace; //Places to write a value and pointer to this value, respectively
     int blocksCount; //Amount of used blocks in accumulator
     int elementsCount; //Amount of stored elements in accumulator
 
-    xptr getPtr ( xptr block, int ind ); //Returns pointer to i-th pointer in given block
-    size_t getVal ( void *buf, xptr block, int ind ); //Returns tuple, pointed by i-th pointer in given block
-    void swapPointers ( xptr p1, xptr p2 ); //Swap data_ptrs, pointed by p1 and p2
+    xptr getPtr(xptr block, int ind);    //Returns pointer to i-th pointer in given block
+    size_t getVal(void *buf, xptr block, int ind);    //Returns tuple, pointed by i-th pointer in given block
+    void swapPointers(xptr p1, xptr p2);    //Swap data_ptrs, pointed by p1 and p2
 
-    void inBlockSort ( xptr p, int left, int right ); //Sorting elements in block using QSort
+    void inBlockSort(xptr p, int left, int right);    //Sorting elements in block using QSort
 
-    void blocksSort ( int ptrsInLast ); //Merging already sorted blocks
-    xptr mergeBlocks ( xptr p1, int size1, xptr p2, int size2 ); //Merging two sorted sequences of blocks
+    void blocksSort(int ptrsInLast);    //Merging already sorted blocks
+    xptr mergeBlocks(xptr p1, int size1, xptr p2, int size2);    //Merging two sorted sequences of blocks
 
     //Chains
     std::vector < SSChain* > chains; //Stores all created chains
@@ -104,15 +107,18 @@ private:
     int heapsize;
 
     //Heap interface
-    void heapPush ( SSChain *chain );
+    void heapPush(SSChain *chain);
     SSChain* heapPop();
-    inline bool heapEmpty() { return heapsize == 0; }
+    inline bool heapEmpty()
+    {
+        return heapsize == 0;
+    }
 
     void buildHeapFromChains(); //Builds heap from given set of chains
 
     //Internal heap methods
-    void siftUp ( int x );
-    void siftDown ( int x );
+    void siftUp(int x);
+    void siftDown(int x);
 
     //Buffers used for serialization/deserialization and sorting, always allocated
     //Work with them very carefully
@@ -121,25 +127,25 @@ private:
     //Block memory data and methods
     std::vector < xptr > emptyBlocks; //Array of empty blocks
     xptr getFreeBlock(); //Allocates new block. New block always has XNULL value of nblk pointer
-    xptr addBlockToChain ( xptr p ); //Adds free block after xptr p and returns pointer b to it
+    xptr addBlockToChain(xptr p);    //Adds free block after xptr p and returns pointer b to it
 
-    xptr nextBlock ( xptr p ); //Returns pointer to the next block in sequence
+    xptr nextBlock(xptr p);    //Returns pointer to the next block in sequence
 
-    xptr readData ( void *buf, size_t size, xptr place );
+    xptr readData(void *buf, size_t size, xptr place);
     //Reads data of given size from block memory. Returns pointer to the place after red data
-    xptr writeData ( void *buf, size_t size, xptr place );
+    xptr writeData(void *buf, size_t size, xptr place);
     //Writes data of given size to block memory. Returns pointer to the place after written data
 
     bool finalized; //Indicates that the sequence already sorted and we can't add new elements
     ITupleSerializer *serializer;
 
 public:
-    SortedSequence ( ITupleSerializer *serializer );
+    SortedSequence(ITupleSerializer *serializer);
     ~SortedSequence();
 
-    void add ( const tuple &t );
+    void add(const tuple &t);
     void sort();
-    void next ( tuple &t );
+    void next(tuple &t);
     void clear();
 };
 
