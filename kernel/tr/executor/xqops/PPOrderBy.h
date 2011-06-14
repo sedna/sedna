@@ -49,8 +49,8 @@ private:
     int data_size;                                  //Tuple cells number of actual data in the tuple.
                                                     //Other tuple cells are used for sorting and filled
                                                     //by order by expressions evaluation results.
-    int sort_size;                                  //Number of these tuple cells. This value is automaticaly
-                                                    //evaluated form the 'data_size' and 'child.ts' values
+
+    int sort_size;                                  //Number of these tuple cells. This value is automaticaly                                                    //evaluated form the 'data_size' and 'child.ts' values
 
     sequence *data_cells;                           //Accumulates the first 'data_size' tuple cells.
     sequence *sort_cells;                           //Accumulates other 'sort_size' tuple cells.
