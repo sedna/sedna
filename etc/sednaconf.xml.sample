@@ -24,6 +24,13 @@
   <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>
 
   <!-- 
+       Sedna server listening interface. May be any correct interface name
+       (examples: localhost, lo, 127.0.0.1)
+       Default: localhost
+  -->
+  <listener_address>localhost</listener_address>
+
+  <!--
        Sedna server listening port number. If you run multiple
        Sedna instances this value MUST differ between them.
        Default: 5050

@@ -32,6 +32,11 @@ void fulfill_config_parameters(gov_config_struct* cfg)
 
   ///  Then we merge the command line parameters and corresponding parameters in cfg structure.
   ///  Command line parameter has priority over corresponding parameter in cfg structure.
+  if ('\0' == gov_globals::cl_lstnr_addr[0])  {
+    strcpy(gov_globals::cl_lstnr_addr, cfg->gov_vars.lstnr_addr);
+  } else  {
+    strcpy(cfg->gov_vars.lstnr_addr, gov_globals::cl_lstnr_addr);
+  }
   MERGE_GOV_GLOBAL_VARIABLE(gov_globals::cl_lstnr_port, cfg->gov_vars.lstnr_port_number);
   MERGE_GOV_GLOBAL_VARIABLE(gov_globals::cl_ping_port,  cfg->gov_vars.ping_port_number);
   MERGE_GOV_GLOBAL_VARIABLE(gov_globals::cl_el_level,   cfg->gov_vars.el_level);

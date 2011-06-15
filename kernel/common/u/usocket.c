@@ -10,6 +10,7 @@
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #else
 #include <Winsock2.h>
 #endif
@@ -17,7 +18,7 @@
 
 #include "common/u/usocket.h"
 #include "common/errdbg/d_printf.h"
-
+#include "common/u/uutils.h"
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
@@ -96,28 +97,25 @@ USOCKET usocket(int af, int type, int protocol, sys_call_error_fun fun)
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int ubind_tcp(USOCKET s, unsigned short port, sys_call_error_fun fun)
+int ubind_tcp(USOCKET s, unsigned short port, const char * addr, sys_call_error_fun fun)
 {
-    struct hostent *hp;
-    struct sockaddr_in ownaddr;
-
+    struct addrinfo hints, *hp;
+    char buf[5];
 #ifndef _WIN32
     int t_reuse = 1;
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &t_reuse, sizeof(int));
 #endif
 
-    if ((hp = gethostbyname("0.0.0.0")) == NULL)
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+
+    if (getaddrinfo(addr, int2c_str((int)port, buf), &hints, &hp) != 0)
     {
-        sys_call_error("gethostbyname");
+        sys_call_error("getaddrinfo");
         return U_SOCKET_ERROR;
     }
 
-    memset(&ownaddr, 0, sizeof ownaddr);
-    ownaddr.sin_family = AF_INET;
-    ownaddr.sin_port = htons(port);
-    memcpy(&ownaddr.sin_addr, hp->h_addr, hp->h_length);
-
-    if (bind(s, (struct sockaddr *) &ownaddr, sizeof ownaddr) != 0)
+    if (bind(s, (struct sockaddr *) hp->ai_addr, hp->ai_addrlen) != 0)
     {
         sys_call_error("bind");
         return U_SOCKET_ERROR;
@@ -129,22 +127,19 @@ int ubind_tcp(USOCKET s, unsigned short port, sys_call_error_fun fun)
    returns U_SOCKET_ERROR if failed */
 int uconnect_tcp(USOCKET s, unsigned short port, const char *hostname, sys_call_error_fun fun)
 {
-    struct hostent *hp;
-    struct sockaddr_in ownaddr;
+    struct addrinfo hints, *hp;
+    char buf[5];
 
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
     
-    if ((hp = gethostbyname(hostname)) == NULL)
+    if (getaddrinfo(hostname, int2c_str((int) port, buf), &hints, &hp) != 0)
     {
-        sys_call_error("gethostbyname");
+        sys_call_error("getaddrinfo");
         return U_SOCKET_ERROR;
     }
 
-    memset(&ownaddr, 0, sizeof ownaddr);
-    ownaddr.sin_family = AF_INET;
-    ownaddr.sin_port = htons(port);
-    memcpy(&ownaddr.sin_addr, hp->h_addr, hp->h_length);
-
-    if (connect(s, (struct sockaddr *) &ownaddr, sizeof ownaddr) != 0)
+    if (connect(s, (struct sockaddr *) hp->ai_addr, hp->ai_addrlen) != 0)
     {
         sys_call_error("connect");
         return U_SOCKET_ERROR;

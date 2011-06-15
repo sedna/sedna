@@ -624,7 +624,7 @@ void pping_server::startup()
     
     if (uNotInheritDescriptor(UHANDLE(sock), __sys_call_error) != 0) throw USER_EXCEPTION(SE4080);
 
-    if (ubind_tcp(sock, port, __sys_call_error) == U_SOCKET_ERROR) throw USER_ENV_EXCEPTION2("Failed to bind socket", usocket_error_translator(), false);
+    if (ubind_tcp(sock, port, "localhost", __sys_call_error) == U_SOCKET_ERROR) throw USER_ENV_EXCEPTION2("Failed to bind socket", usocket_error_translator(), false);
 
     if (ulisten(sock, PPING_LSTNR_QUEUE_LEN, __sys_call_error) == U_SOCKET_ERROR) throw USER_ENV_EXCEPTION("Failed to listen socket", false);
 

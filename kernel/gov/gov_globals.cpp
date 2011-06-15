@@ -18,7 +18,7 @@ int gov_help_s = 0;
 int gov_help_l = 0;
 int gov_version = 0;
 
-const int narg = 9;
+const int narg = 10;
 
 /*
  * -1 means that parameter was not defined through command line
@@ -26,26 +26,28 @@ const int narg = 9;
  */
 namespace gov_globals
 {
-    int cl_el_level       = -1;    // Event log severity level
-    int cl_lstnr_port     = -1;    // Governor listen port
-    int cl_ping_port      = -1;    // Process ping port
-    int cl_ka_timeout     = -1;    // Session keep alive timeout
-    int cl_pp_stack_depth = -1;
+    int  cl_el_level                  = -1;      // Event log severity level
+    char cl_lstnr_addr[U_MAX_FNAME]   = {"\0",}; // Governor listen address
+    int  cl_lstnr_port                = -1;      // Governor listen port
+    int  cl_ping_port                 = -1;      // Process ping port
+    int  cl_ka_timeout                = -1;      // Session keep alive timeout
+    int  cl_pp_stack_depth            = -1;
 }
 
 
 arg_rec gov_argtable[] =
 {
-{"--help",            NULL,        arg_lit,  &gov_help_l,                    "0",   "\t\t\t display this help and exit"},
-{"-help",             NULL,        arg_lit,  &gov_help_s,                    "0",   "\t\t\t\t display this help and exit"},
-{"-version",          NULL,        arg_lit,  &gov_version,                   "0",   "\t\t\t display product version and exit"},
-{"-background-mode",  " on/off",   arg_bool, &background_mode,               "on",  "\t start in the background mode (default on)"},
-{"-port-number",      " port",     arg_int,  &gov_globals::cl_lstnr_port,    "-1",  "\t\t socket listening port (default 5050)"},
-{"-ping-port-number", " port",     arg_int,  &gov_globals::cl_ping_port,     "-1",  "\t ping listening port (default 5151)"},
-{"-el-level",         " level",    arg_int,  &gov_globals::cl_el_level,      "-1",  "\t\t event logging level (default 3):\n\t\t\t\t    0 - event logging is off\
+{"--help",              NULL,        arg_lit,  &gov_help_l,                    "0",   "\t\t\t display this help and exit"},
+{"-help",               NULL,        arg_lit,  &gov_help_s,                    "0",   "\t\t\t\t display this help and exit"},
+{"-version",            NULL,        arg_lit,  &gov_version,                   "0",   "\t\t\t display product version and exit"},
+{"-background-mode",    " on/off",   arg_bool, &background_mode,               "on",  "\t start in the background mode (default on)"},
+{"-address-to-listen",  "iface",     arg_str,  &gov_globals::cl_lstnr_addr,    "localhost", "\t\t socket listening address (default localhost)"},
+{"-port-number",        " port",     arg_int,  &gov_globals::cl_lstnr_port,    "-1",  "\t\t socket listening port (default 5050)"},
+{"-ping-port-number",   " port",     arg_int,  &gov_globals::cl_ping_port,     "-1",  "\t ping listening port (default 5151)"},
+{"-el-level",           " level",    arg_int,  &gov_globals::cl_el_level,      "-1",  "\t\t event logging level (default 3):\n\t\t\t\t    0 - event logging is off\
 \n\t\t\t\t    1 - log only fatal errors\n\t\t\t\t    2 - log all errors/warnings\n\t\t\t\t    3 - system operational messages\
 \n\t\t\t\t    4 - log everything (+debug messages)"},
-{"-alive-timeout",    " timeout",  arg_int,  &gov_globals::cl_ka_timeout,    "-1",  "\t session keep alive timeout\n\t\t\t\t (default 0 - infinite timeout)"},
-{"-stack-depth",      " depth",    arg_int,  &gov_globals::cl_pp_stack_depth,"-1",  "\t\t maximum executor stack depth\n\t\t\t\t (default 4000)"}
+{"-alive-timeout",      " timeout",  arg_int,  &gov_globals::cl_ka_timeout,    "-1",  "\t session keep alive timeout\n\t\t\t\t (default 0 - infinite timeout)"},
+{"-stack-depth",        " depth",    arg_int,  &gov_globals::cl_pp_stack_depth,"-1",  "\t\t maximum executor stack depth\n\t\t\t\t (default 4000)"}
 };
 

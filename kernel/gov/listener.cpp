@@ -63,7 +63,7 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
 
     if (uNotInheritDescriptor(UHANDLE(sockfd), __sys_call_error) != 0) throw USER_EXCEPTION(SE4080);
 
-    if (ubind_tcp(sockfd, cfg->gov_vars.lstnr_port_number, __sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't bind socket");
+    if (ubind_tcp(sockfd, cfg->gov_vars.lstnr_port_number, cfg->gov_vars.lstnr_addr, __sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't bind socket");
 
     if (ulisten(sockfd, 100, __sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't set socket to a listening mode");
 

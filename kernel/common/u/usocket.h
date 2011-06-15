@@ -51,7 +51,7 @@ extern "C"
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-    int ubind_tcp(USOCKET s, unsigned short port, sys_call_error_fun fun);
+    int ubind_tcp(USOCKET s, short unsigned int port, const char* addr, sys_call_error_fun fun );
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */

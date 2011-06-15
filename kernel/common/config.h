@@ -8,7 +8,6 @@
 
 #include "common/u/ushm.h"
 #include "common/base.h"
-#include "common/config.h"
 #include "common/u/uprocess.h"
 
 /*
@@ -20,10 +19,10 @@
  * OM_SM_DOWN         - SM is not running
  */
 enum sm_operation_mode {
-    OM_SM_WORKING = 0,
-    OM_SM_SHUTDOWN = 1,
+    OM_SM_WORKING      = 0,
+    OM_SM_SHUTDOWN     = 1,
     OM_SM_SPECIAL_MODE = 2,
-    OM_SM_DOWN = 3,
+    OM_SM_DOWN         = 3,
 };
 
 struct gov_sess_struct
@@ -51,12 +50,13 @@ struct gov_header_struct
                                       /// 1->indicates that sedna wants to stop
     UPID gov_pid;
     char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
-    int os_primitives_id_min_bound;
+    int  os_primitives_id_min_bound;
 
-    int lstnr_port_number;   /// Governor listening port
-    int ping_port_number;    /// Process ping port
-    int el_level;            /// Event log severity level
-    int ka_timeout;          /// Session keep alive timeout
+    char lstnr_addr[U_MAX_FNAME];     /// Governor listening address
+    int  lstnr_port_number;           /// Governor listening port
+    int  ping_port_number;            /// Process ping port
+    int  el_level;                    /// Event log severity level
+    int  ka_timeout;                  /// Session keep alive timeout
 
     /* Maximum depth of the physical operations stack in executor */
     int pp_stack_depth;
