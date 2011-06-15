@@ -173,6 +173,10 @@ static void endElement_gov_cfg(void *cfg, const char *name)
     {
         strcpy(((gov_header_struct*)cfg)->SEDNA_DATA, trim(elem_content).c_str());
     }
+    if (strcmp(name, "listener_address") == 0)
+    {
+        strcpy(((gov_header_struct*)cfg)->lstnr_addr, trim(elem_content).c_str());
+    }
     if (strcmp(name, "listener_port") == 0)
     {
         ((gov_header_struct*)cfg)->lstnr_port_number = atoi(trim(elem_content).c_str());
@@ -246,6 +250,7 @@ void get_sednaconf_values(gov_header_struct* cfg)
         throw USER_EXCEPTION(SE4081);
 
     cfg->is_server_stop = SE_STOP_NO;
+    strcpy(cfg->lstnr_addr, "localhost");
     cfg->lstnr_port_number = 5050;
     cfg->ping_port_number = 5151;
     cfg->os_primitives_id_min_bound = 1500;
