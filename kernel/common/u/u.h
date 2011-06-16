@@ -373,17 +373,17 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
  * These constants define the maximum length in bytes for the path and
  * for the individual fields within the path.
  * U_MAX_PATH  - Maximum length of full path
- * U_MAX_DIR   - Maximum length of directory component
- * U_MAX_FNAME - Maximum length of filename component
+ * U_MAX_HOSTNAME - Maximum length of hostname
  */
 #ifdef _WIN32
 #define U_MAX_PATH          _MAX_PATH
-#define U_MAX_FNAME         _MAX_FNAME
-#define U_MAX_DIR           _MAX_DIR
+#define U_MAX_HOSTNAME      255
 #else
+ #ifndef _POSIX_HOSTNAME_MAX
+ #define _POSIX_HOSTNAME_MAX 255
+ #endif
 #define U_MAX_PATH          PATH_MAX
-#define U_MAX_FNAME         NAME_MAX
-#define U_MAX_DIR           NAME_MAX
+#define U_MAX_HOSTNAME     _POSIX_HOSTNAME_MAX
 #endif /* _WIN32 */
 
 /*
