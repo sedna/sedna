@@ -26,12 +26,12 @@ const int narg = 10;
  */
 namespace gov_globals
 {
-    int  cl_el_level                  = -1;      // Event log severity level
-    char cl_lstnr_addr[U_MAX_FNAME]   = {"\0",}; // Governor listen address
-    int  cl_lstnr_port                = -1;      // Governor listen port
-    int  cl_ping_port                 = -1;      // Process ping port
-    int  cl_ka_timeout                = -1;      // Session keep alive timeout
-    int  cl_pp_stack_depth            = -1;
+    int  cl_el_level                     = -1;      // Event log severity level
+    char cl_lstnr_addr[U_MAX_HOSTNAME]   = {"\0",}; // Governor listen address
+    int  cl_lstnr_port                   = -1;      // Governor listen port
+    int  cl_ping_port                    = -1;      // Process ping port
+    int  cl_ka_timeout                   = -1;      // Session keep alive timeout
+    int  cl_pp_stack_depth               = -1;
 }
 
 

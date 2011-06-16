@@ -52,7 +52,7 @@ struct gov_header_struct
     char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
     int  os_primitives_id_min_bound;
 
-    char lstnr_addr[U_MAX_FNAME];     /// Governor listening address
+    char lstnr_addr[U_MAX_HOSTNAME];     /// Governor listening address
     int  lstnr_port_number;           /// Governor listening port
     int  ping_port_number;            /// Process ping port
     int  el_level;                    /// Event log severity level

@@ -23,7 +23,7 @@ extern const int narg;
 namespace gov_globals 
 {
     extern int  cl_el_level;
-    extern char cl_lstnr_addr[U_MAX_FNAME];
+    extern char cl_lstnr_addr[U_MAX_HOSTNAME];
     extern int  cl_lstnr_port;
     extern int  cl_ping_port;
     extern int  cl_ka_timeout;
