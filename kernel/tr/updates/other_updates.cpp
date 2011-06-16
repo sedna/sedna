@@ -14,10 +14,8 @@
 #include "tr/triggers/triggers.h"
 #endif
 
-#include "tr/structures/textcptr.h"
-
 // Rename operation
-void rename(PPOpIn arg,const char* name)
+void rename(PPOpIn arg, xsd::NCName name)
 {
     // Creating the first sequence (different validity tests+ indirection deref)
     tuple t(arg.ts);
@@ -89,9 +87,9 @@ void rename(PPOpIn arg,const char* name)
         case attribute:
             {
                 //1. insert
-                text_cptr buf(node);
+                text_membuf_t buf(text_source_node(node));
                 CHECKP(node);
-                res = insert_attribute(left, XNULL, parent, name, AttributeNode(node).getType(), buf.get(), buf.getSize(), NULL_XMLNS);
+                res = insert_attribute(left, XNULL, parent, xsd::QName::createNsN(NULL_XMLNS, name.getValue()), AttributeNode(node).getType(), buf.getTextSource());
                 //2. delete
                 delete_node(indirectionDereferenceCP(indir), &delete_node_context);
                 break;
@@ -99,7 +97,7 @@ void rename(PPOpIn arg,const char* name)
         case element:
             {
                 //1.INSERT
-                res=insert_element(left, XNULL, parent, name, ElementNode(node).getType(), NULL_XMLNS);
+                res=insert_element(left, XNULL, parent, name.getValue(), ElementNode(node).getType(), NULL_XMLNS);
                 copy_node_content(get_last_mo_inderection(), indirectionDereferenceCP(indir), XNULL, NULL, true);
                 //2.DELETE
                 delete_node(indirectionDereferenceCP(indir), &delete_node_context);

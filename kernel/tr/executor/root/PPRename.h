@@ -36,8 +36,8 @@ private:
     PPOpIn child;
     PPOpIn new_name_child;
     dynamic_context *cxt;
-    const char *ncname_prefix;
-    const char *ncname_local;
+    xsd::NCName ncname_prefix;
+    xsd::NCName ncname_local;
     pp_rename_type type;
 
     virtual void do_open();
@@ -48,8 +48,8 @@ private:
 public:
     PPRename(PPOpIn _child_, 
              dynamic_context *_cxt_,
-             const char *_ncname_prefix_,
-             const char *_ncname_local_);
+             xsd::NCName _ncname_prefix_,
+             xsd::NCName _ncname_local_);
 
     PPRename(PPOpIn _child_, 
              PPOpIn _new_name_child_,

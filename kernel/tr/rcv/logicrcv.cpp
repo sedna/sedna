@@ -626,14 +626,18 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
 
     if ((isUNDO && (op == LL_DELETE_DOC_INDEX || op == LL_DELETE_COL_INDEX)) || (!isUNDO && (op == LL_INSERT_DOC_INDEX || op == LL_INSERT_COL_INDEX)))
     {
+        setDefaultSpace(catalog_space_base);
+
         index_descriptor_t dsc;
 
         dsc.backend_type = index_backend;
-        dsc.key = lr2PathExpr(NULL, key_path, pe_catalog_aspace);
+        dsc.key = new xpath::PathExpression(key_path, NULL);
         dsc.keytype = key_type;
-        dsc.object = lr2PathExpr(NULL, obj_path, pe_catalog_aspace);
+        dsc.object = new xpath::PathExpression(obj_path, NULL);
         dsc.index_title = ind_name;
         dsc.owner = catalog_find_name(catobj_metadata, doc_name)->p; // TODO: Check for safety
+
+        popDefaultSpace();
 
         create_index(&dsc);
     } else {
@@ -645,13 +649,15 @@ static void llRcvIndex(LSN curr_lsn, void *Rec)
 static void llRcvFtIndex(LSN curr_lsn, void *Rec)
 {
 #ifdef SE_ENABLE_FTSEARCH
-	 char *rec = (char *)Rec;
+     setDefaultSpace(catalog_space_base);
+
+     char *rec = (char *)Rec;
      const char *obj_path, *ind_name, *doc_name, *options, *custom_tree_buf;
      ft_index_type itconst;
      unsigned custom_tree_size;
      size_t offs;
-	 bool isUNDO = (rollback_active != 0);
-	 char op = rec[0];
+     bool isUNDO = (rollback_active != 0);
+     char op = rec[0];
 
      offs = sizeof(char) + sizeof(transaction_id);
 
@@ -663,8 +669,8 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
      offs += strlen(ind_name) + 1;
      doc_name = rec + offs;
      offs += strlen(doc_name) + 1;
-	 options = rec + offs;
-	 offs += strlen(options) + 1;
+     options = rec + offs;
+     offs += strlen(options) + 1;
      memcpy(&custom_tree_size, rec + offs, sizeof(unsigned));
      offs += sizeof(unsigned);
      custom_tree_buf = rec + offs;
@@ -678,7 +684,7 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
            if (doc_node->type == document || doc_node->type == virtual_root)
 		   {
 		      ft_index_template_t* cust_tree = ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size);
-              create_ft_index (lr2PathExpr(NULL, obj_path, pe_catalog_aspace),
+              create_ft_index (new xpath::PathExpression(obj_path, NULL),
                             (ft_index_type)itconst,
                             (doc_schema_node_xptr)doc_node.ptr(),
                             ind_name,
@@ -698,7 +704,7 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
            if (col_node->type == document || col_node->type == virtual_root)
 		   {
 			  ft_index_template_t* cust_tree = ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size);
-              create_ft_index (lr2PathExpr(NULL, obj_path, pe_catalog_aspace),
+              create_ft_index (new xpath::PathExpression(obj_path, NULL),
                             (ft_index_type)itconst,
                             (doc_schema_node_xptr)col_node.ptr(),
                             ind_name,
@@ -718,6 +724,8 @@ static void llRcvFtIndex(LSN curr_lsn, void *Rec)
      {//delete index
           delete_ft_index(ind_name, true);
      }
+
+     popDefaultSpace();
 #endif
 }
 
@@ -796,6 +804,8 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
 
     U_ASSERT(i == tr_action_size);
 
+    setDefaultSpace(catalog_space_base);
+
     if ((isUNDO && (op == LL_DELETE_DOC_TRG || op == LL_DELETE_COL_TRG) ) || (!isUNDO && (op == LL_INSERT_DOC_TRG || op == LL_INSERT_COL_TRG)))
     {//create trigger
         if (op == LL_DELETE_DOC_TRG || op == LL_INSERT_DOC_TRG)
@@ -804,26 +814,26 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
 
            if (doc_node->type == document || doc_node->type == virtual_root)
                create_trigger(tr_time, tr_event,
-									lr2PathExpr(NULL, trigger_path, pe_catalog_aspace),
-               								tr_gran,
+                                            new xpath::PathExpression(trigger_path, NULL),
+                                            tr_gran,
                                             NULL,
                                             innode,
-                                            (strlen(path_to_parent)) ? lr2PathExpr(NULL, path_to_parent, pe_catalog_aspace) : NULL,
+                                            (strlen(path_to_parent)) ? new xpath::PathExpression(path_to_parent, NULL) : NULL,
                                             (doc_schema_node_xptr )doc_node,
                                             trigger_title, doc_name, true);
            else throw SYSTEM_EXCEPTION("Can't create trigger for document");
-   		}
+        }
         else
         {
            schema_node_xptr coll_node = find_collection(doc_name);
 
            if (coll_node->type == document || coll_node->type == virtual_root)
                create_trigger(tr_time, tr_event,
-									lr2PathExpr(NULL, trigger_path, pe_catalog_aspace),
-               								tr_gran,
+                                            new xpath::PathExpression(trigger_path, NULL),
+                                            tr_gran,
                                             NULL,
                                             innode,
-                                            (strlen(path_to_parent)) ? lr2PathExpr(NULL, path_to_parent, pe_catalog_aspace) : NULL,
+                                            (strlen(path_to_parent)) ? new xpath::PathExpression(path_to_parent, NULL) : NULL,
                                             (doc_schema_node_xptr) coll_node,
                                             trigger_title, doc_name, false);
            else throw SYSTEM_EXCEPTION("Can't create trigger for collection");
@@ -831,6 +841,8 @@ static void llRcvTrigger(LSN curr_lsn, void *Rec)
     }
     else // delete trigger
     	delete_trigger(trigger_title);
+
+    popDefaultSpace();
 #endif
 }
 

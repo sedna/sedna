@@ -269,12 +269,12 @@ get_indexes (xptr node,const char* /* title */)
 //        node      = insert_attribute_i(node,XNULL,XNULL,"object_name",xs_untypedAtomic,ic->doc_name,strlen(ic->doc_name),NULL_XMLNS);
 
         print_type_name(dsc.keytype, buf);
-        node=insert_attribute_i(node,XNULL,XNULL,"as_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
+        node = insert_attribute_i(node,XNULL,XNULL,"as_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
 
-        std::string str = dsc.object->to_string();
-        node=insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(), str.length(),NULL_XMLNS);
-        str = dsc.key->to_string();
-        node=insert_attribute_i(node,XNULL,XNULL,"by_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
+        std::string str = dsc.object->toString();
+        node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(), str.length(),NULL_XMLNS);
+        str = dsc.key->toString();
+        node = insert_attribute_i(node,XNULL,XNULL,"by_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
     }
 }
 
@@ -315,7 +315,7 @@ get_triggers (xptr node,const char* /* title */)
         (tc->trigger_granularity == TRIGGER_FOR_EACH_NODE) ? trigger_granularity="FOR_EACH_NODE" : trigger_granularity="FOR_EACH_STATEMENT";
         node = insert_attribute_i(node,XNULL,XNULL,"granularity", xs_untypedAtomic, trigger_granularity.c_str(), trigger_granularity.length(), NULL_XMLNS);
 
-        std::string str = tc->trigger_path->to_string();
+        std::string str = tc->trigger_path->toString();
         node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
     }
 }
@@ -368,7 +368,7 @@ get_ftindexes (xptr node,const char* /* title */)
         print_ft_type_name(ic->ftype,buf);
         node = insert_attribute_i(node,XNULL,XNULL,"ft_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
 
-        std::string str  = ic->object->to_string();
+        std::string str  = ic->object->toString();
         node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
 
 		op_str_buf tbuf;

@@ -14,27 +14,12 @@
 #include "tr/triggers/triggers_data.h"
 #endif
 
+#include "tr/executor/base/OperationHeaders.h"
+
 #include <algorithm>
 
 namespace sedna
 {
-    static const char *axis_str[] =
-    {
-        "PPAxisChild ",
-        "PPAxisDescendant ",
-        "PPAxisAttribute ",
-        "PPAxisSelf ",
-        "PPAxisDescendantOrSelf ",
-        "PPAxisDescendantAttr ",
-        "PPAxisFollowingSibling ",
-        "PPAxisFollowing ",
-        "PPAxisParent ",
-        "PPAxisAncestor ",
-        "PPAxisPrecedingSibling ",
-        "PPAxisPreceding ",
-        "PPAxisAncestorOrSelf ",
-    };
-
     void lr2por::visit(ASTAlterUser &n)
     {
         qep = new PPAlterUser(PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.user, xs_string)), 1),
@@ -596,7 +581,7 @@ namespace sedna
 
         childOffer off_name, off_path, off_options;
         PPAbsPath *pa;
-        PathExpr *onp;
+        xpath::PathExpression *onp;
         counted_ptr<db_entity> dbe;
         PPOpIn comp_name;
 
@@ -626,10 +611,13 @@ namespace sedna
 
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-        if (!onp || onp->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
-            onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
+        if (!onp || onp->size() == 0) {
+            setDefaultSpace(catalog_space_base);
+            onp = new xpath::PathExpression("()", dyn_cxt);
+            popDefaultSpace();
+        }
 
-        PathExprRoot peroot(dbe);
+        xpath::PathExprRoot peroot(dbe);
 
         // computed name in doc/coll
         if (!dbe->name)
@@ -661,7 +649,7 @@ namespace sedna
     {
         childOffer off_name, off_path, off_type;
         PPAbsPath *pa;
-        PathExpr *onp, *byp;
+        xpath::PathExpression *onp, *byp;
         xmlscm_type xtype;
         counted_ptr<db_entity> dbe;
         PPOpIn comp_name;
@@ -685,8 +673,11 @@ namespace sedna
 
         delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-        if (!onp || onp->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
-            onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
+        setDefaultSpace(catalog_space_base);
+
+        if (!onp || onp->size() == 0) { // should make it persistent (not-null path will be made persistent by ast-ops)
+            onp = new xpath::PathExpression("()", dyn_cxt);
+        }
 
         n.by_path->accept(*this);
         off_path = getOffer();
@@ -699,14 +690,16 @@ namespace sedna
         byp = pa->getPathExpr();
         delete pa; // we don't need it anymore (note that this won't destroy on_path)
 
-        if (!byp || byp->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
-            byp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
+        if (!byp || byp->size() == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
+            byp = new xpath::PathExpression("()", dyn_cxt);
+
+        popDefaultSpace();
 
         n.type->accept(*this);
         off_type = getOffer();
         xtype = off_type.st.type.info.single_type;
 
-        PathExprRoot peroot(dbe);
+        xpath::PathExprRoot peroot(dbe);
 
         // computed name in doc/coll
         if (!dbe->name)
@@ -773,7 +766,7 @@ namespace sedna
 #ifdef SE_ENABLE_TRIGGERS
 
         PPAbsPath *pa;
-        PathExpr *onp;
+        xpath::PathExpression *onp;
         counted_ptr<db_entity> dbe;
         childOffer off_path;
         PPOpIn name, comp_name;
@@ -782,6 +775,8 @@ namespace sedna
         // create trigger name
         tc = string2tuple_cell(*n.name, xs_string);
         name = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
+
+        setDefaultSpace(catalog_space_base);
 
         // on-path will definitely be PPAbsPath
         pers_path_mode = true;
@@ -798,7 +793,7 @@ namespace sedna
             comp_name = pa->getCompName();
 
         delete pa; // we don't need it anymore (note that this won't destroy onp)
-        PathExprRoot peroot(dbe);
+        xpath::PathExprRoot peroot(dbe);
 
         // computed name in doc/coll
         if (!dbe->name)
@@ -806,8 +801,10 @@ namespace sedna
             peroot.set_name(comp_name);
         }
 
-        if (!onp || onp->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
-            onp = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
+
+        if (!onp || onp->size() == 0) { // should make it persistent (not-null path will be made persistent by ast-ops)
+            onp = new xpath::PathExpression("()", dyn_cxt);
+        }
 
         scheme_list *action = new scheme_list(n.do_exprs->size());
 
@@ -831,7 +828,7 @@ namespace sedna
         if (n.t_mod == ASTCreateTrg::BEFORE && n.a_mod == ASTCreateTrg::INSERT && n.g_mod == ASTCreateTrg::NODE)
         {
             childOffer off_ipath;
-            PathExpr *ip;
+            xpath::PathExpression *ip;
 
             pers_path_mode = true;
             n.trimmed_path->accept(*this);
@@ -844,8 +841,9 @@ namespace sedna
             ip = pa->getPathExpr();
             delete pa; // we don't need it anymore (note that this won't destroy onp)
 
-            if (!ip || ip->size == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
-                ip = lr2PathExpr(dyn_cxt, "()", pe_catalog_aspace);
+            if (!ip || ip->size() == 0) { // should make it persistent (not-null path will be made persistent by ast-ops)
+                ip = new xpath::PathExpression("()", dyn_cxt);
+            }
 
             inserting_node innode(n.leaf_name->c_str(), n.leaf_type == 0 ? element : attribute);
 
@@ -871,6 +869,9 @@ namespace sedna
                                       action,  //action list in scheme
                                       name);   //trigger name operation
         }
+
+        popDefaultSpace();
+
 #else
         drv->error(SE1002, "Triggers support is disabled. Rebuild Sedna with enabled triggers.");
 #endif
@@ -917,8 +918,9 @@ namespace sedna
     void lr2por::visit(ASTDefNamespaceDecl &n)
     {
         // we don't add default function namespace, since it is resolved in sema
-        if (n.type == ASTDefNamespaceDecl::ELEMENT)
-            dyn_cxt->add_to_context("", n.uri->c_str());
+        if (n.type == ASTDefNamespaceDecl::ELEMENT) {
+            dyn_cxt->add_to_context(xmlns_touch("", n.uri->c_str()));
+        }
     }
 
     void lr2por::visit(ASTDocConst &n)
@@ -1043,6 +1045,7 @@ namespace sedna
         size_t count = 0;
         PPOpIn content;
         childOffer off_this;
+        PPOpIn ns;
 
         if (n.attrs)
         {
@@ -1064,8 +1067,15 @@ namespace sedna
         {
             seq.reserve(count);
 
-            while (count--)
-                seq.push_back(getOffer().opin);
+            while (count--) {
+                childOffer offer = getOffer();
+
+                if (offer.special_node) {
+                    ns = offer.opin;
+                } else {
+                    seq.push_back(offer.opin);
+                }
+            }
 
             std::reverse(seq.begin(), seq.end());
 
@@ -1077,9 +1087,9 @@ namespace sedna
                            *n.pref + ":" + *n.local;
 
         if (virtualizableConstructors) {
-            off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, n.nsp_expected);
+            off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, ns);
         } else {
-            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, n.nsp_expected);
+            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, ns);
         }
 
         off_this.opin.ts = 1;
@@ -1110,9 +1120,9 @@ namespace sedna
         if (n.name)
         {
             if (virtualizableConstructors) {
-                off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, false);
+                off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, PPOpIn());
             } else {
-                off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, false);
+                off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, PPOpIn());
             }
         }
         else
@@ -1122,9 +1132,9 @@ namespace sedna
                                *n.pref + ":" + *n.local;
 
             if (virtualizableConstructors) {
-                off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, false);
+                off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, PPOpIn());
             } else {
-                off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, false);
+                off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, PPOpIn());
             }
         }
 
@@ -1648,14 +1658,16 @@ namespace sedna
                     drv->error(n.getLocation(), XPTY0004, "argument to fn:collection should be of xs:string");
                 }
 
-                PathExpr *path_expr = lr2PathExpr(dyn_cxt, "()", pe_local_aspace);
+                setDefaultSpace(local_space_base);
+                xpath::PathExpression *pe = new xpath::PathExpression("()", dyn_cxt);
+                popDefaultSpace();
 
                 if (name)
                 {
                     dbe->name = new char[name->lit->size() + 1];
                     strcpy(dbe->name, name->lit->c_str());
 
-                    off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), path_expr, counted_ptr<db_entity>(dbe)), 1);
+                    off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), pe, counted_ptr<db_entity>(dbe)), 1);
                 }
                 else
                 {
@@ -1666,7 +1678,7 @@ namespace sedna
 
                     dbe->name = NULL;
 
-                    off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), path_expr,
+                    off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), pe,
                             counted_ptr<db_entity>(dbe), off.opin), 1);
                 }
 
@@ -1684,7 +1696,9 @@ namespace sedna
                     drv->error(n.getLocation(), XPTY0004, "first argument to fn:document should be of xs:string");
                 }
 
-                PathExpr *path_expr = lr2PathExpr(dyn_cxt, "()", pe_local_aspace);
+                setDefaultSpace(local_space_base);
+                xpath::PathExpression *path_expr = new xpath::PathExpression("()", dyn_cxt);
+                popDefaultSpace();
 
                 if (name)
                 {
@@ -2199,8 +2213,7 @@ namespace sedna
             off_this.test_type = "qname";
 
             off_this.st.type.info.ea.nne = st_nne_name;
-            off_this.st.type.info.ea.node_name_uri = (!n.uri || *n.uri == "") ? NULL : xs_NCName_create(n.uri->c_str(), pe_local_aspace->alloc);
-            off_this.st.type.info.ea.node_name_local = xs_NCName_create(n.local->c_str(), pe_local_aspace->alloc);
+            off_this.st.type.info.ea.qname = xsd::QName::createUL(n.uri->c_str(), n.local->c_str()).serialize(local_space_base);
         }
 
         setOffer(off_this);
@@ -2208,7 +2221,7 @@ namespace sedna
 
     void lr2por::visit(ASTNamespaceDecl &n)
     {
-        dyn_cxt->add_to_context(n.name->c_str(), n.uri->c_str());
+        dyn_cxt->add_to_context(xmlns_touch(n.name->c_str(), n.uri->c_str()));
     }
 
     void lr2por::visit(ASTNodeTest &n)
@@ -2225,13 +2238,16 @@ namespace sedna
 
     void lr2por::visit(ASTNsp &n)
     {
+        childOffer off_this;
         PPOpIn cont;
         tuple_cell tc;
-        childOffer off_this;
+
+        off_this.special_node = n.boundToElement;
 
         tc = string2tuple_cell(n.cont ? *n.cont : "", xs_string);
         cont = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
 
+//        off_this.opin.op = new PPNamespaceConstructor(dyn_cxt, createOperationInfo(n), n.name->c_str(), n.cont->c_str());
         off_this.opin.op = new PPNamespaceConstructor(dyn_cxt, createOperationInfo(n), n.name->c_str(), cont);
         off_this.opin.ts = 1;
 
@@ -2271,8 +2287,7 @@ namespace sedna
                             len = end - start;
                         }
 
-//                        const char * qname = xs_QName_create(value.substr(start, len), XNULL, pe_local_aspace->alloc);
-                        dyn_cxt->add_cdata_section_element(value.substr(start, len), xs_QName_get_xmlns());
+                        dyn_cxt->add_cdata_section_element(xsd::QName::createResolveContext(value.substr(start, len).c_str(), dyn_cxt));
                     }
                 }
             }
@@ -2547,7 +2562,7 @@ namespace sedna
         else
         {
             off_this.test_data = "\"" + *n.test + "\"";
-            off_this.st.type.info.ncname = xs_NCName_create(n.test->c_str(), pe_local_aspace->alloc);
+            off_this.st.type.info.ncname = xsd::NCName::check(n.test->c_str()).serialize(local_space_base);
         }
 
         off_this.test_type = "processing-instruction";
@@ -2668,9 +2683,8 @@ namespace sedna
     {
         childOffer off_this;
 
-        char *qname = xs_QName_create(n.uri->c_str(), n.pref->c_str(), n.local->c_str(), tuple_char_alloc, dyn_cxt);
-
-        off_this.opin.op = new PPConst(dyn_cxt, createOperationInfo(n), tuple_cell::atomic(xs_QName, qname));
+        off_this.opin.op = new PPConst(dyn_cxt, createOperationInfo(n),
+            tuple_cell::atomic(xsd::QName::createUPL(n.uri->c_str(), n.pref->c_str(), n.local->c_str())));
         off_this.opin.ts = 1;
 
         setOffer(off_this);
@@ -3095,10 +3109,14 @@ namespace sedna
         n.what->accept(*this);
         off_what = getOffer();
 
-        char *ncname_prefix = xs_NCName_create(n.pref->c_str(), pe_local_aspace->alloc);
-        char *ncname_local  = xs_NCName_create(n.local->c_str(), pe_local_aspace->alloc);
+        setDefaultSpace(local_space_base);
 
-        qep = new PPRename(off_what.opin, dyn_cxt, ncname_prefix, ncname_local);
+        xsd::NCName prefix(xsd::materialize(n.pref->c_str()));
+        xsd::NCName local(xsd::materialize(n.local->c_str()));
+
+        popDefaultSpace();
+
+        qep = new PPRename(off_what.opin, dyn_cxt, prefix, local);
     }
 
     void lr2por::visit(ASTUpdReplace &n)
@@ -3463,7 +3481,25 @@ namespace sedna
         std::string res = "((";
         childOffer off;
 
-        res += axis_str[s.axis];
+        switch (s.axis) {
+            case ASTAxisStep::CHILD: res += "child"; break;
+            case ASTAxisStep::ATTRIBUTE: res += "attribute"; break;
+
+            case ASTAxisStep::SELF:  res += "self"; break;
+            case ASTAxisStep::PARENT:  res += "parent"; break;
+
+            case ASTAxisStep::DESCENDANT: res += "descendant"; break;
+            case ASTAxisStep::DESCENDANT_OR_SELF: res += "descendant-or-self"; break;
+            case ASTAxisStep::DESCENDANT_ATTRIBUTE: res += "descendant-attribute"; break;
+
+            case ASTAxisStep::ANCESTOR:  res += "ancestor"; break;
+            case ASTAxisStep::ANCESTOR_OR_SELF:  res += "ancestor-or-self"; break;
+
+            case ASTAxisStep::PRECEDING:  res += "preceding"; break;
+            case ASTAxisStep::PRECEDING_SIBLING:  res += "preceding-sibling"; break;
+            case ASTAxisStep::FOLLOWING: res += "following"; break;
+            case ASTAxisStep::FOLLOWING_SIBLING: res += "following-sibling"; break;
+        }
 
         s.test->accept(*this);
         off = getOffer();
@@ -3486,63 +3522,22 @@ namespace sedna
         // make it list-like
         std::string lr_list = std::string("(") + lr + ")";
 
-        PathExpr *pe = lr2PathExpr(dyn_cxt, lr_list.c_str(), pers ? pe_catalog_aspace : pe_local_aspace);
+        setDefaultSpace(pers ? catalog_space_base : local_space_base);
+        xpath::PathExpression * pe = new xpath::PathExpression(lr_list.c_str(), dyn_cxt);
+        popDefaultSpace();
         pap->setPathExpr(pe);
     }
 
     PPOpIn lr2por::getPPForAxis(const ASTAxisStep &s, PPOpIn cont, operation_info oi)
     {
-        NodeTestType ntype;
-        NodeTestData ndata;
         childOffer off;
         PPOpIn op;
 
-        scheme_list *sl = make_tree_from_scheme_list(getlrForAxisStep(s).c_str());
-        set_node_test_type_and_data(sl->at(0).internal.list, ntype, ndata, pe_local_aspace);
-        delete_scheme_list(sl);
+        setDefaultSpace(local_space_base);
+        xpath::NodeTest nodeTest(getlrForAxisStep(s).c_str());
+        popDefaultSpace();
 
-        switch (s.axis)
-        {
-            case ASTAxisStep::CHILD:
-                op.op = new PPAxisChild(dyn_cxt, oi, cont, ntype, ndata);
-                break;
-            case ASTAxisStep::DESCENDANT:
-                op.op = new PPAxisDescendant(dyn_cxt, oi, cont, ntype, ndata);
-                break;
-            case ASTAxisStep::ATTRIBUTE:
-                op.op = new PPAxisAttribute(dyn_cxt, oi, cont, ntype, ndata);
-                break;
-            case ASTAxisStep::SELF:
-                op.op = new PPAxisSelf(dyn_cxt, oi, cont, ntype, ndata);
-                break;
-            case ASTAxisStep::DESCENDANT_OR_SELF:
-                op.op = new PPAxisDescendantOrSelf(dyn_cxt, oi, cont, ntype, ndata);
-                break;
-            case ASTAxisStep::FOLLOWING_SIBLING:
-                op.op = new PPAxisSibling(dyn_cxt, oi, cont, ntype, ndata, true);
-                break;
-            case ASTAxisStep::FOLLOWING:
-                op.op = new PPAxisFP(dyn_cxt, oi, cont, ntype, ndata, true);
-                break;
-            case ASTAxisStep::PARENT:
-                op.op = new PPAxisParent(dyn_cxt, oi, cont, ntype, ndata);
-                break;
-            case ASTAxisStep::ANCESTOR:
-                op.op = new PPAxisAncestor(dyn_cxt, oi, cont, ntype, ndata);
-                break;
-            case ASTAxisStep::PRECEDING_SIBLING:
-                op.op = new PPAxisSibling(dyn_cxt, oi, cont, ntype, ndata, false);
-                break;
-            case ASTAxisStep::PRECEDING:
-                op.op = new PPAxisFP(dyn_cxt, oi, cont, ntype, ndata, false);
-                break;
-            case ASTAxisStep::ANCESTOR_OR_SELF:
-                op.op = new PPAxisAncestorOrSelf(dyn_cxt, oi, cont, ntype, ndata);
-                break;
-            case ASTAxisStep::DESCENDANT_ATTRIBUTE:
-                op.op = new PPAxisDescendantAttr(dyn_cxt, oi, cont, ntype, ndata);
-                break;
-        }
+        op.op = new PPAxisStep(dyn_cxt, oi, cont, nodeTest);
 
         op.ts = 1;
 

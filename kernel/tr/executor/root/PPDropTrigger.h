@@ -15,7 +15,7 @@
 class PPDropTrigger : public PPUpdate
 {
 private:
-    PathExpr *trigger_path;
+    xpath::PathExpression *trigger_path;
     PPOpIn trigger_name;
     dynamic_context *cxt;
 
@@ -25,7 +25,6 @@ private:
     virtual void do_accept(PPVisitor& v);
     
 public:
-
     PPDropTrigger(PPOpIn _trigger_name_, dynamic_context *_cxt_);
 
     ~PPDropTrigger();

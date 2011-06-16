@@ -34,6 +34,11 @@ xmlns_ptr SednaNode::getNamespace() const {
     }
 }
 
+xsd::QName SednaNode::getQName() const {
+    if (!snode.found()) { snode = getSchemaNode(checkp(node)); }
+    return xsd::QName::createNsN(snode->get_xmlns(), snode->get_name(), true);
+}
+
 const text_source_t SednaNode::getValue() const {
     if (getNodeKind() == xml_namespace) {
         return text_source_cstr(NSNode(checkp(node)).getNamespaceLocal()->get_uri());

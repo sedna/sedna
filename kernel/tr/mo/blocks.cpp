@@ -104,12 +104,11 @@ xptr createBlock(schema_node_cptr schema_node, xptr prev_block_xptr, const xptr 
         desc_size += child_count_hint * sizeof(xptr);
     }
 
-    initNodeBlock(block_xptr, desc_size);
+    initNodeBlock(block_xptr, desc_size, schema_node);
+
     block = getBlockHeader(block_xptr);
-    block->snode = schema_node.ptr();
     block->pblk = prev_block_xptr;
     block->nblk = next_block_xptr;
-    block->node_type = schema_node->type;
 
     schema_node.modify();
     schema_node->blockcnt++;

@@ -97,8 +97,9 @@ inline bool _check_st_elem_data(const xptr &p, const st_item_type& it)
         case st_nne_wildcard:
             break;
         case st_nne_name:
-            if (_xs_QName_not_equal(it.info.ea.node_name_uri, it.info.ea.node_name_local, p))
+            if (!sameQName(xsd::QName::deserialize(it.info.ea.qname), p)) {
                 return false;
+            }
             break;
         default             : throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
     }
@@ -127,8 +128,9 @@ inline bool _check_st_attr_data(const xptr &p, const st_item_type& it)
         case st_nne_wildcard:
             break;
         case st_nne_name:
-            if (_xs_QName_not_equal(it.info.ea.node_name_uri, it.info.ea.node_name_local, p))
+            if (!sameQName(xsd::QName::deserialize(it.info.ea.qname), p)) {
                 return false;
+            }
             break;
         default             : throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
     }
@@ -468,8 +470,9 @@ string st_elem_attr_data::to_str() const
       res += "*";
    else
    {
-      if(node_name_uri != NULL) {res += node_name_uri; res += ":";}
-      res += node_name_local;
+      xsd::QName qn(xsd::QName::deserialize(qname));
+      if (qn.getUri() != NULL) {res += qn.getUri(); res += ":";}
+      res += qn.getLocalName();
    }
 
    switch(tne)

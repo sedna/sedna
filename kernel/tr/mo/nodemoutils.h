@@ -16,7 +16,7 @@ using namespace internal;
 /* If any of these is needed elsewhere besides microoperations,
  * move one to tr/structures/nodeoperations.h */
 
-void initNodeBlock(xptr p, shft dsc_size);
+void initNodeBlock(xptr p, shft dsc_size, schema_node_cptr schema_node);
 
 void clearNodeBlock(xptr p);
 

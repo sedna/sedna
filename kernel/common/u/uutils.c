@@ -101,10 +101,10 @@ void int2net_int(uint32_t i, char *buf)
     memcpy(buf, (void*)&i, sizeof(uint32_t));
 }
 
-void net_int2int(uint32_t* i, const char *buf)
+void net_int2int(void * i, const char *buf)
 {
     memcpy((void*)i, buf, sizeof(uint32_t));
-    *i = ntohl(*i);
+    * (uint32_t*) i = ntohl(* (uint32_t*) i);
 }
 
 char *int2c_str(int value, char *buf)

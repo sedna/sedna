@@ -5,12 +5,14 @@
 
 #include "common/sedna.h"
 
+#include "tr/executor/base/PPUtils.h"
 #include "tr/executor/xqops/PPFtIndexScan.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/strings/opt_parser.h"
 #include "tr/ft/ft_index_data.h"
 #include "tr/ft/ft_cache.h"
 #include "tr/ft/query/ft_query.h"
+
 #ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTsearch.h"
 #endif

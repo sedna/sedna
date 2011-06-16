@@ -504,20 +504,14 @@ void hl_logical_log_index(index_descriptor_t *dsc, bool inserted)
     if (!enable_log) return;
     number_of_records++;
 
-    std::ostringstream obj_str(std::ios::out | std::ios::binary);
-    std::ostringstream key_str(std::ios::out | std::ios::binary);
-
-    PathExpr2lr(dsc->object, obj_str);
-    PathExpr2lr(dsc->key, key_str);
-
     llOperations op;
     if (dsc->owner->is_document())
         op = inserted ? LL_INSERT_DOC_INDEX : LL_DELETE_DOC_INDEX;
     else
         op = inserted ? LL_INSERT_COL_INDEX : LL_DELETE_COL_INDEX;
 
-    std::string obj_path_str = obj_str.str();
-    std::string key_path_str = key_str.str();
+    std::string obj_path_str = dsc->object->toLRString();
+    std::string key_path_str = dsc->key->toLRString();
 
     const char * doc_name = dsc->owner->get_name();
     // First character in doc_name stands for metadata cell type
@@ -620,28 +614,23 @@ ft_index_template_t* ft_rebuild_cust_tree(const char *custom_tree_buf, unsigned 
 		{
 			ns = xmlns_touch(ns_pref, ns_uri);
 		}
-		char* qname = se_new char[strlen(name)+1];
-		strcpy(qname, name);
-		std::pair<xmlns_ptr, char*> tag(ns, qname);
 
-		res->push_back(ft_index_pair_t(tag, ind_type));
+		res->push_back(ft_index_pair_t(xsd::QName::createNsCn(ns, name, true), ind_type));
 	}
 	return res;
 }
 
-void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const char * index_title, const char* doc_name,const char* options,bool is_doc,ft_custom_tree_t * custom_tree,bool inserted)
+void hl_logical_log_ft_index(xpath::PathExpression *object_path, ft_index_type itconst, const char * index_title,
+                             const char* doc_name,const char* options,bool is_doc,ft_custom_tree_t * custom_tree,bool inserted)
 {
     if (!enable_log) return;
     number_of_records++;
 
-    std::ostringstream obj_str(std::ios::out | std::ios::binary);
-	PathExpr2lr(object_path, obj_str);
+    unsigned int custom_tree_size = 0;
+    char *custom_tree_buf = tr_globals::e_string_buf;
 
-	unsigned int custom_tree_size = 0;
-	char *custom_tree_buf = tr_globals::e_string_buf;
-
-	if (custom_tree != NULL)
-		ft_serialize_cust_tree(custom_tree_buf, &custom_tree_size, custom_tree);
+    if (custom_tree != NULL)
+        ft_serialize_cust_tree(custom_tree_buf, &custom_tree_size, custom_tree);
 
     llOperations op;
     if (is_doc)
@@ -649,7 +638,7 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const
     else
         op = inserted ? LL_INSERT_COL_FTS_INDEX : LL_DELETE_COL_FTS_INDEX;
 
-    std::string obj_path_str = obj_str.str();
+    std::string obj_path_str = object_path->toLRString();
 
     llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 6, obj_path_str.c_str(), obj_path_str.size() + 1,
             &itconst, sizeof(ft_index_type), index_title, strlen(index_title) + 1,
@@ -659,63 +648,59 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, const
 #endif
 
 #ifdef SE_ENABLE_TRIGGERS
-void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathExpr *trigger_path, trigger_granularity tr_gran, trigger_action_cell* trac, inserting_node insnode, PathExpr *path_to_parent, const char* trigger_title, const char* doc_name, bool is_doc, bool inserted)
+void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event,
+                            xpath::PathExpression *trigger_path, trigger_granularity tr_gran, trigger_action_cell* trac,
+                            inserting_node insnode, xpath::PathExpression *path_to_parent, const char* trigger_title,
+                            const char* doc_name, bool is_doc, bool inserted)
 {
-  if (!enable_log) return;
-  number_of_records++;
+    if (!enable_log) return;
+    number_of_records++;
 
-  std::ostringstream tr_path(std::ios::out | std::ios::binary);
-  PathExpr2lr(trigger_path, tr_path);
+    std::string tr_path_str = trigger_path->toLRString();
+    std::string tr_path_par;
 
-  std::ostringstream path_to_par(std::ios::out | std::ios::binary);
-  if (path_to_parent)
-  	PathExpr2lr(path_to_parent, path_to_par);
+    if (path_to_parent)
+        tr_path_par = path_to_parent->toLRString();
 
-  unsigned int trac_len = 0;
+    unsigned int trac_len = 0;
 
-  for (trigger_action_cell *tr_act = trac; tr_act != NULL; tr_act = tr_act->next)
-      trac_len += strlen(tr_act->statement) + 1;
+    for (trigger_action_cell *tr_act = trac; tr_act != NULL; tr_act = tr_act->next)
+        trac_len += strlen(tr_act->statement) + 1;
 
-  char *tr_action_buf = new char[trac_len];
-  unsigned int tr_action_buf_size = 0;
-  unsigned int str_len = 0;
+    char *tr_action_buf = new char[trac_len];
+    unsigned int tr_action_buf_size = 0;
+    unsigned int str_len = 0;
 
-  for (trigger_action_cell *tr_act = trac; tr_act != NULL; tr_act = tr_act->next)
-  {
-      str_len = strlen(tr_act->statement);
+    for (trigger_action_cell *tr_act = trac; tr_act != NULL; tr_act = tr_act->next) {
+        str_len = strlen(tr_act->statement);
 
-      U_ASSERT(tr_action_buf_size + str_len + 1 <= trac_len);
+        U_ASSERT(tr_action_buf_size + str_len + 1 <= trac_len);
 
-      if (str_len)
-      {
-          memcpy(tr_action_buf + tr_action_buf_size, tr_act->statement, str_len + 1);
-          tr_action_buf_size += str_len + 1;
-      }
-      else
-      {
-          tr_action_buf[tr_action_buf_size] = '\x0';
-          tr_action_buf_size++;
-      }
-  }
+        if (str_len) {
+            memcpy(tr_action_buf + tr_action_buf_size, tr_act->statement, str_len + 1);
+            tr_action_buf_size += str_len + 1;
+        } else {
+            tr_action_buf[tr_action_buf_size] = '\x0';
+            tr_action_buf_size++;
+        }
+    }
 
-  llOperations op;
-  if (is_doc)
-      op = inserted ? LL_INSERT_DOC_TRG : LL_DELETE_DOC_TRG;
-  else
-      op = inserted ? LL_INSERT_COL_TRG : LL_DELETE_COL_TRG;
+    llOperations op;
+    if (is_doc)
+        op = inserted ? LL_INSERT_DOC_TRG : LL_DELETE_DOC_TRG;
+    else
+        op = inserted ? LL_INSERT_COL_TRG : LL_DELETE_COL_TRG;
 
 
-  std::string tr_path_str = tr_path.str();
-  std::string tr_path_par = path_to_par.str();
-  size_t innname_len = insnode.name ? strlen(insnode.name) + 1 : 1;
+    size_t innname_len = insnode.name ? strlen(insnode.name) + 1 : 1;
 
-  llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 11, &tr_time, sizeof(trigger_time), &tr_event, sizeof(trigger_event),
-          tr_path_str.c_str(), tr_path_str.size() + 1, &tr_gran, sizeof(trigger_granularity),
-          &tr_action_buf_size, sizeof(unsigned int), tr_action_buf, (size_t)tr_action_buf_size,
-          insnode.name ? insnode.name : "", innname_len, &insnode.type, sizeof(t_item),
-          tr_path_par.c_str(), tr_path_par.size() + 1, trigger_title,
-          strlen(trigger_title) + 1, doc_name, strlen(doc_name) + 1);
+    llLogGeneral(TR_RECORD, tr_globals::trid, op, false, 11, &tr_time, sizeof(trigger_time), &tr_event, sizeof(trigger_event),
+            tr_path_str.c_str(), tr_path_str.size() + 1, &tr_gran, sizeof(trigger_granularity),
+            &tr_action_buf_size, sizeof(unsigned int), tr_action_buf, (size_t)tr_action_buf_size,
+            insnode.name ? insnode.name : "", innname_len, &insnode.type, sizeof(t_item),
+            tr_path_par.c_str(), tr_path_par.size() + 1, trigger_title,
+            strlen(trigger_title) + 1, doc_name, strlen(doc_name) + 1);
 
-  delete[] tr_action_buf;
+    delete[] tr_action_buf;
 }
 #endif

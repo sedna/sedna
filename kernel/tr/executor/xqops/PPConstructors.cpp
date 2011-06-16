@@ -4,6 +4,7 @@
 */
 
 #include <vector>
+#include <stack>
 
 #include "common/sedna.h"
 
@@ -36,7 +37,7 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 
 static inline
-tuple_cell getQnameParameter(PPOpIn qname)
+tuple_cell getQnameParameter(const PPOpIn &qname)
 {
     tuple name(qname.ts);
 
@@ -47,20 +48,37 @@ tuple_cell getQnameParameter(PPOpIn qname)
     tuple_cell res = atomize(name.cells[0]);
     xmlscm_type xtype = res.get_atomic_type();
 
-    if (xtype == xs_untypedAtomic)
+    if (xtype == xs_untypedAtomic) {
         res = cast(res, xs_string);
-    else if (!is_derived_from_xs_string(xtype) &&
-        xtype != xs_string &&
-        xtype != xs_QName)
+    } else if (!is_derived_from_xs_string(xtype) && xtype != xs_string && xtype != xs_QName)
         throw XQUERY_EXCEPTION2(XPTY0004, "unexpected type in the name expression of an attribute/element constructor");
 
-    res=tuple_cell::make_sure_light_atomic(res);
+    res = tuple_cell::make_sure_light_atomic(res);
 
     qname.op->next(name);
     if (!(name.is_eos()))
         throw XQUERY_EXCEPTION2(XPTY0004, "single atomic value is expected in the name expression of an attribute/element constructor");
 
     return res;
+}
+
+static inline
+xsd::NCName getNCNameParameter(const PPOpIn &ncname)
+{
+    tuple_cell name = getQnameParameter(ncname);
+    xsd::NCName result;
+
+    if (name.is_atomic_type(xs_QName)) {
+        if (name.get_xs_qname().getPrefix()[0] != '\0') {
+            throw XQUERY_EXCEPTION2(XPTY0004, "no prefix supposed for NCName");
+        }
+
+        result = xsd::NCName::check(name.get_xs_qname().getLocalName(), false);
+    } else {
+        result = xsd::NCName::check(name.get_str_mem(), false);
+    }
+
+    return result;
 }
 
 static bool
@@ -131,9 +149,28 @@ getStringWSParameter(PPOpIn content)
     while (it!=at_vals.end());
 }
 
-static inline bool
-isNameValid(const char* name, const char* prefix, const char* uri, bool check_name = true)
+
+text_source_t getTextContent(const char * cstr, PPOpIn op, bool preserveWS) {
+    if (cstr == NULL) {
+        if (preserveWS) {
+            getStringWSParameter(op);
+        } else {
+            getStringParameter(op);
+        }
+
+        return text_source_strbuf(&(executor_globals::tmp_op_str_buf));
+    } else {
+        return text_source_mem(cstr, strlen(cstr));
+    }
+}
+
+static inline
+bool isNameValid(xsd::QName qname, bool check_name = true)
 {
+    const char* name = qname.getLocalName();
+    const char* prefix = qname.getPrefix();
+    const char* uri = qname.getUri();
+
     /* It has no namespace prefix and its local name is xmlns */
     if(check_name && (prefix == NULL || strcmp(prefix,"") == 0) && strcmpex(name,"xmlns") == 0) return false;
 
@@ -148,6 +185,7 @@ isNameValid(const char* name, const char* prefix, const char* uri, bool check_na
        !(uri == NULL || strcmpex(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
     /* Its namespace prefix is other than xml and its namespace URI is xml namespace */
     if(prefix != NULL && strcmp(prefix, "xml") != 0 && (uri == NULL || strcmpex(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
+
     return true;
 }
 
@@ -158,17 +196,13 @@ isNameValid(const char* name, const char* prefix, const char* uri, bool check_na
  * In any case at_vals sequence is cleared.
  */
 static inline bool
-process_atomic_values(xptr& left,
-                      const xptr& parent,
-                      sequence& at_vals)
-{
+process_atomic_values(xptr& left, const xptr& parent, sequence& at_vals) {
     if (at_vals.size() > 0)
     {
         executor_globals::tmp_op_str_buf.clear();
         tuple_cell tcc;
         sequence::iterator it = at_vals.begin();
-        do
-        {
+        do {
             tcc = tuple_cell::make_sure_light_atomic((*it).cells[0]);
             tcc = cast(tcc, xs_string);
             executor_globals::tmp_op_str_buf.append(tcc);
@@ -197,32 +231,76 @@ process_atomic_values(xptr& left,
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-
 /*
  * Global state shared between all constructors and some classes
  * which are also inherited from PPConstructor
  */
-schema_node_cptr PPConstructor::root_schema = XNULL;
-xptr PPConstructor::virt_root               = XNULL;
-xptr PPConstructor::last_elem               = XNULL;
-xptr PPConstructor::cont_parind             = XNULL;
-xptr PPConstructor::cont_leftind            = XNULL;
-int PPConstructor::conscnt                  = 0;
+
+struct constructor_context_t {
+    struct dynamic_part {
+        xptr lastElementIndir;
+        xptr parentElementIndir;
+        xptr leftElementIndir;
+
+        int count;
+    } d;
+
+    schema_node_xptr root_schema;
+    xptr virtual_root;
+};
+
+static std::stack<constructor_context_t::dynamic_part> constructorContextStack;
+static constructor_context_t constructorContext = { {XNULL, XNULL, XNULL, 0}, XNULL, XNULL };
+
+Node PPConstructor::getVirtualRoot()
+{
+    return constructorContext.virtual_root;
+}
+
+
+xsd::QName PPConstructor::resolveQName(const char* nameString, PPOpIn qname, dynamic_context* cxt) {
+    xsd::QName result;
+
+    if (NULL == nameString) {
+        tuple_cell qnameTuple = getQnameParameter(qname);
+        if (qnameTuple.is_atomic_type(xs_QName)) {
+            result = xsd::QName::deserialize(qnameTuple.get_str_mem());
+            nameString = NULL;
+        } else {
+            nameString = qnameTuple.get_str_mem();
+        }
+    }
+
+    if (NULL != nameString) {
+        result = xsd::QName::createResolveContext(nameString, cxt, false);
+    }
+
+    U_ASSERT(result.valid());
+
+    /* Check constraints on full name */
+    if (!isNameValid(result, false)) {
+        throw XQUERY_EXCEPTION(XQDY0096);
+    }
+
+    return result;
+}
+
 
 void PPConstructor::checkInitial()
 {
-    if (!root_schema.found())
-    {
+    if (constructorContext.root_schema == XNULL) {
         node_info_t node_info = {XNULL, XNULL, XNULL, virtual_root};
-        root_schema = doc_schema_node_object::create_virtual_root()->p;
-        xptr blk = createBlock(root_schema, XNULL);
+        constructorContext.root_schema = doc_schema_node_object::create_virtual_root()->p;
+        xptr blk = createBlock(constructorContext.root_schema, XNULL);
         insertNodeFirst(blk, &node_info);
+        constructorContext.virtual_root = node_info.node_xptr;
 
-        virt_root=node_info.node_xptr;
-        cont_parind=XNULL;
-        cont_leftind=XNULL;
-        conscnt=0;
-        last_elem=XNULL;
+        constructorContext.d.parentElementIndir = XNULL;
+        constructorContext.d.lastElementIndir = XNULL;
+        constructorContext.d.leftElementIndir = XNULL;
+        constructorContext.d.count = 0;
+
+        constructorContextStack.push(constructorContext.d);
     }
 }
 
@@ -232,14 +310,63 @@ void PPConstructor::checkInitial()
  */
 void PPConstructor::clear_virtual_root()
 {
-    if (root_schema.found())
-    {
-        nid_delete(virt_root);
-        root_schema->drop();
-        root_schema = XNULL;
-        virt_root=XNULL;
+    if (constructorContext.root_schema != XNULL) {
+        nid_delete(constructorContext.virtual_root);
+        constructorContext.root_schema->drop();
+        constructorContext.root_schema = XNULL;
+        constructorContext.virtual_root = XNULL;
     }
 }
+
+class ProperNamespace {
+  private:
+    tuple contentIterator;
+    PPOpIn * contentProducer;
+    dynamic_context * cxt;
+
+    std::stack<xmlns_ptr> nsList;
+    xmlns_ptr ns;
+  public:
+    ProperNamespace(PPOpIn * _contentProducer, dynamic_context * _cxt)
+      : contentIterator(1), contentProducer(_contentProducer),
+       cxt(_cxt), ns(NULL_XMLNS) {
+    };
+
+    void add(xmlns_ptr _ns) {
+        /* Default namespace handling should be done automatically in add_to_context */
+        cxt->add_to_context(_ns);
+        nsList.push(_ns);
+    }
+
+    void collect() {
+        if (contentProducer->op) {
+            contentProducer->op->next(contentIterator);
+            U_ASSERT(!contentIterator.is_eos());
+            U_ASSERT(contentIterator.cells[0].is_node());
+            U_ASSERT(Node(contentIterator.cells[0].get_node()).checkp().getNodeType() == xml_namespace);
+
+            ns = NSNode(contentIterator.cells[0].get_node()).getNamespaceLocal();
+
+            this->add(ns);
+
+            contentProducer->op->next(contentIterator);
+
+            if (!(contentIterator.is_eos())) {
+                throw XQUERY_EXCEPTION2(XPTY0004, "single atomic value is expected in the namespace expression of an attribute/element constructor");
+            }
+        }
+    };
+
+    xmlns_ptr getNamespace() const { return ns; };
+
+    void clear() {
+        while (!nsList.empty()) {
+            cxt->remove_from_context(nsList.top());
+            nsList.pop();
+        }
+    }
+};
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -249,16 +376,16 @@ void PPConstructor::clear_virtual_root()
 
 
 PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
-        operation_info _info_, PPOpIn _qname_, PPOpIn _content_, bool _deep_copy, bool _ns_inside) :
-            PPConstructor(_cxt_, _info_, _deep_copy), qname(_qname_), content(_content_), ns_inside(_ns_inside)
+        operation_info _info_, PPOpIn _qname_, PPOpIn _content_, bool _deep_copy, PPOpIn _ns) :
+            PPConstructor(_cxt_, _info_, _deep_copy), qname(_qname_), content(_content_), inner_ns_node(_ns)
 
 {
     el_name=NULL;
 }
 
 PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
-        operation_info _info_, const char* name, PPOpIn _content_, bool _deep_copy, bool _ns_inside) :
-            PPConstructor(_cxt_, _info_, _deep_copy), content(_content_), ns_inside(_ns_inside)
+        operation_info _info_, const char* name, PPOpIn _content_, bool _deep_copy, PPOpIn _ns) :
+            PPConstructor(_cxt_, _info_, _deep_copy), content(_content_), inner_ns_node(_ns)
 {
     el_name=se_new char[strlen(name)+1];
     strcpy(el_name,name);
@@ -266,7 +393,6 @@ PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
 }
 PPVirtualConstructor::~PPVirtualConstructor()
 {
-
     if (el_name!=NULL) {
         delete [] el_name;
     } else {
@@ -284,6 +410,11 @@ void PPVirtualConstructor::do_open ()
     checkInitial();
     if (el_name==NULL) qname.op->open();
     content.op->open();
+
+    if (inner_ns_node.op != NULL) {
+        inner_ns_node.op->open();
+    }
+
     first_time = true;
 }
 
@@ -292,6 +423,10 @@ void PPVirtualConstructor::do_reopen()
     if (el_name==NULL)  qname.op->reopen();
     content.op->reopen();
 
+    if (inner_ns_node.op != NULL) {
+        inner_ns_node.op->reopen();
+    }
+
     first_time = true;
 }
 
@@ -299,46 +434,10 @@ void PPVirtualConstructor::do_close()
 {
     if (el_name==NULL) qname.op->close();
     content.op->close();
-}
 
-const char * getName(const char* name, PPOpIn& qnameop, xmlns_ptr& ns, dynamic_context* cxt) {
-    char* prefix = NULL;
-    tuple_cell res;
-
-    /* Name parameter */
-    if (NULL == name) {
-        res  = getQnameParameter(qnameop);
-        name = res.get_str_mem();
+    if (inner_ns_node.op != NULL) {
+        inner_ns_node.op->close();
     }
-
-    if (!res.is_eos() && res.get_atomic_type() == xs_QName) {
-        ns   = xs_QName_get_xmlns(name);
-        name = xs_QName_get_local_name(name);
-    } else {
-        separateLocalAndPrefix(prefix, name);
-
-        if (!check_constraints_for_xs_NCName(name)) {
-            delete [] prefix;
-            throw XQUERY_EXCEPTION(XQDY0074);
-        }
-
-        if (prefix != NULL) {
-            str_counted_ptr c_ptr(prefix);
-            if(strcmp(prefix, "xmlns") == 0) throw XQUERY_EXCEPTION(XQDY0096);
-            if(!check_constraints_for_xs_NCName(prefix)) throw XQUERY_EXCEPTION(XQDY0074);
-            ns = cxt->get_xmlns_by_prefix(prefix);
-        } else {
-            ns = cxt->get_xmlns_by_prefix("");
-        }
-    }
-
-    /* The attribute value in a default namespace declaration MAY be empty.
-     * This has the same effect, within the scope of the declaration, of there being no default namespace
-     */
-
-    if (is_empty_default_ns_declaration(ns)) { ns = NULL_XMLNS; }
-
-    return name;
 }
 
 inline static
@@ -363,23 +462,22 @@ void PPVirtualConstructor::do_next (tuple &t)
         std::vector<xmlns_ptr> ns_list;
         portal::VirtualElementWriter elementProducer(cxt);
 
-        xmlns_ptr ns = NULL_XMLNS;
-        tuple cont(content.ts);
+        U_ASSERT(constructorContext.d.parentElementIndir == XNULL);
 
-        U_ASSERT(!ns_inside);
+        /* Resolve namespace */
+        ProperNamespace nsHandler(&inner_ns_node, cxt);
+        nsHandler.collect();
 
-        const char * name = getName(el_name, qname, ns, cxt);
+        /* Resolve name */
+        xsd::QName name = resolveQName(el_name, qname, cxt);
 
-        schema_node_cptr snode = get_virtual_root_snode()->get_first_child(ns, name, element);
+        schema_node_cptr snode = constructorContext.root_schema->get_first_child(name, element);
+
         if (!snode.found()) {
-            snode = get_virtual_root_snode()->add_child(ns, name, element);
+            snode = constructorContext.root_schema->add_child(name, element);
         }
-        elementProducer.create(snode.ptr(), parent_element);
 
-        /* Check constraints on full name */
-        if(!isNameValid(name, ns == NULL_XMLNS ? NULL : ns->prefix, ns == NULL_XMLNS ? NULL : ns->uri, false)) {
-            throw XQUERY_EXCEPTION(XQDY0096);
-        }
+        elementProducer.create(snode.ptr(), parent_element);
 
         tuple_cell old_parent_element = parent_element;
         /* TODO: There is a problem with deep_copy constructors: we can create element on
@@ -387,51 +485,68 @@ void PPVirtualConstructor::do_next (tuple &t)
          * be inserted before it */
 //        parent_element = elementProducer.get();
 
-        const xptr virtual_root_i = getIndirectionSafeCP(get_virtual_root());
+        const xptr virtual_root_i = getIndirectionSafeCP(constructorContext.virtual_root);
         sequence atomic_acc(1);
-        content.op->next(cont);
+        bool noMoreAttributes;
 
-        while (!cont.is_eos()) {
-            tuple_cell tc = cont.cells[0];
+        tuple contentTuple(content.ts); /* Content iterator, used throughout the function */
+        content.op->next(contentTuple);
+
+        // Add proper namespace
+        elementProducer.add(tuple_cell(nsHandler.getNamespace()));
+
+        while (!contentTuple.is_eos()) {
+            tuple_cell tc = contentTuple.cells[0];
 
             if (tc.is_atomic()) {
                 /* Accumulate atomic values */
-                atomic_acc.add(cont);
+                atomic_acc.add(contentTuple);
             } else {
                 /* If there are any atomic values, add them as a text node */
                 atomics_to_text(elementProducer, atomic_acc, virtual_root_i);
 
                 /* Analyze and insert it */
                 if (tc.is_node()) {
-                    /* Add node */
                     xptr node = tc.get_node();
-                    t_item nodetype = getNodeType(node);
-                    if (nodetype == virtual_root) { throw XQUERY_EXCEPTION2(SE1003, "Virtual root node type in the element constructor content sequence"); }
-                    if (nodetype == text && CommonTextNode(node).isEmpty()) { continue; }
-                    if (nodetype == xml_namespace) {
-                        ns_list.push_back(NSNode(cont.cells[0].get_node()).getNamespaceLocal());
+                    t_item nodeType = getNodeType(node);
+
+                    switch (nodeType) {
+                      case attribute :
+                        if (noMoreAttributes) {
+                          throw XQUERY_EXCEPTION(XQTY0024);
+                        } break;
+
+                      case text :
+                        if (CommonTextNode(node).isEmpty()) {
+                          continue;
+                        } break;
+
+                      case xml_namespace : {
+                          nsHandler.add(NSNode(node).getNamespaceLocal());
+                        } break;
+
+                      default : break;
                     }
-    //                if (nodetype == xml_namespace) { break; }
+
+                    if (nodeType != attribute && nodeType != xml_namespace) {
+                        noMoreAttributes = true;
+                    }
                 }
+
                 elementProducer.add(tc);
             }
-            content.op->next(cont);
+            content.op->next(contentTuple);
         }
 
         /* If there are any atomic values left, add them as a text node */
         atomics_to_text(elementProducer, atomic_acc, virtual_root_i);
 
          /* Clear context namespaces deleting local namespace declarations */
-        vector<xmlns_ptr>::iterator it = ns_list.begin();
-        while (it != ns_list.end()) {
-            cxt->remove_from_context(*it);
-            it++;
-        }
+        nsHandler.clear();
 
         t.copy(elementProducer.get());
         elementProducer.close();
         parent_element = old_parent_element;
-        cont_parind  = XNULL;
     } else {
         first_time = true;
         t.set_eos();
@@ -442,10 +557,10 @@ PPIterator* PPVirtualConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPVirtualConstructor *res ;
     if (el_name!=NULL)
-        res = se_new PPVirtualConstructor(_cxt_, info, el_name, content, deep_copy, ns_inside);
+        res = se_new PPVirtualConstructor(_cxt_, info, el_name, content, deep_copy, inner_ns_node);
     else
     {
-        res = se_new PPVirtualConstructor(_cxt_, info, qname, content, deep_copy, ns_inside);
+        res = se_new PPVirtualConstructor(_cxt_, info, qname, content, deep_copy, inner_ns_node);
         res->qname.op = qname.op->copy(_cxt_);
     }
     res->content.op = content.op->copy(_cxt_);
@@ -467,12 +582,12 @@ PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_,
                                            PPOpIn _qname_,
                                            PPOpIn _content_,
                                            bool _deep_copy,
-                                           bool _ns_inside) : PPConstructor(_cxt_, _info_, _deep_copy),
+                                           PPOpIn _ns) : PPConstructor(_cxt_, _info_, _deep_copy),
                                                               qname(_qname_),
                                                               content(_content_),
-                                                              ns_inside(_ns_inside)
+                                                              el_name(NULL),
+                                                              inner_ns_node(_ns)
 {
-    el_name=NULL;
 }
 
 PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_,
@@ -480,12 +595,14 @@ PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_,
                                            const char* name,
                                            PPOpIn _content_,
                                            bool _deep_copy,
-                                           bool _ns_inside): PPConstructor(_cxt_, _info_, _deep_copy),
+                                           PPOpIn _ns): PPConstructor(_cxt_, _info_, _deep_copy),
+                                                             qname(),
                                                              content(_content_),
-                                                             ns_inside(_ns_inside)
+                                                             el_name(NULL),
+                                                             inner_ns_node(_ns)
 {
     el_name=se_new char[strlen(name)+1];
-    strcpy(el_name,name);
+    strcpy(el_name, name);
 
 }
 PPElementConstructor::~PPElementConstructor()
@@ -509,8 +626,13 @@ PPElementConstructor::~PPElementConstructor()
 void PPElementConstructor::do_open ()
 {
     checkInitial();
-    if (el_name==NULL) qname.op->open();
+    if (el_name == NULL) qname.op->open();
     content.op->open();
+
+    if (inner_ns_node.op != NULL) {
+        inner_ns_node.op->open();
+    }
+
     first_time = true;
 }
 
@@ -519,254 +641,167 @@ void PPElementConstructor::do_reopen()
     if (el_name==NULL)  qname.op->reopen();
     content.op->reopen();
 
+    if (inner_ns_node.op != NULL) {
+        inner_ns_node.op->reopen();
+    }
+
     first_time = true;
 }
 
 void PPElementConstructor::do_close()
 {
     if (el_name==NULL) qname.op->close();
+
+    if (inner_ns_node.op != NULL) {
+        inner_ns_node.op->close();
+    }
+
     content.op->close();
 }
 
 void PPElementConstructor::do_next (tuple &t)
 {
-    if (first_time)
-    {
+    if (first_time) {
         first_time = false;
 
-        /* Name parameter */
-        const char* name = el_name;
-        tuple_cell res;
-        if (NULL == name)
-        {
-            res  = getQnameParameter(qname);
-            name = res.get_str_mem();
-        }
+        /* Save context */
+        constructorContextStack.push(constructorContext.d);
 
-        /* Context save */
-        xptr parind  = cont_parind;
-        xptr leftind = cont_leftind;
-        cont_parind  = XNULL;
-        cont_leftind = XNULL;
-        int oldcnt   = conscnt;
+        /* Resolve namespace */
+        ProperNamespace nsHandler(&inner_ns_node, cxt);
+        nsHandler.collect();
 
-        /* Preliminaries for static context */
-        vector<xmlns_ptr> ns_list;
-        vector<tuple> start_seq;
-        tuple cont(content.ts);
-        if (ns_inside)
-        {
-            content.op->next(cont);
-            while (true)
-            {
-                start_seq.push_back(cont);
-                if(cont.is_eos()||cont.cells[0].is_atomic()) break;
-                tuple_cell tc=cont.cells[0];
-                xptr node=tc.get_node();
-                CHECKP(node);
-                t_item typ=getNodeType(node);
-                if(typ!=xml_namespace)
-                    break;
-                content.op->next(cont);
-            }
-        }
-
-        /* Namespace search */
-        char* prefix = NULL;
-        xmlns_ptr ns = NULL_XMLNS;
-        if (!res.is_eos()&&res.get_atomic_type()==xs_QName)
-        {
-            ns   = xs_QName_get_xmlns(name);
-            name = xs_QName_get_local_name(name);
-        }
-        else
-        {
-            separateLocalAndPrefix(prefix, name);
-
-            if (!check_constraints_for_xs_NCName(name))
-            {
-                delete [] prefix;
-                throw XQUERY_EXCEPTION(XQDY0074);
-            }
-
-            if (prefix != NULL)
-            {
-                str_counted_ptr c_ptr(prefix);
-                if(strcmp(prefix, "xmlns") == 0) throw XQUERY_EXCEPTION(XQDY0096);
-                if(!check_constraints_for_xs_NCName(prefix)) throw XQUERY_EXCEPTION(XQDY0074);
-                ns = cxt->get_xmlns_by_prefix(prefix);
-            }
-            else
-            {
-                ns = cxt->get_xmlns_by_prefix("");
-            }
-        }
-        /*
-         * The attribute value in a default namespace declaration MAY be empty.
-         * This has the same effect, within the scope of the declaration, of there being no default namespace
-         */
-        if(is_empty_default_ns_declaration(ns)) ns = NULL_XMLNS;
-
-        /* Check constraints on full name */
-        if(!isNameValid(name,
-                        ns == NULL_XMLNS ? NULL : ns->prefix,
-                        ns == NULL_XMLNS ? NULL : ns->uri,
-                        false))
-            throw XQUERY_EXCEPTION(XQDY0096);
+        /* Resolve name */
+        xsd::QName name = resolveQName(el_name, qname, cxt);
 
         /* Element insertion */
-        xptr new_element;
-        if (parind == XNULL || deep_copy)
-        {
-            new_element = insert_element(indirectionDereferenceCP(last_elem),XNULL,get_virtual_root(),name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
-            last_elem   = get_last_mo_inderection();
+        xptr newElement = XNULL;
+        bool preserveType = cxt->get_static_context()->get_construction_mode();
+
+        if (constructorContext.d.parentElementIndir == XNULL || deep_copy) {
+            newElement = insert_element(
+              indirectionDereferenceCP(constructorContext.d.lastElementIndir), XNULL, constructorContext.virtual_root,
+              name, preserveType ? xs_anyType : xs_untyped);
+
+            constructorContext.d.lastElementIndir = get_last_mo_inderection();
+        } else if (constructorContext.d.leftElementIndir !=XNULL) {
+            newElement = insert_element(
+              indirectionDereferenceCP(constructorContext.d.leftElementIndir), XNULL, XNULL,
+              name, preserveType ? xs_anyType : xs_untyped);
+
+            ++constructorContextStack.top().count;
+        } else {
+            newElement = insert_element(
+              XNULL, XNULL, indirectionDereferenceCP(constructorContext.d.parentElementIndir),
+              name, preserveType ? xs_anyType : xs_untyped);
+
+            ++constructorContextStack.top().count;
         }
-        else
-        {
-            if (leftind!=XNULL)
-                new_element = insert_element(indirectionDereferenceCP(leftind),XNULL,XNULL,name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
-            else
-                new_element = insert_element(XNULL,XNULL,indirectionDereferenceCP(parind),name,(cxt->get_static_context()->get_construction_mode())?xs_anyType:xs_untyped,ns);
-            conscnt++;
-        }
-        int cnt = conscnt;
-        xptr indir = getIndirectionSafeCP(new_element);
 
         /* Context change */
-        cont_parind  = indir;
-        cont_leftind = XNULL;
+        U_ASSERT(newElement != XNULL);
 
-        /* Process content sequence */
-        sequence at_vals(1);
-        xptr left = XNULL;
-        bool mark_attr = true;   // If the content sequence contains an attribute node following a node that is not an attribute node
-        tuple* cont_ptr = NULL;
-        unsigned int ss_size = start_seq.size();
-        unsigned int ss_it = 0;
+        xptr indir = constructorContext.d.parentElementIndir = get_last_mo_inderection();
+        constructorContext.d.leftElementIndir = XNULL;
 
-        while (true)
-        {
-            /* Get next content sequence tuple cell */
-            if (ss_it <= ss_size)
-            {
-                if (ss_it == ss_size) {
-                    content.op->next(cont);
-                    cont_ptr = &cont;
+        /* Insert proper namespace node */
+        if (nsHandler.getNamespace() != NULL_XMLNS) {
+              insert_namespace(indirectionDereferenceCP(constructorContext.d.leftElementIndir),
+                XNULL, indirectionDereferenceCP(indir), nsHandler.getNamespace());
+              constructorContext.d.leftElementIndir = get_last_mo_inderection();
+        }
+
+        /* Process content nodes */
+        sequence atomicAccum(1);
+        int count = constructorContext.d.count;
+        bool noMoreAttributes = false;
+
+        tuple contentTuple(content.ts); /* Content iterator, used throughout the function */
+        content.op->next(contentTuple);
+
+        while (!contentTuple.is_eos()) {
+            tuple_cell tc = contentTuple.cells[0];
+
+            if (tc.is_atomic()) {
+                atomicAccum.add(contentTuple);
+            } else {
+                if (process_atomic_values(constructorContext.d.leftElementIndir, indir, atomicAccum)) {
+                    noMoreAttributes = true;
+                    continue;
+                };
+
+                Node node = Node(tc.get_node()).checkp();
+                t_item nodeType = node.getNodeType();
+
+                switch (nodeType) {
+                  case attribute :
+                    if (noMoreAttributes) {
+                      throw XQUERY_EXCEPTION(XQTY0024);
+                    } break;
+
+                  case text :
+                    if (CommonTextNode(node).isEmpty()) {
+                      continue;
+                    } break;
+
+                  case xml_namespace : {
+                      nsHandler.add(NSNode(node).getNamespaceLocal());
+                    } break;
+
+                  default : break;
                 }
-                else cont_ptr = &start_seq.at(ss_it++);
-            }
-            else
-                content.op->next(cont);
 
-            if(cont_ptr->is_eos()) break;
-            tuple_cell tc = cont_ptr->cells[0];
-
-
-            /* Analyze and insert it */
-            if (tc.is_atomic())
-            {
-                at_vals.add(*cont_ptr);
-            }
-            else
-            {
-                /* Process atomic values */
-                if(process_atomic_values(left, indir, at_vals)) mark_attr = false;
-
-                xptr node = tc.get_node();
-                CHECKP(node);
-                t_item typ = getNodeType(node);
-
-                switch (typ)
-                {
-                case virtual_root: throw XQUERY_EXCEPTION2(SE1003, "Virtual root node type in the element constructor content sequence");
-                case xml_namespace:
-                    {
-                        xmlns_ptr nsptr = NSNode(node).getNamespaceLocal();
-                        ns_list.push_back(nsptr);
-                        if(is_empty_default_ns_declaration(nsptr)) continue;
-                        break;
-                    }
-                case comment:
-                case pr_ins:
-                case document:
-                case element:
-                    {
-                        mark_attr = false;
-                        break;
-                    }
-                case text:
-                    {
-                        if (CommonTextNode(node).isEmpty()) continue;
-                        mark_attr = false;
-                        break;
-                    }
-                case attribute:
-                    {
-                        if (!mark_attr) throw XQUERY_EXCEPTION(XQTY0024);
-                    }
+                if (nodeType != attribute && nodeType != xml_namespace) {
+                    noMoreAttributes = true;
                 }
+
+                U_ASSERT(nodeType != virtual_root);
 
                 // Check if we've already inserted the node to this node as a context
-                if (conscnt > cnt)
-                {
-                    left = getIndirectionSafeCP(node);
-                    cnt =conscnt;
-                    cont_leftind = left;
-                }
-                else
-                {
-                    if (typ == document) {
-                        xptr res = copy_node_content(indir, node, left, NULL, cxt->get_static_context()->get_construction_mode());
-                        if (res != XNULL) {
-                            left = res;
-                            cont_leftind = left;
+                if (count < constructorContext.d.count) {
+                    count = constructorContext.d.count;
+                    constructorContext.d.leftElementIndir = node.getIndirection();
+                } else {
+                    if (nodeType == document) {
+                        xptr left = copy_node_content(indir, node.getPtr(), constructorContext.d.leftElementIndir, NULL, preserveType);
+
+                        if (left != XNULL) {
+                            constructorContext.d.leftElementIndir = left;
                         }
                     } else {
                         /* depth 1 means, that this is not an update operation copying */
-                        left = deep_copy_node_ii(left, XNULL, indir, node, NULL, cxt->get_static_context()->get_construction_mode(), 1);
-                        cont_leftind = left;
+                        constructorContext.d.leftElementIndir = deep_copy_node_ii(constructorContext.d.leftElementIndir, XNULL, indir, node.getPtr(), NULL, preserveType, 1);
                     }
                 }
             }
+
+            content.op->next(contentTuple);
         }
 
-        /* Process remained atomic values */
-        process_atomic_values(left, indir, at_vals);
+        process_atomic_values(constructorContext.d.leftElementIndir, indir, atomicAccum);
+
+        constructorContext.d = constructorContextStack.top();
+        constructorContextStack.pop();
+
+        nsHandler.clear();
 
         /* Result */
         t.copy(tuple_cell::node_indir(indir));
-
-        /* Clear in-scope context deleteng local namespace declarations */
-        vector<xmlns_ptr>::iterator it=ns_list.begin();
-        while (it != ns_list.end())
-        {
-            cxt->remove_from_context(*it);
-            it++;
-        }
-
-        /* Restore context */
-        cont_parind  = parind;
-        cont_leftind = XNULL;
-        if (deep_copy) conscnt = oldcnt;
-    }
-    else
-    {
+    } else {
         first_time = true;
         t.set_eos();
     }
 }
 
 
-
-
 PPIterator* PPElementConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPElementConstructor *res ;
     if (el_name!=NULL)
-        res = se_new PPElementConstructor(_cxt_, info, el_name,content,deep_copy,ns_inside);
+        res = se_new PPElementConstructor(_cxt_, info, el_name,content, deep_copy, inner_ns_node);
     else
     {
-        res = se_new PPElementConstructor(_cxt_, info, qname,content,deep_copy,ns_inside);
+        res = se_new PPElementConstructor(_cxt_, info, qname,content, deep_copy, inner_ns_node);
         res->qname.op = qname.op->copy(_cxt_);
     }
     res->content.op = content.op->copy(_cxt_);
@@ -870,114 +905,64 @@ void PPAttributeConstructor::do_close()
     if (at_value==NULL) content.op->close();
 }
 
+void getValue(const char * ) {
+}
+
 void PPAttributeConstructor::do_next (tuple &t)
 {
-    if (first_time)
-    {
+    if (first_time) {
         first_time = false;
-        const char* name=at_name;
-        const char* value=at_value;
-        xmlns_ptr ns = NULL_XMLNS;
-        tuple_cell res1, res;
-
-        /* Get attribute name */
-        if (NULL == name) {
-            res1 = getQnameParameter(qname);
-            name = res1.get_str_mem();
-        }
-
-        /* Get full name */
-        if (!res1.is_eos() && res1.get_atomic_type() == xs_QName)
-        {
-            ns   = xs_QName_get_xmlns(name);
-            name = xs_QName_get_local_name(name);
-        }
-        else
-        {
-            char* prefix = NULL;
-            separateLocalAndPrefix(prefix, name);
-
-            if(!check_constraints_for_xs_NCName(name))
-            {
-                delete [] prefix;
-                throw XQUERY_EXCEPTION(XQDY0074);
-            }
-
-            if (prefix != NULL)
-            {
-                str_counted_ptr c_ptr(prefix);
-                if(strcmp(prefix, "xmlns") == 0) throw XQUERY_EXCEPTION(XQDY0044);
-                if(!check_constraints_for_xs_NCName(prefix)) throw XQUERY_EXCEPTION(XQDY0074);
-                /* Default namespace is not applied to the attributes */
-                if(strcmpex(prefix, "") != 0)
-                    ns = cxt->get_xmlns_by_prefix(prefix);
-            }
-        }
-        /*
-         * The attribute value in a default namespace declaration MAY be empty.
-         * This has the same effect, within the scope of the declaration, of there being no default namespace
-         */
-        if(is_empty_default_ns_declaration(ns)) ns = NULL_XMLNS;
-
-        /* Check constraints on full name */
-        if(!isNameValid(name,
-                        ns == NULL_XMLNS ? NULL : ns->prefix,
-                        ns == NULL_XMLNS ? NULL : ns->uri))
-            throw XQUERY_EXCEPTION(XQDY0044);
-
-        /* Get attribute value */
-        strsize_t size;
-        if (value==NULL)
-        {
-            getStringWSParameter(content);
-            value=(char*)executor_globals::tmp_op_str_buf.c_str();
-            size = executor_globals::tmp_op_str_buf.get_size();
-        }
-        else
-            size = strlen(value);
+        xsd::QName name = resolveQName(at_name, qname, cxt);
+        text_source_t value = getTextContent(at_value, content, true);
 
         /* Attribute insertion */
-        xptr new_attribute;
-        if (cont_parind==XNULL || deep_copy)
-            new_attribute = insert_attribute(XNULL,XNULL,get_virtual_root(),name,xs_untypedAtomic,value,size,ns);
-        else
-        {
-            if (cont_leftind!=XNULL)
-            {
-                xptr left_sib=indirectionDereferenceCP(cont_leftind);
-                CHECKP(left_sib);
-                schema_node_cptr ss = getSchemaNode(left_sib);
+        xptr newAttribute;
+
+        if (constructorContext.d.parentElementIndir == XNULL || deep_copy) {
+            newAttribute = insert_attribute(XNULL, XNULL, constructorContext.virtual_root, name, xs_untypedAtomic, value);
+        } else {
+            if (constructorContext.d.leftElementIndir !=XNULL) {
+                schema_node_cptr ss = getSchemaNode(
+                    indirectionDereferenceCP(
+                        constructorContext.d.leftElementIndir));
+
                 t_item typ = ss->type;
-                if (typ != attribute && typ != xml_namespace)
-                {
+
+                if (typ != attribute && typ != xml_namespace) {
                     if (ss->parent->type != document)
                         throw XQUERY_EXCEPTION(XQTY0024);
                     else
                         throw XQUERY_EXCEPTION(XPTY0004);
                 }
 
-                if (ns != NULL_XMLNS) {
-                    const xptr parent = indirectionDereferenceCP(cont_parind);
-                    const xmlns_ptr new_ns = swizzle_namespace(parent, ns);
+                if (name.getXmlNs() != NULL_XMLNS) {
+                    const xptr parent = indirectionDereferenceCP(
+                        constructorContext.d.parentElementIndir);
+
+                    const xmlns_ptr new_ns = swizzle_namespace(parent, name.getXmlNs());
+
                     if (new_ns != NULL_XMLNS) {
                         insert_namespace(XNULL, XNULL, parent, new_ns);
-                        ns = new_ns;
+                        name = xsd::QName::createNsN(new_ns, name.getLocalName());
                     }
                 }
 
-                new_attribute= insert_attribute(indirectionDereferenceCP(cont_leftind),XNULL,XNULL,name,xs_untypedAtomic,value,size,ns);
+                newAttribute = insert_attribute(
+                    indirectionDereferenceCP(constructorContext.d.leftElementIndir),
+                        XNULL, XNULL, name, xs_untypedAtomic, value);
+            } else {
+                newAttribute = insert_attribute(
+                    XNULL, XNULL, indirectionDereferenceCP(constructorContext.d.parentElementIndir),
+                        name, xs_untypedAtomic, value);
             }
-            else
-                new_attribute= insert_attribute(XNULL,XNULL,indirectionDereferenceCP(cont_parind),name,xs_untypedAtomic,value,size,ns);
-            conscnt++;
-            cont_leftind=nodeGetIndirection(new_attribute);
+
+            constructorContext.d.leftElementIndir = get_last_mo_inderection();
+            ++constructorContext.d.count;
         }
 
         /* Result */
-        t.copy(tuple_cell::node(new_attribute));
-    }
-    else /* i.e. first_time == false */
-    {
+        t.copy(tuple_cell::node(newAttribute));
+    } else {
         first_time = true;
         t.set_eos();
     }
@@ -1074,32 +1059,26 @@ void PPNamespaceConstructor::do_close()
 
 void PPNamespaceConstructor::do_next (tuple &t)
 {
-    if (first_time)
-    {
+    if (first_time) {
         first_time = false;
 
-        const char* prefix = at_name;
-        const char* uri    = at_value;
+        text_source_t content_value = getTextContent(at_value, content, false);
 
-        if (uri == NULL)
-        {
-            getStringParameter(content);
-            uri = (char*)executor_globals::tmp_op_str_buf.c_str();
-        }
+        xmlns_ptr ns = xmlns_touch(at_name, content_value.u.cstr);
 
-        xptr new_namespace;
-        xmlns_ptr ns = cxt->add_to_context(prefix,uri);
-        if (cont_parind != XNULL) {
-            new_namespace = insert_namespace(XNULL, XNULL, indirectionDereferenceCP(cont_parind), ns);
-            ++conscnt;
+        xptr newNamespace;
+
+        if (constructorContext.d.parentElementIndir == XNULL || deep_copy) {
+            newNamespace = insert_namespace(
+                XNULL, XNULL, constructorContext.virtual_root, ns);
         } else {
-            new_namespace = insert_namespace(XNULL, XNULL, get_virtual_root(), ns);
+            newNamespace = insert_namespace(XNULL, XNULL,
+                /* parent */ indirectionDereferenceCP(constructorContext.d.parentElementIndir), ns);
+            ++ constructorContext.d.count;
         }
 
-        t.copy(tuple_cell::node(new_namespace));
-    }
-    else
-    {
+        t.copy(tuple_cell::node(newNamespace));
+    } else {
         first_time = true;
         t.set_eos();
     }
@@ -1177,36 +1156,41 @@ void PPCommentConstructor::do_next (tuple &t)
     if (first_time)
     {
         first_time = false;
-        const char* value=at_value;
-        strsize_t size=0;
         tuple_cell res;
-        if (value==NULL)
-        {
-            getStringParameter(content);
-            value=(char*)executor_globals::tmp_op_str_buf.c_str();
-            size=executor_globals::tmp_op_str_buf.get_size();
-        }
-        else
-            size=strlen(value);
 
-        int rst=strm.parse(value,size,NULL,NULL);
-        if (rst==1||(size>0 && value[size-1]=='-'))
+        text_source_t content_value = getTextContent(at_value, content, false);
+
+        if (content_value.type != text_source_t::text_mem) {
+            throw USER_EXCEPTION(SE2024);
+        }
+
+        int rst = strm.parse(content_value.u.cstr, content_value.size, NULL,NULL);
+
+        if (rst == 1 || (content_value.size > 0 && content_value.u.cstr[content_value.size-1] == '-')) {
             throw XQUERY_EXCEPTION(XQDY0072);
-        xptr newcomm;
-        if (cont_parind==XNULL || deep_copy )
-            newcomm= insert_comment(XNULL,XNULL,get_virtual_root(),value,size);
+        }
+
+        xptr newComm;
+        if (constructorContext.d.parentElementIndir == XNULL || deep_copy )
+            newComm= insert_comment(XNULL, XNULL, constructorContext.virtual_root, content_value.u.cstr, content_value.size);
         else
         {
-            if (cont_leftind!=XNULL)
-                newcomm= insert_comment(indirectionDereferenceCP(cont_leftind),XNULL,XNULL,value,size);
-            else
-                newcomm= insert_comment(XNULL,XNULL,indirectionDereferenceCP(cont_parind),value,size);
-            conscnt++;
-            cont_leftind=get_last_mo_inderection();
-        }
-        //Result
-        t.copy(tuple_cell::node(newcomm));
+            if (constructorContext.d.leftElementIndir != XNULL) {
+                newComm= insert_comment(
+                    /* left */ indirectionDereferenceCP(constructorContext.d.leftElementIndir),
+                    XNULL, XNULL, content_value.u.cstr, content_value.size);
+            } else {
+                newComm= insert_comment(XNULL, XNULL,
+                    /* parent */ indirectionDereferenceCP(constructorContext.d.parentElementIndir),
+                    content_value.u.cstr, content_value.size);
+            }
 
+            ++ constructorContext.d.count;
+            constructorContext.d.leftElementIndir = get_last_mo_inderection();
+        }
+
+        //Result
+        t.copy(tuple_cell::node(newComm));
     }
     else
     {
@@ -1272,6 +1256,7 @@ PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
     strcpy(at_value,value);
     strm.add_str("?>","--");
 }
+
 PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
                                  operation_info _info_,
                                  const char* name,
@@ -1284,6 +1269,7 @@ PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
     strcpy(at_value,value);
     strm.add_str("?>","--");
 }
+
 PPPIConstructor::~PPPIConstructor()
 {
 
@@ -1325,6 +1311,21 @@ void PPPIConstructor::do_close()
     if (at_value==NULL) content.op->close();
 }
 
+
+inline static
+text_source_t skipWS(text_source_t ts) {
+    int wp_k = 0;
+    int wp_s = ts.size;
+
+    while (wp_k < wp_s) {
+        char s = ts.u.cstr[0];
+        if (s != 32 && s != 9 && s != 10 && s != 13) break;
+        ++ts.u.cstr; --ts.size;
+    }
+
+    return ts;
+}
+
 void PPPIConstructor::do_next (tuple &t)
 {
     if (first_time)
@@ -1332,81 +1333,57 @@ void PPPIConstructor::do_next (tuple &t)
         first_time = false;
 
         /* Determine parameter */
-        const char* name = at_name;
         tuple_cell res1;
         res1.set_eos();
+        xsd::NCName name;
 
-        if (name == NULL)
-        {
-            res1 = getQnameParameter(qname);
-            name = res1.get_str_mem();
-        }
-
-        if (!res1.is_eos() && res1.get_atomic_type() == xs_QName)
-        {
-            const char* prefix = (char*)xs_QName_get_prefix(name);
-            name = xs_QName_get_local_name(name);
-            if (prefix != NULL)
-                throw XQUERY_EXCEPTION(XQDY0041);
-        }
-        else
-        {
-            /* Perform name normalization */
+        if (at_name == NULL) {
+            name = getNCNameParameter(qname);
+        } else {
             stmt_str_buf res;
-            collapse_string_normalization(name, res);
-            res1 = res.get_tuple_cell();
-            name = res1.get_str_mem();
-            /* Check name constraints */
-            if (!check_constraints_for_xs_NCName(name))
-                throw XQUERY_EXCEPTION(XQDY0041);
+            collapse_string_normalization(at_name, res); /* Perform name normalization */
+            name = xsd::NCName::check(res.get_tuple_cell().get_str_mem(), false);
         }
 
-        if(charset_handler->matches(name, "^(?i:xml)$"))
+        if (charset_handler->matches(name.getValue(), "^(?i:xml)$")) {
             throw XQUERY_EXCEPTION(XQDY0064);
-
-        const char* value = at_value;
-        tuple_cell res;
-        strsize_t size;
-        if (value == NULL)
-        {
-            getStringParameter(content);
-            value = (char*)executor_globals::tmp_op_str_buf.c_str();
-            size  = executor_globals::tmp_op_str_buf.get_size();
         }
-        else
-            size = strlen(value);
 
-        int rst = strm.parse(value,size,NULL,NULL);
-        if (rst == 1)
+        text_source_t content_value = getTextContent(at_value, content, false);
+
+        if (content_value.type != text_source_t::text_mem) {
+            throw USER_EXCEPTION(SE2024);
+        }
+
+        /* TRICKY This is just a search for "?>" or "--", that should not be in content (IT) */
+        if (strm.parse(content_value.u.cstr, content_value.size, NULL, NULL) != 0) {
             throw XQUERY_EXCEPTION(XQDY0026);
-        int wp_k = 0;
-        int wp_s = size;
-        while (wp_k < wp_s)
-        {
-            char s = value[0];
-            if (s != 32 && s != 9 && s != 10 && s != 13) break;
-            ++value; --size;
         }
+
+        /* Skip heading whitespaces */
+        content_value = skipWS(content_value);
 
         /* Attribute insertion */
         xptr new_pi;
-        if (cont_parind == XNULL || deep_copy)
-            new_pi = insert_pi(XNULL,XNULL,get_virtual_root(),name,strlen(name),value,size);
-        else
-        {
-            if (cont_leftind!=XNULL)
-                new_pi = insert_pi(indirectionDereferenceCP(cont_leftind),XNULL,XNULL,name,strlen(name),value,size);
-            else
-                new_pi = insert_pi(XNULL,XNULL,indirectionDereferenceCP(cont_parind),name,strlen(name),value,size);
-            conscnt++;
-            cont_leftind = get_last_mo_inderection();
+        if (constructorContext.d.parentElementIndir == XNULL || deep_copy) {
+            new_pi = insert_pi(XNULL, XNULL, constructorContext.virtual_root,
+                               name.getValue(), strlen(name.getValue()), content_value.u.cstr, content_value.size);
+        } else {
+            if (constructorContext.d.leftElementIndir !=XNULL) {
+                new_pi = insert_pi(indirectionDereferenceCP(constructorContext.d.leftElementIndir),
+                    XNULL, XNULL, name.getValue(), strlen(name.getValue()), content_value.u.cstr, content_value.size);
+            } else {
+                new_pi = insert_pi(XNULL, XNULL,
+                    indirectionDereferenceCP(constructorContext.d.parentElementIndir),
+                    name.getValue(), strlen(name.getValue()), content_value.u.cstr, content_value.size);
+            }
+            constructorContext.d.count++;
+            constructorContext.d.leftElementIndir = get_last_mo_inderection();
         }
 
         /* Result */
         t.copy(tuple_cell::node(new_pi));
-    }
-    else
-    {
+    } else {
         first_time = true;
         t.set_eos();
     }
@@ -1491,32 +1468,31 @@ void PPTextConstructor::do_next (tuple &t)
     if (first_time)
     {
         first_time = false;
-        text_source_t text_source;
-        tuple_cell res;
-        if (at_value == NULL)
-        {
-            if (getStringParameter(content))
-            {
-                t.set_eos();
-                return;
+        text_source_t text_source = getTextContent(at_value, content, false);
+
+        if (tsGetActualSize(text_source) == 0) {
+            first_time = true;
+            t.set_eos();
+            return;
+        }
+
+        xptr newText;
+
+        if (constructorContext.d.parentElementIndir == XNULL || deep_copy || text_source.size == 0) {
+            newText = insert_text(XNULL, XNULL, constructorContext.virtual_root, text_source);
+        } else {
+            if (constructorContext.d.leftElementIndir != XNULL) {
+                newText = insert_text(indirectionDereferenceCP(constructorContext.d.leftElementIndir), XNULL, XNULL, text_source);
+            } else {
+                newText = insert_text(XNULL, XNULL, indirectionDereferenceCP(constructorContext.d.parentElementIndir), text_source);
             }
-            text_source = text_source_strbuf(&(executor_globals::tmp_op_str_buf));
-        } else {
-            text_source = text_source_mem(at_value, strlen(at_value));
+
+            constructorContext.d.count++;
+            constructorContext.d.leftElementIndir = get_last_mo_inderection();
         }
-        xptr newcomm;
-        if (cont_parind==XNULL || deep_copy || text_source.size == 0) {
-            newcomm = insert_text(XNULL, XNULL, get_virtual_root(), text_source);
-        } else {
-            if (cont_leftind!=XNULL)
-                newcomm = insert_text(indirectionDereferenceCP(cont_leftind),XNULL,XNULL, text_source);
-            else
-                newcomm = insert_text(XNULL,XNULL,indirectionDereferenceCP(cont_parind), text_source);
-            conscnt++;
-            cont_leftind=get_last_mo_inderection();
-        }
+
         //Result
-        t.copy(tuple_cell::node(newcomm));
+        t.copy(tuple_cell::node(newText));
     }
     else
     {
@@ -1584,75 +1560,79 @@ void PPDocumentConstructor::do_next (tuple &t)
     {
         first_time = false;
         tuple_cell res;
-        xptr parind  = cont_parind;
-        xptr leftind = cont_leftind;
-        int cnt=conscnt;
-        int oldcnt=conscnt;
-        xptr new_doc = insert_document("tmp",false);
-        cxt->add_temporary_doc_node(new_doc);
-        xptr indir=nodeGetIndirection(new_doc);
-        cont_parind=indir;
-        cont_leftind=XNULL;
-        sequence at_vals(1);
-        xptr lefti=XNULL;
 
-        while (true)
-        {
+        constructorContextStack.push(constructorContext.d);
+
+        xptr new_doc = insert_document("tmp", false);
+        cxt->add_temporary_doc_node(new_doc);
+
+        xptr indir = nodeGetIndirection(new_doc);
+        int count = constructorContext.d.count;
+
+        sequence at_vals(1);
+
+        while (true) {
             content.op->next(t);
             if(t.is_eos()) break;
 
             tuple_cell tc=t.cells[0];
-            if (tc.is_atomic())
-            {
+            if (tc.is_atomic()) {
                 at_vals.add(t);
-            }
-            else
-            {
-                process_atomic_values(lefti, indir, at_vals);
-
-                xptr node=tc.get_node();
-                CHECKP(node);
-                t_item typ = getNodeType(node);
-
-                switch (typ)
-                {
-                  case document:
-                  case element:
-                  case pr_ins:
-                  case comment: break;
-                  case text:
-                    {
-                        if (CommonTextNode(node).isEmpty()) continue;
-                        break;
-                    }
-                  case attribute:     throw XQUERY_EXCEPTION2(XPTY0004, "Attribute node in the document constructor content sequence");
-                  case virtual_root:  throw XQUERY_EXCEPTION2(SE1003, "Virtual root node type in the document constructor content sequence");
-                  case xml_namespace: throw XQUERY_EXCEPTION2(XPTY0004, "Namespace node in the document constructor content sequence");
+            } else {
+                if (process_atomic_values(constructorContext.d.leftElementIndir, indir, at_vals)) {
+                    continue;
                 }
 
-                if (conscnt > cnt) {
-                    lefti = getIndirectionSafeCP(node);
-                    cnt   = conscnt;
+                Node node(tc.get_node());
+                t_item nodeType = node.checkp().getNodeType();
+
+                switch (nodeType) {
+                  case text: {
+                      if (CommonTextNode(node).isEmpty()) {
+                          continue;
+                      }
+                    } break;
+
+                  case attribute: {
+                    throw XQUERY_EXCEPTION2(XPTY0004, "Attribute node in the document constructor content sequence");
+                  }
+
+                  case virtual_root: {
+                    throw XQUERY_EXCEPTION2(SE1003, "Virtual root node type in the document constructor content sequence");
+                  }
+
+                  case xml_namespace: {
+                    throw XQUERY_EXCEPTION2(XPTY0004, "Namespace node in the document constructor content sequence");
+                  }
+
+                  default: break;
+                }
+
+                // Check if we've already inserted the node to this node as a context
+                if (count < constructorContext.d.count) {
+                    count = constructorContext.d.count;
+                    constructorContext.d.leftElementIndir = node.getIndirection();
+                } else if (nodeType == document) {
+                    xptr left = copy_node_content(indir, node.getPtr(), constructorContext.d.leftElementIndir,
+                                                  NULL, cxt->get_static_context()->get_construction_mode());
+                    if (left != XNULL) {
+                        constructorContext.d.leftElementIndir = left;
+                    }
                 } else {
-                    if (typ == document) {
-                        xptr res = copy_node_content(indir, node, lefti, NULL, cxt->get_static_context()->get_construction_mode());
-                        if (res != XNULL) lefti = res;
-                        else continue;
-                    } else {
-                        lefti = deep_copy_node_ii(lefti, XNULL, indir, node, NULL, cxt->get_static_context()->get_construction_mode());
-                    }
+                    /* depth 1 means, that this is not an update operation copying */
+                    constructorContext.d.leftElementIndir =
+                        deep_copy_node_ii(constructorContext.d.leftElementIndir, XNULL, indir, node.getPtr(),
+                                          NULL, cxt->get_static_context()->get_construction_mode(), 1);
                 }
-                cont_leftind = lefti;
             }
         }
 
-        process_atomic_values(lefti, indir, at_vals);
+        process_atomic_values(constructorContext.d.leftElementIndir, indir, at_vals);
+
+        constructorContext.d = constructorContextStack.top();
+        constructorContextStack.pop();
 
         t.copy(tuple_cell::node_indir(indir));
-
-        cont_parind=parind;
-        cont_leftind=XNULL;
-        conscnt=oldcnt;
     } else {
         first_time = true;
         t.set_eos();

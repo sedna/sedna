@@ -14,8 +14,8 @@
 
 PPRename::PPRename(PPOpIn _child_, 
                    dynamic_context *_cxt_,
-                   const char *_ncname_prefix_,
-                   const char *_ncname_local_): PPUpdate("PPRename"),
+                   xsd::NCName _ncname_prefix_,
+                   xsd::NCName _ncname_local_): PPUpdate("PPRename"),
                                              child(_child_),
                                              cxt(_cxt_),
                                              ncname_prefix(_ncname_prefix_),
@@ -30,6 +30,8 @@ PPRename::PPRename(PPOpIn _child_,
                                              child(_child_),
                                              new_name_child(_new_name_child_),
                                              cxt(_cxt_),
+                                             ncname_prefix(NULL),
+                                             ncname_local(NULL),
                                              type(PP_RENAME_COLLECTION)
 {
 }

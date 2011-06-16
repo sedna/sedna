@@ -18,6 +18,7 @@
 
 #include "tr/structures/nodeinterface.h"
 #include "tr/mo/indirection.h"
+#include "tr/executor/base/xsd.h"
 
 class sequence;
 
@@ -277,6 +278,10 @@ public:
     bool               get_xs_boolean()  const { return *(bool*              )(&data); }
     xs_packed_datetime get_xs_dateTime() const { return *(xs_packed_datetime*)(&data); }
     xs_packed_duration get_xs_duration() const { return *(xs_packed_duration*)(&data); }
+    xsd::QName         get_xs_qname()    const {
+        U_ASSERT(t == (tc_light_atomic_var_size | xs_QName));
+        return xsd::QName::deserialize(get_str_mem());
+    };
 
     sequence*          get_sequence_ptr()const {
         U_ASSERT(is_light_atomic() && (t & TC_XTYPE_MASK) == se_sequence);
@@ -517,6 +522,13 @@ public:
     static tuple_cell atomic(xmlscm_type _xtype_, char *_str_)
     {
         return tuple_cell(_xtype_, _str_);
+    }
+
+    static tuple_cell atomic(const xsd::QName &_qname_)
+    {
+        char * str = new char[_qname_.getLen()];
+        _qname_.serializeTo(str);
+        return tuple_cell(xs_QName, str);
     }
 
     static tuple_cell atomic_deep(xmlscm_type _xtype_, const char *_str_)

@@ -25,8 +25,20 @@ xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent, const char* valu
 xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const char* target, size_t tsize, const char* data, size_t dsize);
 xptr insert_doc_node(doc_schema_node_cptr doc_snode, const char * doc_name, const char * collection_name);
 
-xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t source);
+xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t source, bool cdataflag = false);
 
+inline static
+xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const xsd::QName qname, xmlscm_type type, const text_source_t source)
+{
+    U_ASSERT(source.type == text_source_t::text_mem);
+    return insert_attribute(left_sib, right_sib, parent, qname.getLocalName(), type, source.u.cstr, source.size, qname.getXmlNs());
+}
+
+inline static
+xptr insert_element(xptr left_sibling, xptr right_sibling, xptr parent, const xsd::QName qname, xmlscm_type type)
+{
+    return insert_element(left_sibling, right_sibling, parent, qname.getLocalName(), type, qname.getXmlNs());
+}
 
 extern xptr last_inserted_node_indirection;
 

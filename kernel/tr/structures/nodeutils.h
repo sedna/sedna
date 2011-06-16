@@ -9,6 +9,7 @@
 #include <set>
 
 #include "tr/structures/nodeoperations.h"
+#include "tr/executor/base/xsd.h"
 
 xptr getFirstChild(const xptr node);
 xptr getFirstChildByType(const xptr node, t_item t);
@@ -105,7 +106,11 @@ xptr findAttribute(xptr node, const char* name, xmlns_ptr ns) {
     return findAttribute(node, name, (ns == NULL) ? NULL : ns->uri);
 }
 
-
+inline static
+bool sameQName(xsd::QName qname, xptr p) {
+    schema_node_cptr scn = getSchemaNode(p);
+    return same_xmlns_uri(scn->get_xmlns(), qname.getXmlNs()) && (strcmpex(scn->get_name(), qname.getLocalName()) == 0);
+}
 
 //xptr getFirstDescandantBySchema(xptr ancestor,schema_node_cptr scn);
 

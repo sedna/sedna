@@ -16,14 +16,14 @@ class PPCreateTrigger : public PPUpdate
 {
 private:
     dynamic_context *cxt;
-    PathExprRoot root;
+    xpath::PathExprRoot root;
     trigger_event event;
     trigger_time time;
     trigger_granularity gran;
-    PathExpr *trigger_path;
+    xpath::PathExpression *trigger_path;
     scheme_list* action;
     PPOpIn trigger_name;
-    PathExpr *path_to_parent;
+    xpath::PathExpression *path_to_parent;
     inserting_node innode;
 
     virtual void do_open();
@@ -34,23 +34,23 @@ private:
 public:
     
     PPCreateTrigger(dynamic_context *_cxt_,
-                    PathExprRoot _root_,
+                    xpath::PathExprRoot _root_,
                     trigger_event _event_,                    
                     trigger_time _time_,
                     trigger_granularity _gran_,
-                    PathExpr *_trigger_path_,
+                    xpath::PathExpression *_trigger_path_,
                     scheme_list* _action_,
                     PPOpIn _trigger_name_);
 
     PPCreateTrigger(dynamic_context *_cxt_,
-                    PathExprRoot _root_,
+                    xpath::PathExprRoot _root_,
                     trigger_event _event_,
                     trigger_time _time_,
                     trigger_granularity _gran_,
-                    PathExpr *_trigger_path_,
+                    xpath::PathExpression *_trigger_path_,
                     scheme_list* _action_,
                     PPOpIn _trigger_name_,
-                    PathExpr *_path_to_parent_,
+                    xpath::PathExpression *_path_to_parent_,
                     inserting_node _innode_);
     
     ~PPCreateTrigger();
@@ -59,9 +59,9 @@ public:
     inline trigger_time get_trigger_time() const { return time; }
     inline trigger_granularity get_trigger_granularity() const { return gran; }
     inline const inserting_node& get_inserting_node() const { return innode; }
-    inline const PathExprRoot& get_path_expression_root() const { return root; }
-    inline const PathExpr* get_trigger_path() { return trigger_path; }
-    inline const PathExpr* get_path_to_parent() { return path_to_parent; }
+    inline const xpath::PathExprRoot& get_path_expression_root() const { return root; }
+    inline const xpath::PathExpression* get_trigger_path() { return trigger_path; }
+    inline const xpath::PathExpression* get_path_to_parent() { return path_to_parent; }
 };
 
 #endif /* _PPCREATETRIGGER_H */

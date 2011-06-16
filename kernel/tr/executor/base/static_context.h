@@ -151,6 +151,7 @@ public:
     {
         return preserve_type;
     }
+
     inline void set_construction_mode(bool cm)
     {
         preserve_type = cm;
@@ -205,10 +206,15 @@ public:
 
     inline xmlns_ptr get_default_nsp()
     {
-        if (def_ns.empty())
+        if (def_ns.empty()) {
             return NULL_XMLNS;
-        else
-            return def_ns.back();
+        } else {
+            xmlns_ptr p = def_ns.back();
+            if (is_empty_ns_declaration(p)) {
+                p = NULL_XMLNS;
+            }
+            return p;
+        }
     }
 
     inline void set_default_nsp(xmlns_ptr ns)

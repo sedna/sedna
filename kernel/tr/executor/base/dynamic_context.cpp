@@ -165,12 +165,9 @@ xmlns_ptr dynamic_context::get_xmlns_by_prefix(const char *prefix)
     U_ASSERT(prefix);
     xmlns_ptr res;
 
-    if (!strlen(prefix))
-    {
+    if (!strlen(prefix)) {
         return st_cxt->get_default_nsp();
-    }
-    else
-    {
+    } else {
         inscmap::const_iterator it = insc_ns.find(prefix);
 
         if (it != insc_ns.end() && it->second.size() > 0)
@@ -182,45 +179,31 @@ xmlns_ptr dynamic_context::get_xmlns_by_prefix(const char *prefix)
     }
 }
 
-xmlns_ptr dynamic_context::add_to_context(const char* prefix,const char* uri)
+xmlns_ptr dynamic_context::add_to_context(xmlns_ptr xmlns)
 {
-    U_ASSERT(prefix);
-
-    xmlns_ptr res = xmlns_touch(prefix, uri);
-
-    if (strcmp("", prefix) == 0)
-    {
-        st_cxt->set_default_nsp(res);
-    }
-    else
-    {
-        inscmap::iterator it = insc_ns.find(std::string(prefix));
-        if (it != insc_ns.end())
-            it->second.push_back(res);
-        else
-            insc_ns[std::string(prefix)].push_back(res);
-
-        st_cxt->set_nsp(res);
+    if (!xmlns->has_prefix()) {
+        st_cxt->set_default_nsp(xmlns);
+    } else {
+        insc_ns[std::string(xmlns->get_prefix())].push_back(xmlns);
+        st_cxt->set_nsp(xmlns); // QUESTION: WTF???
     }
 
-    return res;
+    return xmlns;
 }
 
 void dynamic_context::remove_from_context(const char* prefix)
 {
-    U_ASSERT(prefix);
+    U_ASSERT(NULL != prefix);
 
-    if (strcmp(prefix, "") == 0)
-    {
+    if (strcmp(prefix, "") == 0) {
         st_cxt->unset_default_nsp();
-    }
-    else
-    {
+    } else {
         inscmap::iterator it = insc_ns.find(std::string(prefix));
-        if (it != insc_ns.end() && it->second.size() > 0)
+        if (it != insc_ns.end() && it->second.size() > 0) {
             it->second.pop_back();
-        else
+        } else {
             throw SYSTEM_EXCEPTION("dynamic context Error");
+        }
     }
 }
 

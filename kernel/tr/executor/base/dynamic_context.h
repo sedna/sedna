@@ -372,8 +372,11 @@ public:
 
     xmlns_ptr get_xmlns_by_prefix(const char* prefix);
 
-    xmlns_ptr      add_to_context(const char* prefix, const char* uri);
+    /* Adds and removes namespace to/from context. Replaces the previous one with the same prefix.
+       Handles default namspace right. */
+    xmlns_ptr add_to_context(xmlns_ptr xmlns);
     void           remove_from_context(const char* prefix);
+
     inline void    remove_from_context(xmlns_ptr ns)
     {
         remove_from_context(ns->prefix);

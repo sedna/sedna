@@ -44,6 +44,7 @@ namespace portal {
         t_item getNodeKind() const { return element; };
         const text_source_t getValue() const { return text_source_mem(NULL, 0); };
         const char * getLocalName() const { return snode->get_name(); };
+        xsd::QName getQName() const { return xsd::QName::createNsN(snode->get_xmlns(), snode->get_name()); };
         xmlns_ptr getNamespace() const { return snode->get_xmlns(); };
 
         void printNodeName(se_ostream & out) const;

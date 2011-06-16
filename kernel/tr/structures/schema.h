@@ -22,6 +22,7 @@
 #include "tr/cat/catalog.h"
 #include "tr/cat/catptr.h"
 #include "tr/cat/catstructures.h"
+#include "tr/executor/base/xsd.h"
 
 #define ISINDEXSUPPORTED(schema) schema->index_object!=NULL
 
@@ -83,6 +84,7 @@ struct schema_node_object : public catalog_object
 private:
     xmlns_ptr_pers xmlns_pers; /* persistent */
     mutable xmlns_ptr xmlns_local;
+    mutable int indexInParent;
 
 public:
 
@@ -107,6 +109,18 @@ public:
     t_item type; /* type of node: element/text/attribute/simple */ /* persistent */
     xptr bblk; /* pointer to the first block of block chain */ /* persistent */
     xptr bblk_indir; /* beggining block with free indirection quota*/ /* persistent */
+
+    int getIndex() const {
+        if (indexInParent == -2) {
+            if (parent == XNULL) {
+                indexInParent = -1;
+            } else {
+                indexInParent = parent->find_child(this->p_object);
+            }
+        }
+
+        return indexInParent;
+    }
 
     const char * get_name () const {
         return name;
@@ -150,8 +164,16 @@ public:
     ~schema_node_object();
 
     /* Schema node comparition */
-    inline bool same_node(const xmlns_ptr xmlns, const char * name, t_item type) {
-        return (strcmpex(this->name, name) == 0 && this->type == type && this->get_xmlns() == xmlns);
+    inline bool same_node(const char * uri, const char * local, t_item type) {
+        return (this->type == type) && same_xmlns_uri(get_xmlns(), uri) && (strcmpex(name, local) == 0);
+    }
+
+    inline bool node_matches(const char * uri, const char * local, t_item type) {
+        return ((this->type & type) > 0) && same_xmlns_uri(get_xmlns(), uri) && (strcmpex(name, local) == 0);
+    }
+
+    inline bool same_node(const xmlns_ptr xmlns, const char * local, t_item type) {
+        return (this->type == type) && same_xmlns_uri(get_xmlns(), xmlns) && (strcmpex(name, local) == 0);
     }
 
     /* Create new schema node */
@@ -170,6 +192,8 @@ public:
         t_item          type
     ) const;
 
+    schema_node_xptr get_first_child(const xsd::QName & qname, t_item type);
+
     /* Returns info about the child */
     const sc_ref * get_first_child_ref(
         const xmlns_ptr xmlns,
@@ -184,6 +208,8 @@ public:
         t_item          type
     );
 
+    schema_node_xptr add_child(const xsd::QName & qname, t_item type);
+
     /* Returns position of the child with the given name and of the given descriptor
      * type exist in schema as the child of the node that corresponds to the current
      * block header; -1 otherwise */
@@ -195,9 +221,10 @@ public:
 
     int find_child(const xptr schema_node) const;
 
-    int find_child_fair (const char * uri, const char * name, t_item type) const;
+    int find_child_fair(const char * uri, const char * name, t_item type) const;
+    int find_child_fair(const xsd::QName & qname, t_item type) const;
 
-    inline int get_node_position_in_parent() const {
+    inline int get_node_position_in_parent__depricated() const {
         return (parent == XNULL) ? -1 : parent->find_first_child(get_xmlns(), name, type);
     };
 

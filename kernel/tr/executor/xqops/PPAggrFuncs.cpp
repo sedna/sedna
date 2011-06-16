@@ -10,6 +10,7 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/xs_helper.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+#include "tr/executor/base/PPUtils.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////

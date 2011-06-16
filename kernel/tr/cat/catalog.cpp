@@ -267,6 +267,7 @@ void catalog_on_transaction_begin()
 {
     CATALOG_TEMPORARY_CONTEXT = new CatalogMemoryContext(DEF_CHUNK_SIZE);
     local_space_base = cat_malloc_context_(CATALOG_TEMPORARY_CONTEXT, 32);
+    catalog_space_base = local_space_base;
 
     cs_initp();
 

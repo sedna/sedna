@@ -35,7 +35,7 @@ void delete_undeep(PPOpIn arg);
 void replace(PPOpIn arg);
 
 // Rename operation
-void rename(PPOpIn arg,const char* name);
+void rename(PPOpIn arg, xsd::NCName name);
 //update utilities
 //void checkSwiizleTab(upd_ns_map*& updmap);
 //insertion of the node to new parent

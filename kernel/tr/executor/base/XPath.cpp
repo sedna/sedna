@@ -5,6 +5,10 @@
 
 #include <list>
 
+#include <iostream>
+#include <sstream>
+#include <string>
+
 #include "common/sedna.h"
 
 #include "common/base.h"
@@ -15,427 +19,427 @@
 #include "tr/executor/base/PPBase.h"
 
 using namespace std;
+using namespace xpath;
 
-///////////////////////////////////////////////////////////////////////////////
-/// PathExpr program logic
-///////////////////////////////////////////////////////////////////////////////
-void * create_PathExpr(const PathExprDistr &distr, void * memory_parent)
-{
-    PathExpr *path = cat_malloc(memory_parent, sizeof(PathExpr));
-    path->size = distr.size();
-    if (path->size == 0) path->nto = NULL;
-    else
-    {
-        path->nto = cat_malloc ( NodeTestOr*)mm->alloc(sizeof(NodeTestOr) * path->size);
+template <typename T> struct de_scheme_list_delete {
+    inline static void deallocate(T * p) { delete_scheme_list(p); }
+};
 
-        for (size_t i = 0; i < path->size; i++)
-        {
-            NodeTestOr &nto = path->nto[i];
-            nto.size = distr[i];
-            nto.nt = (NodeTest*)mm->alloc(sizeof(NodeTest) * nto.size);
+struct axis_pair_t {
+  xpath::Axis type;
+  const char * lr;
+};
+
+struct node_test_pair_t {
+  xpath::NodeTestType type;
+  const char * lr;
+  const char * str;
+};
+
+static const axis_pair_t axisTypeMap[] = {
+  { axis_any, "errornous" },
+  { axis_child, "child" },
+  { axis_descendant, "descendant" },
+  { axis_attribute, "attribute" },
+  { axis_self, "self" },
+  { axis_descendant_or_self, "descendant-or-self" },
+  { axis_descendant_attr, "descendant-attribute" },
+  { axis_parent, "parent" },
+  { __axis_last, "errornous" },
+  { axis_ancestor, "ancestor" },
+  { axis_ancestor_or_self, "ancestor-or-self" },
+  { axis_following, "following" },
+  { axis_following_sibling, "following-sibling" },
+  { axis_preceding, "preceding" },
+  { axis_preceding_sibling, "preceding-sibling" },
+};
+
+static const node_test_pair_t nodeTypeMap[] = {
+  { node_test_invalid, "errornous", "Errornous" },
+  { node_test_pi, "processing-instruction", "node_test_pi" },
+  { node_test_comment, "comment", "node_test_comment" },
+  { node_test_text, "text", "node_test_text" },
+  { node_test_node, "node", "node_test_node" },
+  { node_test_element, "element", "node_test_element" },
+  { node_test_attribute, "attribute", "node_test_attribute" },
+  { node_test_document, "document-node", "node_test_document" },
+  { node_test_qname, "qname", "node_test_qname" },
+  { node_test_wildcard_star, "wildcard_star", "node_test_wildcard_star" },
+  { node_test_wildcard_ncname_star, "wildcard_ncname_star", "node_test_wildcard_ncname_star" },
+  { node_test_wildcard_star_ncname, "wildcard_star_ncname", "node_test_wildcard_star_ncname" }
+};
+
+#define axisTypeMapSize ((int) (sizeof(axisTypeMap) / sizeof(axis_pair_t)))
+#define nodeTypeMapSize ((int) (sizeof(nodeTypeMap) / sizeof(node_test_pair_t)))
+
+static inline
+xpath::Axis axisTypeFromLR(const char * axis) {
+    for (int i = 0; i < axisTypeMapSize; ++i) {
+        if (strcmp(axis, axisTypeMap[i].lr) == 0) {
+            return axisTypeMap[i].type;
         }
     }
 
-    return path;
+    return axis_any;
 }
 
-std::string
-NodeTest::to_string(const NodeTestType& type, const NodeTestData& data)
-{
-    string res;
-    switch (type)
-    {
-        case node_test_processing_instruction: res += "processing-instruction(" + xsd::NCName(data.ncname_local).;
-                                               res += ;
-                                               res += ")";
-                                               break;
-
-        case node_test_comment               : res += "comment()"; break;
-        case node_test_text                  : res += "text()"; break;
-        case node_test_node                  : res += "node()"; break;
-
-        case node_test_element               : res += "element(";
-                                               if (NULL != data.ncname_local)
-                                                   res += xs_QName2string(data.ncname_prefix, data.ncname_local);
-                                               res += ")";
-                                               break;
-
-        case node_test_attribute             : res += "attribute(";
-                                               if (NULL != data.ncname_local)
-                                                   res += xs_QName2string(data.ncname_prefix, data.ncname_local);
-                                               res += ")";
-                                               break;
-
-        case node_test_document              : res += "document-node(";
-                                               if (NULL != data.ncname_local)
-                                               {
-                                                   res += "element(";
-                                                   res += xs_QName2string(data.ncname_prefix, data.ncname_local);
-                                                   res += ")";
-                                               }
-                                               res += ")";
-                                               break;
-
-        case node_test_qname                 : res += xs_QName2string(data.ncname_prefix, data.ncname_local);
-                                               break;
-
-        case node_test_wildcard_star         : res += "*"; break;
-        case node_test_wildcard_ncname_star  : res += xs_NCName2string(data.ncname_prefix); res += ":*"; break;
-        case node_test_wildcard_star_ncname  : res += "*:"; res += xs_NCName2string(data.ncname_local); break;
-        default                              : res += "UNKNOWN";
+static inline
+const char * axisTypeToStr(xpath::Axis axis) {
+    if (axis >= axis_any && axis < __axis_last) {
+        return axisTypeMap[axis].lr;
+    } else {
+        return NULL;
     }
-    return res;
 }
 
-std::string NodeTest::to_string() const
-{
-    string res;
-    switch (axis)
-    {
-        case axis_child             : res += "child"; break;
-        case axis_descendant        : res += "descendant"; break;
-        case axis_attribute         : res += "attribute"; break;
-        case axis_self              : res += "self"; break;
-        case axis_descendant_or_self: res += "descendant-or-self"; break;
-        case axis_descendant_attr   : res += "descendant-attr"; break;
-        case axis_parent            : res += "parent"; break;
-        default                     : res += "UNKNOWN";
+static inline
+const char * axisTypeToLR(xpath::Axis axis) {
+    if (axis >= axis_any && axis < __axis_last) {
+        return axisTypeMap[axis].lr;
+    } else {
+        return NULL;
     }
-    res += "::";
-    res += NodeTest::to_string(type, data);
-    return res;
 }
 
 
-
-void NodeTest::print_to_lr(std::ostream& str)
-{
-    str << "(";
-    switch (axis)
-    {
-        case axis_child             : str << "PPAxisChild"; break;
-        case axis_descendant        : str << "PPAxisDescendant"; break;
-        case axis_attribute         : str << "PPAxisAttribute"; break;
-        case axis_self              : str << "PPAxisSelf"; break;
-        case axis_descendant_or_self: str << "PPAxisDescendantOrSelf"; break;
-        case axis_descendant_attr   : str << "PPAxisDescendantAttr"; break;
-        case axis_parent            : str << "PPAxisParent"; break;
-        default                     : str << "UNKNOWN";
-    }
-
-    str << " ";
-
-    switch (type)
-    {
-        case node_test_processing_instruction: if(NULL == data.ncname_local)
-                                                   str << "processing-instruction ()";
-                                               else
-                                               {
-                                                   str << "processing-instruction ";
-                                                   xs_NCName_print_to_lr(data.ncname_local, str);
-                                               }
-                                               break;
-        case node_test_comment               : str << "comment ()"; break;
-        case node_test_text                  : str << "text ()"; break;
-        case node_test_node                  : str << "node ()"; break;
-
-
-        case node_test_element               : str << "element (";
-                                               if(NULL != data.ncname_local)
-                                                   xs_QName_print_to_lr(data.ncname_prefix,
-                                                                        data.ncname_local,
-                                                                        data.uri,
-                                                                        str);
-                                               str << ")";
-                                               break;
-
-        case node_test_attribute             : str << "attribute (";
-                                               if(NULL != data.ncname_local)
-                                                   xs_QName_print_to_lr(data.ncname_prefix,
-                                                                        data.ncname_local,
-                                                                        data.uri,
-                                                                        str);
-                                               str << ")";
-                                               break;
-
-        case node_test_document              : str << "document (";
-                                               if(NULL != data.ncname_local)
-                                                   xs_QName_print_to_lr(data.ncname_prefix,
-                                                                        data.ncname_local,
-                                                                        data.uri,
-                                                                        str);
-                                               str << ")";
-                                               break;
-
-        case node_test_qname                 : str << "qname (";
-                                               xs_QName_print_to_lr(data.ncname_prefix,
-                                                                    data.ncname_local,
-                                                                    data.uri,
-                                                                    str);
-                                               str << ")";
-                                               break;
-
-        case node_test_wildcard_star         : str << "wildcard_star ()"; break;
-        case node_test_wildcard_ncname_star  : str << "wildcard_ncname_star ";
-                                               xs_anyURI_print_to_lr(data.uri, str);
-                                               break;
-
-        case node_test_wildcard_star_ncname  : str << "wildcard_star_ncname ";
-                                               xs_NCName_print_to_lr(data.ncname_local, str);
-                                               break;
-
-        default                              : str << "UNKNOWN";
-    }
-    str << ")";
-}
-
-std::string NodeTestOr::to_string() const
-{
-    string res ;
-    if (size == 1)
-    {
-        res += nt[0].to_string();
-    }
-    else
-    {
-        size_t i = 0;
-        res += "(";
-        res += nt[0].to_string();
-        for (i = 1; i < size; i++)
-        {
-            res += " | ";
-            res += nt[i].to_string();
-        }
-        res += ")";
-    }
-    return res;
-}
-
-void NodeTestOr::print_to_lr(std::ostream& str)
-{
-    str << "(";
-    size_t i = 0;
-    nt[0].print_to_lr(str);
-    for (i = 1; i < size; i++)
-    {
-        str << " ";
-        nt[i].print_to_lr(str);
-    }
-    str << ")";
-}
-
-std::string PathExpr::to_string() const
-{
-    string res;
-    size_t i = 0;
-    if (size > 0)
-    {
-        res += nto[0].to_string();
-        for (i = 1; i < size; i++)
-        {
-            res += "/";
-            res += nto[i].to_string();
+static inline
+xpath::NodeTestType nodeTypeFromStr(const char * node) {
+    for (int i = 0; i < nodeTypeMapSize; ++i) {
+        if (strcmp(node, nodeTypeMap[i].str) == 0) {
+            return nodeTypeMap[i].type;
         }
     }
-    return res;
+
+    return node_test_invalid;
 }
 
-void PathExpr::print_to_lr(std::ostream& str)
-{
-    str << "(";
-    if (size > 0)
-    {
-        size_t i = 0;
-        nto[0].print_to_lr(str);
-        for (i = 1; i < size; i++)
-        {
-            str << " ";
-            nto[i].print_to_lr(str);
+static inline
+xpath::NodeTestType nodeTypeFromLR(const char * node) {
+    for (int i = 0; i < nodeTypeMapSize; ++i) {
+        if (strcmp(node, nodeTypeMap[i].lr) == 0) {
+            return nodeTypeMap[i].type;
         }
     }
-    str << ")";
+
+    return node_test_invalid;
 }
 
-void PathExpr2lr(PathExpr *path, std::ostream& str)
-{
-    path->print_to_lr(str);
+static inline
+const char * nodeTypeToStr(xpath::NodeTestType node) {
+    if (node >= node_test_invalid && node < __node_test_last) {
+        return nodeTypeMap[node].str;
+    } else {
+        return NULL;
+    }
 }
 
-void static inline
-set_node_test_QName_data(scheme_list *lst,
-                         NodeTestData &nt_data,
-                         PathExprMemoryManager * mm)
+static inline
+const char * nodeTypeToLR(xpath::NodeTestType node) {
+    if (node >= node_test_invalid && node < __node_test_last) {
+        return nodeTypeMap[node].lr;
+    } else {
+        return NULL;
+    }
+}
+
+void NodeTest::set(scheme_list* lst)
 {
-    if (lst->size() != 3
-        || lst->at(0).type != SCM_STRING
-        || lst->at(1).type != SCM_STRING
-        || lst->at(2).type != SCM_STRING)
+    if (lst->size() != 3 || lst->at(0).type != SCM_SYMBOL) {
         throw USER_EXCEPTION2(SE1004, "Path expression");
+    }
 
-    if (*(lst->at(0).internal.str))
-            nt_data.uri = xs_anyURI_create(lst->at(0).internal.str, mm->alloc);
+    axis = axisTypeFromLR(lst->at(0).internal.symb);
 
-    nt_data.ncname_local  = xs_NCName_create(lst->at(1).internal.str, mm->alloc);
-    if (*(lst->at(2).internal.str))
-        nt_data.ncname_prefix = xs_NCName_create(lst->at(2).internal.str, mm->alloc);
-}
+    if (axis == axis_any) {
+        throw USER_EXCEPTION2(SE1004, "Path expression");
+    }
 
-void set_node_test_type_and_data(scheme_list *lst,
-                                 NodeTestType &nt_type, /* out */
-                                 NodeTestData &nt_data, /* out */
-                                 PathExprMemoryManager * mm)
-{
     if (lst->at(1).type != SCM_SYMBOL)
         throw USER_EXCEPTION2(SE1004, "Path expression");
 
-    string type = string(lst->at(1).internal.symb);
-    if (type == "processing-instruction")    nt_type = node_test_processing_instruction;
-    else if (type == "comment")              nt_type = node_test_comment;
-    else if (type == "text")                 nt_type = node_test_text;
-    else if (type == "node")                 nt_type = node_test_node;
-    else if (type == "element")              nt_type = node_test_element;
-    else if (type == "attribute")            nt_type = node_test_attribute;
-    else if (type == "document")             nt_type = node_test_document;
-    else if (type == "qname")                nt_type = node_test_qname;
-    else if (type == "wildcard_star")        nt_type = node_test_wildcard_star;
-    else if (type == "wildcard_ncname_star") nt_type = node_test_wildcard_ncname_star;
-    else if (type == "wildcard_star_ncname") nt_type = node_test_wildcard_star_ncname;
-    else throw USER_EXCEPTION2(SE1004, "Path expression");
+    type = nodeTypeFromLR(lst->at(1).internal.symb);
 
-    nt_data.uri           = NULL;
-    nt_data.ncname_prefix = NULL;
-    nt_data.ncname_local  = NULL;
+    if (type == node_test_invalid) {
+        throw USER_EXCEPTION2(SE1004, "Path expression");
+    }
 
-    switch(nt_type)
-    {
-        case node_test_wildcard_ncname_star:
-        {
-            if (lst->at(2).type != SCM_STRING)
+    scheme_list * qname_lst = NULL;
+
+    switch(type) {
+        case node_test_wildcard_ncname_star: {
+            if (lst->at(2).type != SCM_STRING) {
                 throw USER_EXCEPTION2(SE1004, "Path expression");
-                nt_data.uri = xs_anyURI_create(lst->at(2).internal.str, mm->alloc);
-            break;
-        }
+            }
 
-        case node_test_wildcard_star_ncname:
-        {
-            if (lst->at(2).type != SCM_STRING)
+            uri = xsd::AnyURI::check(lst->at(2).internal.str).serialize(default_context_space);
+        } break;
+
+        case node_test_wildcard_star_ncname: {
+            if (lst->at(2).type != SCM_STRING) {
                 throw USER_EXCEPTION2(SE1004, "Path expression");
+            }
 
-            nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, mm->alloc);
-            break;
-        }
+            local = xsd::NCName::check(lst->at(2).internal.str).serialize(default_context_space);
+        } break;
 
         case node_test_document:
         case node_test_attribute:
-        case node_test_element:
-        {
-            if (  lst->at(2).type != SCM_LIST &&
-                  ( lst->at(2).internal.list->size() != 3 ||
-                    lst->at(2).internal.list->size() != 0 ))
-                throw USER_EXCEPTION2(SE1004, "110.1");
-
-            if(lst->at(2).internal.list->size() != 0) {
-                scheme_list *qname_lst = lst->at(2).internal.list;
-
-                set_node_test_QName_data(qname_lst, nt_data, mm);
+        case node_test_element: {
+            if (lst->at(2).type != SCM_LIST || (lst->at(2).internal.list->size() != 3 && lst->at(2).internal.list->size() != 0)) {
+                throw USER_EXCEPTION2(SE1004, "Path expression");
             }
-            break;
-        }
+
+            if (lst->at(2).internal.list->size() != 0) {
+                qname_lst = lst->at(2).internal.list;
+            }
+        } break;
 
         case node_test_qname:
         {
-            if (lst->size() < 3
-                || lst->at(2).type != SCM_LIST
-                || lst->at(2).internal.list->size() != 3)
+            if (lst->size() < 3 || lst->at(2).type != SCM_LIST || lst->at(2).internal.list->size() != 3) {
                 throw USER_EXCEPTION2(SE1004, "node_test_qname");
+            }
 
-            set_node_test_QName_data(lst->at(2).internal.list, nt_data, mm);
-            break;
-        }
+            qname_lst = lst->at(2).internal.list;
+        } break;
 
-        case node_test_processing_instruction:
+        case node_test_pi:
         {
-            if (   lst->at(2).type == SCM_LIST
-                && lst->at(2).internal.list->size() == 0)
-            {
-                nt_data.ncname_local  = NULL;
+            if (lst->at(2).type == SCM_LIST && lst->at(2).internal.list->size() == 0) {
+                // local = NULL
+            } else if (lst->at(2).type == SCM_STRING) {
+                local = xsd::NCName::check(lst->at(2).internal.str).serialize(default_context_space);
+            } else {
+                throw USER_EXCEPTION2(SE1004, "110");
             }
-            else if (lst->at(2).type == SCM_STRING)
-            {
-                nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, mm->alloc);
-            }
-            else throw USER_EXCEPTION2(SE1004, "110");
-            break;
-        }
+        } break;
 
         default: break;
     }
-}
 
-void set_node_test_parameters(scheme_list *lst,
-                              NodeTest &nt, //out parameter
-                              PathExprMemoryManager * mm)
-{
-    if (   lst->size() != 3
-        || lst->at(0).type != SCM_SYMBOL)
-    throw USER_EXCEPTION2(SE1004, "Path expression");
-
-    string axis = string(lst->at(0).internal.symb);
-    if (axis == "PPAxisChild") nt.axis = axis_child;
-    else if (axis == "PPAxisAttribute") nt.axis = axis_attribute;
-    else if (axis == "PPAxisParent") nt.axis = axis_parent;
-    else if (axis == "PPAxisSelf") nt.axis = axis_self;
-    else if (axis == "PPAxisDescendant") nt.axis = axis_descendant;
-    else if (axis == "PPAxisDescendantOrSelf") nt.axis = axis_descendant_or_self;
-    else if (axis == "PPAxisDescendantAttr") nt.axis = axis_descendant_attr;
-    else throw USER_EXCEPTION2(SE1004, "Path expression");
-
-    set_node_test_type_and_data(lst, nt.type, nt.data, mm);
-}
-
-PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, void * memory_parent)
-{
-    size_t i = 0, j = 0;
-    PathExprDistr distr(path_lst->size(), 0);
-
-    for (i = 0; i < path_lst->size(); i++)
-    {
-        if (   path_lst->at(i).type != SCM_LIST
-            || path_lst->at(i).internal.list->size() < 1)
+    if (qname_lst != NULL) {
+        if (qname_lst->size() != 3 || lst->at(0).type != SCM_STRING || lst->at(1).type != SCM_STRING || lst->at(2).type != SCM_STRING) {
             throw USER_EXCEPTION2(SE1004, "Path expression");
+        }
 
-        // node-test-or
-        scheme_list* node_test_or_lst = path_lst->at(i).internal.list;
-        distr[i] = node_test_or_lst->size();
-    }
+        if (*(qname_lst->at(0).internal.str)) {
+            uri = xsd::AnyURI::check(qname_lst->at(0).internal.str).serialize(default_context_space);
+        }
 
-    PathExpr *path_expr = (PathExpr*)create_PathExpr(distr, memory_parent);
+        local  = xsd::NCName::check(qname_lst->at(1).internal.str).serialize(default_context_space);
 
-    for (i = 0; i < path_lst->size(); i++)
-    {
-        // node-test-or
-        scheme_list* node_test_or_lst = path_lst->at(i).internal.list;
-
-        for (j = 0; j < node_test_or_lst->size(); j++)
-        {
-            if (node_test_or_lst->at(j).type != SCM_LIST)
-                throw USER_EXCEPTION2(SE1004, "Path expression");
-
-            set_node_test_parameters(node_test_or_lst->at(j).internal.list, path_expr->nto[i].nt[j], mm);
+        if (*(qname_lst->at(2).internal.str)) {
+            prefix = xsd::NCName::check(qname_lst->at(2).internal.str).serialize(default_context_space);
         }
     }
-
-    return path_expr;
 }
 
-PathExpr *lr2PathExpr(dynamic_context *cxt, const char *str, PathExprMemoryManager * mm)
+
+NodeTest::NodeTest(scheme_list* lst) {
+    set(lst);
+}
+
+NodeTest::NodeTest(const char* str)
 {
-    scheme_list *lst = make_tree_from_scheme_list(str);
-    PathExpr *path = lr2PathExpr(cxt, lst, mm);
-    delete_scheme_list(lst); // !!! free memory in case of exception too
-
-    return path;
+    scoped_ptr<scheme_list> lst = make_tree_from_scheme_list(str);
+    set(lst.operator->());
 }
+
+void PathExpression::set(scheme_list* path_lst, dynamic_context* cxt)
+{
+    _size = path_lst->size();
+    nodes = (NodeTestUnion *) cat_malloc(default_context_space, _size * sizeof(NodeTestUnion));
+
+    for (scheme_list::size_type i = 0; i < path_lst->size(); i++) {
+        if (path_lst->at(i).type != SCM_LIST || path_lst->at(i).internal.list->size() < 1) {
+            throw USER_EXCEPTION2(SE1004, "Path expression");
+        }
+
+        scheme_list* srcNodeUnion = path_lst->at(i).internal.list;
+        NodeTestUnion * dstNodeUnion = nodes + i;
+
+        dstNodeUnion->size = srcNodeUnion->size();
+        dstNodeUnion->nodes = (NodeTest *) cat_malloc(default_context_space, dstNodeUnion->size * sizeof(NodeTest));
+
+        for (scheme_list::size_type j = 0; j < srcNodeUnion->size(); j++) {
+            if (srcNodeUnion->at(j).type != SCM_LIST) {
+                throw USER_EXCEPTION2(SE1004, "Path expression");
+            }
+
+            scheme_list* srcNodes = path_lst->at(i).internal.list;
+
+            *(dstNodeUnion->nodes + i) = NodeTest(srcNodes);
+        }
+    }
+}
+
+
+
+PathExpression::PathExpression(scheme_list* path_lst, dynamic_context* cxt) {
+    set(path_lst, cxt);
+}
+
+string NodeTest::toString() const
+{
+    string result;
+
+    if (axis != axis_any) {
+        result += string(axisTypeToStr(axis)) + "::";
+    }
+
+    const char * typeName = nodeTypeToLR(type);
+
+    switch (type) {
+      case node_test_pi:
+        result += string(typeName) + "(" + xsd::NCName(local).toString() + ")"; break;
+      case node_test_comment :
+      case node_test_text :
+      case node_test_node :
+        result += string(typeName) + "()"; break;
+      case node_test_element :
+      case node_test_attribute :
+        result += string(typeName) + "(" + xsd::QName::getColonizedName(prefix, local) + ")"; break;
+      case node_test_document :
+        if (xsd::NCName(local).valid()) {
+            result += "document-node(element(" + xsd::QName::getColonizedName(prefix, local) + "))";
+        } else {
+            result += "document-node()";
+        }; break;
+      case node_test_qname :
+        result += xsd::QName::getColonizedName(prefix, local); break;
+      case node_test_wildcard_star :
+        result += "*"; break;
+      case node_test_wildcard_ncname_star :
+        result +=  xsd::NCName(prefix).toString() + ":*"; break;
+      case node_test_wildcard_star_ncname :
+        result += "*:" + xsd::NCName(local).toString(); break;
+      default :
+        result += typeName; break;
+    }
+
+    return result;
+}
+
+void NodeTest::toLR(ostream& str) const
+{
+    str << "(";
+    str << axisTypeToLR(axis) << " ";
+    str << nodeTypeToLR(type);
+
+    switch (type) {
+      case node_test_pi:
+        if (xsd::NCName(local).valid()) {
+            str << " ()";
+        } else {
+            xsd::NCName(local).toLR(str);
+        } break;
+      case node_test_comment :
+      case node_test_text :
+      case node_test_node :
+      case node_test_wildcard_star :
+        str << "()";
+        break;
+      case node_test_element :
+      case node_test_attribute :
+      case node_test_document :
+      case node_test_qname :
+        str << "("; xsd::QName::toLR(str, uri, prefix, local); str << ")"; break;
+      case node_test_wildcard_ncname_star :
+        xsd::NCName(prefix).toLR(str); break;
+      case node_test_wildcard_star_ncname :
+        xsd::NCName(local).toLR(str); break;
+      default :
+        break;
+    }
+
+    str << ")";
+}
+
+string NodeTestUnion::toString() const
+{
+    if (size == 1) {
+        return nodes[0].toString();
+    } else {
+        std::string res = nodes[0].toString();
+
+        for (size_t i = 1; i < size; i++) {
+            res += " | " + nodes[i].toString();
+        }
+
+        return "(" + res + ")";
+    }
+}
+
+void NodeTestUnion::toLR(ostream& str) const
+{
+    str << "(";
+
+    nodes[0].toLR(str);
+    for (size_t i = 1; i < size; i++) {
+        str << " ";
+        nodes[i].toLR(str);
+    }
+
+    str << ")";
+}
+
+string PathExpression::toString() const
+{
+    string res;
+
+    if (size() > 0) {
+        res += nodes[0].toString();
+        for (size_t i = 1; i < size(); i++) {
+            res += "/" + nodes[i].toString();
+        }
+    }
+    return res;
+}
+
+void PathExpression::toLR(ostream& str) const
+{
+    str << "(";
+    if (size() > 0) {
+        nodes[0].toLR(str);
+        for (size_t i = 1; i < size(); i++) {
+            str << " ";
+            nodes[i].toLR(str);
+        }
+    }
+    str << ")";
+}
+
+string PathExpression::toLRString() const
+{
+    ostringstream oss(std::ios::out | std::ios::binary);
+    toLR(oss);
+    return oss.str();
+}
+
+
+
+PathExpression::PathExpression(const char* str, dynamic_context* cxt)
+{
+    scoped_ptr<scheme_list> lst = make_tree_from_scheme_list(str);
+    set(lst.operator->(), cxt);
+}
+
+void* PathExpression::operator new(size_t size)
+{
+    return cat_malloc(default_context_space, size);
+}
+
+void PathExpression::operator delete(void* mem)
+{
+    return;
+}
+
+PathExpression::PathExpression(schema_node_cptr from, schema_node_cptr to)
+{
+    U_ASSERT(false);
+}
+
+/*
 
 PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to)
 {
@@ -506,14 +510,17 @@ PathExpr *build_PathExpr(schema_node_cptr from, schema_node_cptr to)
     return path_expr;
 }
 
+*/
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 /// PathExprRoot - manages document or collection PathExpr is evaluated on
 ////////////////////////////////////////////////////////////////////////////////
 
 void PathExprRoot::release()
 {
-    if(name.op != NULL)
-    {
+    if (name.op != NULL) {
         delete name.op;
         name.op = NULL;
     }
@@ -521,30 +528,26 @@ void PathExprRoot::release()
 
 void PathExprRoot::open()
 {
-    if(name.op != NULL)
-    {
+    if (name.op != NULL) {
         name.op->open();
     }
 }
 
 void PathExprRoot::reopen()
 {
-    if(name.op != NULL)
-    {
+    if (name.op != NULL) {
         name.op->reopen();
     }
 }
 
 void PathExprRoot::close()
 {
-    if(name.op != NULL)
-    {
+    if (name.op != NULL) {
         name.op->close();
     }
 }
 
-const counted_ptr<db_entity>& PathExprRoot::get_entity(const char* obj_name,
-                                                       const char* op_name)
+const counted_ptr<db_entity>& PathExprRoot::get_entity(const char* obj_name, const char* op_name)
 {
     U_ASSERT(db_ent->type != dbe_module);
 

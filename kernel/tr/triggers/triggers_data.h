@@ -87,8 +87,8 @@ public:
     /* trigger action */
     trigger_action_cell* trigger_action; /* persistent special */
 
-    PathExpr *trigger_path;   /* persistent special */
-    PathExpr *path_to_parent; /* persistent special */
+    xpath::PathExpression *trigger_path;   /* persistent special */
+    xpath::PathExpression *path_to_parent; /* persistent special */
     inserting_node innode;    /* persistent special */
 
     bool fits_to_trigger(schema_node_cptr snode);

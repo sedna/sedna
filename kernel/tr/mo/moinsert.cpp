@@ -171,12 +171,13 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent, const char* name
     return node_info.node_xptr;
 }
 
-xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t source)
-// xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const void* value, strsize_t size, text_type ttype)
+enum text_insert_t { ti_new_node, ti_addtext_after, ti_addtext_before };
+
+xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t source, bool cdataflag)
 {
     node_info_t node_info = {left_sib, right_sib, parent, text, 0, NULL_XMLNS};
     schema_node_cptr parent_snode;
-    enum text_insert_t { ti_new_node, ti_addtext_after, ti_addtext_before } insert_type = ti_new_node;
+    enum text_insert_t insert_type = ti_new_node;
 
     if (source.size < 1 && (IS_DATA_BLOCK(parent))) throw USER_EXCEPTION(SE2009);
     if (source.size > STRMAXSIZE) throw USER_EXCEPTION(SE2037);
@@ -184,6 +185,8 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
     check_common_constraints(left_sib, right_sib, parent);
     find_relatives(node_info);
     parent_snode = getSchemaNode(node_info.parent);
+
+    node_info.cdataflag = cdataflag;
 
 //    if (source.size < 1 && parent != XNULL && parent_snode->type != virtual_root) throw USER_EXCEPTION(SE2009);
 
@@ -224,6 +227,8 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
     node_info.snode->textcnt += source.size;
 
 /* Update logical log */
+
+    // TODO: CDATA flag is not stored in logical log
     if (IS_DATA_BLOCK(parent))
     {
         if (insert_type == ti_new_node) {

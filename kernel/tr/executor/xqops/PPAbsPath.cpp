@@ -17,6 +17,7 @@
 
 #include "tr/structures/nodeutils.h"
 
+using namespace xpath;
 
 /**
  * The goal of this operation is to provide efficient execution for absolute
@@ -56,7 +57,7 @@ AnyKindTest    ::=    <"node" "("> ")"
 
 PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
                      operation_info _info_,
-                     PathExpr *_path_expr_,
+                     xpath::PathExpression *_path_expr_,
                      counted_ptr<db_entity> _db_ent_) : PPIterator(_cxt_, _info_, "PPAbsPath"),
                                                         path_expr(_path_expr_),
                                                         db_ent(_db_ent_),
@@ -67,7 +68,7 @@ PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
 
 PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
                      operation_info _info_,
-                     PathExpr *_path_expr_,
+                     xpath::PathExpression *_path_expr_,
                      counted_ptr<db_entity> _db_ent_,
                      PPOpIn _name_) : PPIterator(_cxt_, _info_, "PPAbsPath"),
                                       path_expr(_path_expr_),
@@ -79,7 +80,7 @@ PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
 
 PPAbsPath::PPAbsPath(dynamic_context *_cxt_,
                      operation_info _info_,
-                     PathExpr *_path_expr_,
+                     xpath::PathExpression *_path_expr_,
                      counted_ptr<db_entity> _db_ent_,
                      PPOpIn _name_,
                      schema_node_xptr _root_) : PPIterator(_cxt_, _info_, "PPAbsPath"),
@@ -155,8 +156,8 @@ void PPAbsPath::do_next(tuple &t)
         delete [] merged_seq_arr;
         merged_seq_arr = NULL;
         scmnodes_num = -1;
-		root = XNULL;	// there is no need for reopen, because it was called automatically
-						// when we obtained root (eos was reached)
+        root = XNULL;	// there is no need for reopen, because it was called automatically
+                        // when we obtained root (eos was reached)
 
         t.set_eos();
     }
@@ -181,14 +182,14 @@ bool PPAbsPath::determine_root()
         strcpy(db_ent->name, tc.get_str_mem());
     }
 
-	document_type dt = get_document_type(db_ent);
+    document_type dt = get_document_type(db_ent);
 
-	if (dt == DT_NON_SYSTEM)
+    if (dt == DT_NON_SYSTEM)
         root = get_schema_node(db_ent, "Unknown entity passed to fn:doc() or fn:collection() in XPath expression");
-	else
-	   	root = get_system_doc(dt, db_ent->name);
+    else
+        root = get_system_doc(dt, db_ent->name);
 
-	return false;
+    return false;
 }
 
 PPIterator* PPAbsPath::do_copy(dynamic_context *_cxt_)
@@ -211,7 +212,7 @@ PPIterator* PPAbsPath::do_copy(dynamic_context *_cxt_)
 void PPAbsPath::create_merged_seq(int &scmnodes_num,
                                   xptr*& merged_seq_arr,
                                   schema_node_cptr root,
-                                  PathExpr *path_expr)
+                                  xpath::PathExpression *path_expr)
 {
     t_scmnodes nodes;
     nodes = execute_abs_path_expr(root, path_expr, NULL, NULL);
@@ -244,10 +245,10 @@ void PPAbsPath::do_accept(PPVisitor &v)
 // true, if PPAbsPath is just wrapping over fn:document/fn:collection call
 bool PPAbsPath::isDocCollFunCall() const
 {
-    return (path_expr->size == 0);
+    return (path_expr->size() == 0);
 }
 
-void PPAbsPath::setPathExpr(PathExpr *pe)
+void PPAbsPath::setPathExpr(xpath::PathExpression *pe)
 {
     path_expr = pe;
 }

@@ -17,9 +17,10 @@ class PPCreateIndex : public PPUpdate
 {
 private:
     PPOpIn index_name;
-    PathExprRoot root;
-    PathExpr *object_path;
-    PathExpr *key_path;
+    xpath::PathExprRoot root;
+    xpath::PathExpression *object_path;
+    xpath::PathExpression *key_path;
+
     xmlscm_type key_type;
     dynamic_context *cxt;
     std::string tree_type;
@@ -32,9 +33,9 @@ private:
 public:
     
     PPCreateIndex(PPOpIn _index_name_,
-                  PathExprRoot _root_,
-                  PathExpr *_object_path_,
-                  PathExpr *_key_path_,
+                  xpath::PathExprRoot _root_,
+                  xpath::PathExpression *_object_path_,
+                  xpath::PathExpression *_key_path_,
                   xmlscm_type _key_type_,
                   dynamic_context *_cxt_,
                   const char * _tree_type_);
@@ -43,9 +44,9 @@ public:
     
     inline xmlscm_type get_index_type() const { return key_type; }
     inline std::string get_idxtree_type() const { return tree_type; }
-    inline const PathExpr* get_object_path() const { return object_path; }
-    inline const PathExpr* get_key_path() const { return key_path; }
-    inline const PathExprRoot& get_path_root() const { return root; }
+    inline const xpath::PathExpression* get_object_path() const { return object_path; }
+    inline const xpath::PathExpression* get_key_path() const { return key_path; }
+    inline const xpath::PathExprRoot& get_path_root() const { return root; }
 };
 
 #endif /* _PPCREATEINDEX_H */

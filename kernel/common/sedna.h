@@ -14,6 +14,7 @@
 #include "common/errdbg/event_log.h"
 
 #ifdef __cplusplus
+#include <cstddef>
 #include "common/errdbg/exceptions.h"
 #endif
 

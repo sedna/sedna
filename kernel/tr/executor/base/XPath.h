@@ -16,28 +16,40 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/xsd.h"
 #include "tr/executor/por2qep/scheme_tree.h"
-#include "tr/structures/schema.h"
-#include "tr/structures/system_tables.h"
-
-namespace xpath {
+#include "tr/cat/catptr.h"
 
 class dynamic_context;
 
+namespace xpath {
+
 enum Axis
 {
+    axis_any = 0, /* When not used, or implied */
+
     axis_child,
     axis_descendant,
     axis_attribute,
     axis_self,
     axis_descendant_or_self,
     axis_descendant_attr,
-    axis_parent
+    axis_parent,
+
+    __axis_last,
+
+    axis_ancestor,
+    axis_ancestor_or_self,
+    axis_following,
+    axis_following_sibling,
+    axis_preceding,
+    axis_preceding_sibling,
 };
 
 enum NodeTestType
 {
+    node_test_invalid = 0,
+
     /* KindTest */
-    node_test_processing_instruction, // processing-instruction(name)
+    node_test_pi, // processing-instruction(name)
     node_test_comment,                // comment()
     node_test_text,                   // text()
     node_test_node,                   // node()
@@ -50,55 +62,72 @@ enum NodeTestType
     node_test_wildcard_star,          // *
     node_test_wildcard_ncname_star,   // NCName:*
     node_test_wildcard_star_ncname,   // *:NCName
-};
 
-struct NodeTestData
-{
-    xsd::AnyURI uri;
-    xsd::NCName prefix;
-    xsd::NCName local;
+    __node_test_last
 };
 
 struct NodeTest {
     xpath::Axis axis;
     xpath::NodeTestType type;
-    xpath::NodeTestData data;
+
+    const char * uri;
+    const char * prefix;
+    const char * local;
+
+    void set(scheme_list * path_lst);
+  public:
+    NodeTest() : axis(axis_any), type(node_test_invalid), uri(NULL), prefix(NULL), local(NULL) {};
+
+    NodeTest(xpath::Axis _axis, xpath::NodeTestType _type) : axis(_axis), type(_type), uri(NULL), prefix(NULL), local(NULL) {};
+    NodeTest(scheme_list * path_lst);
+    NodeTest(const char * str);
+    NodeTest(schema_node_cptr node);
 
     std::string toString() const;
     void toLR(std::ostream& str) const;
 };
-
-typedef std::vector<xpath::NodeTest *> NodeTestList;
 
 struct NodeTestUnion {
-    NodeTestList nodes;
+    size_t size;
+    xpath::NodeTest * nodes;
 
     std::string toString() const;
     void toLR(std::ostream& str) const;
 };
 
-typedef std::vector<size_t> PathExprDistr;
+struct PathExpression {
+  private:
+    size_t _size;
+    xpath::NodeTestUnion * nodes;
 
-typedef std::vector<xpath::NodeTestOr *> NodeTestUnionList;
+  void set(scheme_list* path_lst, dynamic_context* cxt);
+  public:
+    PathExpression();
+    PathExpression(scheme_list * path_lst, dynamic_context * cxt);
+    PathExpression(const char * str, dynamic_context * cxt);
+    PathExpression(schema_node_cptr from, schema_node_cptr to);
 
-struct AbsPathExpression {
-    NodeTestUnionList nodeUnion;
+    size_t size() const { return _size; };
+    NodeTestUnion & operator[](size_t i) const { return nodes[i]; };
+
+    void * operator new(size_t size);
+    void operator delete(void * mem);
 
     std::string toString() const;
     void toLR(std::ostream& str) const;
+    std::string toLRString() const;
 };
 
 
-struct PathExprRoot
-{
+
+struct PathExprRoot {
 private:
     counted_ptr<db_entity> db_ent;
     PPOpIn name;
 
 public:
-    PathExprRoot(counted_ptr<db_entity> _db_ent_,
-                 PPOpIn _name_): db_ent(_db_ent_),
-                                 name(_name_) {}
+    PathExprRoot(counted_ptr<db_entity> _db_ent_, PPOpIn _name_)
+      : db_ent(_db_ent_), name(_name_) {}
 
     PathExprRoot(counted_ptr<db_entity> _db_ent_): db_ent(_db_ent_) {}
 
@@ -110,18 +139,12 @@ public:
     const PPOpIn& get_operation() const { return name; }
     const counted_ptr<db_entity>& get_entity() const { return db_ent; } ;
 
-    void set_name(PPOpIn &_name_)
-    {
-        name = _name_;
-    }
+    void set_name(PPOpIn &_name_) { name = _name_; }
 
-    const counted_ptr<db_entity>& get_entity(const char* obj_name,
-                                             const char* op_name);
+    const counted_ptr<db_entity>& get_entity(const char* obj_name, const char* op_name);
 };
 
-void * create_PathExpr(const PathExprDistr &distr, void * memory_parent);
-
-
+//void * create_PathExpr(const PathExprDistr &distr, void * memory_parent);
 // void PathExpr2lr(PathExpr *path, std::ostream& str);
 //PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, void * memory_parent);
 //PathExpr *lr2PathExpr(dynamic_context *cxt, const char *str, void * memory_parent);

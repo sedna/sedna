@@ -16,7 +16,7 @@
 class PPAbsPath : public PPIterator
 {
 protected:
-    PathExpr *path_expr;
+    xpath::PathExpression *path_expr;
     counted_ptr<db_entity> db_ent;
     PPOpIn name;
 
@@ -28,7 +28,7 @@ protected:
 
     bool determine_root();
     void create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
-                           schema_node_cptr root, PathExpr *path_expr);
+                           schema_node_cptr root, xpath::PathExpression *path_expr);
 
 private:
     virtual void do_open   ();
@@ -42,28 +42,28 @@ private:
     /* Private constructor for copy */
     PPAbsPath(dynamic_context *_cxt_,
               operation_info _info_,
-              PathExpr *_path_expr_,
+              xpath::PathExpression *_path_expr_,
               counted_ptr<db_entity> _db_ent_,
               PPOpIn _name_,
               schema_node_xptr _root_);
 public:
     PPAbsPath(dynamic_context *_cxt_,
               operation_info _info_,
-              PathExpr *_path_expr_,
+              xpath::PathExpression *_path_expr_,
               counted_ptr<db_entity> _db_ent_);
 
     PPAbsPath(dynamic_context *_cxt_,
               operation_info _info_,
-              PathExpr *_path_expr_,
+              xpath::PathExpression *_path_expr_,
               counted_ptr<db_entity> _db_ent_,
               PPOpIn _name_);
 
     virtual ~PPAbsPath();
 
     bool isDocCollFunCall() const;  // true, if PPAbsPath is just wrapping over fn:document/fn:collection call
-    void setPathExpr(PathExpr *pe); // to set path expression later on qep construction
+    void setPathExpr(xpath::PathExpression *pe); // to set path expression later on qep construction
 
-    PathExpr *getPathExpr()         // use it to get path_expr to use it in some other operation (i.e. when PPAbsPath just a container)
+    xpath::PathExpression *getPathExpr()         // use it to get path_expr to use it in some other operation (i.e. when PPAbsPath just a container)
     {
         return path_expr;
     }

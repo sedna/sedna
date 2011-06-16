@@ -90,18 +90,14 @@ void index_cell_object::serialize_data(se_simplestream &stream)
 
     stream.write_string(index_title);
 
-    std::ostringstream obj_str(std::ios::out | std::ios::binary);
-    std::ostringstream key_str(std::ios::out | std::ios::binary);
-
-    PathExpr2lr(object, obj_str);
-    PathExpr2lr(key, key_str);
-
-    stream.write_string(obj_str.str().c_str());
-    stream.write_string(key_str.str().c_str());
+    stream.write_string(object->toLRString().c_str());
+    stream.write_string(key->toLRString().c_str());
 };
 
 void index_cell_object::deserialize_data(se_simplestream &stream)
 {
+    setDefaultSpace(catalog_space_base);
+
     stream.read(&keytype, sizeof(xmlscm_type));
     stream.read(&backend_type, sizeof(index_backend_t));
     stream.read(&owner, sizeof(doc_schema_node_xptr));
@@ -118,14 +114,16 @@ void index_cell_object::deserialize_data(se_simplestream &stream)
     if ((len = stream.read_string_len()) != 0)
         obj_str = (char *)malloc(len);
     stream.read_string(SSTREAM_SAVED_LENGTH, obj_str);
-    object = lr2PathExpr(NULL, obj_str, pe_catalog_aspace);
+    object = new xpath::PathExpression(obj_str, NULL);
     free(obj_str);
 
     if ((len = stream.read_string_len()) != 0)
         key_str = (char *)malloc(len);
     stream.read_string(SSTREAM_SAVED_LENGTH, key_str);
-    key = lr2PathExpr(NULL, key_str, pe_catalog_aspace);
+    key = new xpath::PathExpression(key_str, NULL);
     free(key_str);
+
+    popDefaultSpace();
 };
 
 void index_cell_object::drop()
@@ -169,11 +167,12 @@ void index_cell_object::on_schema_node_created(schema_node_cptr snode) const
 {
     t_scmnodes res;
     t_scmnodes objs = execute_abs_path_expr(snode->root, object);
-    const NodeTest node_test_nodes_deep = {axis_descendant, node_test_wildcard_star};
+
+    const xpath::NodeTest node_test_nodes_deep(xpath::axis_descendant, xpath::node_test_wildcard_star);
 
     FOR_EACH(i, objs, t_scmnodes) {
         if ((*i)->is_ancestor_or_self(snode)) {
-            t_scmnodes keys=execute_abs_path_expr(*i, key);
+            t_scmnodes keys = execute_abs_path_expr(*i, key);
             FOR_EACH(j, keys, t_scmnodes) {
                 if (snode.ptr() == *j) {
                     snode->index_list->add(index_ref(this->p_object, *i, *j));
@@ -285,7 +284,8 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
 {
     int64_t counter1 = 0;
     int64_t counter2 = 0;
-    const NodeTest node_test_nodes_deep = {axis_descendant, node_test_wildcard_star};
+
+    const xpath::NodeTest node_test_nodes_deep(xpath::axis_descendant, xpath::node_test_wildcard_star);
 
     // 0. Check index type
     check_index_key_type(index_dsc->keytype);

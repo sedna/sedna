@@ -564,11 +564,11 @@ void apply_per_statement_triggers(xptr_sequence* target_seq, bool target_seq_dir
 
 trigger_cell_xptr create_trigger (enum trigger_time tr_time,
                                   enum trigger_event tr_event,
-                                  PathExpr *trigger_path,
+                                  xpath::PathExpression *trigger_path,
                                   enum trigger_granularity tr_gran,
                                   scheme_list* action,
                                   inserting_node innode,
-                                  PathExpr *path_to_parent,
+                                  xpath::PathExpression *path_to_parent,
                                   doc_schema_node_xptr schemaroot,
                                   const char * trigger_title,
                                   const char* doc_name,

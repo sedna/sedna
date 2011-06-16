@@ -17,6 +17,7 @@ class Node {
 protected:
     mutable xptr node;
 public:
+    inline Node() : node(XNULL) {};
     inline Node(const xptr p) : node(p) {};
     inline Node(const Node & anode) : node(anode.node) {};
 
@@ -76,6 +77,17 @@ public:
 
     inline
     bool isTextBasedNode() const { return internal::isTextType(internal::getBlockHeader(node)->node_type); };
+
+    inline
+    bool operator<(const Node & other) const {
+        // The idea is all XNULL nodes are greater then non-null
+
+        if (node == XNULL && other.node == XNULL) return false;
+        if (node == XNULL) return false;
+        if (other.node == XNULL) return true;
+
+        return nid_cmp(node, other.node) < 0;
+    }
 };
 
 /*

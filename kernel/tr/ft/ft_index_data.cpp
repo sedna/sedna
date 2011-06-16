@@ -60,15 +60,12 @@ void delete_ft_custom_tree (ft_custom_tree_t * custom_tree)
     }
     ft_custom_tree_t::sset_free(custom_tree);
 }
+
 void delete_cust_rules_vector(ft_index_template_t* &v)
 {
-	ft_index_template_t::iterator it;
-	for (it = v->begin(); it < v->end(); it++)
-	{
-		delete [] it->first.second;
-	}
-	delete v;
-	v = NULL;
+    ft_index_template_t::iterator it;
+    delete v;
+    v = NULL;
 }
 
 
@@ -84,9 +81,7 @@ void ft_index_cell_object::serialize_data(se_simplestream &stream)
 	stream.write_string(stemming);
     stream.write(&fts_data, sizeof(struct FtsData));
 
-    std::ostringstream obj_str(std::ios::out | std::ios::binary);
-    PathExpr2lr(object, obj_str);
-    stream.write_string(obj_str.str().c_str());
+    stream.write_string(object->toLRString().c_str());
 
     stream.write_string(doc_name);
     stream.write(&is_doc, sizeof(bool));
@@ -123,6 +118,8 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
     char* obj_str = NULL;
     se_size_t len;
 
+    setDefaultSpace(catalog_space_base);
+
     index_title = (char *) cat_malloc(this, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, index_title);
     stream.read(&ftype, sizeof(ft_index_type));
@@ -134,7 +131,7 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
     if ((len = stream.read_string_len()) != 0)
         obj_str = (char *)malloc(len);
     stream.read_string(SSTREAM_SAVED_LENGTH, obj_str);
-    object = lr2PathExpr(NULL, obj_str, pe_catalog_aspace);
+    object = new xpath::PathExpression(obj_str, NULL);
     free(obj_str);
 
     doc_name = (char *) cat_malloc(this, stream.read_string_len());
@@ -154,11 +151,13 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
         stream.read_string(SSTREAM_SAVED_LENGTH, ct_local);
         stream.read(&ct_ns, sizeof(xmlns_ptr_pers));
 
-        custom_tree->put(new ft_custom_cell(ct_ns, NULL_XMLNS, ct_local, ct_cm));
+        custom_tree->put(new ft_custom_cell(ct_ns, xsd::QName::createNsN(xmlns_touch(ct_ns), ct_local, true), ct_cm));
         delete [] ct_local;
 
         stream.read(&marker, sizeof(uint8_t));
     }
+
+    popDefaultSpace();
 }
 
 void ft_index_cell_object::drop()
@@ -173,21 +172,21 @@ void ft_index_cell_object::drop()
 
 bool ft_index_cell_object::fits_to_index(schema_node_cptr snode)
 {
-	t_scmnodes res;
-	t_scmnodes objs=execute_abs_path_expr(snode->root,object,NULL,NULL);
-	t_scmnodes::iterator it=objs.begin();
-	while (it!=objs.end())
-	{
-		if (*it==snode.ptr())
-			return true;
-		it++;
-	}
-	return false;
+    t_scmnodes res;
+    t_scmnodes objs=execute_abs_path_expr(snode->root,object,NULL,NULL);
+    t_scmnodes::iterator it=objs.begin();
+    while (it!=objs.end())
+    {
+        if (*it==snode.ptr())
+            return true;
+        it++;
+    }
+    return false;
 }
 
 
 ft_index_cell_xptr create_ft_index(
-        PathExpr *_object_path, ft_index_type _it,
+        xpath::PathExpression *_object_path, ft_index_type _it,
         doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
         ft_index_template_t* _templ, bool rcv, const char *options
@@ -209,7 +208,7 @@ ft_index_cell_xptr create_ft_index(
         ft_index_template_t::iterator tmp=_templ->begin();
         while (tmp!=_templ->end())
         {
-            idc->custom_tree->put(new ft_custom_cell(_schemaroot->xmlns_register(tmp->first.first), NULL_XMLNS, tmp->first.second, tmp->second));
+            idc->custom_tree->put(new ft_custom_cell(_schemaroot->xmlns_register(tmp->first.getXmlNs()), tmp->first, tmp->second));
             tmp++;
         }
     }
@@ -217,13 +216,13 @@ ft_index_cell_xptr create_ft_index(
     // only needed for ft_ind_native impl
 
     ftc_index_t ftc_idx;
-	if (idc->impl == ft_ind_native)
+    if (idc->impl == ft_ind_native)
     {
-		fts_create(&idc->fts_data);
+        fts_create(&idc->fts_data);
         ftc_idx = ftc_get_index(_index_title, &idc->fts_data);
     }
 
-	hl_logical_log_ft_index(_object_path, _it, _index_title, _doc_name, options ? options:"", _is_doc, idc->custom_tree, true);
+    hl_logical_log_ft_index(_object_path, _it, _index_title, _doc_name, options ? options:"", _is_doc, idc->custom_tree, true);
 
     // ALGORITHM: indexing data
     //II. Execute abs path (object_path) on the desriptive schema
@@ -236,7 +235,7 @@ ft_index_cell_xptr create_ft_index(
         xptr blk;
         sobj[i].modify()->ft_index_list->add(idc.ptr()); // just_heap modified because this must be recovered (AK)
         RECOVERY_CRASH;
-		if (!rcv || idc->impl != ft_ind_dtsearch)
+        if (!rcv || idc->impl != ft_ind_dtsearch)
         {
             blk = getNonemptyBlockLookFore(sobj[i]->bblk);
             if (blk!=XNULL)

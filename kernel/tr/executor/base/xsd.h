@@ -55,13 +55,11 @@ xs:positiveInteger      8                   uint64_t
 
 /*
   XML Schema Datatypes
-
 */
 
 namespace xsd {
 
 /*
- *
  * Serialize returns the serialized form of NCName within the memory context, defined by parent.
  * If no memory context defined, uses malloc.
  */
@@ -70,51 +68,53 @@ typedef counted_ptr<char, de_free<char> > counted_cstr;
 
 class Name {
   private:
-    char * name;
+    bool ownsName;
+    const char * name;
+
+    void release() { if (ownsName && name != NULL) { free(const_cast<char*>(name)); }; }
   public:
-    ~Name() {};
+    Name() : ownsName(false), name(NULL) {};
+    ~Name() { release(); }
+
     /* deserializes name */
-    Name(const char * value) : name(value) { };
-    /* creates new name */
-    Name(const char * value, void * memory_parent);
+    Name(const char * value) : ownsName(false), name(value) { };
+    Name(const Name & from) : ownsName(false) { this->name = from.name; };
 
-    Name(const Name & from) { this->name = from.name; };
-
-    Name & operator=(Name & to);
+    Name & operator=(const Name & to) {
+        release();
+        this->name = to.name;
+        this->ownsName = false;
+        return *this;
+    };
 
     void toLR(std::ostream& os) const;
     std::string toString() const;
-    char const * serialize(void * parent);
+    const char * serialize(void * parent);
+    void own();
 
-    inline const char * getValue() const { return name.get(); };
-    inline bool valid() const { return name.get() != NULL; };
+    inline const char * getValue() const { return name; };
+    inline bool valid() const { return name != NULL; };
 };
-
-/// XML Schema Part 2 NCName
 
 class NCName : public Name {
   public:
-    static void * defaultContext;
-
+    NCName() : Name() {};
     NCName(const char * value) : Name(value) {};
-//    NCName(const char * value, void * memory_parent) : Name(value) {};
     NCName(const NCName & from) : Name(from) {};
 
-    static NCName checkQuietly(const char * name);
-    static NCName check(const char * name);
+    static NCName check(const char * name, bool quietly = false);
 };
 
-/// XML Schema Part 2 anyURI
+inline static char * materialize(const char * in) { return cat_strcpy(default_context_space, in); };
 
 class AnyURI : public Name {
+  private:
+    AnyURI() : Name() {};
   public:
-    static void * defaultContext;
-
     AnyURI(const char * value) : Name(value) {};
     AnyURI(const AnyURI & from) : Name(from) {};
 
-    static AnyURI checkQuietly(const char * uri);
-    static AnyURI check(const char * uri);
+    static AnyURI check(const char * uri, bool quietly = false);
 };
 
 /// XML Schema Part 2 QName (qualified name from Namespaces in XML standard)
@@ -124,18 +124,25 @@ class QName {
     xmlns_ptr ns;
     counted_cstr localName;
 
-    QName(); // invalid!
     QName(xmlns_ptr ns, const char * localName);
     QName(xmlns_ptr ns, const char * localName, size_t len);
   public:
-    static void * defaultContext;
-
+    QName(); // invalid!
     ~QName() {};
     QName(const QName & from) { this->ns = from.ns; this->localName = from.localName; }
 
     void toLR(std::ostream& os) const;
+
+    /* Serializes qname, allocates memory cat_malloc */
     const char * serialize(void * parent) const;
+
+    char * serializeTo(char * tmp) const;
+    size_t getLen() const { return strlen(localName.get()) + 2 * sizeof(uintptr_t) + 1; };
+
     std::string getColonizedName() const;
+
+    static std::string getColonizedName(NCName prefix, NCName local);
+    static void toLR(std::ostream& os, const AnyURI uri, const NCName prefix, const NCName local);
 
     inline xmlns_ptr getXmlNs() const { return ns; };
     inline const char * getUri() const { return ns == NULL_XMLNS ? "" : ns->get_uri(); };
@@ -147,7 +154,7 @@ class QName {
     inline bool valid() const { return localName.get() != NULL; };
 
     inline bool equals(const QName & to) const {
-        return same_xmlns_uri(ns, to.ns) && strcmp(localName.get(), to.localName.get());
+        return same_xmlns_uri(ns, to.ns) && (strcmpex(localName.get(), to.localName.get()) == 0);
     };
 
     /* operators are overloaded to store class in set */
@@ -190,20 +197,16 @@ class QName {
     };
 
     static QName deserialize(const char* serializedForm);
+
+    static QName createNsN(xmlns_ptr ns, const char * local, bool quietly = false);
     static QName createNsCn(xmlns_ptr ns, const char * prefixAndLocal, bool quietly = false);
     static QName createUCn(const char * uri, const char * prefixAndLocal, bool quietly = false);
+    static QName createUL(const char * uri, const char * localName, bool quietly = false);
     static QName createUPL(const char * uri, const char * prefix, const char * localName, bool quietly = false);
-    static QName createResolveCn(const char * prefixAndLocal, xptr node, dynamic_context *cxt, bool quietly = false);
+    static QName createResolveContext(const char * prefixAndLocal, dynamic_context *cxt, bool quietly = false);
+    static QName createResolveNode(const char * prefixAndLocal, xptr node, dynamic_context *cxt, bool quietly = false);
 };
 
 }
-
-/*
-
-// Separates prefix and local name from the QName in text
-// representaion: prefix:local. Allocates memory for prefix with malloc.
-// Changes qname to point to the local name start.
-// void separateLocalAndPrefix(char*& prefix, const char*& qname);
-*/
 
 #endif /* __XSD_H */

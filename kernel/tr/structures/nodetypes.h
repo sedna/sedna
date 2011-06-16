@@ -35,11 +35,11 @@ enum t_item {
     pr_ins = 0x80
 };
 
-enum { ti_first_children = attribute | xml_namespace };
-enum { ti_all = element | text | attribute | document | virtual_root | xml_namespace | comment | pr_ins };
-enum { ti_dmchildren = element | text | document | comment | pr_ins };
-enum { ti_content = element | text | comment | pr_ins };
-enum { ti_singleton_element = xml_namespace | text | comment | pr_ins };
+const t_item ti_first_children = (t_item) (attribute | xml_namespace);
+const t_item ti_all = (t_item) (element | text | attribute | document | virtual_root | xml_namespace | comment | pr_ins);
+const t_item ti_dmchildren = (t_item) (element | text | document | comment | pr_ins);
+const t_item ti_content = (t_item) (element | text | comment | pr_ins);
+const t_item ti_singleton_element = (t_item) (xml_namespace | text | comment | pr_ins);
 
 #ifdef BITWISE_NODE_TYPES
 typedef int typemask_t;

@@ -4,12 +4,29 @@
  */
 
 #include "tr/cat/catmem.h"
+#include "tr/cat/catmem.h"
+
+#include <stack>
 
 CatalogMemoryContext *CATALOG_TEMPORARY_CONTEXT = NULL;
 CatalogMemoryContext *CATALOG_COMMON_CONTEXT = NULL;
 
 void * local_space_base = NULL;
-#define catalog_space_base local_space_base
+void * catalog_space_base = NULL;
+void * default_context_space = NULL;
+
+static std::stack<void *> contextstack;
+
+void setDefaultSpace(void * space) {
+    contextstack.push(default_context_space);
+    default_context_space = space;
+};
+
+void * popDefaultSpace() {
+    default_context_space = contextstack.top();
+    contextstack.pop();
+};
+
 
 /* As soon as persistent context is the same as temporary */
 

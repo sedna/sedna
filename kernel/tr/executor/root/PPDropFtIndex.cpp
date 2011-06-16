@@ -9,6 +9,7 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/auth/auc.h"
+#include "tr/ft/ft_index_data.h"
 
 PPDropFtIndex::PPDropFtIndex(PPOpIn _index_name_,
                              dynamic_context *_cxt_) : PPUpdate("PPDropFtIndex"),

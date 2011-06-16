@@ -84,7 +84,7 @@ void PPExplain::do_next (tuple &t)
             pi_total.time = stop - start;
         }
 
-        xmlns_ptr explain_ns = cxt->add_to_context("", SEDNA_NAMESPACE_URI);
+        xmlns_ptr explain_ns = cxt->add_to_context(xmlns_touch("", SEDNA_NAMESPACE_URI));
         xptr root = insert_doc_node(scm, "$explain", NULL);
         xptr left = XNULL;
 

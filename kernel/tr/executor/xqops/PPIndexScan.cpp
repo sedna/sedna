@@ -14,6 +14,7 @@
 #include "tr/idx/indecies.h"
 
 #include "tr/bstrie/sednabtrie.h"
+#include "tr/executor/fo/op_map.h"
 
 PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
                          operation_info _info_,

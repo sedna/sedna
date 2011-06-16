@@ -25,6 +25,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #ifndef MIN
 #define MIN(A, B) \
@@ -65,7 +66,7 @@
 	((size_t)(SIZE)-(size_t)(SIZE)%(K))
 
 inline
-int strcmpex(const char* c1, const char* c2)
+static int strcmpex(const char* c1, const char* c2)
 {
   if (c1==NULL && c2==NULL) return 0;
   if (c1==NULL || c2==NULL) return (c1==NULL) ? -1 : 1;

@@ -67,17 +67,7 @@ public:
     virtual void visit(PPFnMaxMin* op);
     virtual void visit(PPFnSumAvg* op);
     virtual void visit(PPAbsPath* op);
-    virtual void visit(PPAxisAncestor* op);
-    virtual void visit(PPAxisAncestorOrSelf* op);
-    virtual void visit(PPAxisAttribute* op);
-    virtual void visit(PPAxisChild* op);
-    virtual void visit(PPAxisDescendant* op);
-    virtual void visit(PPAxisDescendantOrSelf* op);
-    virtual void visit(PPAxisDescendantAttr* op);
-    virtual void visit(PPAxisFP* op);
-    virtual void visit(PPAxisParent* op);
-    virtual void visit(PPAxisSelf* op);
-    virtual void visit(PPAxisSibling* op);
+    virtual void visit(PPAxisStep* op);
     virtual void visit(PPPred1* op);
     virtual void visit(PPPred2* op);
     virtual void visit(PPFnTrue* op);

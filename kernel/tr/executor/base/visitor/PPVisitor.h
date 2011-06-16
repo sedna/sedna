@@ -39,17 +39,7 @@ public:
 
     /* XPath expressions */
     virtual void visit(PPAbsPath* op)                    = 0;
-    virtual void visit(PPAxisAncestor* op)               = 0;
-    virtual void visit(PPAxisAncestorOrSelf* op)         = 0;
-    virtual void visit(PPAxisAttribute* op)              = 0;
-    virtual void visit(PPAxisChild* op)                  = 0;
-    virtual void visit(PPAxisDescendant* op)             = 0;
-    virtual void visit(PPAxisDescendantOrSelf* op)       = 0;
-    virtual void visit(PPAxisDescendantAttr* op)         = 0;
-    virtual void visit(PPAxisFP* op)                     = 0;
-    virtual void visit(PPAxisParent* op)                 = 0;
-    virtual void visit(PPAxisSelf* op)                   = 0;
-    virtual void visit(PPAxisSibling* op)                = 0;
+    virtual void visit(PPAxisStep* op)                   = 0;
     virtual void visit(PPPred1* op)                      = 0;
     virtual void visit(PPPred2* op)                      = 0;
 
