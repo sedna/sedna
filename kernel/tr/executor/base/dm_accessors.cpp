@@ -123,19 +123,18 @@ tuple_cell dm_node_name(Node node)
         case element :
         case attribute : {
             schema_node_cptr snode = node.getSchemaNode();
-            return tuple_cell::atomic(xs_QName,
-                  xs_QName_create(snode->get_xmlns(), snode->get_name(), tuple_char_alloc));
+            return tuple_cell::atomic(xsd::QName::createNsN(snode->get_xmlns(), snode->get_name()));
         }
         case xml_namespace : {
             xmlns_ptr ns = NSNode(node).getNamespaceLocal();
             if (ns->prefix != NULL) {
-                return tuple_cell::atomic(xs_QName, xs_QName_create(NULL_XMLNS, ns->prefix, tuple_char_alloc));
+                return tuple_cell::atomic(xsd::QName::createNsN(NULL_XMLNS, ns->prefix));
             } else {
                 return tuple_cell::eos();
             }
         }
         case pr_ins :
-            return tuple_cell::atomic(xs_QName, xs_QName_create(NULL_XMLNS, get_pi_name(node).get_str_mem(), tuple_char_alloc));
+            return tuple_cell::atomic(xsd::QName::createNsN(NULL_XMLNS, get_pi_name(node).get_str_mem()));
         default : throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
     }
 }

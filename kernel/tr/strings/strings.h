@@ -451,8 +451,6 @@ public:
 
 extern CharsetHandler	*charset_handler;
 
-
-
 void feed_tuple_cell(string_consumer_fn fn, void *p, const tuple_cell& tc);
 
 void print_tuple_cell_dummy(se_ostream& crmout,const tuple_cell& tc);
@@ -495,6 +493,45 @@ strsize_t tsGetActualSize(struct text_source_t t) {
     }
 }
 
+struct text_membuf_t {
+  private:
+    size_t size;
+    char * cstr;
+
+  public:
+    text_membuf_t() : size(0), cstr(NULL) {};
+    text_membuf_t(struct text_source_t ts) : size(0), cstr(NULL) {
+        strsize_t sz = tsGetActualSize(ts);
+
+        if (sz > PAGE_SIZE) {
+            throw USER_EXCEPTION2(SE2037, "Too long string to be copied");
+        }
+
+        size = (strsize_t) size;
+        cstr = (char *) malloc(sz + 1);
+
+        switch (ts.type) {
+          case text_source_t::text_mem : {
+            strncpy(cstr, ts.u.cstr, size);
+          } break;
+          case text_source_t::text_pstr : {
+            xptr ptr = ts.u.data;
+            CHECKP(ptr);
+            memcpy(cstr, (char*) XADDR(ptr), (size_t) size);
+          } break;
+          case text_source_t::text_estr : {
+            estr_copy_to_buffer(cstr, ts.u.data, ts.size);
+          } break;
+          default : throw USER_EXCEPTION2(SE2037, "Failed to copy text (this is a Sedna bug)");
+        }
+    };
+    ~text_membuf_t() { if (cstr != NULL) { free(cstr); } };
+
+    text_source_t getTextSource() const { return text_source_cstr(cstr); };
+    const char * getCstr() const { return cstr; }
+    size_t getSize() const { return size; }
+};
+
 static inline
 struct text_source_t text_source_pstr(const xptr text, strsize_t size) {
     struct text_source_t result = {text_source_t::text_pstr};
@@ -524,7 +561,7 @@ struct text_source_t text_source_pstrlong(const xptr text) {
 inline static
 struct text_source_t text_source_strbuf(str_buf_base * buf) {
     struct text_source_t result = {};
-	buf->fill_text_source(&result);
+    buf->fill_text_source(&result);
 
     return result;
 }

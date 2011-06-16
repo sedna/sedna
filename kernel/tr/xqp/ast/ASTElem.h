@@ -20,12 +20,17 @@ public:
     ASTNodesVector *cont; // element content; may be NULL
 
     bool deep_copy; // element will be attached to virtual_root and copied on demand
-    bool nsp_expected; // element prefix redefined with xmlns: attribute
 
-    const ASTNsp * nsp_node;
+    const ASTNsp * nsp_node; /* Namespace node, needed to resolve prefix */
+    int nsp_node_index; // Needed to store namespace node
 
 public:
-    ASTElem(const ASTNodeCommonData &loc, std::string *name, ASTNodesVector *attrs_ = NULL, ASTNodesVector *cont_ = NULL) : ASTNode(loc), attrs(attrs_), cont(cont_), nsp_node(NULL)
+    ASTElem(const ASTNodeCommonData &loc, std::string *name, ASTNodesVector *attrs_ = NULL, ASTNodesVector *cont_ = NULL) :
+            ASTNode(loc),
+            attrs(attrs_),
+            cont(cont_),
+            nsp_node(NULL),
+            nsp_node_index(-1)
     {
         ASTParseQName(name, &pref, &local);
 
@@ -38,7 +43,8 @@ public:
             local(elem_local),
             attrs(attrs_),
             cont(cont_),
-            nsp_node(NULL)
+            nsp_node(NULL),
+            nsp_node_index(-1)
     {
     }
 

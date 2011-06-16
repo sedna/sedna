@@ -363,7 +363,7 @@ xptr getFirstChildByTypeMask(const xptr node, typemask_t tmask)
 xptr getFirstChildBySchema(const xptr node, schema_node_cptr childscn)
 {
     CHECKP(node);
-    return getChildAt(node, getSchemaNode(node)->find_child(childscn.ptr()));
+    return getChildAt(node, childscn->getIndex());
 }
 
 xptr getFirstChild(const xptr node)

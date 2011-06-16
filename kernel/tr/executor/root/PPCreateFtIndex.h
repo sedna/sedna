@@ -20,10 +20,10 @@ class PPCreateFtIndex : public PPUpdate
 {
 private:
 
-    PathExpr *object_path;
+    xpath::PathExpression *object_path;
 	ft_index_type index_type;
 	PPOpIn cust_rules;
-    PathExprRoot root;    
+    xpath::PathExprRoot root;
     PPOpIn index_name;
     PPOpIn options;
     dynamic_context *cxt;
@@ -35,9 +35,9 @@ private:
 
 public:
     
-    PPCreateFtIndex(PathExpr *_object_path_,
+    PPCreateFtIndex(xpath::PathExpression *_object_path_,
                     const char* _index_type_,
-                    PathExprRoot _root_,
+                    xpath::PathExprRoot _root_,
                     PPOpIn _index_name_,
 					PPOpIn _options_,
                     PPOpIn _cust_rules_,
@@ -46,8 +46,8 @@ public:
     ~PPCreateFtIndex();
     
     inline ft_index_type get_index_type() const { return index_type; }
-    inline const PathExpr* get_path_expression() const { return object_path; }
-    inline const PathExprRoot& get_path_root() const { return root; }
+    inline const xpath::PathExpression* get_path_expression() const { return object_path; }
+    inline const xpath::PathExprRoot& get_path_root() const { return root; }
 };
 
 #endif /* _PPCREATEFTINDEX_H */

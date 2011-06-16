@@ -141,6 +141,11 @@ public :
 extern void * local_space_base;
 extern void * catalog_space_base;
 
+extern void * default_context_space;
+
+void setDefaultSpace(void * space);
+void * popDefaultSpace();
+
 /*
  * This class represents some type of memory context.
  * That is: it allocates and frees memory by chunks of size TEMP_CHUNK_SIZE.

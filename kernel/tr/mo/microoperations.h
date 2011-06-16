@@ -54,6 +54,8 @@ struct node_info_t
     strsize_t text_size;
     xptr text_data;
     size_t pi_target_size;
+
+    bool cdataflag;
 };
 
 xptr splitBlock(xptr node_xptr);

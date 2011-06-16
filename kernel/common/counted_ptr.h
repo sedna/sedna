@@ -6,15 +6,15 @@
 #ifndef COUNTED_PTR_H
 #define COUNTED_PTR_H
 
-template <class T> struct de_delete {
+template <typename T> struct de_delete {
     inline static void deallocate(T * p) { delete p; }
 };
 
-template <class T> struct de_delete_array {
+template <typename T> struct de_delete_array {
     inline static void deallocate(T * p) { delete[] p; }
 };
 
-template <class T> struct de_free {
+template <typename T> struct de_free {
     inline static void deallocate(T * p) { free(p); }
 };
 
@@ -23,7 +23,7 @@ template <class T> struct de_free {
   Notice, that the best way to delete an object stored in this cursor is to NULL or call clear method
 */
 
-template <typename T>
+template <typename T, class Deallocator = de_delete<T> >
 class scoped_ptr {
   private:
     T * p;
@@ -34,18 +34,21 @@ class scoped_ptr {
     scoped_ptr(T * _p = NULL) : p(_p) {}
 
     /* Recall: delete operator have no effect on NULL anyway, so this is safe. */
-    ~scoped_ptr() { delete p; }
+    ~scoped_ptr() { Deallocator::deallocate(p); }
+
+    inline
+    T* get() const { return p; };
 
     // Scoped pointer MUST NOT be neither copied nor assigned to any other scoped pointer!
     // scoped_ptr (const scoped_ptr<T> &ptr) throw() { U_ASSERT(false); }
 
-    void clear() { delete p; p = NULL; };
+    void clear() { Deallocator::deallocate(p); p; p = NULL; };
     bool isnull() const { return NULL == p; };
 
     /* This implementation of scoped pointer does DELETE old object on assignment  */
     scoped_ptr<T>& operator= (T* ptr) throw() {
         U_ASSERT(p != ptr);
-        delete p;
+        Deallocator::deallocate(p);
         p = ptr;
         return *this;
     }

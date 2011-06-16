@@ -34,6 +34,9 @@ namespace sedna
             // NOTE: false doesn't necessarily mean that we won't use abs-path; true forces even relative XPath to consider the
             //       opportunity; for indexes and triggers, relative abs-path is crucial, so "true" here means "force"
 
+            std::string * parentPrefix; /* Namespace prefix of parent element. Namespace is not added to child sequence if it
+                      * is needed to resolve element's prefix, but returned in child offer */
+
             parentRequest()
             {
                 calledOnce = true;
@@ -41,6 +44,7 @@ namespace sedna
                 deep_copy = true;
                 atomize = false;
                 start_abspath = false;
+                parentPrefix = NULL;
             }
         };
 
@@ -52,6 +56,8 @@ namespace sedna
             bool use_last;                  // true, if child uses fn:last()
             bool use_position;              // true, if child uses fn:position()
             bool in_abs_path;               // true, if we continue AbsPath chain -- see PPAbsPath execution logic
+
+            ASTNode * nspNode;
 
             childOffer()
             {
@@ -67,6 +73,8 @@ namespace sedna
                 in_abs_path = false;
 
                 isCached = false;
+
+                nspNode = NULL;
             }
         };
 

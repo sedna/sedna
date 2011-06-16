@@ -121,7 +121,7 @@ catalog_object_header * schema_node_object::create(doc_schema_node_xptr root, xm
 }
 
 
-schema_node_object::schema_node_object() : xmlns_pers(XNULL), xmlns_local(NULL), persistent(true), lastnode_ind(XNULL)
+schema_node_object::schema_node_object() : xmlns_pers(XNULL), xmlns_local(NULL), indexInParent(-2), persistent(true), lastnode_ind(XNULL)
 {
     CatalogMemoryContext *context = CATALOG_PERSISTENT_CONTEXT;
 
@@ -144,6 +144,7 @@ schema_node_object::schema_node_object(
 ) :
     xmlns_pers(XNULL),
     xmlns_local(_xmlns),
+    indexInParent(-2),
     persistent(_persistent),
     name(NULL),
     root(_root),
@@ -296,6 +297,15 @@ int schema_node_object::find_child(const xptr schema_node) const
     return -1;
 }
 
+schema_node_xptr schema_node_object::add_child(const xsd::QName& qname, t_item type)
+{
+    return add_child(qname.getXmlNs(), qname.getLocalName(), type);
+}
+
+schema_node_xptr schema_node_object::get_first_child(const xsd::QName& qname, t_item type)
+{
+    return get_first_child(qname.getXmlNs(), qname.getLocalName(), type);
+}
 
 int schema_node_object::find_first_child (const xmlns_ptr xmlns, const char * name, t_item type) const
 {
@@ -320,6 +330,12 @@ int schema_node_object::find_child_fair (const char * uri, const char * name, t_
 
     return -1;
 };
+
+int schema_node_object::find_child_fair(const xsd::QName& qname, t_item type) const
+{
+    return find_child_fair(qname.getUri(), qname.getLocalName(), type);
+}
+
 
 const sc_ref * schema_node_object::get_first_child_ref(const xmlns_ptr xmlns, const char * name, t_item type) const
 {
@@ -670,27 +686,29 @@ void col_schema_node_object::drop()
 
 
 /*comparison function for schema nodes*/
+
 bool comp_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
 {
-    return scm->type==type;
+    return (scm->type & type) > 0;
 }
 
 bool comp_qname_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
 {
-    return (scm->type==type && strcmpex(scm->name,name)==0 &&
-       ( (uri==NULL && scm->get_xmlns()==NULL) ||
-         (scm->get_xmlns()!=NULL && strcmpex(scm->get_xmlns()->uri,uri)==0) )) ;
+    return ((scm->type & type) > 0) &&
+      (strcmpex(scm->name, name) == 0) &&
+      same_xmlns_uri(scm->get_xmlns(), uri);
 }
 
 bool comp_local_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
 {
-    return (scm->type==type && strcmpex(scm->name,name)==0 );
+    return ((scm->type & type) > 0) &&
+      (strcmpex(scm->name, name) == 0);
 }
 
 bool comp_uri_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
 {
-    return (scm->type==type && ((uri==NULL && scm->get_xmlns()==NULL) ||
-     (scm->get_xmlns()!=NULL && strcmpex(scm->get_xmlns()->uri,uri)==0))) ;
+    return ((scm->type & type) > 0) &&
+      same_xmlns_uri(scm->get_xmlns(), uri);
 }
 
 void getSchemeChildren(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result)
@@ -698,26 +716,28 @@ void getSchemeChildren(schema_node_cptr scm,const char* uri,const char* name, t_
     sc_ref_item* sc=scm->children->first;
     while (sc!=NULL)
     {
-        if (cfun(sc->object.snode,uri,name,type)) result.push_back(sc->object.snode);
+        if (cfun(sc->object.snode, uri, name, type)) {
+            result.push_back(sc->object.snode);
+        }
         sc=sc->next;
     }
 }
 void getSchemeDescendantsOrSelf(schema_node_cptr scm,const char* uri,const char* name, t_item type, comp_schema cfun, std::vector<schema_node_xptr> &result)
 {
-    //if (scm->type==type && strcmpex(scm->name,name)==0 &&((uri==NULL && scm->get_xmlns()==NULL) || (scm->get_xmlns()!=NULL && strcmpex(scm->get_xmlns()->uri,uri)==0 )))
-    if (cfun(scm,uri,name,type))
+    if (cfun(scm, uri, name, type)) {
         result.push_back(scm.ptr());
+    }
     getSchemeDescendants(scm,uri,name,type,cfun,result);
 
 }
 
 void getSchemeDescendants(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result)
 {
-    sc_ref_item* sc=scm->children->first;
-    while (sc!=NULL)
-    {
-//      if (strcmpex(name,sc->object.name)==0 && sc->object.type==type &&((uri==NULL && sc->get_xmlns()==NULL) || (sc->get_xmlns()!=NULL && strcmpex(sc->get_xmlns()->uri,uri)==0 ))) result.push_back(sc->object.snode);
-        if (cfun(sc->object.snode,uri,name,type)) result.push_back(sc->object.snode);
+    sc_ref_item* sc = scm->children->first;
+    while (sc != NULL) {
+        if (cfun(sc->object.snode, uri, name, type)) {
+            result.push_back(sc->object.snode);
+        }
         getSchemeDescendants(sc->object.snode,uri,name,type,cfun,result);
         sc=sc->next;
     }

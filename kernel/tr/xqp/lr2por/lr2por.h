@@ -50,9 +50,12 @@ namespace sedna
             std::string test_type; // for node-test in axis steps (type of test, e.g node, pi)
             std::string test_data; // for node-test in axis steps (data for test, e.g. name for pi)
 
+            bool special_node; // Currently used to indicate that the constructed branch is NSP node with element's prefix
+
             childOffer()
             {
                 opin.op = NULL;
+                special_node = false;
             }
         };
 

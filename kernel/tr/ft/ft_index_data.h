@@ -20,7 +20,7 @@
 #include "tr/cat/catptr.h"
 #include "tr/cat/catmem.h"
 
-struct PathExpr;
+namespace xpath { struct PathExpression; }
 
 /*
 struct doc_parser
@@ -47,7 +47,7 @@ struct ft_index_cell_object : public catalog_object
 
     doc_schema_node_xptr schemaroot;
     char * index_title;
-    PathExpr *object;
+    xpath::PathExpression *object;
     char* doc_name;
     bool is_doc;
     ft_index_type ftype;
@@ -67,7 +67,7 @@ struct ft_index_cell_object : public catalog_object
     inline ft_index_cell_object() {};
 
     inline ft_index_cell_object(
-        PathExpr *_object_path, ft_index_type _it,
+        xpath::PathExpression *_object_path, ft_index_type _it,
         const doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
 		const char * options
@@ -98,7 +98,7 @@ struct ft_index_cell_object : public catalog_object
     };
 
     static catalog_object_header * create(
-        PathExpr *_object_path, ft_index_type _it,
+        xpath::PathExpression *_object_path, ft_index_type _it,
         const doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
         const char * options
@@ -135,7 +135,7 @@ struct ft_index_cell_object : public catalog_object
 
 //if rcv is true - dtSearch indexes are created in heap(catalog) only.
 ft_index_cell_xptr create_ft_index(
-        PathExpr *_object_path, ft_index_type _it,
+        xpath::PathExpression *_object_path, ft_index_type _it,
         doc_schema_node_xptr _schemaroot,
         const char * _index_title, const char* _doc_name, bool _is_doc,
         ft_index_template_t* _templ, bool rcv, const char * options

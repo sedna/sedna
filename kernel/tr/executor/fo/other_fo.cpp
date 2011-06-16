@@ -29,14 +29,10 @@ tuple_cell op_equal_xs_QName(const tuple_cell &a1, const tuple_cell &a2)
     U_ASSERT(a1.is_light_atomic());
     U_ASSERT(a2.is_light_atomic());
 
-    char *qname1 = a1.get_str_mem();
-    char *qname2 = a2.get_str_mem();
-    const char *uri1 = xs_QName_get_uri(qname1);
-    const char *uri2 = xs_QName_get_uri(qname2);
-    const char *local1 = xs_QName_get_local_name(qname1);
-    const char *local2 = xs_QName_get_local_name(qname2);
+    xsd::QName qname1 = xsd::QName::deserialize(a1.get_str_mem());
+    xsd::QName qname2 = xsd::QName::deserialize(a2.get_str_mem());
 
-    return tuple_cell::atomic(_xs_QName_equal(uri1, local1, uri2, local2));
+    return tuple_cell::atomic(qname1.equals(qname2));
 }
 
 tuple_cell op_not_equal_xs_QName(const tuple_cell &a1, const tuple_cell &a2)
@@ -45,12 +41,8 @@ tuple_cell op_not_equal_xs_QName(const tuple_cell &a1, const tuple_cell &a2)
     U_ASSERT(a1.is_light_atomic());
     U_ASSERT(a2.is_light_atomic());
 
-    char *qname1 = a1.get_str_mem();
-    char *qname2 = a2.get_str_mem();
-    const char *uri1 = xs_QName_get_uri(qname1);
-    const char *uri2 = xs_QName_get_uri(qname2);
-    const char *local1 = xs_QName_get_local_name(qname1);
-    const char *local2 = xs_QName_get_local_name(qname2);
+    xsd::QName qname1 = xsd::QName::deserialize(a1.get_str_mem());
+    xsd::QName qname2 = xsd::QName::deserialize(a2.get_str_mem());
 
-    return tuple_cell::atomic(_xs_QName_not_equal(uri1, local1, uri2, local2));
+    return tuple_cell::atomic(!qname1.equals(qname2));
 }

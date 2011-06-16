@@ -6,9 +6,10 @@
 #ifndef XDM_H_
 #define XDM_H_
 
-#include <tr/structures/xmlns.h>
-#include <tr/strings/strings_base.h>
-#include <tr/crmutils/exec_output.h>
+#include "tr/structures/xmlns.h"
+#include "tr/strings/strings_base.h"
+#include "tr/crmutils/exec_output.h"
+#include "tr/executor/base/xsd.h"
 
 /* This is serialization wrapper for xml nodes.
  * One can implement any node represenation, but for it to be serialized well to any output,
@@ -24,6 +25,7 @@ class IXDMNodeList;
     virtual t_item getNodeKind() const = 0;
     virtual const char * getLocalName() const = 0;
     virtual xmlns_ptr getNamespace() const = 0;
+    virtual xsd::QName getQName() const = 0;
     virtual const text_source_t getValue() const = 0;
 
     virtual void printNodeName(se_ostream & out) const = 0;
@@ -58,6 +60,7 @@ class SednaNode : public IXDMNode {
     virtual t_item getNodeKind() const;
     virtual const char * getLocalName() const;
     virtual xmlns_ptr getNamespace() const;
+    virtual xsd::QName getQName() const;
     virtual const text_source_t getValue() const;
 
     virtual void printNodeName(se_ostream & out) const;

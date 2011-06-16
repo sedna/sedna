@@ -192,7 +192,7 @@ void shiftManyNodesCopy(struct shift_node_structure_t * shift_info, xptr source_
     source_block = getBlockHeader(source_block_xptr);
     shift_info->buffer = nodeBufferAlloc(source_block->dsc_size, node_count);
     pfl_it = shift_info->pfl = (xptr_mapping *) malloc(node_count * 4 * sizeof(xptr_mapping));
-    pos_in_parent = schema_node_cptr(source_block->snode)->get_node_position_in_parent();
+    pos_in_parent = schema_node_cptr(source_block->snode)->getIndex();
 
     /* Fill fix pointer list. We MUST do it before any nodes are deleted from the block
         (because left or right siblings may lay in this block). */

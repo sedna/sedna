@@ -45,56 +45,45 @@ const char* ft_index_type2str(ft_index_type type)
 
 ft_index_template_t *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt)
 {
-	tuple t(1);
-	ft_index_template_t * res = se_new ft_index_template_t();
-	while (1)
-	{
-		tuple_cell tc;
-		cust_rules->op->next(t);
-		if (t.is_eos())
-			break;
+    tuple t(1);
+    ft_index_template_t * res = se_new ft_index_template_t();
+    while (1)
+    {
+        tuple_cell tc;
+        cust_rules->op->next(t);
+        if (t.is_eos())
+            break;
 
-		tc = t.cells[0];
-		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
-			throw USER_EXCEPTION(SE1071);
-		tc = tuple_cell::make_sure_light_atomic(tc);
-		const char *qname = tc.get_str_mem();
+        tc = t.cells[0];
+        if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
+            throw USER_EXCEPTION(SE1071);
+        tc = tuple_cell::make_sure_light_atomic(tc);
 
-		char* prefix=NULL;
-		separateLocalAndPrefix(prefix,qname);
-		xmlns_ptr ns=NULL_XMLNS;
-		if (prefix!=NULL)
-		{
-			ns=cxt->get_xmlns_by_prefix(prefix);
-			delete prefix;
-		}
-		char* name = se_new char[strlen(qname)+1];
-		strcpy(name, qname);
-		std::pair<xmlns_ptr, char*> tag(ns, name);
+        xsd::QName qname = xsd::QName::createResolveContext(tc.get_str_mem(), cxt);
 
-		cust_rules->op->next(t);
-		if (t.is_eos())
-			throw USER_EXCEPTION(SE1071);
+        cust_rules->op->next(t);
+        if (t.is_eos())
+            throw USER_EXCEPTION(SE1071);
 
-		tc = t.cells[0];
-		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
-			throw USER_EXCEPTION(SE1071);
-		tc = tuple_cell::make_sure_light_atomic(tc);
+        tc = t.cells[0];
+        if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
+            throw USER_EXCEPTION(SE1071);
+        tc = tuple_cell::make_sure_light_atomic(tc);
 
-		const char *index_type = tc.get_str_mem();
+        const char *index_type = tc.get_str_mem();
 
-		ft_index_type itype = str2ft_index_type(index_type);
+        ft_index_type itype = str2ft_index_type(index_type);
 
-		res->push_back(ft_index_pair_t(tag, itype));
-	}
-	return res;
+        res->push_back(ft_index_pair_t(qname, itype));
+    }
+    return res;
 }
 
 
 
-PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
+PPCreateFtIndex::PPCreateFtIndex(xpath::PathExpression *_object_path_,
                                  const char *_index_type_,
-                                 PathExprRoot _root_,
+                                 xpath::PathExprRoot _root_,
                                  PPOpIn _index_name_,
                                  PPOpIn _options_,
                                  PPOpIn _cust_rules_,

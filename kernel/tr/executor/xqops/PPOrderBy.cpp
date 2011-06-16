@@ -9,6 +9,7 @@
 #include "common/bit_set.h"
 
 #include "tr/executor/xqops/PPOrderBy.h"
+#include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/fo/string_operations.h"

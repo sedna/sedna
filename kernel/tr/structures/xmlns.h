@@ -106,7 +106,7 @@ bool same_xmlns_uri(xmlns_ptr ns1, const char * uri) {
 }
 
 inline
-bool is_empty_default_ns_declaration(xmlns_ptr ns)
+bool is_empty_ns_declaration(xmlns_ptr ns)
 {
     U_ASSERT(ns == NULL_XMLNS || (ns->prefix != NULL && ns->uri != NULL));
     return ns != NULL_XMLNS && strlen(ns->prefix)==0 && strlen(ns->uri)==0;

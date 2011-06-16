@@ -117,15 +117,10 @@ inline bool nullsafe_CHECKP(xptr p)
     return false;
 }
 
-inline int getPageDescriptorCapacitySP(xptr block_xptr)
-{
-    return (PAGE_SIZE - sizeof(node_blk_hdr)) / (getBlockHeader(block_xptr)->dsc_size + sizeof(xptr));
-}
+/* Aliases */
 
-inline int getPageDescriptorCapacitySP(node_blk_hdr * block)
-{
-    return (PAGE_SIZE - sizeof(node_blk_hdr)) / (block->dsc_size + sizeof(xptr));
-}
+inline int getPageDescriptorCapacitySP(xptr block_xptr) { return internal::getBlockCapacity(block_xptr); }
+inline int getPageDescriptorCapacitySP(node_blk_hdr * block) { return internal::getBlockCapacity(block); }
 
 //#define GET_EFFECTIVE_PAGE_SIZE(p)
 

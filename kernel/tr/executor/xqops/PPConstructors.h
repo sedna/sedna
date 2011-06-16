@@ -16,18 +16,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 class PPConstructor : public PPIterator
 {
-private:
-    static schema_node_cptr root_schema;
-    static xptr virt_root;
-
 protected:
-	static xptr last_elem;
-	static xptr cont_parind;
-	static xptr cont_leftind;
-	static int conscnt;
-
     bool first_time;
-	bool deep_copy;
+    bool deep_copy;
 
     PPConstructor(dynamic_context *_cxt_,
                   operation_info _info_,
@@ -37,9 +28,9 @@ protected:
 public:
     static void checkInitial();
     static void clear_virtual_root();
+    static xsd::QName resolveQName(const char * nameString, PPOpIn qname, dynamic_context * cxt);
+    static Node getVirtualRoot();
 
-    static inline xptr get_virtual_root() { return virt_root; }
-    static inline schema_node_cptr get_virtual_root_snode() { return root_schema; }
     inline bool is_deep_copy() { return deep_copy; }
 };
 
@@ -52,7 +43,7 @@ protected:
     PPOpIn qname;
     PPOpIn content;
     char* el_name;
-    bool ns_inside;
+    PPOpIn inner_ns_node;
 
     // EOS by default constructor. Error if not!
     static tuple_cell parent_element;
@@ -67,16 +58,15 @@ private:
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 public:
     PPVirtualConstructor(dynamic_context *_cxt_, operation_info _info_,
-            PPOpIn _qname_, PPOpIn _content_, bool _deep_copy, bool _ns_inside);
+            PPOpIn _qname_, PPOpIn _content_, bool _deep_copy, PPOpIn _ns);
 
     PPVirtualConstructor(dynamic_context *_cxt_, operation_info _info_,
-            const char* name, PPOpIn _content_, bool _deep_copy, bool _ns_inside);
+            const char* name, PPOpIn _content_, bool _deep_copy, PPOpIn _ns);
 
     virtual ~PPVirtualConstructor();
 
     /* May return NULL if name is not predefined */
     inline const char* get_name() { return el_name; }
-    inline bool is_ns_inside() { return ns_inside; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -88,7 +78,7 @@ protected:
     PPOpIn qname;
     PPOpIn content;
     char* el_name;
-    bool ns_inside;
+    PPOpIn inner_ns_node;
 
 private:
     virtual void do_open   ();
@@ -106,20 +96,19 @@ public:
                          PPOpIn _qname_,
                          PPOpIn _content_,
                          bool _deep_copy,
-                         bool _ns_inside);
+                         PPOpIn _ns);
 
     PPElementConstructor(dynamic_context *_cxt_,
                          operation_info _info_,
                          const char* name,
                          PPOpIn _content_,
                          bool _deep_copy,
-                         bool _ns_inside);
+                         PPOpIn _ns);
 
     virtual ~PPElementConstructor();
 
     /* May return NULL if name is not predefined */
     inline const char* get_name() { return el_name; }
-    inline bool is_ns_inside() { return ns_inside; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -129,10 +118,9 @@ class PPAttributeConstructor : public PPConstructor
 {
 protected:
     PPOpIn qname;
-	PPOpIn content;
-	char* at_name;
-	char* at_value;
-
+    PPOpIn content;
+    char* at_name;
+    char* at_value;
 
 private:
     virtual void do_open   ();
@@ -182,8 +170,8 @@ class PPNamespaceConstructor : public PPConstructor
 {
 protected:
     PPOpIn content;
-	char* at_name;
-	char* at_value;
+    char* at_name;
+    char* at_value;
 
 private:
     virtual void do_open   ();

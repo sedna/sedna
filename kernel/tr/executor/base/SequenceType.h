@@ -47,8 +47,7 @@ struct st_elem_attr_data
 {
     st_node_name_enum nne;
     st_type_name_enum tne;
-    char *node_name_uri;
-    char *node_name_local;
+    const char * qname;
     xmlscm_type type_name;
 
     std::string to_str() const;
@@ -74,7 +73,7 @@ struct st_item_type
     st_item_type_enum type;
     union {
         xmlscm_type single_type; // AtomicType for atomic values
-        char *ncname;            // for processing-instruction
+        const char * ncname;     // for processing-instruction
         st_elem_attr_data ea;    // information for ElementTest and AttributeTest
     } info;
 

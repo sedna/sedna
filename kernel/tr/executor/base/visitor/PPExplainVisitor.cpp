@@ -18,6 +18,8 @@
 #include "tr/cat/catptr.h"
 #include "tr/mo/mo.h"
 
+#include "tr/executor/base/OperationHeaders.h"
+
 using namespace std;
 
 static xmlns_ptr explain_ns = NULL_XMLNS;
@@ -236,7 +238,7 @@ void PPExplainVisitor::visit(PPFnSumAvg* op)
 void PPExplainVisitor::visit(PPAbsPath* op)
 {
     insertOperationElement("PPAbsPath", left, parent, op);
-    string path_expr = op->getPathExpr()->to_string();
+    string path_expr = op->getPathExpr()->toString();
     xptr attr_left = insertAttributeHelper("root", XNULL, left, op->getDocColl()->to_string());
     if(path_expr.length() != 0)
     {
@@ -244,91 +246,10 @@ void PPExplainVisitor::visit(PPAbsPath* op)
     }
 }
 
-void PPExplainVisitor::visit(PPAxisAncestor* op)
+void PPExplainVisitor::visit(PPAxisStep* op)
 {
-    insertOperationElement("PPAxisAncestor", left, parent, op);
-    string node_test = "ancestor::" + NodeTest::to_string(op->get_node_test_type(),
-                                                          op->get_node_test_data());
-    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(),NULL_XMLNS);
-}
-
-void PPExplainVisitor::visit(PPAxisAncestorOrSelf* op)
-{
-    insertOperationElement("PPAxisAncestorOrSelf", left, parent, op);
-    string node_test = "ancestor-or-self::" + NodeTest::to_string(op->get_node_test_type(),
-                                                                  op->get_node_test_data());
-    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
-}
-
-void PPExplainVisitor::visit(PPAxisAttribute* op)
-{
-    insertOperationElement("PPAxisAttribute", left, parent, op);
-    string node_test = "attribute::" + NodeTest::to_string(op->get_node_test_type(),
-                                                           op->get_node_test_data());
-    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
-}
-
-void PPExplainVisitor::visit(PPAxisChild* op)
-{
-    insertOperationElement("PPAxisChild", left, parent, op);
-    string node_test = "child::" + NodeTest::to_string(op->get_node_test_type(),
-                                                       op->get_node_test_data());
-    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
-}
-
-void PPExplainVisitor::visit(PPAxisDescendant* op)
-{
-    insertOperationElement("PPAxisDescendant", left, parent, op);
-    string node_test = "descendant::" + NodeTest::to_string(op->get_node_test_type(),
-                                                            op->get_node_test_data());
-    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
-}
-
-void PPExplainVisitor::visit(PPAxisDescendantOrSelf* op)
-{
-    insertOperationElement("PPAxisDescendantOrSelf", left, parent, op);
-    string node_test = "descendant-or-self::" + NodeTest::to_string(op->get_node_test_type(),
-                                                                    op->get_node_test_data());
-    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
-}
-
-void PPExplainVisitor::visit(PPAxisDescendantAttr* op)
-{
-    insertOperationElement("PPAxisDescendantAttr", left, parent, op);
-    string node_test = "@descendant::" + NodeTest::to_string(op->get_node_test_type(),
-                                                             op->get_node_test_data());
-    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
-}
-
-void PPExplainVisitor::visit(PPAxisFP* op)
-{
-    insertOperationElement("PPAxisFP", left, parent, op);
-    string node_test = (op->is_following() ? "following::" : "preceding::") + NodeTest::to_string(op->get_node_test_type(),
-                                                                  op->get_node_test_data());
-    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
-}
-
-void PPExplainVisitor::visit(PPAxisParent* op)
-{
-    insertOperationElement("PPAxisParent", left, parent, op);
-    string node_test = "parent::" + NodeTest::to_string(op->get_node_test_type(),
-                                                        op->get_node_test_data());
-    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
-}
-
-void PPExplainVisitor::visit(PPAxisSelf* op)
-{
-    insertOperationElement("PPAxisSelf", left, parent, op);
-    string node_test = "self::" + NodeTest::to_string(op->get_node_test_type(),
-                                                      op->get_node_test_data());
-    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
-}
-
-void PPExplainVisitor::visit(PPAxisSibling* op)
-{
-    insertOperationElement("PPAxisSibling", left, parent, op);
-    string node_test = (op->is_following() ? "following-sibling::" : "preceding-sibling::") + NodeTest::to_string(op->get_node_test_type(),
-                                                                  op->get_node_test_data());
+    insertOperationElement("PPAxisStep", left, parent, op);
+    string node_test = op->getNodeTest().toString();
     insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
 }
 
@@ -465,9 +386,7 @@ void PPExplainVisitor::visit(PPElementConstructor* op)
         attr_left = insert_attribute_i(XNULL,XNULL,left,"element-name",xs_untypedAtomic, name, strlen(name), NULL_XMLNS);
     }
     const char* deep_copy = op->is_deep_copy() ? "true" : "false";
-    const char* ns_inside = op->is_ns_inside() ? "true" : "false";
     attr_left = insert_attribute_i(attr_left,XNULL,left,"deep-copy",xs_untypedAtomic, deep_copy, strlen(deep_copy), NULL_XMLNS);
-    insert_attribute_i(attr_left,XNULL,left,"namespace-inside",xs_untypedAtomic, ns_inside, strlen(ns_inside), NULL_XMLNS);
 }
 
 void PPExplainVisitor::visit(PPVirtualConstructor* op)
@@ -1255,8 +1174,8 @@ void PPExplainVisitor::visit(PPCreateIndex* op)
 {
     insertOperationElement("PPCreateIndex", left, parent, NULL, op);
     xptr attr_left = insertAttributeHelper("type", XNULL, left, string(xmlscm_type2c_str(op->get_index_type())));
-    string obj_path = op->get_object_path()->to_string();
-    string key_path = op->get_key_path()->to_string();
+    string obj_path = op->get_object_path()->toString();
+    string key_path = op->get_key_path()->toString();
     attr_left = insertAttributeHelper("root", XNULL, left, op->get_path_root().get_entity()->to_string());
     if(obj_path.length() != 0) {
         attr_left = insertAttributeHelper("object-path", attr_left, left, obj_path);
@@ -1291,7 +1210,7 @@ void PPExplainVisitor::visit(PPCreateTrigger* op)
     type += trigger_granularity2string(op->get_trigger_granularity());
     xptr attr_left = insertAttributeHelper("type", XNULL, left, type);
     attr_left = insertAttributeHelper("root", attr_left, left, op->get_path_expression_root().get_entity()->to_string());
-    string trg_path = op->get_trigger_path()->to_string();
+    string trg_path = op->get_trigger_path()->toString();
     if(trg_path.length() != 0) {
         attr_left = insertAttributeHelper("trigger-path", attr_left, left, trg_path);
     }
@@ -1319,7 +1238,7 @@ void PPExplainVisitor::visit(PPCreateFtIndex* op)
 {
     insertOperationElement("PPCreateFtIndex", left, parent, NULL, op);
     xptr attr_left = insertAttributeHelper("type", XNULL, left, string(ft_index_type2str(op->get_index_type())));
-    string path_expr = op->get_path_expression()->to_string();
+    string path_expr = op->get_path_expression()->toString();
     attr_left = insertAttributeHelper("root", attr_left, left, op->get_path_root().get_entity()->to_string());
     if(path_expr.length() != 0)
     {

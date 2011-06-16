@@ -10,7 +10,7 @@
 
 #include "tr/cat/catptr.h"
 
-struct PathExpr;
+namespace xpath { struct PathExpression; }
 
 typedef const char * lockid_t; /* FIXME: implement this! AND MOVE TO OTHER HEADER */
 
@@ -27,8 +27,8 @@ struct index_descriptor_t {
     xmlscm_type keytype;
     index_backend_t backend_type;
 
-    PathExpr *object; /* persistent special */  // absolute xPath expression for object nodes xPath
-    PathExpr *key; /* persistent special */     // relative xPath expression for key value nodes
+    xpath::PathExpression *object; /* persistent special */  // absolute xPath expression for object nodes xPath
+    xpath::PathExpression *key; /* persistent special */     // relative xPath expression for key value nodes
 };
 
 #endif /* _INDEX_TYPES_H */

@@ -14,10 +14,12 @@
 #include "tr/locks/locks.h"
 #include "tr/auth/auc.h"
 
+using namespace xpath;
+
 PPCreateIndex::PPCreateIndex(PPOpIn _index_name_,
                              PathExprRoot _root_,
-                             PathExpr *_object_path_,
-                             PathExpr *_key_path_,
+                             PathExpression *_object_path_,
+                             PathExpression *_key_path_,
                              xmlscm_type _key_type_,
                              dynamic_context *_cxt_,
                              const char *_tree_type_)

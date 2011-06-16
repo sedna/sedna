@@ -19,7 +19,6 @@
 #endif
 
 #include "tr/structures/nodeutils.h"
-#include "tr/structures/textcptr.h"
 
 #define IGNORE_UPDATE_ERRORS
 
@@ -314,21 +313,21 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
                    break;
 
         case comment: {
-            text_cptr buf(node);
-            result = insert_comment(left, right, parent, buf.get(), buf.getSize());
+            text_membuf_t buf(text_source_node(node));
+            result = insert_comment(left, right, parent, buf.getCstr(), buf.getSize());
                       }
                       break;
 
         case pr_ins: {
             size_t tsize = PINode(node).getPITargetSize();
-            text_cptr buf(node);
-            result = insert_pi(left, right, parent, buf.get(), tsize, buf.get() + tsize + 1, buf.getSize() - tsize - 1);
+            text_membuf_t buf(text_source_node(node));
+            result = insert_pi(left, right, parent, buf.getCstr(), tsize, buf.getCstr() + tsize + 1, buf.getSize() - tsize - 1);
         }
         break;
 
         case attribute: {
             xmlns_ptr ns = scmnode->get_xmlns();
-            text_cptr buf(node);
+            text_membuf_t buf(text_source_node(node));
 
             if (nsupdmap != NULL && ns != NULL_XMLNS) {
                 replaceNamespace(ns, *nsupdmap);
@@ -344,7 +343,7 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
 
             CHECKP(node);
             scm_type = (save_types) ? AttributeNode(node).getType() : xs_untypedAtomic;
-            result = insert_attribute(left, right, parent, scmnode->name, scm_type, buf.get(), buf.getSize(), ns);
+            result = insert_attribute(left, right, parent, scmnode->name, scm_type, buf.getCstr(), buf.getSize(), ns);
         }
         break;
 
@@ -397,7 +396,7 @@ xptr copy_to_temp(xptr node)
     PPConstructor::checkInitial();
     return deep_copy_node(XNULL,
         XNULL,
-        PPConstructor::get_virtual_root(),
+        PPConstructor::getVirtualRoot().getPtr(),
         node,
         NULL,
         true);

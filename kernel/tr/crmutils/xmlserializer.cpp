@@ -65,8 +65,8 @@ struct text_source_t getTupleText(const tuple_cell &t) {
 }
 
 struct ElementContext {
-    const char * name;
-    xmlns_ptr ns;
+    xsd::QName qname;
+    bool preserveCData;
 };
 
 
@@ -190,8 +190,8 @@ void XDMSerializer::serialize(tuple & t) {
 void XMLSerializer::printAtomic(const tuple_cell &t)
 {
      if (t.is_atomic_type(xs_QName)) {
-        const char * prefix = xs_QName_get_prefix(t.get_str_mem());
-        const char * local_name = xs_QName_get_local_name(t.get_str_mem());
+        const char * prefix = t.get_xs_qname().getPrefix();
+        const char * local_name = t.get_xs_qname().getLocalName();
 
         if (prefix != NULL && *prefix != '\0') {
             stringFilter.parse(prefix, strlen(prefix), write_func, crmout, pat_element);
@@ -262,7 +262,7 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     CHECK_TIMER_FLAG;
 
     ElementContext * parentContext = this->elementContext;
-    ElementContext context = {elementInterface->getLocalName(), elementInterface->getNamespace()};
+    ElementContext context = {elementInterface->getQName(), false};
     elementContext = &context;
     bool indented = indentNext;
     int namespaceCount = 0;
@@ -284,14 +284,16 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     printElementName(elementInterface);
 #endif /* SE_ENABLE_DTSEARCH */
 
-    /* If null namespace implies non-null defualt namespace then */
-    if (context.ns != NULL_XMLNS || getDefaultNamespace() != NULL_XMLNS) {
-      /* Fix of bad update policy, where default namespace is not added with element */
-        if (context.ns == NULL_XMLNS) { context.ns = xmlns_touch("", ""); }
+    /* If null element namespace implies non-null default namespace */
 
-        if (declareNamespace(context.ns)) {
+    if (context.qname.getXmlNs() != NULL_XMLNS || getDefaultNamespace() != NULL_XMLNS) {
+        xmlns_ptr ns = context.qname.getXmlNs();
+      /* Fix of bad update policy, where default namespace is not added with element */
+        if (ns == NULL_XMLNS) { ns = xmlns_touch("", ""); }
+
+        if (declareNamespace(ns)) {
             (*crmout) << " ";
-            printNamespace(context.ns);
+            printNamespace(ns);
             ++namespaceCount;
         }
     }
@@ -368,8 +370,10 @@ void XMLSerializer::printText(t_item type, const text_source_t value)
 
     if (type == text) {
         indentNext = false;
-        if (elementContext != NULL && options != NULL && setContainsQName(&(options->cdataSectionElements), elementContext->name, elementContext->ns)) {
+        if (elementContext != NULL && options != NULL &&
+              (options->cdataSectionElements.find(elementContext->qname) != options->cdataSectionElements.end())) {
             (*crmout) << "<![CDATA[";
+
             // StringMatcher must substitute "]]>" with "]]>]]<![CDATA[<"
             filterText(stringFilter, crmout, pat_cdata, reader);
             (*crmout) << "]]>";
@@ -461,7 +465,7 @@ void SXMLSerializer::printElement(IXDMNode * elementInterface)
     CHECK_TIMER_FLAG;
 
     ElementContext * parentContext = this->elementContext;
-    ElementContext context = {elementInterface->getLocalName(), elementInterface->getNamespace()};
+    ElementContext context = {elementInterface->getQName(), false};
     elementContext = &context;
 
     (*crmout) << " (";

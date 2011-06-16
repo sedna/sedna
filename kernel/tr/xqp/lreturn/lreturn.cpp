@@ -908,6 +908,7 @@ namespace sedna
             // check if prefix is redefined later with xmlns:
             ASTNodesVector::const_iterator cit;
 
+            int node_index = 0;
             for (cit = n.attrs->begin(); cit != n.attrs->end(); cit++)
             {
                 if (const ASTNsp *nsp = dynamic_cast<const ASTNsp *>(*cit))
@@ -915,18 +916,19 @@ namespace sedna
                     if (*nsp->name == *n.pref)
                     {
                         n.nsp_node = nsp;
-                        n.nsp_expected = true;
+                        n.nsp_node_index = node_index;
                         break;
                     }
                 }
+                ++node_index;
             }
 
             if (cit == n.attrs->end())
-                n.nsp_expected = false;
+                n.nsp_node_index = -1;
         }
         else
         {
-            n.nsp_expected = false;
+            n.nsp_node_index = -1;
         }
 
         setOffer(off);
@@ -1843,8 +1845,20 @@ namespace sedna
 
     void LReturn::visit(ASTNsp &n)
     {
-        // nothing to do
-        setOffer(childOffer());
+        childOffer off;
+
+        std::string * prefix;
+
+        if (const ASTElem * p = dynamic_cast<ASTElem *>(getParent())) {
+            prefix = p->pref;
+        }
+
+        if (prefix != NULL && prefix->compare(*n.name) == 0) {
+            off.nspNode = &n;
+            n.boundToElement = true;
+        }
+
+        setOffer(off);
     }
 
     void LReturn::visit(ASTOption &n)

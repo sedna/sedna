@@ -16,6 +16,8 @@ namespace internal {
     struct node_blk_hdr {
         vmm_sm_blk_hdr __vmm_data;  /* sm/vmm parameters */
 
+        shft sz;
+
         xptr pblk;              /* previoius block */
         xptr nblk;              /* next block */
 
@@ -32,18 +34,30 @@ namespace internal {
         xptr nblk_indir;        /* next block with free indirection space*/
 
         t_item node_type;       /* duplicates type of node declaration from schema node */
+
+        char additional_data[];
     };
 
-    inline
+    inline static shft getBlockCapacity(node_blk_hdr * hdr) {
+        return ((PAGE_SIZE - hdr->sz) / (hdr->dsc_size + sizeof(xptr)));
+    }
+
+    inline static
     node_blk_hdr * getBlockHeader(xptr p) { return (node_blk_hdr *) XADDR(block_xptr(p)); };
 
-    inline
+    inline static shft getHeaderSize(xptr p) { return getBlockHeader(p)->sz; };
+
+    inline static
     node_blk_hdr * getBlockHeaderCP(xptr p) { CHECKP(p); return (node_blk_hdr *) XADDR(block_xptr(p)); };
 
-    inline
+    inline static shft getBlockCapacity(xptr p) {
+        return getBlockCapacity(getBlockHeaderCP(p));
+    };
+
+    inline static
     void * getBlockPointer(xptr p, shft i) { if (i == 0) { return NULL; } else { CHECKP(p); return xaddr(block_xptr(p) + i); } }
 
-    inline
+    inline static
     xptr blockGetFreeIndirection(xptr p) { return block_xptr(p) + ((node_blk_hdr *) XADDR(block_xptr(p)))->free_first_indir; }
 };
 

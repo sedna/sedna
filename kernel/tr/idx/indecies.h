@@ -33,8 +33,8 @@ struct index_cell_object : public catalog_object {
 
     index_backend_t backend_type; /* persistent */
 
-    PathExpr *object; /* persistent special */  // absolute xPath expression for object nodes xPath
-    PathExpr *key; /* persistent special */     // relative xPath expression for key value nodes
+    xpath::PathExpression *object; /* persistent special */  // absolute xPath expression for object nodes xPath
+    xpath::PathExpression *key; /* persistent special */     // relative xPath expression for key value nodes
 
     /*
      * Error counter: stores the number of uncastable key values.

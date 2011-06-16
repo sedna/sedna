@@ -7,6 +7,35 @@
 #include "tr/executor/base/PPOperations.h"
 #include "tr/tr_globals.h"
 
+#include "tr/executor/xqops/PPNumericFuncs.h"
+#include "tr/executor/xqops/PPFnDateTimeFuncs.h"
+#include "tr/executor/xqops/PPSubsMatch.h"
+#include "tr/executor/xqops/PPStringFuncs.h"
+#include "tr/executor/xqops/PPUriFuncs.h"
+#include "tr/executor/xqops/PPAggrFuncs.h"
+#include "tr/executor/xqops/PPFnAccessors.h"
+#include "tr/executor/xqops/PPStringsCompare.h"
+#include "tr/executor/xqops/PPSequenceOps.h"
+#include "tr/executor/xqops/PPDocInCol.h"
+#include "tr/executor/xqops/PPError.h"
+#include "tr/executor/xqops/PPBooleanOps.h"
+#include "tr/executor/xqops/PPFilterEL.h"
+
+#ifdef SE_ENABLE_FTSEARCH
+#include "tr/executor/xqops/PPFtIndexScan.h"
+#include "tr/executor/xqops/PPFtIndexDict.h"
+#endif /* SE_ENABLE_FTSEARCH */
+
+#include "tr/executor/xqops/PPPatMatch.h"
+#include "tr/executor/xqops/PPCheckpoint.h"
+#include "tr/executor/xqops/PPFnGetProperty.h"
+#include "tr/executor/xqops/PPFnDeepEqual.h"
+#include "tr/executor/xqops/PPFnDocAvailable.h"
+#include "tr/executor/xqops/PPNodeOps.h"
+#include "tr/executor/xqops/PPQName.h"
+#include "tr/executor/xqops/PPTest.h"
+#include "tr/executor/xqops/PPNodeComparison.h"
+
 PPOpIn l2pFnAbs(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
     PPOpIn res;

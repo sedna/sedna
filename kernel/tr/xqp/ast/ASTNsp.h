@@ -16,9 +16,10 @@ class ASTNsp : public ASTNode
 public:
     std::string *name; // namespace name (NCName)
     std::string *cont; // namespace content; may be NULL; cannot be sequence-like since specs disallow this
+    bool boundToElement; // This one is a hint, that tells, that this node is used as proper element namespace.
 
 public:
-    ASTNsp(const ASTNodeCommonData &loc, std::string *name_, std::string *cont_ = NULL) : ASTNode(loc), name(name_), cont(cont_) {}
+    ASTNsp(const ASTNodeCommonData &loc, std::string *name_, std::string *cont_ = NULL) : ASTNode(loc), name(name_), cont(cont_), boundToElement(false) {}
 
     ~ASTNsp();
 

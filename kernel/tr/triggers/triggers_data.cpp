@@ -114,17 +114,13 @@ void trigger_cell_object::serialize_data(se_simplestream &stream)
     stream.write(&n, sizeof(void *));
 
     if (trigger_path) {
-        std::ostringstream trigger_path_str(std::ios::out | std::ios::binary);
-        PathExpr2lr(trigger_path, trigger_path_str);
-        stream.write_string(trigger_path_str.str().c_str());
+        stream.write_string(trigger_path->toLRString().c_str());
     } else {
         stream.write_string(NULL);
     }
 
     if (path_to_parent) {
-        std::ostringstream path_to_parent_str(std::ios::out | std::ios::binary);
-        PathExpr2lr(path_to_parent, path_to_parent_str);
-        stream.write_string(path_to_parent_str.str().c_str());
+        stream.write_string(path_to_parent->toLRString().c_str());
     } else {
         stream.write_string(NULL);
     }
@@ -137,6 +133,8 @@ void trigger_cell_object::serialize_data(se_simplestream &stream)
 
 void trigger_cell_object::deserialize_data(se_simplestream &stream)
 {
+    setDefaultSpace(catalog_space_base);
+
     trigger_title = (char *) cat_malloc(this, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, trigger_title);
     stream.read(&schemaroot, sizeof(doc_schema_node_xptr));
@@ -171,7 +169,7 @@ void trigger_cell_object::deserialize_data(se_simplestream &stream)
     stream.read_string(SSTREAM_SAVED_LENGTH, trigger_path_str);
 
     if (trigger_path_str != NULL) {
-        trigger_path = lr2PathExpr(NULL, trigger_path_str, pe_catalog_aspace);
+        trigger_path = new xpath::PathExpression(trigger_path_str, NULL);
         free(trigger_path_str);
     } else {
         trigger_path = NULL;
@@ -182,7 +180,7 @@ void trigger_cell_object::deserialize_data(se_simplestream &stream)
     stream.read_string(SSTREAM_SAVED_LENGTH, path_to_parent_str);
 
     if (path_to_parent_str != NULL) {
-        path_to_parent = lr2PathExpr(NULL, path_to_parent_str, pe_catalog_aspace);
+        path_to_parent = new xpath::PathExpression(path_to_parent_str, NULL);
         free(path_to_parent_str);
     } else {
         path_to_parent = NULL;
@@ -191,6 +189,8 @@ void trigger_cell_object::deserialize_data(se_simplestream &stream)
     innode.name = (char *) cat_malloc(this, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, innode.name);
     stream.read(&innode.type, sizeof(t_item));
+
+    popDefaultSpace();
 }
 
 void trigger_cell_object::drop()

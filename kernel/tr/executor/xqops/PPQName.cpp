@@ -90,13 +90,7 @@ void PPFnResolveQName::do_next(tuple &t)
         if (getNodeType(node) != element)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
 
-
-        char *qname = xs_QName_create(qname_tc.get_str_mem(),
-                                      node,
-                                      tuple_char_alloc,
-                                      cxt);
-
-        t.copy(tuple_cell::atomic(xs_QName, qname));
+        t.copy(tuple_cell::atomic(xsd::QName::createResolveNode(qname_tc.get_str_mem(), node, cxt)));
     }
     else
     {
@@ -198,10 +192,7 @@ void PPFnQName::do_next(tuple &t)
         child_qname.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
 
-        char * qname = xs_QName_create(uri_tc.is_eos() ? NULL : uri_tc.get_str_mem(),
-                                        qname_tc.get_str_mem(), tuple_char_alloc, cxt);
-
-        t.copy(tuple_cell::atomic(xs_QName, qname));
+        t.copy(tuple_cell::atomic(xsd::QName::createUCn(uri_tc.is_eos() ? NULL : uri_tc.get_str_mem(), qname_tc.get_str_mem())));
     }
     else
     {
@@ -286,7 +277,7 @@ void PPFnPrefixFromQName::do_next (tuple &t)
         if (!(t.is_eos()))
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:prefix-from-QName function");
 
-        const char *prefix = xs_QName_get_prefix(tc.get_str_mem());
+        const char *prefix = tc.get_xs_qname().getPrefix();
         if (prefix)
             t.copy(tuple_cell::atomic_deep(xs_NCName, prefix));
         else
@@ -376,7 +367,7 @@ void PPFnLocalNameFromQName::do_next (tuple &t)
         if (!(t.is_eos()))
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:local-name-from-QName function");
 
-        const char *local_name = xs_QName_get_local_name(tc.get_str_mem());
+        const char *local_name = tc.get_xs_qname().getLocalName();
         t.copy(tuple_cell::atomic_deep(xs_NCName, local_name));
     }
     else
@@ -460,7 +451,7 @@ void PPFnNamespaceUriFromQName::do_next (tuple &t)
         if (!(t.is_eos()))
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-from-QName function");
 
-        const char *uri = xs_QName_get_uri(tc.get_str_mem());
+        const char *uri = tc.get_xs_qname().getUri();
         if (!uri) uri = "";
 
         t.copy(tuple_cell::atomic_deep(xs_anyURI, uri));
@@ -565,8 +556,6 @@ void PPFnNamespaceUriForPrefix::do_next(tuple &t)
         CHECKP(node);
         if (getNodeType(node) != element)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
-
-
 
         std::vector<xmlns_ptr> xmlns;
         se_get_in_scope_namespaces(node, xmlns, cxt);

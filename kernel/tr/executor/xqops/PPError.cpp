@@ -9,6 +9,7 @@
 #include "tr/tr_globals.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 #include "tr/crmutils/serialization.h"
+#include "tr/executor/base/PPUtils.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// fn:error
@@ -108,9 +109,7 @@ void PPFnError::do_next (tuple &t)
     }
 
 
-    const char *err_name = err_name_tc.is_eos() ? 
-                           "FOER0000" : 
-                           xs_QName_get_local_name(err_name_tc.get_str_mem());
+    const char *err_name = err_name_tc.is_eos() ? "FOER0000" : err_name_tc.get_xs_qname().getLocalName();
     const char *err_descr = err_descr_tc.is_eos() ? NULL : err_descr_tc.get_str_mem();
 
     throw USER_EXCEPTION_FNERROR(err_name, err_descr);

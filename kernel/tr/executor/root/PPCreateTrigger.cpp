@@ -16,13 +16,14 @@
 #include "tr/auth/auc.h"
 
 using namespace std;
+using namespace xpath;
 
 PPCreateTrigger::PPCreateTrigger(dynamic_context *_cxt_,
                                  PathExprRoot _root_,
                                  trigger_event _event_,                    
                                  trigger_time _time_,
                                  trigger_granularity _gran_,
-                                 PathExpr *_trigger_path_,
+                                 PathExpression *_trigger_path_,
                                  scheme_list* _action_,
                                  PPOpIn _trigger_name_) : PPUpdate("PPCreateTrigger"),
                                                           cxt(_cxt_),
@@ -42,10 +43,10 @@ PPCreateTrigger::PPCreateTrigger(dynamic_context *_cxt_,
                                  trigger_event _event_,                    
                                  trigger_time _time_,
                                  trigger_granularity _gran_,
-                                 PathExpr *_trigger_path_,
+                                 PathExpression *_trigger_path_,
                                  scheme_list* _action_,
                                  PPOpIn _trigger_name_,
-                                 PathExpr *_path_to_parent_,
+                                 PathExpression *_path_to_parent_,
                                  inserting_node _innode_) : PPUpdate("PPCreateTrigger"),
                                                             cxt(_cxt_),
                                                             root(_root_),

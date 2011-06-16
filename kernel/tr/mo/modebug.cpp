@@ -68,7 +68,7 @@ inline bool checkNodeOuterPointers(xptr node_ptr) {
         CHECK_INVARIANT(nid_cmp_effective(test_ptr, node_ptr) == -2, ce_nid);
 
         if (test_ptr != lparent) {
-            int child_no = getSchemaNode(node_ptr)->get_node_position_in_parent();
+            int child_no = getSchemaNode(node_ptr)->getIndex();
             xptr * list;
             int child_num;
             CHECKP(test_ptr);

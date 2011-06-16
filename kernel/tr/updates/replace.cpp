@@ -16,7 +16,6 @@
 #endif
 
 #include "tr/structures/nodeutils.h"
-#include "tr/structures/textcptr.h"
 
 void replace(PPOpIn arg)
 {
