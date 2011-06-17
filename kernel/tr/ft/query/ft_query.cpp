@@ -774,8 +774,10 @@ void FtQueryProcessor::get_next_result(tuple &t)
 
 					if (!pred_rt.is_eos())
 					{
-						if (rt.is_eos() ||
-							!(pred_rt.cells[0].get_node() == rt.cells[0].get_node() || nid_cmp_effective(pred_rt.cells[0].get_node(),rt.cells[0].get_node())==-2))
+                                               //add pred_rt to results(ssr) if rt isn't pred_rt's descendant-or-self or if pred_rt's score is higher
+                                               if (rt.is_eos()
+                                                       || !(pred_rt.cells[0].get_node() == rt.cells[0].get_node() || nid_cmp_effective(pred_rt.cells[0].get_node(),rt.cells[0].get_node())==-2)
+                                                       || pred_rt.cells[1].get_xs_integer() > rt.cells[1].get_xs_integer())
 						{
 							tuple t(2);
 							t.cells[0] = pred_rt.cells[1];
