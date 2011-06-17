@@ -109,6 +109,7 @@ int ubind_tcp(USOCKET s, unsigned short port, const char * addr, sys_call_error_
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
 
     if (getaddrinfo(addr, int2c_str((int)port, buf), &hints, &hp) != 0)
     {
@@ -133,6 +134,7 @@ int uconnect_tcp(USOCKET s, unsigned short port, const char *hostname, sys_call_
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
     
     if (getaddrinfo(hostname, int2c_str((int) port, buf), &hints, &hp) != 0)
     {
