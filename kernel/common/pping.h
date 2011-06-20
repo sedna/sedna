@@ -21,8 +21,6 @@
 #endif
 
 
-#define PPING_ON
-
 #define PPING_MAX_HOSTLEN 128
 
 class pping_client

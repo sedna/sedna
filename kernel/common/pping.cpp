@@ -128,7 +128,6 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
 
 pping_client::pping_client(int _port_, int _component_, const char* _host_)
 {
-#ifdef PPING_ON
     port = _port_;
     if (_host_ && strlen(_host_) < PPING_MAX_HOSTLEN)
         strcpy(host, _host_);
@@ -150,12 +149,10 @@ pping_client::pping_client(int _port_, int _component_, const char* _host_)
 	stacktrace_fh = U_INVALID_FD;
 #endif
 #endif
-#endif
 }
 
 pping_client::pping_client(int _port_, int _component_, volatile bool* volatile _signaled_flag_, const char* _host_)
 {
-#ifdef PPING_ON
     port = _port_;
     if (_host_ && strlen(_host_) < PPING_MAX_HOSTLEN)
         strcpy(host, _host_);
@@ -177,13 +174,10 @@ pping_client::pping_client(int _port_, int _component_, volatile bool* volatile 
 	stacktrace_fh = U_INVALID_FD;
 #endif
 #endif
-#endif
 }
 
 pping_client::~pping_client()
 {
-#ifdef PPING_ON
-#endif
 }
 
 void pping_client::startup(SednaUserException& e)
@@ -204,7 +198,6 @@ void pping_client::throw_exception(SednaUserException& e, bool is_soft)
 
 void pping_client::startup(SednaUserException& e, bool is_soft)
 {
-#ifdef PPING_ON
     sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 
     if (sock == U_INVALID_SOCKET) throw USER_ENV_EXCEPTION("Failed to create socket", false);
@@ -223,12 +216,10 @@ void pping_client::startup(SednaUserException& e, bool is_soft)
     if (res != 0) throw USER_ENV_EXCEPTION("Failed to create pping client thread", false);
 
     initialized = true;
-#endif
 }
 
 void pping_client::shutdown()
 {
-#ifdef PPING_ON
     if (!initialized) return;
 
     stop_keep_alive = true;
@@ -251,18 +242,15 @@ void pping_client::shutdown()
         throw USER_ENV_EXCEPTION("Failed to release semaphore", false);
 
     initialized = false;
-#endif
 }
 
 void pping_client::start_timer(int _timeout_)
 {
-#ifdef PPING_ON
     
 	timeout = _timeout_;
 	reset_flag = true;
     if(signaled_flag) *signaled_flag = false;
 
-#endif    
 }
 
 void pping_client::stop_timer()
@@ -595,7 +583,6 @@ U_THREAD_PROC(pping_server_lstn_thread_proc_st, arg)
 
 pping_server::pping_server(int _port_, int _component_)
 {
-#ifdef PPING_ON
     port = _port_;
     component = _component_;
     close_lstn_thread = false;
@@ -607,18 +594,14 @@ pping_server::pping_server(int _port_, int _component_)
         thread_table[i].is_running = true;
         thread_table[i].is_empty = true;
     }
-#endif
 }
 
 pping_server::~pping_server()
 {
-#ifdef PPING_ON
-#endif
 }
 
 void pping_server::startup()
 {
-#ifdef PPING_ON
     sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
     if (sock == U_INVALID_SOCKET) throw USER_ENV_EXCEPTION("Failed to create socket", false);
     
@@ -631,12 +614,10 @@ void pping_server::startup()
     uResVal res = uCreateThread(pping_server_lstn_thread_proc_st, this, &server_lstn_thread_handle, PPING_STACK_SIZE, NULL, __sys_call_error);
     if (res != 0) throw USER_ENV_EXCEPTION("Failed to create pping server thread", false);
     initialized = true;
-#endif
 }
 
 void pping_server::shutdown()
 {
-#ifdef PPING_ON
     if (!initialized) return;
 
     close_lstn_thread = true;
@@ -662,6 +643,5 @@ void pping_server::shutdown()
 
     if (uCloseThreadHandle(server_lstn_thread_handle, NULL) != 0)
         throw USER_EXCEPTION2(SE4063, "pping server_lstn_thread");
-#endif
 }
 
