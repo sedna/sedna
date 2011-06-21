@@ -129,10 +129,10 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
 pping_client::pping_client(int _port_, int _component_, const char* _host_)
 {
     port = _port_;
-    if (_host_ && strlen(_host_) < PPING_MAX_HOSTLEN)
+    if (_host_ && strlen(_host_) < U_MAX_HOSTNAME)
         strcpy(host, _host_);
     else
-        strcpy(host, "127.0.0.1");
+        strcpy(host, "localhost");
 	component = _component_;
 	
     stop_keep_alive = false;
@@ -154,10 +154,10 @@ pping_client::pping_client(int _port_, int _component_, const char* _host_)
 pping_client::pping_client(int _port_, int _component_, volatile bool* volatile _signaled_flag_, const char* _host_)
 {
     port = _port_;
-    if (_host_ && strlen(_host_) < PPING_MAX_HOSTLEN)
+    if (_host_ && strlen(_host_) < U_MAX_HOSTNAME)
         strcpy(host, _host_);
     else
-        strcpy(host, "127.0.0.1");
+        strcpy(host, "localhost");
 	component = _component_;
 	
     stop_keep_alive = false;
@@ -381,95 +381,6 @@ sys_failure:
 
     return 0;
 }
-
-/* Multi threaded pping server version.
- * It's obsolete now. Use pping_server_lstn_thread_proc_st 
- * instead.
- */
-U_THREAD_PROC(pping_server_lstn_thread_proc_mt, arg)
-{
-    if (uThreadBlockAllSignals(NULL) != 0)
-        d_printf1("Failed to block signals for SSMMsg_server_proc");
-
-    pping_server *pps = (pping_server*)arg;
-    int i = 0;
-
-    while (true)
-    {
-        pping_serv_arg *pps_arg = se_new pping_serv_arg;
-           
-        //accept a call from a client
-        pps_arg->pps = pps;
-        pps_arg->id = -1;
-        pps_arg->sock = uaccept(pps->sock, NULL);
-
-        if (pps_arg->sock == U_INVALID_SOCKET || pps->close_lstn_thread) 
-        {
-            if (pps->close_lstn_thread) 
-            {
-                for (i = 0; i < PPING_SERVER_THREAD_TABLE_SIZE; ++i)
-                {
-                    if (!(pps->thread_table[i].is_empty))
-                    {
-                        if (uThreadJoin(pps->thread_table[i].handle, NULL) != 0)
-                            goto sys_failure;
-                        if (uCloseThreadHandle(pps->thread_table[i].handle, NULL) != 0)
-                            goto sys_failure;
-
-                        pps->thread_table[i].handle = (UTHANDLE)0;
-                        pps->thread_table[i].is_running = true;
-                        pps->thread_table[i].is_empty = true;
-                    }
-                }
-
-                return 0;
-            }
-            else
-				goto sys_failure;
-        }
-
-        if (uNotInheritDescriptor(UHANDLE(pps_arg->sock), __sys_call_error) != 0) throw USER_EXCEPTION(SE4080);
-
-        for (i = 0; i < PPING_SERVER_THREAD_TABLE_SIZE; ++i)
-        {
-            if (!(pps->thread_table[i].is_empty) &&
-                !(pps->thread_table[i].is_running))
-            {
-                if (uThreadJoin(pps->thread_table[i].handle, NULL) != 0)
-                    goto sys_failure;
-                if (uCloseThreadHandle(pps->thread_table[i].handle, NULL) != 0)
-                    goto sys_failure;
-
-                pps->thread_table[i].handle = (UTHANDLE)0;
-                pps->thread_table[i].is_running = true;
-                pps->thread_table[i].is_empty = true;
-            }
-
-            if (pps_arg->id == -1 && pps->thread_table[i].is_empty)
-                pps_arg->id = i;
-        }
-
-        pps->thread_table[pps_arg->id].is_running = true;
-        pps->thread_table[pps_arg->id].is_empty = false;
-        uResVal res = uCreateThread(pping_server_cli_thread_proc, 
-                                    pps_arg, 
-                                    &(pps->thread_table[pps_arg->id].handle), 
-                                    PPING_STACK_SIZE,
-                                    NULL,
-                                    NULL);
-        if (res != 0)
-		{
-			goto sys_failure;
-		}
-    }
-    return 0;
-
-sys_failure:
-    sedna_soft_fault("Malfunction in SEDNA GOVERNOR", pps->component);
-
-    return 0;
-}
-
 
 /* Single threaded version of pping server.
  * Uses select() to create connections and serve

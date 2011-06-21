@@ -21,13 +21,11 @@
 #endif
 
 
-#define PPING_MAX_HOSTLEN 128
-
 class pping_client
 {
 private:
     int port;
-    char host[PPING_MAX_HOSTLEN];
+    char host[U_MAX_HOSTNAME];
     int component;
     USOCKET sock;
     bool stop_keep_alive;
@@ -108,7 +106,6 @@ public:
     void shutdown();
 
     friend U_THREAD_PROC(pping_server_cli_thread_proc, arg);
-    friend U_THREAD_PROC(pping_server_lstn_thread_proc_mt, arg);
     friend U_THREAD_PROC(pping_server_lstn_thread_proc_st, arg);
     friend int client_exception_handler(USOCKET sock, const pping_server *pps);
 };
