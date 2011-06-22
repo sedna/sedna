@@ -76,18 +76,9 @@ public:
 };
 
 
-#define PPING_SERVER_THREAD_TABLE_SIZE		(2 * (MAX_SESSIONS_NUMBER + MAX_DBS_NUMBER))
-
-
 class pping_server
 {
 public:
-    struct thread_table_t
-    {
-        UTHANDLE handle;
-        bool is_running;
-        bool is_empty;
-    };
 
 private:
     int port;
@@ -96,7 +87,6 @@ private:
     bool initialized;
     UTHANDLE server_lstn_thread_handle;
     volatile bool close_lstn_thread;
-    thread_table_t thread_table[PPING_SERVER_THREAD_TABLE_SIZE];
 
 public:
     pping_server(int _port_, int _component_);

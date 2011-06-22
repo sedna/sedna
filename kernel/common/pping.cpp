@@ -293,7 +293,6 @@ struct pping_serv_arg
 {
     pping_server *pps;
     USOCKET sock;
-    int id; // thread_table id
 };
 
 inline int
@@ -351,7 +350,6 @@ U_THREAD_PROC(pping_server_cli_thread_proc, arg)
 
     pping_server *pps = ((pping_serv_arg*)arg)->pps;
     USOCKET sock = ((pping_serv_arg*)arg)->sock;
-    int id = ((pping_serv_arg*)arg)->id;
     int component = ((pping_serv_arg*)arg)->pps->component;
     delete ((pping_serv_arg*)arg);
 
@@ -373,7 +371,6 @@ U_THREAD_PROC(pping_server_cli_thread_proc, arg)
     //d_printf1("pping_server's client is closed\n");
     if (uclose_socket(sock, NULL) == U_SOCKET_ERROR) goto sys_failure;
 
-    pps->thread_table[id].is_running = false;
     return 0;
 
 sys_failure:
@@ -498,13 +495,6 @@ pping_server::pping_server(int _port_, int _component_)
     component = _component_;
     close_lstn_thread = false;
     initialized = false;
-
-    for (int i = 0; i < PPING_SERVER_THREAD_TABLE_SIZE; ++i)
-    {
-        thread_table[i].handle = (UTHANDLE)0;
-        thread_table[i].is_running = true;
-        thread_table[i].is_empty = true;
-    }
 }
 
 pping_server::~pping_server()
