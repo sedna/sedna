@@ -14,6 +14,7 @@
 #include "common/xptr.h"
 
 #include "tr/structures/xmlns.h"
+#include "tr/executor/por2qep/scheme_tree.h"
 
 class dynamic_context;
 
@@ -66,31 +67,28 @@ namespace xsd {
 
 typedef counted_ptr<char, de_free<char> > counted_cstr;
 
+/* Frees internal strings for storing localnames */
+void clearQNameCache();
+
 class Name {
   private:
-    bool ownsName;
     const char * name;
-
-    void release() { if (ownsName && name != NULL) { free(const_cast<char*>(name)); }; }
   public:
-    Name() : ownsName(false), name(NULL) {};
-    ~Name() { release(); }
+    Name() : name(NULL) {};
 
     /* deserializes name */
-    Name(const char * value) : ownsName(false), name(value) { };
-    Name(const Name & from) : ownsName(false) { this->name = from.name; };
+    Name(const char * value) : name(value) { };
+    Name(const Name & from) { this->name = from.name; };
 
     Name & operator=(const Name & to) {
-        release();
         this->name = to.name;
-        this->ownsName = false;
         return *this;
     };
 
     void toLR(std::ostream& os) const;
+    std::string toLRString() const;
     std::string toString() const;
     const char * serialize(void * parent);
-    void own();
 
     inline const char * getValue() const { return name; };
     inline bool valid() const { return name != NULL; };
@@ -122,22 +120,22 @@ class AnyURI : public Name {
 class QName {
   private:
     xmlns_ptr ns;
-    counted_cstr localName;
+    const char * localName; /* This always should be internal saved string, we need not to free it or allocate it. */
 
     QName(xmlns_ptr ns, const char * localName);
     QName(xmlns_ptr ns, const char * localName, size_t len);
   public:
     QName(); // invalid!
-    ~QName() {};
-    QName(const QName & from) { this->ns = from.ns; this->localName = from.localName; }
+    QName(const QName & from);
 
     void toLR(std::ostream& os) const;
+    std::string toLRString() const;
 
     /* Serializes qname, allocates memory cat_malloc */
     const char * serialize(void * parent) const;
 
     char * serializeTo(char * tmp) const;
-    size_t getLen() const { return strlen(localName.get()) + 2 * sizeof(uintptr_t) + 1; };
+    size_t getLen() const { return strlen(localName) + 2 * sizeof(uintptr_t) + 1; };
 
     std::string getColonizedName() const;
 
@@ -145,16 +143,17 @@ class QName {
     static void toLR(std::ostream& os, const AnyURI uri, const NCName prefix, const NCName local);
 
     inline xmlns_ptr getXmlNs() const { return ns; };
-    inline const char * getUri() const { return ns == NULL_XMLNS ? "" : ns->get_uri(); };
+    inline const char * getUri() const { return ns == NULL_XMLNS ? NULL : ns->get_uri(); };
     inline const char * getPrefix() const { return ns == NULL_XMLNS ? "" : ns->get_prefix(); };
-    inline const char * getLocalName() const { return localName.get(); };
+    inline const char * getLocalName() const { return localName; };
 
     inline bool emptyUri() const { return ns == NULL_XMLNS || ns->empty_uri(); };
 
-    inline bool valid() const { return localName.get() != NULL; };
+    inline bool valid() const { return localName != NULL; };
 
     inline bool equals(const QName & to) const {
-        return same_xmlns_uri(ns, to.ns) && (strcmpex(localName.get(), to.localName.get()) == 0);
+        /* We can compare just pointers to strings since they are internalized */
+        return same_xmlns_uri(ns, to.ns) && (localName == to.localName);
     };
 
     /* operators are overloaded to store class in set */
@@ -191,12 +190,14 @@ class QName {
 
         U_ASSERT(valid() && against.valid()); // to make sure localnames are not NULL
 
-        cmp = strcmp(localName.get(), against.localName.get());
+        cmp = strcmp(localName, against.localName);
 
         return cmp < 0;
     };
 
     static QName deserialize(const char* serializedForm);
+
+    static QName fromLR(scheme_list* lst);
 
     static QName createNsN(xmlns_ptr ns, const char * local, bool quietly = false);
     static QName createNsCn(xmlns_ptr ns, const char * prefixAndLocal, bool quietly = false);

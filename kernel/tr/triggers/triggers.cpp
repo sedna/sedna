@@ -284,7 +284,7 @@ void apply_after_replace_triggers(xptr new_node, xptr old_node, xptr where_var, 
 void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, bool target_seq_direct, xptr_sequence* upd_seq, bool upd_seq_direct)
 {
     t_scmnodes_set extended_nodes, extender_nodes;
-    t_scmnodes_const matched_nodes;
+    t_scmnodes matched_nodes;
     schema_nodes_triggers_map statement_triggers;
     schema_nodes_triggers_map::iterator statement_triggers_iter;
 	t_triggers_set::iterator trigers_iter;
@@ -307,7 +307,7 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
             node = *it1;
         else
             node = indirectionDereferenceCP(*it1);
-		CHECKP(node);
+        CHECKP(node);
         extended_nodes.insert(getSchemaPointer(node));
         it1++;
     }
@@ -319,29 +319,35 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
             node = *it2;
         else
             node = indirectionDereferenceCP(*it2);
-		CHECKP(node);
+        CHECKP(node);
         extender_nodes.insert(getSchemaPointer(node));
         it2++;
     }
 
     //3. finding out triggers and execute their action
     get_statement_triggers(&statement_triggers, TRIGGER_INSERT_EVENT, TRIGGER_BEFORE);
-    for(statement_triggers_iter=statement_triggers.begin();statement_triggers_iter!=statement_triggers.end(); statement_triggers_iter++)
+    for (statement_triggers_iter=statement_triggers.begin();statement_triggers_iter!=statement_triggers.end(); statement_triggers_iter++)
     {
-        for(trigers_iter=statement_triggers_iter->second.begin();trigers_iter!=statement_triggers_iter->second.end();trigers_iter++)
+        for (trigers_iter=statement_triggers_iter->second.begin();trigers_iter!=statement_triggers_iter->second.end();trigers_iter++)
         {
             trigger_cell_cptr trc = *trigers_iter;
 
-	   	    matched_nodes = execute_abs_path_expr((const schema_node_xptr)(statement_triggers_iter->first), trc->trigger_path, &extended_nodes, &extender_nodes);
-            for(std::vector<schema_node_xptr>::size_type i=0; i < matched_nodes.size(); i++)
-		    if(hasAncestorInSet((schema_node_xptr)(matched_nodes.at(i)),&extender_nodes))
-            	    //4. check if extender nodes has data of the type schema_node
-                    for(it2=upd_seq->begin(); it2!=upd_seq->end(); it2++)
-			if(getFirstDescandantBySchema(indirectionDereferenceCP(*it2), (schema_node_xptr)(matched_nodes.at(i)))!=XNULL)
+            executeAbsPathExpression((const schema_node_xptr)(statement_triggers_iter->first), *trc->trigger_path, &matched_nodes, &extended_nodes, &extender_nodes);
+            for (std::vector<schema_node_xptr>::size_type i=0; i < matched_nodes.size(); i++)
+            {
+                if (hasAncestorInSet((schema_node_xptr)(matched_nodes.at(i)),&extender_nodes))
+                {
+                    //4. check if extender nodes has data of the type schema_node
+                    for (it2=upd_seq->begin(); it2!=upd_seq->end(); it2++)
+                    {
+                        if(getFirstDescandantBySchema(indirectionDereferenceCP(*it2), (schema_node_xptr)(matched_nodes.at(i)))!=XNULL)
                         {
                             trc->execute_trigger_action(XNULL, XNULL, XNULL);
                             break;
                         }
+                    }
+                }
+            }
         }
     }
 }
@@ -633,7 +639,8 @@ trigger_cell_xptr create_trigger (enum trigger_time tr_time,
     hl_logical_log_trigger(tr_time, tr_event, trigger_path, tr_gran, trc->trigger_action, trc->innode, path_to_parent, trigger_title, doc_name, is_doc, true);
 
     //II. Execute abs path (object_path) on the desriptive schema
-    t_scmnodes sobj = execute_abs_path_expr(schemaroot, trigger_path, NULL, NULL);
+    t_scmnodes sobj;
+    executeAbsPathExpression(schemaroot, *trigger_path, &sobj, NULL, NULL);
 
     //III. For each schema node found (sn_obj)
     std::vector<xptr> start_nodes;

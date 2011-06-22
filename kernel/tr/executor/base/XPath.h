@@ -31,7 +31,7 @@ enum Axis
     axis_attribute,
     axis_self,
     axis_descendant_or_self,
-    axis_descendant_attr,
+    axis_descendant_attr, /* Depricated, should not be used. There is no such axis in XQuery. */
     axis_parent,
 
     __axis_last,
@@ -70,21 +70,26 @@ struct NodeTest {
     xpath::Axis axis;
     xpath::NodeTestType type;
 
-    const char * uri;
-    const char * prefix;
-    const char * local;
+  private:
+    const char * uri; /* for wildcard prefix */
+    const char * local; /* for wildcard localname or PI name */
+    const char * qname; /* for full qname */
 
     void set(scheme_list * path_lst);
   public:
-    NodeTest() : axis(axis_any), type(node_test_invalid), uri(NULL), prefix(NULL), local(NULL) {};
+    NodeTest() : axis(axis_any), type(node_test_invalid), uri(NULL), local(NULL), qname(NULL) {};
 
-    NodeTest(xpath::Axis _axis, xpath::NodeTestType _type) : axis(_axis), type(_type), uri(NULL), prefix(NULL), local(NULL) {};
-    NodeTest(scheme_list * path_lst);
+    NodeTest(xpath::Axis _axis, xpath::NodeTestType _type) : axis(_axis), type(_type), uri(NULL), local(NULL), qname(NULL) {};
+    NodeTest(scheme_list * path_lst) : uri(NULL), local(NULL), qname(NULL) { set(path_lst); }
     NodeTest(const char * str);
-    NodeTest(schema_node_cptr node);
+
+    xsd::QName getQName() const { return xsd::QName::deserialize(qname); };
+    xsd::AnyURI getUri() const { return xsd::AnyURI(uri); };
+    xsd::NCName getLocal() const  { return xsd::NCName(local); };
+    bool isAnyQName() const { return qname == NULL; }
 
     std::string toString() const;
-    void toLR(std::ostream& str) const;
+    std::ostream& toStream(std::ostream& str) const;
 };
 
 struct NodeTestUnion {
@@ -92,7 +97,7 @@ struct NodeTestUnion {
     xpath::NodeTest * nodes;
 
     std::string toString() const;
-    void toLR(std::ostream& str) const;
+    std::ostream& toStream(std::ostream& str) const;
 };
 
 struct PathExpression {
@@ -114,8 +119,8 @@ struct PathExpression {
     void operator delete(void * mem);
 
     std::string toString() const;
-    void toLR(std::ostream& str) const;
-    std::string toLRString() const;
+    std::string toLRString() const { return toString(); };
+    std::ostream& toStream(std::ostream& str) const;
 };
 
 

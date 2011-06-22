@@ -684,65 +684,6 @@ void col_schema_node_object::drop()
     doc_schema_node_object::drop();
 }
 
-
-/*comparison function for schema nodes*/
-
-bool comp_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
-{
-    return (scm->type & type) > 0;
-}
-
-bool comp_qname_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
-{
-    return ((scm->type & type) > 0) &&
-      (strcmpex(scm->name, name) == 0) &&
-      same_xmlns_uri(scm->get_xmlns(), uri);
-}
-
-bool comp_local_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
-{
-    return ((scm->type & type) > 0) &&
-      (strcmpex(scm->name, name) == 0);
-}
-
-bool comp_uri_type(schema_node_cptr scm,const char* uri,const char* name, t_item type)
-{
-    return ((scm->type & type) > 0) &&
-      same_xmlns_uri(scm->get_xmlns(), uri);
-}
-
-void getSchemeChildren(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result)
-{
-    sc_ref_item* sc=scm->children->first;
-    while (sc!=NULL)
-    {
-        if (cfun(sc->object.snode, uri, name, type)) {
-            result.push_back(sc->object.snode);
-        }
-        sc=sc->next;
-    }
-}
-void getSchemeDescendantsOrSelf(schema_node_cptr scm,const char* uri,const char* name, t_item type, comp_schema cfun, std::vector<schema_node_xptr> &result)
-{
-    if (cfun(scm, uri, name, type)) {
-        result.push_back(scm.ptr());
-    }
-    getSchemeDescendants(scm,uri,name,type,cfun,result);
-
-}
-
-void getSchemeDescendants(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result)
-{
-    sc_ref_item* sc = scm->children->first;
-    while (sc != NULL) {
-        if (cfun(sc->object.snode, uri, name, type)) {
-            result.push_back(sc->object.snode);
-        }
-        getSchemeDescendants(sc->object.snode,uri,name,type,cfun,result);
-        sc=sc->next;
-    }
-}
-
 bool hasAncestorInSet(schema_node_cptr scm_node, std::set<schema_node_xptr>* scm_nodes_set )
 {
     while((scm_node->type != document) && (scm_node.found())) {

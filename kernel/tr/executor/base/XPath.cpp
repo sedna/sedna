@@ -144,7 +144,11 @@ const char * nodeTypeToLR(xpath::NodeTestType node) {
 
 void NodeTest::set(scheme_list* lst)
 {
-    if (lst->size() != 3 || lst->at(0).type != SCM_SYMBOL) {
+    // CHECK Node test: (SYMBOL, SYMBOL, *)
+
+    if (lst->size() != 3 ||
+          lst->at(0).type != SCM_SYMBOL ||
+          lst->at(1).type != SCM_SYMBOL ) {
         throw USER_EXCEPTION2(SE1004, "Path expression");
     }
 
@@ -154,16 +158,11 @@ void NodeTest::set(scheme_list* lst)
         throw USER_EXCEPTION2(SE1004, "Path expression");
     }
 
-    if (lst->at(1).type != SCM_SYMBOL)
-        throw USER_EXCEPTION2(SE1004, "Path expression");
-
     type = nodeTypeFromLR(lst->at(1).internal.symb);
 
     if (type == node_test_invalid) {
         throw USER_EXCEPTION2(SE1004, "Path expression");
     }
-
-    scheme_list * qname_lst = NULL;
 
     switch(type) {
         case node_test_wildcard_ncname_star: {
@@ -185,64 +184,49 @@ void NodeTest::set(scheme_list* lst)
         case node_test_document:
         case node_test_attribute:
         case node_test_element: {
-            if (lst->at(2).type != SCM_LIST || (lst->at(2).internal.list->size() != 3 && lst->at(2).internal.list->size() != 0)) {
+            if (lst->at(2).type != SCM_LIST && lst->at(2).internal.list->size() != 0) {
                 throw USER_EXCEPTION2(SE1004, "Path expression");
             }
 
             if (lst->at(2).internal.list->size() != 0) {
-                qname_lst = lst->at(2).internal.list;
+                qname = xsd::QName::fromLR(lst->at(2).internal.list).serialize(default_context_space);
+            } else {
+                qname = NULL;
             }
         } break;
 
         case node_test_qname:
         {
-            if (lst->size() < 3 || lst->at(2).type != SCM_LIST || lst->at(2).internal.list->size() != 3) {
+            if (lst->at(2).type != SCM_LIST) {
                 throw USER_EXCEPTION2(SE1004, "node_test_qname");
             }
 
-            qname_lst = lst->at(2).internal.list;
+            qname = xsd::QName::fromLR(lst->at(2).internal.list).serialize(default_context_space);
         } break;
 
         case node_test_pi:
         {
-            if (lst->at(2).type == SCM_LIST && lst->at(2).internal.list->size() == 0) {
-                // local = NULL
-            } else if (lst->at(2).type == SCM_STRING) {
-                local = xsd::NCName::check(lst->at(2).internal.str).serialize(default_context_space);
+            if (lst->at(2).type == SCM_STRING) {
+                throw USER_EXCEPTION2(SE1004, "Bad PI node");
+            }
+
+            local = lst->at(2).internal.str;
+
+            if (*local != '\0') {
+                local = xsd::NCName::check(local).serialize(default_context_space);
             } else {
-                throw USER_EXCEPTION2(SE1004, "110");
+                local = NULL;
             }
         } break;
 
         default: break;
     }
-
-    if (qname_lst != NULL) {
-        if (qname_lst->size() != 3 || lst->at(0).type != SCM_STRING || lst->at(1).type != SCM_STRING || lst->at(2).type != SCM_STRING) {
-            throw USER_EXCEPTION2(SE1004, "Path expression");
-        }
-
-        if (*(qname_lst->at(0).internal.str)) {
-            uri = xsd::AnyURI::check(qname_lst->at(0).internal.str).serialize(default_context_space);
-        }
-
-        local  = xsd::NCName::check(qname_lst->at(1).internal.str).serialize(default_context_space);
-
-        if (*(qname_lst->at(2).internal.str)) {
-            prefix = xsd::NCName::check(qname_lst->at(2).internal.str).serialize(default_context_space);
-        }
-    }
 }
 
-
-NodeTest::NodeTest(scheme_list* lst) {
-    set(lst);
-}
-
-NodeTest::NodeTest(const char* str)
+NodeTest::NodeTest(const char* str) : uri(NULL), local(NULL), qname(NULL)
 {
     scoped_ptr<scheme_list> lst = make_tree_from_scheme_list(str);
-    set(lst.operator->());
+    set(lst.get());
 }
 
 void PathExpression::set(scheme_list* path_lst, dynamic_context* cxt)
@@ -281,6 +265,10 @@ PathExpression::PathExpression(scheme_list* path_lst, dynamic_context* cxt) {
 
 string NodeTest::toString() const
 {
+    ostringstream oss(std::ios::out | std::ios::binary);
+    toStream(oss);
+    return oss.str();
+/*
     string result;
 
     if (axis != axis_any) {
@@ -318,9 +306,10 @@ string NodeTest::toString() const
     }
 
     return result;
+*/
 }
 
-void NodeTest::toLR(ostream& str) const
+ostream& NodeTest::toStream(ostream& str) const
 {
     str << "(";
     str << axisTypeToLR(axis) << " ";
@@ -328,24 +317,20 @@ void NodeTest::toLR(ostream& str) const
 
     switch (type) {
       case node_test_pi:
-        if (xsd::NCName(local).valid()) {
-            str << " ()";
-        } else {
-            xsd::NCName(local).toLR(str);
-        } break;
+        xsd::NCName(local).toLR(str);
       case node_test_comment :
       case node_test_text :
       case node_test_node :
       case node_test_wildcard_star :
-        str << "()";
+        str << " () ";
         break;
       case node_test_element :
       case node_test_attribute :
       case node_test_document :
       case node_test_qname :
-        str << "("; xsd::QName::toLR(str, uri, prefix, local); str << ")"; break;
+        str << "("; xsd::QName::deserialize(qname).toLR(str); str << ")"; break;
       case node_test_wildcard_ncname_star :
-        xsd::NCName(prefix).toLR(str); break;
+        xsd::AnyURI(uri).toLR(str); break;
       case node_test_wildcard_star_ncname :
         xsd::NCName(local).toLR(str); break;
       default :
@@ -353,75 +338,62 @@ void NodeTest::toLR(ostream& str) const
     }
 
     str << ")";
+
+    return str;
 }
 
 string NodeTestUnion::toString() const
 {
-    if (size == 1) {
-        return nodes[0].toString();
-    } else {
-        std::string res = nodes[0].toString();
-
-        for (size_t i = 1; i < size; i++) {
-            res += " | " + nodes[i].toString();
-        }
-
-        return "(" + res + ")";
-    }
+    ostringstream oss(std::ios::out | std::ios::binary);
+    toStream(oss);
+    return oss.str();
 }
 
-void NodeTestUnion::toLR(ostream& str) const
+ostream& NodeTestUnion::toStream(ostream& str) const
 {
     str << "(";
 
-    nodes[0].toLR(str);
+    U_ASSERT((size > 0));
+
+    nodes[0].toStream(str);
     for (size_t i = 1; i < size; i++) {
         str << " ";
-        nodes[i].toLR(str);
+        nodes[i].toStream(str);
     }
 
     str << ")";
+
+    return str;
 }
 
 string PathExpression::toString() const
 {
-    string res;
-
-    if (size() > 0) {
-        res += nodes[0].toString();
-        for (size_t i = 1; i < size(); i++) {
-            res += "/" + nodes[i].toString();
-        }
-    }
-    return res;
-}
-
-void PathExpression::toLR(ostream& str) const
-{
-    str << "(";
-    if (size() > 0) {
-        nodes[0].toLR(str);
-        for (size_t i = 1; i < size(); i++) {
-            str << " ";
-            nodes[i].toLR(str);
-        }
-    }
-    str << ")";
-}
-
-string PathExpression::toLRString() const
-{
     ostringstream oss(std::ios::out | std::ios::binary);
-    toLR(oss);
+    toStream(oss);
     return oss.str();
 }
 
+std::ostream& PathExpression::toStream(ostream& str) const
+{
+    str << "(";
 
+    if (size() > 0) {
+        nodes[0].toStream(str);
+        for (size_t i = 1; i < size(); i++) {
+            str << " ";
+            nodes[i].toStream(str);
+        }
+    }
+
+    str << ")";
+
+    return str;
+}
 
 PathExpression::PathExpression(const char* str, dynamic_context* cxt)
 {
     scoped_ptr<scheme_list> lst = make_tree_from_scheme_list(str);
-    set(lst.operator->(), cxt);
+    set(lst.get(), cxt);
 }
 
 void* PathExpression::operator new(size_t size)

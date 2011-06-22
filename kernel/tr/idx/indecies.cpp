@@ -166,19 +166,22 @@ catalog_object_header* index_cell_object::create(index_descriptor_t* index_dsc)
 void index_cell_object::on_schema_node_created(schema_node_cptr snode) const
 {
     t_scmnodes res;
-    t_scmnodes objs = execute_abs_path_expr(snode->root, object);
+    t_scmnodes objs;
+    executeAbsPathExpression(snode->root, *object, &objs, NULL, NULL);
 
     const xpath::NodeTest node_test_nodes_deep(xpath::axis_descendant, xpath::node_test_wildcard_star);
 
     FOR_EACH(i, objs, t_scmnodes) {
         if ((*i)->is_ancestor_or_self(snode)) {
-            t_scmnodes keys = execute_abs_path_expr(*i, key);
+            t_scmnodes keys;
+            executeAbsPathExpression(*i, *key, &keys, NULL, NULL);
             FOR_EACH(j, keys, t_scmnodes) {
                 if (snode.ptr() == *j) {
                     snode->index_list->add(index_ref(this->p_object, *i, *j));
                     break;
                 }
-                t_scmnodes keydeps = execute_node_test(*i, node_test_nodes_deep);
+                t_scmnodes keydeps;
+                executeNodeTest(*i, node_test_nodes_deep, &keydeps, NULL, NULL);
                 FOR_EACH(k, keydeps, t_scmnodes) {
                     if (snode.ptr() == *j) {
                         snode->index_list->add(index_ref(this->p_object, *i, *j));
@@ -312,13 +315,15 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
 
     //II. Execute abs path (object_path) on the desriptive schema
 
-    t_scmnodes sobj = execute_abs_path_expr(root_node.ptr(), index_dsc->object);
+    t_scmnodes sobj;
+    executeAbsPathExpression(root_node.ptr(), *index_dsc->object, &sobj, NULL, NULL);
 
     //III. For each schema node found (sn_obj)
     for (unsigned int i = 0; i < sobj.size(); i++)
     {
         //IV. Execute path expression (key_path) on the descriptive schema
-        t_scmnodes skey = execute_abs_path_expr(sobj[i], index_dsc->key);
+        t_scmnodes skey;
+        executeAbsPathExpression(sobj[i], *index_dsc->key, &skey, NULL, NULL);
         //V. For each schema node found (sn_key)
         for (unsigned int j = 0; j < skey.size(); j++)
         {
@@ -326,7 +331,8 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
             //VI. Add pair <&ind,&sn_obj> into schema node (the special list is used)
             skey[j].modify()->index_list->add(index_ref(idc.ptr(), sobj[i], skey[j]));
 
-            t_scmnodes skeydep = execute_node_test(skey[j], node_test_nodes_deep);
+            t_scmnodes skeydep;
+            executeNodeTest(skey[j], node_test_nodes_deep, &skeydep, NULL, NULL);
             for (t_scmnodes::iterator k = skeydep.begin(); k != skeydep.end(); k++) {
                 (*k)->index_list->add(index_ref(idc.ptr(), sobj[i], skey[j]));
             }

@@ -2208,12 +2208,12 @@ namespace sedna
         }
         else
         {
-            off_this.test_data = "(\"" + ((n.uri) ? *n.uri : "") + "\"";
-            off_this.test_data += " \"" + *n.local + "\" \"" + *n.pref + "\")";
+            xsd::QName qname = xsd::QName::createUPL(n.uri->c_str(), n.pref->c_str(), n.local->c_str());
+            off_this.test_data = qname.toLRString();
             off_this.test_type = "qname";
 
             off_this.st.type.info.ea.nne = st_nne_name;
-            off_this.st.type.info.ea.qname = xsd::QName::createUL(n.uri->c_str(), n.local->c_str()).serialize(local_space_base);
+            off_this.st.type.info.ea.qname = qname.serialize(local_space_base);
         }
 
         setOffer(off_this);
@@ -2561,8 +2561,9 @@ namespace sedna
         }
         else
         {
-            off_this.test_data = "\"" + *n.test + "\"";
-            off_this.st.type.info.ncname = xsd::NCName::check(n.test->c_str()).serialize(local_space_base);
+            xsd::NCName name = xsd::NCName::check(n.test->c_str());
+            off_this.test_data = name.toString();
+            off_this.st.type.info.ncname = name.serialize(local_space_base);
         }
 
         off_this.test_type = "processing-instruction";
@@ -3478,7 +3479,7 @@ namespace sedna
 
     std::string lr2por::getlrForAxisStep(const ASTAxisStep &s)
     {
-        std::string res = "((";
+        std::string res = "(";
         childOffer off;
 
         switch (s.axis) {
@@ -3508,7 +3509,7 @@ namespace sedna
         res += off.test_type;
         res += " ";
         res += off.test_data;
-        res += "))";
+        res += ")";
 
         return res;
     }

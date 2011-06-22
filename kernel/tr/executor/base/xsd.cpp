@@ -4,6 +4,7 @@
  */
 
 #include "common/sedna.h"
+#include "common/internstr.h"
 
 #include "tr/executor/base/xsd.h"
 #include "tr/structures/schema.h"
@@ -12,8 +13,17 @@
 #include "tr/structures/nodeinterface.h"
 #include "tr/executor/base/dm_accessors.h"
 
-
 using namespace xsd;
+
+/* Storage of strings, used as QName
+  WARNING: name storage's main goal is to save char array even after qname is destroyed
+*/
+
+sedna::StringStorage nameStorage(128);
+
+void xsd::clearQNameCache() {
+    nameStorage.clear();
+}
 
 void Name::toLR(std::ostream& os) const
 {
@@ -31,12 +41,11 @@ std::string Name::toString() const
     }
 }
 
-void Name::own() {
-    if (!ownsName && name != NULL) {
-        char * newname = (char *) malloc(strlen(name) + 1);
-        strcpy(newname, name);
-        name = newname;
-    }
+std::string Name::toLRString() const
+{
+    std::ostringstream oss(std::ios::out | std::ios::binary);
+    toLR(oss);
+    return oss.str();
 }
 
 const char * Name::serialize(void * parent)
@@ -47,7 +56,7 @@ const char * Name::serialize(void * parent)
 NCName NCName::check(const char* name, bool quietly)
 {
     if (check_constraints_for_xs_NCName(name)) {
-        return NCName(name);
+        return NCName(materialize(name));
     } else if (!quietly) {
         throw XQUERY_EXCEPTION(XQDY0074);
     } else {
@@ -57,50 +66,73 @@ NCName NCName::check(const char* name, bool quietly)
 
 AnyURI AnyURI::check(const char* uri, bool quietly)
 {
-    return AnyURI(uri);
+    return AnyURI(materialize(uri));
 }
 
 QName::QName() : ns(NULL_XMLNS), localName(NULL) { }
 
+QName::QName(const xsd::QName& from) : ns(from.ns)
+{
+    this->localName = from.localName;
+}
+
 QName::QName(xmlns_ptr ns, const char* aLocalName) : ns(ns), localName(NULL)
 {
-    localName = (char *) malloc(strlen(aLocalName) + 1);
-    strcpy(localName.get(), aLocalName);
+    U_ASSERT(aLocalName != NULL);
+    localName = nameStorage.intern(aLocalName);
 }
 
 QName::QName(xmlns_ptr ns, const char* aLocalName, size_t len) : ns(ns), localName(NULL)
 {
-    localName = (char *) malloc(len + 1);
-    strncpy(localName.get(), aLocalName, len);
-    localName[len] = 0;
+    U_ASSERT(aLocalName != NULL);
+    localName = nameStorage.intern(aLocalName, len);
 }
 
+static
+char * encodePtr(char * c, uintptr_t p) {
+    uintptr_t a = ~ (uintptr_t) 0;
+    uintptr_t b = ~ p;
+
+    char * ca = c;
+    memcpy(c, &a, sizeof(uintptr_t)); c += sizeof(uintptr_t);
+    char * cb = c;
+    memcpy(c, &b, sizeof(uintptr_t)); c += sizeof(uintptr_t);
+
+    for (int i = 0; i < ((int) sizeof(uintptr_t)); i++, ca++, cb++) {
+        if (cb == '\0') {
+            * (uint8_t *) cb = 0xf0;
+            * (uint8_t *) ca = 0x0f;
+        }
+    }
+
+    return c;
+}
+
+static
+uintptr_t decodePtr(const char * c) {
+    uintptr_t a;
+    uintptr_t b;
+
+    memcpy(&a, c, sizeof(uintptr_t)); c += sizeof(uintptr_t);
+    memcpy(&b, c, sizeof(uintptr_t));
+
+    return (a ^ b);
+}
 
 char* QName::serializeTo(char* str) const
 {
     U_ASSERT(sizeof(xmlns_ptr) == sizeof(uintptr_t));
-
-    size_t localNameLen = strlen(localName.get());
-
-    uintptr_t a = ~ (uintptr_t) 0;
-    uintptr_t b = ~ (uintptr_t) ns;
-
-    memcpy(str, &a, sizeof(uintptr_t)); str += sizeof(uintptr_t);
     char * c = str;
-    memcpy(str, &b, sizeof(uintptr_t)); str += sizeof(uintptr_t);
-    memcpy(str, localName.get(), localNameLen); str += localNameLen;
-    *str = '\0';
+    size_t localNameLen = strlen(localName);
 
-    for (int i = 0; i < ((int) sizeof(uintptr_t)); i++) {
-        if (c[i] == '\0') {
-            * (uint8_t *) (c + i) = 0xf0;
-            * (uint8_t *) (c + i - sizeof(uintptr_t)) = 0x0f;
-        }
-    }
+    c = encodePtr(c, (uintptr_t) ns);
+
+    memcpy(c, localName, localNameLen); c += localNameLen;
+
+    *c = '\0';
 
     return str;
 }
-
 
 const char* QName::serialize(void* parent) const
 {
@@ -113,14 +145,11 @@ QName QName::deserialize(const char* serializedForm)
 {
     U_ASSERT(sizeof(xmlns_ptr) == sizeof(uintptr_t));
 
-    size_t len = strlen(serializedForm);
-    uintptr_t a, b;
-    xmlns_ptr ns;
+    if (serializedForm == NULL) {
+        return QName();
+    }
 
-    memcpy(&a, serializedForm, sizeof(uintptr_t));
-    memcpy(&b, serializedForm + sizeof(uintptr_t), sizeof(uintptr_t));
-
-    ns = (xmlns_ptr) (a ^ b);
+    xmlns_ptr ns = (xmlns_ptr) decodePtr(serializedForm);
 
     return QName(ns, serializedForm + 2 * sizeof(uintptr_t));
 }
@@ -142,7 +171,6 @@ std::string QName::getColonizedName(NCName prefix, NCName local)
         return prefix.toString() + ":" + local.toString();
     }
 }
-
 QName QName::createUL(const char* uri, const char* localName, bool quietly)
 {
     xmlns_ptr ns;
@@ -319,13 +347,45 @@ QName QName::createResolveNode(const char* prefixAndLocal, xptr node, dynamic_co
 
 void QName::toLR(std::ostream& os, const xsd::AnyURI uri, const xsd::NCName prefix, const xsd::NCName local)
 {
+    os << "(";
     uri.toLR(os);
     os << " ";
-    local.toLR(os);
-    os << " ";
     prefix.toLR(os);
+    os << " ";
+    local.toLR(os);
+    os << ")";
 }
 
+
+QName QName::fromLR(scheme_list* lst)
+{
+    xmlns_ptr ns = NULL_XMLNS;
+    char * local = NULL;
+
+    if (lst->size() != 3 ||
+          lst->at(0).type != SCM_STRING ||
+          lst->at(1).type != SCM_STRING ||
+          lst->at(2).type != SCM_STRING ) {
+        throw USER_EXCEPTION2(SE1004, "Path expression");
+    }
+
+    if (*(lst->at(0).internal.str) != '\0' || *(lst->at(1).internal.str) != '\0') {
+        ns = xmlns_touch(lst->at(0).internal.str, lst->at(1).internal.str);
+    }
+
+    local = lst->at(2).internal.str;
+
+    U_ASSERT((QName::createNsN(ns, local).valid()));
+
+    return QName(ns, local);
+}
+
+std::string QName::toLRString() const
+{
+    std::ostringstream oss(std::ios::out | std::ios::binary);
+    toLR(oss);
+    return oss.str();
+}
 
 void QName::toLR(std::ostream& os) const
 {

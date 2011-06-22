@@ -22,11 +22,14 @@ public:
     char* prefix; /* persistent string */
     char* uri; /* persistent string */
 
+    inline bool same_prefix(const char * _prefix) const { return strcmpex(prefix, _prefix) == 0; };
+    inline bool same_uri(const char * _uri) const { return strcmpex(prefix, _uri) == 0; };
+
     inline const char * get_uri() const { return uri; }
     inline const char * get_prefix() const { return prefix; }
     inline bool has_prefix() const { return prefix != NULL && prefix[0] != '\0'; }
     inline bool empty_uri() const { return uri == NULL || uri[0] == '\0'; }
-    inline bool is_reserved_prefix() const { return prefix != NULL && (strcmp(prefix, "xml") == 0); }
+    inline bool is_reserved_prefix() const { return prefix != NULL && ((strcmp(prefix, "xml") == 0) || (strcmp(prefix, "xmlns") == 0)); }
 };
 
 struct xmlns_indb_object : public catalog_object {
