@@ -67,7 +67,8 @@ void triggers_on_statement_end()
 
 bool trigger_cell_object::fits_to_trigger(schema_node_cptr snode)
 {
-    t_scmnodes objs=execute_abs_path_expr(snode->root,trigger_path,NULL,NULL);
+    t_scmnodes objs;
+    executeAbsPathExpression(snode->root, *trigger_path, &objs, NULL, NULL);
     t_scmnodes::iterator it=objs.begin();
     while (it!=objs.end())
     {
@@ -80,7 +81,8 @@ bool trigger_cell_object::fits_to_trigger(schema_node_cptr snode)
 
 bool trigger_cell_object::fits_to_trigger_path_to_parent(schema_node_cptr parent)
 {
-    t_scmnodes objs=execute_abs_path_expr(parent->root,path_to_parent,NULL,NULL);
+    t_scmnodes objs;
+    executeAbsPathExpression(parent->root, *path_to_parent, &objs, NULL, NULL);
     t_scmnodes::iterator it=objs.begin();
     while (it!=objs.end())
     {

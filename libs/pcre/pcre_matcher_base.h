@@ -3997,7 +3997,7 @@ do
   //. we don't want to increment p further than subject_end 
 	  start_match < subject_end)
     {
-    register CharIterator p = start_match;
+    CharIterator p = start_match;
 	if (first_byte >= 0)
 		++p;
 

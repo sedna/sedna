@@ -37,11 +37,13 @@ struct index_ref {
 struct sc_ref {
     schema_node_xptr snode;
     char* name;
+
     xmlns_ptr_pers xmlns_pers;
-    xmlns_ptr xmlns_local;
+    mutable xmlns_ptr xmlns_local;
+
     t_item type;
 
-    inline xmlns_ptr get_xmlns() {
+    inline xmlns_ptr get_xmlns() const {
         if (xmlns_pers == XNULL) { return NULL; }
         else if (xmlns_local != NULL) { return xmlns_local; }
         else {
@@ -51,12 +53,16 @@ struct sc_ref {
 
     inline sc_ref() : name(NULL), xmlns_pers(XNULL), xmlns_local(NULL) {};
 
-    inline bool same_node(const xmlns_ptr xmlns, const char * name, t_item type) {
+    inline bool same_node(const xmlns_ptr xmlns, const char * name, t_item type) const {
         return (strcmpex(this->name, name) == 0 && this->type == type && this->get_xmlns() == xmlns);
     }
 
-    inline bool same_node_fair(const char * uri, const char * name, t_item type) {
+    inline bool same_node_fair(const char * uri, const char * name, t_item type) const {
         return (strcmpex(this->name, name) == 0 && this->type == type && same_xmlns_uri(this->get_xmlns(), uri));
+    }
+
+    inline bool matches(const char * uri, const char * name, t_item type) const {
+        return ((this->type & type) > 0 && strcmpex(this->name, name) == 0 && same_xmlns_uri(this->get_xmlns(), uri));
     }
 };
 
@@ -164,15 +170,15 @@ public:
     ~schema_node_object();
 
     /* Schema node comparition */
-    inline bool same_node(const char * uri, const char * local, t_item type) {
+    inline bool same_node(const char * uri, const char * local, t_item type) const {
         return (this->type == type) && same_xmlns_uri(get_xmlns(), uri) && (strcmpex(name, local) == 0);
     }
 
-    inline bool node_matches(const char * uri, const char * local, t_item type) {
+    inline bool matches(const char * uri, const char * local, t_item type) const {
         return ((this->type & type) > 0) && same_xmlns_uri(get_xmlns(), uri) && (strcmpex(name, local) == 0);
     }
 
-    inline bool same_node(const xmlns_ptr xmlns, const char * local, t_item type) {
+    inline bool same_node(const xmlns_ptr xmlns, const char * local, t_item type) const {
         return (this->type == type) && same_xmlns_uri(get_xmlns(), xmlns) && (strcmpex(name, local) == 0);
     }
 
@@ -315,20 +321,10 @@ struct col_schema_node_object : public doc_schema_node_object
 };
 
 /* Schema node comparison function for node utils */
-typedef bool (*comp_schema)(schema_node_cptr scm,const char* uri,const char* name, t_item type);
+typedef bool (*comp_schema)(schema_node_cptr scm, const char* uri, const char* name, t_item type);
 
 /* returns the name of atomic type */
 // char* convertTypeToName(xmlscm_type i);
-
-/*comparison function for schema nodes*/
-bool comp_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
-bool comp_qname_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
-bool comp_local_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
-bool comp_uri_type(schema_node_cptr scm,const char* uri,const char* name, t_item type);
-
-void getSchemeChildren(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result);
-void getSchemeDescendantsOrSelf(schema_node_cptr scm,const char* uri,const char* name, t_item type, comp_schema cfun, std::vector<schema_node_xptr> &result);
-void getSchemeDescendants(schema_node_cptr scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node_xptr> &result);
 
 /* checks if the node is the descendant of one of the nodes in the vector */
 bool hasAncestorInSet(schema_node_cptr scm_node, std::set<schema_node_xptr>* scm_nodes_set );

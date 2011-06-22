@@ -168,23 +168,23 @@ static inline
 bool isNameValid(xsd::QName qname, bool check_name = true)
 {
     const char* name = qname.getLocalName();
-    const char* prefix = qname.getPrefix();
-    const char* uri = qname.getUri();
+    xmlns_ptr ns = qname.getXmlNs();
 
     /* It has no namespace prefix and its local name is xmlns */
-    if(check_name && (prefix == NULL || strcmp(prefix,"") == 0) && strcmpex(name,"xmlns") == 0) return false;
+    if(check_name && (ns == NULL_XMLNS || !ns->has_prefix()) && strcmpex(name,"xmlns") == 0) return false;
 
-    if(!prefix && !uri) return true;
+    if(ns == NULL_XMLNS) return true;
 
     /* Its namespace prefix is xmlns. */
-    if(strcmpex(prefix, "xmlns") == 0) return false;
-    /* Its namespace URI is xmlns URI. */
-    if(strcmpex(uri, "http://www.w3.org/2000/xmlns/") == 0) return false;
-    /* Its namespace prefix is xml and its namespace URI is not xml namespace */
-    if(strcmpex(prefix, "xml") == 0 &&
-       !(uri == NULL || strcmpex(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
-    /* Its namespace prefix is other than xml and its namespace URI is xml namespace */
-    if(prefix != NULL && strcmp(prefix, "xml") != 0 && (uri == NULL || strcmpex(uri, "http://www.w3.org/XML/1998/namespace") == 0)) return false;
+    if (ns->same_prefix("xmlns")) { return false; }
+
+    if (ns->same_prefix("xml")) {
+        if (!ns->same_uri("http://www.w3.org/XML/1998/namespace")) {
+            return false;
+        }
+    } else if (ns->same_uri("http://www.w3.org/XML/1998/namespace")) {
+        return false;
+    }
 
     return true;
 }
@@ -264,7 +264,7 @@ xsd::QName PPConstructor::resolveQName(const char* nameString, PPOpIn qname, dyn
     if (NULL == nameString) {
         tuple_cell qnameTuple = getQnameParameter(qname);
         if (qnameTuple.is_atomic_type(xs_QName)) {
-            result = xsd::QName::deserialize(qnameTuple.get_str_mem());
+            result = qnameTuple.get_xs_qname();
             nameString = NULL;
         } else {
             nameString = qnameTuple.get_str_mem();

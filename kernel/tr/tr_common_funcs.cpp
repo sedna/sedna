@@ -25,6 +25,7 @@
 #include "tr/triggers/triggers_data.h"
 #include "tr/mo/boundaries.h"
 #include "tr/crmutils/serialization.h"
+#include "tr/executor/base/xsd.h"
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_cache.h"
@@ -400,6 +401,8 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
     d_printf1("Releasing locks...");
     release_locks();
     d_printf1("OK\n");
+
+    xsd::clearQNameCache();
 
     d_printf1("Releasing transaction_id...");
     release_transaction_id(sm_server);
