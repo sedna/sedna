@@ -254,6 +254,7 @@ struct ft_parse_data_hl
 
 static const char *opentag_str = "\xEE\xA0\x81";
 static const char *closetag_str = "\xEE\xA0\x82";
+static const char *quotinattr_str = "\xEE\xA0\x83";
 
 static void hl_flush(struct ft_parse_data_hl *parse_data)
 {
@@ -272,6 +273,21 @@ static void hl_puts(struct ft_parse_data_hl *parse_data, const char *s)
 {
 	hl_flush(parse_data);
 	parse_data->out_str->append(s);
+}
+static void hl_put_attr_value(struct ft_parse_data_hl *parse_data, const char *s, const char *quot_in_attr)
+{
+	hl_flush(parse_data);
+	const char *p = strchr(s, '"');
+	while (p != NULL)
+	{
+		if (p > s)
+			parse_data->out_str->append(s, p-s);
+		parse_data->out_str->append(quot_in_attr);
+		s = p + 1;
+		p = strchr(s, '"');
+	}
+	if (*s != '\x0')
+		parse_data->out_str->append(s);
 }
 static void hl_putch(struct ft_parse_data_hl *parse_data, int ch)
 {
@@ -315,7 +331,7 @@ static void hl_start(void *state, const char *el, const char **attr)
 			hl_puts(parse_data, *attr);
 			attr++;
 			hl_puts(parse_data, "=\"");
-			hl_puts(parse_data, *attr);
+			hl_put_attr_value(parse_data, *attr, quotinattr_str);
 			hl_puts(parse_data, "\"");
 			attr++;
 		}
