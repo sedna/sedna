@@ -29,6 +29,7 @@ namespace tr_globals
 
     extern int run_rewriter;
     extern int show_time;
+    extern char gov_address[];
     extern int socket_port;
     extern int print_intermed;
     extern int debug_mode;

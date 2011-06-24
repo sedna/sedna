@@ -28,6 +28,7 @@ namespace tr_globals
     int show_time         = 0;
     int print_intermed    = 0;
     int debug_mode        = 0;
+    char gov_address[U_MAX_HOSTNAME] = "localhost";
     int socket_port       = 0;
     int authentication    = 1;
     int authorization     = 1;

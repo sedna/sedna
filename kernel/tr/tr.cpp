@@ -136,6 +136,7 @@ int TRmain(int argc, char *argv[])
 
         /* get global configuration */
         socket_port     = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
+        strcpy(gov_address, GOV_HEADER_GLOBAL_PTR -> lstnr_addr);
         SEDNA_DATA      = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
         max_stack_depth = GOV_HEADER_GLOBAL_PTR -> pp_stack_depth;
 

@@ -136,17 +136,17 @@ setup_sm_globals(gov_config_struct* cfg, int db_id)
                            (int)PAGES2MBS(cfg->db_vars[db_id].tmp_file_initial_size);
 
    if (sm_globals::tmp_file_initial_size < 1)
-	   throw USER_EXCEPTION2(SE4601, "'tmp_file_init_size' parameter is incorrect (must be >= 1)");
+           throw USER_EXCEPTION2(SE4601, "'tmp_file_init_size' parameter is incorrect (must be >= 1)");
    if (sm_globals::upd_crt < 0 || sm_globals::upd_crt > 1)
-	   throw USER_EXCEPTION2(SE4601, "'upd-crt' parameter is incorrect (must be in [0;1])");
+           throw USER_EXCEPTION2(SE4601, "'upd-crt' parameter is incorrect (must be in [0;1])");
    if (sm_globals::max_log_files < 1)
-	   throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
+           throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
    if (sm_globals::bufs_num < 1)
-	   throw USER_EXCEPTION2(SE4601, "'bufs-num' parameter is incorrect (must be >= 1)");
+           throw USER_EXCEPTION2(SE4601, "'bufs-num' parameter is incorrect (must be >= 1)");
    if (sm_globals::max_trs_num < 1)
-	   throw USER_EXCEPTION2(SE4601, "'max-trs-num' parameter is incorrect (must be >= 1)");
+           throw USER_EXCEPTION2(SE4601, "'max-trs-num' parameter is incorrect (must be >= 1)");
    if (sm_globals::max_log_files < 1)
-	   throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
+           throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
 }
 
 
@@ -159,6 +159,7 @@ register_sm_on_gov()
     USOCKET s;
     int32_t sm_id;
     int32_t port_number;
+    char gov_address[U_MAX_HOSTNAME];
     msg_struct msg;
 
     /* If this is the case when SM is started for some special purpose,
@@ -169,16 +170,17 @@ register_sm_on_gov()
                                  buf, 1024, __sys_call_error) == 0);
     
     port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
+    strcpy(gov_address, GOV_HEADER_GLOBAL_PTR -> lstnr_addr);
 
-	sm_id = uGetCurrentProcessId(__sys_call_error);
+        sm_id = uGetCurrentProcessId(__sys_call_error);
 
     s = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
     if(s == U_SOCKET_ERROR)
         throw USER_EXCEPTION (SE3001);
 
-    if(uconnect_tcp(s, port_number, "127.0.0.1", __sys_call_error)!=0)
+    if(uconnect_tcp(s, port_number, gov_address, __sys_call_error)!=0)
     {
-    	ushutdown_close_socket(s, __sys_call_error);
+        ushutdown_close_socket(s, __sys_call_error);
         throw USER_EXCEPTION (SE3003);
     }
 
@@ -213,7 +215,7 @@ register_sm_on_gov()
         /* Socket error occured */
         throw USER_EXCEPTION2(SE3006,usocket_error_translator());
     if(msg.instruction == 182)
-    	/* Failed to register */
+        /* Failed to register */
         throw USER_EXCEPTION(SE3045);
 
     if(ushutdown_close_socket(s, __sys_call_error) !=0)

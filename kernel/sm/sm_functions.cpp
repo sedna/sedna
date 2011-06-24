@@ -77,10 +77,12 @@ void
 send_stop_sm_msg()
 {
     int port_number = GOV_HEADER_GLOBAL_PTR->lstnr_port_number;
+    char gov_address[U_MAX_HOSTNAME];
+    strcpy(gov_address, GOV_HEADER_GLOBAL_PTR -> lstnr_addr);
     int database_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, sm_globals::db_name);
 
     GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].mode = OM_SM_SHUTDOWN;
-    send_command_to_gov(port_number, STOP);
+    send_command_to_gov(port_number, gov_address, STOP);
 }
 
 
@@ -89,29 +91,29 @@ static bool isGiantLockInitialized = false;
 
 void InitGiantLock()
 {
-	if (isGiantLockInitialized)
-		throw SYSTEM_EXCEPTION("giant lock already initialised");
-	if (uMutexInit(&giantLockMutex,__sys_call_error) != 0)
-		throw SYSTEM_EXCEPTION("giant lock mutex not initialised");
-	isGiantLockInitialized = true;
+        if (isGiantLockInitialized)
+                throw SYSTEM_EXCEPTION("giant lock already initialised");
+        if (uMutexInit(&giantLockMutex,__sys_call_error) != 0)
+                throw SYSTEM_EXCEPTION("giant lock mutex not initialised");
+        isGiantLockInitialized = true;
 }
 
 void DestroyGiantLock()
 {
-	if (isGiantLockInitialized)
-		uMutexDestroy(&giantLockMutex, NULL);
+        if (isGiantLockInitialized)
+                uMutexDestroy(&giantLockMutex, NULL);
 }
 
 void ObtainGiantLock()
 {
-	if (!isGiantLockInitialized || uMutexLock(&giantLockMutex, __sys_call_error)!=0)
-		throw SYSTEM_EXCEPTION("failed to obtain giant lock");
+        if (!isGiantLockInitialized || uMutexLock(&giantLockMutex, __sys_call_error)!=0)
+                throw SYSTEM_EXCEPTION("failed to obtain giant lock");
 }
 
 void ReleaseGiantLock()
 {
-	if (!isGiantLockInitialized || uMutexUnlock(&giantLockMutex, __sys_call_error)!=0)
-		throw SYSTEM_EXCEPTION("failed to release giant lock");
+        if (!isGiantLockInitialized || uMutexUnlock(&giantLockMutex, __sys_call_error)!=0)
+                throw SYSTEM_EXCEPTION("failed to release giant lock");
 }
 
 void set_layer_parameters(lsize_t layer_size)

@@ -7,6 +7,6 @@
 #define _HB_MAIN_
 
 // main hot-backup procedure
-void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_checkp);
+void hbMainProcedure(char* hb_dir_name, char* hb_db_name, char address[], int port, int is_checkp);
 
 #endif

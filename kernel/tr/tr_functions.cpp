@@ -242,7 +242,7 @@ void register_session_on_gov()
 
     if(U_SOCKET_ERROR == s) throw USER_EXCEPTION (SE3001);
 
-    while(0 != uconnect_tcp(s, socket_port, "127.0.0.1", __sys_call_error))
+    while(0 != uconnect_tcp(s, socket_port, gov_address, __sys_call_error))
     {
         if(!utry_connect_again())
         {
@@ -373,6 +373,3 @@ void set_trn_ctrl_handler()
                 throw USER_EXCEPTION(SE4207);
 #endif /* _WIN32 */
 }
-
-
-

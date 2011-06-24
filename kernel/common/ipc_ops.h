@@ -18,7 +18,7 @@ int
 close_gov_shm ();
 
 void
-send_command_to_gov(int port_number, int cmd);
+send_command_to_gov(int port_number, char gov_address[], int cmd);
 
 int
 get_db_id_by_name(gov_config_struct* cfg, const char* db_name);

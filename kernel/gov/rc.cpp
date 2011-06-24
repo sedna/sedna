@@ -21,7 +21,7 @@
 #include "gov/listener.h"
 #include "gov/rc.h"
 
-#define RC_TIMEOUT		30000
+#define RC_TIMEOUT              30000
 
 
 static const size_t narg = 4;
@@ -111,6 +111,7 @@ int main(int argc, char **argv)
     program_name_argv_0 = argv[0];  /// This global variable is used in uGetImageProcPath! Don't remove it!
     pping_client *ppc = NULL;
     int port_number;
+    char gov_address[U_MAX_HOSTNAME];
     USOCKET sock;
     int res;
     msg_struct msg;
@@ -144,7 +145,7 @@ int main(int argc, char **argv)
         /* Parse config file to get id_min_bound value */
         get_sednaconf_values(&cfg);
      
-		/* Initialize global names with given id_min_bound number */
+                /* Initialize global names with given id_min_bound number */
         InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
         SetGlobalNames();
 
@@ -168,10 +169,11 @@ int main(int argc, char **argv)
         elog(EL_LOG, ("Request for runtime configuration issued"));
 
         port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
+        strcpy(gov_address, GOV_HEADER_GLOBAL_PTR -> lstnr_addr);
         close_gov_shm();
 
         sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
-        if (uconnect_tcp(sock, port_number, "127.0.0.1", __sys_call_error) == 0)
+        if (uconnect_tcp(sock, port_number, gov_address, __sys_call_error) == 0)
         {
             msg.instruction = RUNTIME_CONFIG;
             msg.length = 0;

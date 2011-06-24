@@ -23,8 +23,8 @@
 
 #define PPING_STACK_SIZE             102400
 
-#define PPING_KEEP_ALIVE_MSG	     'a'
-#define PPING_DISCONNECT_MSG	     'b'
+#define PPING_KEEP_ALIVE_MSG         'a'
+#define PPING_DISCONNECT_MSG         'b'
 #define PPING_PROC_EXCEPTION_MSG     'e'
 
 #define PPING_LSTNR_QUEUE_LEN        100
@@ -86,39 +86,39 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 #define SENDVAR(v) if (usend(ppc->sock, (char*)&v, sizeof(v), NULL) != sizeof(v)) continue;
 #ifdef _WIN32
-		if (ppc->exceptPtrs)
-		{
-			//TODO: do something if usend/urecv fails or get wrong msg
-			char cc = PPING_PROC_EXCEPTION_MSG;
-			DWORD proc_id = GetCurrentProcessId();
+                if (ppc->exceptPtrs)
+                {
+                        //TODO: do something if usend/urecv fails or get wrong msg
+                        char cc = PPING_PROC_EXCEPTION_MSG;
+                        DWORD proc_id = GetCurrentProcessId();
 
-			if (usend(ppc->sock, &cc, sizeof(cc), NULL) != sizeof(cc))
-				{ ppc->exceptPtrs = NULL; continue; }
+                        if (usend(ppc->sock, &cc, sizeof(cc), NULL) != sizeof(cc))
+                                { ppc->exceptPtrs = NULL; continue; }
 
-			SENDVAR(proc_id)
-			SENDVAR(ppc->component);
-			SENDVAR(ppc->except_thread_id);
-			SENDVAR(ppc->exceptPtrs);
+                        SENDVAR(proc_id)
+                        SENDVAR(ppc->component);
+                        SENDVAR(ppc->except_thread_id);
+                        SENDVAR(ppc->exceptPtrs);
 
-			if (urecv(ppc->sock, &cc, sizeof(cc), NULL) != sizeof(cc))
-				{ ppc->exceptPtrs = NULL; continue; }
-			if (cc != PPING_PROC_EXCEPTION_MSG)
-				{ ppc->exceptPtrs = NULL; continue; }
+                        if (urecv(ppc->sock, &cc, sizeof(cc), NULL) != sizeof(cc))
+                                { ppc->exceptPtrs = NULL; continue; }
+                        if (cc != PPING_PROC_EXCEPTION_MSG)
+                                { ppc->exceptPtrs = NULL; continue; }
 
-			if (ppc->stacktrace_fh != U_INVALID_FD)
-			{
-				if (StackTraceInit() != 0)
-				{
-					StackTraceWriteFd(ppc->exceptPtrs->ContextRecord, (intptr_t)ppc->stacktrace_fh, 9999, 0);
-					
-					StackTraceDeinit();
-				}
-				uCloseFile(ppc->stacktrace_fh, NULL);
-			}
+                        if (ppc->stacktrace_fh != U_INVALID_FD)
+                        {
+                                if (StackTraceInit() != 0)
+                                {
+                                        StackTraceWriteFd(ppc->exceptPtrs->ContextRecord, (intptr_t)ppc->stacktrace_fh, 9999, 0);
 
-			
-			ppc->exceptPtrs = NULL;
-		}
+                                        StackTraceDeinit();
+                                }
+                                uCloseFile(ppc->stacktrace_fh, NULL);
+                        }
+
+
+                        ppc->exceptPtrs = NULL;
+                }
 #endif
 #undef SENDVAR
 #endif
@@ -133,8 +133,8 @@ pping_client::pping_client(int _port_, int _component_, const char* _host_)
         strcpy(host, _host_);
     else
         strcpy(host, "localhost");
-	component = _component_;
-	
+        component = _component_;
+
     stop_keep_alive = false;
     initialized = false;
 
@@ -145,8 +145,8 @@ pping_client::pping_client(int _port_, int _component_, const char* _host_)
 
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 #ifdef _WIN32
-	exceptPtrs = NULL;
-	stacktrace_fh = U_INVALID_FD;
+        exceptPtrs = NULL;
+        stacktrace_fh = U_INVALID_FD;
 #endif
 #endif
 }
@@ -158,8 +158,8 @@ pping_client::pping_client(int _port_, int _component_, volatile bool* volatile 
         strcpy(host, _host_);
     else
         strcpy(host, "localhost");
-	component = _component_;
-	
+        component = _component_;
+
     stop_keep_alive = false;
     initialized = false;
 
@@ -170,8 +170,8 @@ pping_client::pping_client(int _port_, int _component_, volatile bool* volatile 
 
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
 #ifdef _WIN32
-	exceptPtrs = NULL;
-	stacktrace_fh = U_INVALID_FD;
+        exceptPtrs = NULL;
+        stacktrace_fh = U_INVALID_FD;
 #endif
 #endif
 }
@@ -247,8 +247,8 @@ void pping_client::shutdown()
 void pping_client::start_timer(int _timeout_)
 {
     
-	timeout = _timeout_;
-	reset_flag = true;
+        timeout = _timeout_;
+        reset_flag = true;
     if(signaled_flag) *signaled_flag = false;
 
 }
@@ -265,20 +265,20 @@ void pping_client::stop_timer()
 #ifdef _WIN32
 void pping_client::WriteStackTraceFile(LPEXCEPTION_POINTERS exceptPtrs)
 {
-	if (exceptPtrs != NULL)
-	{
-		int wait = 60;
-		this->except_thread_id = GetCurrentThreadId();
-		this->stacktrace_fh = sedna_soft_fault_log_fh(this->component, "-st");
-		this->exceptPtrs = exceptPtrs;
-		while (this->exceptPtrs != NULL && wait > 0)
-		{
-			if (UUnnamedSemaphoreUp(&sem, NULL) != 0)
-				return;
-			uSleep(1, NULL);
-			wait--;
-		}
-	}
+        if (exceptPtrs != NULL)
+        {
+                int wait = 60;
+                this->except_thread_id = GetCurrentThreadId();
+                this->stacktrace_fh = sedna_soft_fault_log_fh(this->component, "-st");
+                this->exceptPtrs = exceptPtrs;
+                while (this->exceptPtrs != NULL && wait > 0)
+                {
+                        if (UUnnamedSemaphoreUp(&sem, NULL) != 0)
+                                return;
+                        uSleep(1, NULL);
+                        wait--;
+                }
+        }
 }
 #endif
 ///////////////////////////////////////////////////////////////////////////////
@@ -316,7 +316,7 @@ client_exception_handler(USOCKET sock,
     GETVAR(component);
     GETVAR(except_thread_id);
     GETVAR(client_exceptPtrs);
-#undef GETVAR			
+#undef GETVAR
     
     proc_h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, proc_id);
     if (proc_h == NULL)
@@ -334,12 +334,12 @@ client_exception_handler(USOCKET sock,
     uCloseFile(fh, NULL);
     
     if (usend(sock, &cc, sizeof(cc), NULL) != sizeof(cc))
-	    SYS_FAILURE_SERVER("Failure in pping server (cannot send exception ack to the client)."); 
+            SYS_FAILURE_SERVER("Failure in pping server (cannot send exception ack to the client).");
 
 #endif /* _WIN32 */
 #endif /* EL_DEBUG */
 
-	return 1;
+        return 1;
 }
 
 
@@ -359,11 +359,11 @@ U_THREAD_PROC(pping_server_cli_thread_proc, arg)
         if (urecv(sock, &c, sizeof(c), NULL) != sizeof(c)) goto sys_failure;
         if (c == PPING_DISCONNECT_MSG) break;
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
-		if (c == PPING_PROC_EXCEPTION_MSG)
-		{
-			if (client_exception_handler(sock, pps) != 1) return 0;
-			continue;
-		}
+                if (c == PPING_PROC_EXCEPTION_MSG)
+                {
+                        if (client_exception_handler(sock, pps) != 1) return 0;
+                        continue;
+                }
 #endif
         if (c != PPING_KEEP_ALIVE_MSG) goto sys_failure;
     }
@@ -527,7 +527,7 @@ void pping_server::shutdown()
     if (s == U_INVALID_SOCKET) 
         throw USER_ENV_EXCEPTION("Failed to create socket", false);
 
-    if (uconnect_tcp(s, port, "127.0.0.1", NULL) == U_SOCKET_ERROR) 
+    if (uconnect_tcp(s, port, "localhost", NULL) == U_SOCKET_ERROR)
         throw USER_ENV_EXCEPTION("Failed to create TCP connection", false);
 
     char c = PPING_KEEP_ALIVE_MSG;

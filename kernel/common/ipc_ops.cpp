@@ -71,7 +71,7 @@ close_gov_shm()
  ******************************************************************************/
 
 
-void send_command_to_gov(int port_number, int cmd)
+void send_command_to_gov(int port_number, char gov_address[], int cmd)
 {
     USOCKET s;
     int rc;
@@ -80,7 +80,7 @@ void send_command_to_gov(int port_number, int cmd)
 
     s = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 
-    if (uconnect_tcp(s, port_number, "127.0.0.1", __sys_call_error) == 0)
+    if (uconnect_tcp(s, port_number, gov_address, __sys_call_error) == 0)
     {
         tmp = htonl(cmd);
         ptr = (char*) &(tmp);

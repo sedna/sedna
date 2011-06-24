@@ -27,8 +27,8 @@
 #include "gov/listener.h"
 #include "gov/config_utils.h"
 
-#define GOV_BACKGROUND_MODE_TIMEOUT					15000
-#define GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON		"SEDNA_GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON"
+#define GOV_BACKGROUND_MODE_TIMEOUT                                     15000
+#define GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON           "SEDNA_GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON"
 
 using namespace std;
 
@@ -44,21 +44,21 @@ BOOL GOVCtrlHandler(DWORD fdwCtrlType)
 {
     switch (fdwCtrlType)
     {
-        case CTRL_C_EVENT		: // Handle the CTRL+C signal.
-        case CTRL_CLOSE_EVENT	: // CTRL+CLOSE: confirm that the user wants to exit.
-        case CTRL_BREAK_EVENT	:
-        case CTRL_LOGOFF_EVENT	:
+        case CTRL_C_EVENT               : // Handle the CTRL+C signal.
+        case CTRL_CLOSE_EVENT   : // CTRL+CLOSE: confirm that the user wants to exit.
+        case CTRL_BREAK_EVENT   :
+        case CTRL_LOGOFF_EVENT  :
         case CTRL_SHUTDOWN_EVENT:
         {
              // Beep(1000, 1000);
              open_gov_shm();
              GOV_HEADER_GLOBAL_PTR -> is_server_stop = SE_STOP_SOFT;
-             send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, STOP);
+             send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, GOV_HEADER_GLOBAL_PTR -> lstnr_addr, STOP);
              close_gov_shm();
 
              return TRUE;
         }
-        default	: return FALSE;
+        default : return FALSE;
     }
 }
 
@@ -73,7 +73,7 @@ void GOVCtrlHandler(int signo)
          // beep();
          open_gov_shm();
          GOV_HEADER_GLOBAL_PTR -> is_server_stop = SE_STOP_SOFT;
-         send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, STOP);
+         send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, GOV_HEADER_GLOBAL_PTR -> lstnr_addr, STOP);
          close_gov_shm();
      }
 }
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
 
-		InitGlobalNames(cfg.gov_vars.os_primitives_id_min_bound,INT_MAX);
+                InitGlobalNames(cfg.gov_vars.os_primitives_id_min_bound,INT_MAX);
         SetGlobalNames();
 
         if (!is_first_start_of_gov(cfg.gov_vars.ping_port_number))
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
             string command_line = argv[0];
 
             command_line += " -background-mode off";
-	    command_line += " -address-to-listen " + string(cfg.gov_vars.lstnr_addr);
+            command_line += " -address-to-listen " + string(cfg.gov_vars.lstnr_addr);
             command_line += " -port-number " + int2string(cfg.gov_vars.lstnr_port_number);
             command_line += " -ping-port-number " + int2string(cfg.gov_vars.ping_port_number);
             command_line += " -el-level " + int2string(cfg.gov_vars.el_level);
@@ -246,10 +246,10 @@ int main(int argc, char** argv)
 #else
         if (signal(SIGINT, GOVCtrlHandler) == SIG_ERR)
            throw USER_EXCEPTION(SE4403);
-		// For Control-backslash
+                // For Control-backslash
         if (signal(SIGQUIT, GOVCtrlHandler) == SIG_ERR)
            throw USER_EXCEPTION(SE4403);
-		//For reboot or halt
+                //For reboot or halt
         if (signal(SIGTERM, GOVCtrlHandler) == SIG_ERR)
            throw USER_EXCEPTION(SE4403);
 #endif

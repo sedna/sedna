@@ -10,6 +10,7 @@ extern int   hb_checkpoint;
 extern char hb_dir_name[];
 extern char hb_db_name[];
 extern int hb_port;
+extern char hb_address[];
 extern int hb_timestamp;
 extern int hb_mkdir;
 extern char hb_incr_mode[];

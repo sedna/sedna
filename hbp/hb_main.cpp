@@ -38,42 +38,42 @@ static void hbSendMsgAndRcvResponse(USOCKET hbSock, msg_struct *msg)
 
     if (sp_send_msg(hbSock, msg) != 0)
     {
-   		uclose_socket(hbSock, __sys_call_error);
-    	throw USER_EXCEPTION(SE3006);
+                uclose_socket(hbSock, __sys_call_error);
+        throw USER_EXCEPTION(SE3006);
     }
 
-	if (sp_recv_msg(hbSock, msg) != 0 || msg->instruction == HB_ERR)
+        if (sp_recv_msg(hbSock, msg) != 0 || msg->instruction == HB_ERR)
     {
-   		uclose_socket(hbSock, __sys_call_error);
+                uclose_socket(hbSock, __sys_call_error);
 
-    	if (msg->instruction == HB_ERR && msg->length > 5 && msg->body[0] == 0)
-    	{
-	    	net_int2int(&len, &(msg->body[1]));
-	    	err_msg = std::string(&(msg->body[5]), len);
+        if (msg->instruction == HB_ERR && msg->length > 5 && msg->body[0] == 0)
+        {
+                net_int2int(&len, &(msg->body[1]));
+                err_msg = std::string(&(msg->body[5]), len);
 
-	    	throw USER_EXCEPTION2(SE4903, err_msg.c_str());
-	    }
-	    else
-	    	throw USER_EXCEPTION(SE3007);
+                throw USER_EXCEPTION2(SE4903, err_msg.c_str());
+            }
+            else
+                throw USER_EXCEPTION(SE3007);
     }
 }
 
 // this function retrieves file name from socket message (stored as a string)
 static int hbRetrieveFileName(msg_struct *msg, char *file_name)
 {
-	if (msg->length <= 5 || msg->body[0] != 0)  return -1;
+        if (msg->length <= 5 || msg->body[0] != 0)  return -1;
 
-	uint32_t len;
+        uint32_t len;
 
-	net_int2int(&len, &(msg->body[1]));
+        net_int2int(&len, &(msg->body[1]));
 
-	if (len == 0) return -1;
+        if (len == 0) return -1;
 
-	strncpy(file_name, &(msg->body[5]), len);
+        strncpy(file_name, &(msg->body[5]), len);
 
-	file_name[len] = '\0';
+        file_name[len] = '\0';
 
-	return 0;
+        return 0;
 }
 
 // this function performs main hot-backup actions (see plan above)
@@ -82,11 +82,11 @@ static int hbRetrieveFileName(msg_struct *msg, char *file_name)
 //     hb_dir_name - name of the distance directory
 //     hb_db_name  - name if the database to archive
 //     port        - port number to connect to gov
-void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_checkp)
+void hbMainProcedure(char *hb_dir_name, char *hb_db_name, char address[], int port, int is_checkp)
 {
     USOCKET hbSocket;
     int nodelay = 1;
-    char host[SE_HOSTNAMELENGTH + 1];
+    char host[U_MAX_HOSTNAME];
     struct msg_struct msg;
     hb_state hb_incr_req;
 
@@ -95,15 +95,15 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
     hbSocket = usocket(AF_INET, SOCK_STREAM, 0, NULL);
 
     if (hbSocket == U_INVALID_SOCKET)
-    	throw USER_EXCEPTION(SE3001);
+        throw USER_EXCEPTION(SE3001);
 
     if (usetsockopt(hbSocket, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay, sizeof(int), NULL) == U_SOCKET_ERROR)
-    	throw USER_EXCEPTION(SE3027);
+        throw USER_EXCEPTION(SE3027);
 
-    strcpy(host, "127.0.0.1");
+    strcpy(host, address);
 
     if (uconnect_tcp(hbSocket, port, host, NULL) != 0)
-    	throw USER_EXCEPTION(SE3003);
+        throw USER_EXCEPTION(SE3003);
 
     // sending hot-backup start (only to gov, to start hot-backup socket there)
     printf("Connecting to database...");
@@ -112,20 +112,20 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
     msg.length = 0;
     if (sp_send_msg(hbSocket, &msg) != 0)
     {
-   		uclose_socket(hbSocket, __sys_call_error);
-    	throw USER_EXCEPTION(SE3006);
+                uclose_socket(hbSocket, __sys_call_error);
+        throw USER_EXCEPTION(SE3006);
     }
-	printf("Done.\n");
+        printf("Done.\n");
 
     // determine increment request mode
-	if (!strncmp(hb_incr_mode, "start", 512))
-    	hb_incr_req = HB_START_INCR;
-	else if (!strncmp(hb_incr_mode, "add", 512))
-    	hb_incr_req = HB_ADD_INCR;
-	else if (!strncmp(hb_incr_mode, "stop", 512))
-    	hb_incr_req = HB_STOP_INCR;
+        if (!strncmp(hb_incr_mode, "start", 512))
+        hb_incr_req = HB_START_INCR;
+        else if (!strncmp(hb_incr_mode, "add", 512))
+        hb_incr_req = HB_ADD_INCR;
+        else if (!strncmp(hb_incr_mode, "stop", 512))
+        hb_incr_req = HB_STOP_INCR;
     else
-    	hb_incr_req = HB_NONE_INCR;
+        hb_incr_req = HB_NONE_INCR;
 
     // sending hot-backup request
     msg.instruction = HB_START;
@@ -137,55 +137,55 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
 
     // db_name
     msg.body[5] = 0;
-	int2net_int((int32_t)strlen(hb_db_name), &(msg.body[6]));
-	strncpy(&(msg.body[10]), hb_db_name, strlen(hb_db_name));
+        int2net_int((int32_t)strlen(hb_db_name), &(msg.body[6]));
+        strncpy(&(msg.body[10]), hb_db_name, strlen(hb_db_name));
 
-	hbSendMsgAndRcvResponse(hbSocket, &msg);
+        hbSendMsgAndRcvResponse(hbSocket, &msg);
 
-	U_ASSERT(msg.instruction == HB_CONT || msg.instruction == HB_WAIT);
+        U_ASSERT(msg.instruction == HB_CONT || msg.instruction == HB_WAIT);
 
-	if (msg.instruction == HB_WAIT) printf("Waiting for checkpoint to finish...");
+        if (msg.instruction == HB_WAIT) printf("Waiting for checkpoint to finish...");
 
-	while (msg.instruction != HB_CONT)
+        while (msg.instruction != HB_CONT)
     {
-    	uSleep(HB_REQ_WAIT_TIME, __sys_call_error);
+        uSleep(HB_REQ_WAIT_TIME, __sys_call_error);
 
-    	msg.instruction = HB_START;
-	    msg.length = 5;
+        msg.instruction = HB_START;
+            msg.length = 5;
 
-	    // continue to send increment option (ignore checkpoint)
-    	int2net_int(hb_incr_req, &(msg.body[1]));
+            // continue to send increment option (ignore checkpoint)
+        int2net_int(hb_incr_req, &(msg.body[1]));
 
-		hbSendMsgAndRcvResponse(hbSocket, &msg);
+                hbSendMsgAndRcvResponse(hbSocket, &msg);
 
-		if (msg.instruction == HB_CONT)	printf("Done.\n");
+                if (msg.instruction == HB_CONT) printf("Done.\n");
     }
 
-	U_ASSERT(msg.instruction == HB_CONT);
+        U_ASSERT(msg.instruction == HB_CONT);
 
     // nothing to do: just send confirmation
     if (hb_incr_req == HB_STOP_INCR)
-    	goto end_mode;
+        goto end_mode;
 
     printf("Creating necessary directories...");
     fflush(stdout);
     // prepare distance directory (make hot-backup directory with current timestamp)
     if (hbPrepareDistance(hb_dir_name, hb_db_name) == -1)
     {
-   		ushutdown_close_socket(hbSocket, __sys_call_error);
-    	throw USER_EXCEPTION2(SE4510, "Failed to create some of the backup directories");
+                ushutdown_close_socket(hbSocket, __sys_call_error);
+        throw USER_EXCEPTION2(SE4510, "Failed to create some of the backup directories");
     }
-	printf("Done.\n");
+        printf("Done.\n");
 
     // another portion of log files must be archived
     if (hb_incr_req == HB_ADD_INCR)
-    	goto arch_mode;
+        goto arch_mode;
 
     // retrieve file data name from message
     if (hbRetrieveFileName(&msg, file_name) == -1)
     {
-   		ushutdown_close_socket(hbSocket, __sys_call_error);
-    	throw USER_EXCEPTION2(SE4510, "Error in processing incoming mesage");
+                ushutdown_close_socket(hbSocket, __sys_call_error);
+        throw USER_EXCEPTION2(SE4510, "Error in processing incoming mesage");
     }
 
     // we can copy data file now
@@ -194,55 +194,55 @@ void hbMainProcedure(char *hb_dir_name, char *hb_db_name, int port, int is_check
 
     if (hbCopyFile(file_name) == -1)
     {
-   		ushutdown_close_socket(hbSocket, __sys_call_error);
-    	throw USER_EXCEPTION2(SE4510, "Error in copying data file");
+                ushutdown_close_socket(hbSocket, __sys_call_error);
+        throw USER_EXCEPTION2(SE4510, "Error in copying data file");
     }
-	printf("Done.\n");
+        printf("Done.\n");
 
 arch_mode:
-	// next step: request archive log; receive all files need to backup
+        // next step: request archive log; receive all files need to backup
     msg.instruction = HB_ARCHIVELOG;
     msg.length = 5;
-   	int2net_int(hb_incr_req, &(msg.body[1])); // send increment mode to signalize that we need only log ifles
+        int2net_int(hb_incr_req, &(msg.body[1])); // send increment mode to signalize that we need only log ifles
 
-	hbSendMsgAndRcvResponse(hbSocket, &msg);
+        hbSendMsgAndRcvResponse(hbSocket, &msg);
 
-	U_ASSERT(msg.instruction == HB_CONT || msg.instruction == HB_END);
+        U_ASSERT(msg.instruction == HB_CONT || msg.instruction == HB_END);
 
-	while (msg.instruction == HB_CONT && msg.length != 0)
-	{
-	    // retrieve file name from message
-	    if (hbRetrieveFileName(&msg, file_name) == -1)
-	    {
-   			ushutdown_close_socket(hbSocket, __sys_call_error);
-    		throw USER_EXCEPTION2(SE4510, "Error in processing incoming mesage");
-	    }
+        while (msg.instruction == HB_CONT && msg.length != 0)
+        {
+            // retrieve file name from message
+            if (hbRetrieveFileName(&msg, file_name) == -1)
+            {
+                        ushutdown_close_socket(hbSocket, __sys_call_error);
+                throw USER_EXCEPTION2(SE4510, "Error in processing incoming mesage");
+            }
 
         // copy file
         printf("Copying additional files...%s...", file_name);
         fflush(stdout);
 
         if (hbCopyFile(file_name) == -1)
-	    {
-   			ushutdown_close_socket(hbSocket, __sys_call_error);
-    		throw USER_EXCEPTION2(SE4510, "Error in copying one of the additional database files");
-	    }
-		printf("Done.\n");
+            {
+                        ushutdown_close_socket(hbSocket, __sys_call_error);
+                throw USER_EXCEPTION2(SE4510, "Error in copying one of the additional database files");
+            }
+                printf("Done.\n");
 
-	    msg.instruction = HB_NEXTFILE;
-    	msg.length = 0;
+            msg.instruction = HB_NEXTFILE;
+        msg.length = 0;
 
-		hbSendMsgAndRcvResponse(hbSocket, &msg);
+                hbSendMsgAndRcvResponse(hbSocket, &msg);
     }
 
 end_mode:
-	// next step: notify gov of end
+        // next step: notify gov of end
     msg.instruction = HB_END;
     msg.length = 0;
 
-	hbSendMsgAndRcvResponse(hbSocket, &msg);
+        hbSendMsgAndRcvResponse(hbSocket, &msg);
 
-	U_ASSERT(msg.instruction == HB_END);
+        U_ASSERT(msg.instruction == HB_END);
 
-	ushutdown_close_socket(hbSocket, __sys_call_error);
+        ushutdown_close_socket(hbSocket, __sys_call_error);
 }
