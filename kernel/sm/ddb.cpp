@@ -99,7 +99,7 @@ int main(int argc, char** argv)
         gov_header_struct cfg;
         get_sednaconf_values(&cfg);
      
-		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
+                InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
         SetGlobalNames();
 
         /* Wrapper around open_gov_shm  which absorbs exceptions */ 
@@ -120,6 +120,8 @@ int main(int argc, char** argv)
         if (sedna_gov_shm_ptr)
         {
             int port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
+            char gov_address[U_MAX_HOSTNAME];
+            strcpy(gov_address, GOV_HEADER_GLOBAL_PTR -> lstnr_addr);
             ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_DDB);
             ppc->startup(e);
 
@@ -135,7 +137,7 @@ int main(int argc, char** argv)
 
             sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 
-            if (uconnect_tcp(sock, port_number, "127.0.0.1", __sys_call_error) == 0)
+            if (uconnect_tcp(sock, port_number, gov_address, __sys_call_error) == 0)
             {
                 msg.instruction = IS_RUN_SM;
                 if (strlen (db_name) > SE_MAX_DB_NAME_LENGTH)

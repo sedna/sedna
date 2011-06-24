@@ -43,6 +43,7 @@ int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
     UPID sm_pid;
+    char gov_address[U_MAX_HOSTNAME];
     int port_number;
     int command = STOP;
     int db_id;
@@ -81,13 +82,14 @@ int main(int argc, char **argv)
         get_sednaconf_values(&cfg);
      
         InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
-		SetGlobalNames();
+                SetGlobalNames();
 
         open_gov_shm();
 
         SEDNA_DATA  = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
         db_id       = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
         port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
+        strcpy(gov_address, GOV_HEADER_GLOBAL_PTR -> lstnr_addr);
 
         /* There is no such database? */
         if (db_id == -1) goto end;
@@ -120,7 +122,7 @@ int main(int argc, char **argv)
 
         GOV_CONFIG_GLOBAL_PTR -> db_vars[db_id].mode = OM_SM_SHUTDOWN;
 
-        send_command_to_gov(port_number, command);
+        send_command_to_gov(port_number, gov_address, command);
         uWaitForProcess(sm_pid, proc_handle, __sys_call_error);
         uCloseProcessHandle(proc_handle, __sys_call_error);
 

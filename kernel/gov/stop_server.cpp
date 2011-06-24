@@ -38,6 +38,7 @@ int main(int argc, char** argv)
 {
     UPID gov_pid;
     int port_number;
+    char gov_address[U_MAX_HOSTNAME];
     UPHANDLE proc_handle;
     int res;
     program_name_argv_0 = argv[0];
@@ -75,7 +76,7 @@ int main(int argc, char** argv)
         gov_header_struct cfg;
         get_sednaconf_values(&cfg);
      
-		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
+                InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
         SetGlobalNames();
 
         open_gov_shm();
@@ -109,12 +110,13 @@ int main(int argc, char** argv)
 
         gov_pid     = GOV_HEADER_GLOBAL_PTR -> gov_pid;
         port_number = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
+        strcpy(gov_address, GOV_HEADER_GLOBAL_PTR -> lstnr_addr);
         
         res = uOpenProcess(gov_pid, &proc_handle, __sys_call_error);
         if (res != 0) 
             throw USER_ENV_EXCEPTION("An error occurred while trying to open Sedna server process", false);
         
-        send_command_to_gov(port_number, STOP);
+        send_command_to_gov(port_number, gov_address, STOP);
 
         uWaitForProcess(gov_pid, proc_handle, __sys_call_error);
         uCloseProcessHandle(proc_handle, __sys_call_error);

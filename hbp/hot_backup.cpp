@@ -35,17 +35,17 @@ int main(int argc, char **argv)
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
-		// get default parameters from sednaconf (port number)
-		hbGetDefaultValues();
+                // get default parameters from sednaconf (port number)
+                hbGetDefaultValues();
 
         // parsing parameters
-		hbParseCommandLine(argc, argv);
+                hbParseCommandLine(argc, argv);
    
         // init socket subsystem (needed for communication with gov)
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
 
         // doing hot-backup
-        hbMainProcedure(hb_dir_name, hb_db_name, hb_port, hb_checkpoint); 
+        hbMainProcedure(hb_dir_name, hb_db_name, hb_address, hb_port, hb_checkpoint);
         
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     catch (SednaException &e) {        
         fprintf(stderr, "%s\n", e.what());
 
-	    // make backup directory cleanup
+            // make backup directory cleanup
         hbMakeCleanup();
 
         return 1;
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
     catch (ANY_SE_EXCEPTION) {
         fprintf(stderr, "Unknown error during hot-backup process!\n");
 
-	    // make backup directory cleanup
+            // make backup directory cleanup
         hbMakeCleanup();
 
         return 2;
