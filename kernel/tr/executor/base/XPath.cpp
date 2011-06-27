@@ -250,9 +250,9 @@ void PathExpression::set(scheme_list* path_lst, dynamic_context* cxt)
                 throw USER_EXCEPTION2(SE1004, "Path expression");
             }
 
-            scheme_list* srcNodes = path_lst->at(i).internal.list;
+            scheme_list* srcNodes = srcNodeUnion->at(j).internal.list;
 
-            *(dstNodeUnion->nodes + i) = NodeTest(srcNodes);
+            *(dstNodeUnion->nodes + j) = NodeTest(srcNodes);
         }
     }
 }

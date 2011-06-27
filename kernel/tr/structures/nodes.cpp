@@ -312,7 +312,7 @@ xptr getMostLeftSiblingByType(const xptr node, t_item t)
 xptr getLeftSiblingByType(const xptr node, t_item t)
 {
     for (xptr i = nodeGetLeftSibling(checkp(node)); i != XNULL; i = nodeGetLeftSibling(checkp(i))) {
-        if (getNodeType(checkp(i)) == t) {
+        if ((getNodeType(checkp(i)) & t) > 0) {
             return i;
         }
     }

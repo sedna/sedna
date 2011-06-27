@@ -38,6 +38,8 @@ struct AxisHints {
     DescendantMap descendantPathIndex;
     NodeSequenceHeap nodeHeap;
 
+    std::stack<Node> nodeStack;
+
     AxisHints() : nt(), childTypeMask(element) {};
 
     Node nodeHeapPop() {
@@ -178,9 +180,53 @@ Node nextNode_RightSiblingAny(Node node, AxisHints * hint) {
     return getRightSiblingByTypeMask(node.getPtr(), hint->childTypeMask);
 }
 
+Node nextNode_LeftSiblingAny(Node node, AxisHints * hint) {
+    return getLeftSiblingByType(node.getPtr(), hint->childTypeMask);
+}
+
 Node nextNode_RightSiblingType(Node node, AxisHints * hint) {
     return getRightSiblingByTypeMask(node.getPtr(), hint->childTypeMask);
 }
+
+Node nextNode_following(Node node, AxisHints * hint) {
+    hint->nodeStack.push(node);
+
+    Node x = getFirstChild(node.checkp().getPtr());
+    while (x.isNull()) {
+        /* Pop node from stack */
+        if (hint->nodeStack.empty()) {
+            node = node.getActualParent();
+            if (node.isNull()) {
+                return XNULL;
+            }
+        } else {
+            node = hint->nodeStack.top();
+            hint->nodeStack.pop();
+        }
+        x = node.getRight();
+    }
+
+    return x;
+}
+
+Node nextNode_preceding(Node node, AxisHints * hint) {
+    hint->nodeStack.push(node);
+
+    Node x = node.getLeft();
+
+    if (x.isNull()) {
+        return node.getActualParent();
+    }
+
+    Node y;
+
+    while (!(y = getLastChild(x.getPtr())).isNull()) {
+        x = y;
+    }
+
+    return x;
+}
+
 
 bool testNode_PIName(Node node, AxisHints * hint) {
     U_ASSERT(node.checkp().getNodeType() != pr_ins);
@@ -218,14 +264,17 @@ static const struct {
   {axis_descendant_or_self, nextNode_RightSiblingMerge, resolveAxis_XPathStep},
   {axis_descendant_attr,    /* Depricated */ },
   {axis_parent,             nextNode_Null,              resolveAxis_Parent},
-  {axis_any, },
+
+  {axis_any, /* gap */ },
+
   {axis_ancestor,           nextNode_Parent,            resolveAxis_Parent},
   {axis_ancestor_or_self,   nextNode_Parent,            resolveAxis_Self},
   //
-  {axis_following,          nextNode_Parent},
-  {axis_following_sibling,  nextNode_Parent},
-  {axis_preceding,          nextNode_Parent},
-  {axis_preceding_sibling,  nextNode_Parent},
+  {axis_following,          nextNode_following,         nextNode_following},
+  {axis_following_sibling,  nextNode_RightSiblingAny,   nextNode_RightSiblingAny},
+  {axis_preceding,          nextNode_preceding,         nextNode_preceding},
+  {axis_preceding_sibling,  nextNode_LeftSiblingAny,    nextNode_LeftSiblingAny},
+
   {__axis_last, },
 };
 
@@ -266,7 +315,7 @@ PPAxisStep::PPAxisStep(dynamic_context* _cxt_, operation_info _info_, PPOpIn _ch
         testNodeProc = testNode_PIName;
     }
 
-    if ((nt.axis == axis_self) || (nt.axis == axis_ancestor) || (nt.axis == axis_parent) || (nt.axis == axis_ancestor_or_self)) {
+    if ((nt.axis == axis_self) || (nt.axis >= axis_ancestor)) {
         testNodeProc = schemaTest;
     }
 }
