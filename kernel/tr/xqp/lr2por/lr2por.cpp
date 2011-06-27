@@ -182,7 +182,7 @@ namespace sedna
                 lr = getlrForAxisStep(n);
 
                 off_this.opin = off_cont.opin;
-                off_this.lr_path = (off_cont.lr_path + lr);
+                off_this.lr_path = (off_cont.lr_path + "(" + lr + ")");
 
                 // last step: should finalize abspath
                 if (n.isLast)
