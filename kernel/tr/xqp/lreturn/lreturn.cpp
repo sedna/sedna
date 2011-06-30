@@ -2032,6 +2032,7 @@ namespace sedna
         for (it = n.others.begin(); it != n.others.end(); it++)
         {
             // check if expression is a candidate for conjunct
+            // Note! it doesn't actually analyze properly children dependency on context!
             ASTNode *cand = checkIfPosConjunct(it->expr);
 
             setParentRequest(req);
@@ -2063,6 +2064,13 @@ namespace sedna
             }
             else
             {
+                // See bug #3328520
+                // if candidate failed, the whole predicate use position().
+                // for example: element/element[position() = (1 to ./test/element)] - in this
+                // case checkIfPosConjunct returns non null (since it doesn't check context
+                // dependency), but cadidate failed since it->use_cxt will be true.
+                it->use_pos = cand || it->use_pos;
+
                 if (!others_and.expr)
                 {
                     others_and = *it;
@@ -2874,6 +2882,7 @@ namespace sedna
 
     // check if this is optimization-case conjunct (i.e. fn:position() >(<,<=, etc) <expr> where <expr> doesn't depend on position or context)
     // if true, then return <expr>, else return NULL
+    // Note! it doesn't check if <expr> depends on position or context right now. That check must be performed additionally.
     ASTNode *LReturn::checkIfPosConjunct(const ASTNode *n)
     {
         // consider to check for conjunct
