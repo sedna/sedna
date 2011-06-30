@@ -140,17 +140,18 @@ int ubind_tcp(USOCKET s, unsigned short port, const char * addr, sys_call_error_
 int uconnect_tcp(USOCKET s, unsigned short port, const char *hostname, sys_call_error_fun fun)
 {
     struct addrinfo hints, *hp;
-    char buf[5];
+    /* 8 is enough for c-str for any port (and yes, 5 is not enough :)) */
+    char buf[8];
 
-/* pay attention to getaddrinfo function. It creates addrinfo structure and it needs
- * to get port number as C-string (not as a number -- it leads to segfault) and it
- * also needs some additional options which are written in struct addrinfo hints.
- * addrinfo.ai_family and addrinfo.ai_socktype are obligatory in fact (though it isn't
- * mentioned anywhere) for correct work. Also pay attention to the fact that return codes
- * (of errors) are different in linux and freebsd and some options also may be different.
- * If something goes wrong it's convinient to get info on errors using special function
- * instead of trying to find error codes in sources: * const char *gai_strerror(int errcode);
- * You can find more info with "man getaddrinfo". */
+    /* pay attention to getaddrinfo function. It creates addrinfo structure and it needs
+     * to get port number as C-string (not as a number -- it leads to segfault) and it
+     * also needs some additional options which are written in struct addrinfo hints.
+     * addrinfo.ai_family and addrinfo.ai_socktype are obligatory in fact (though it isn't
+     * mentioned anywhere) for correct work. Also pay attention to the fact that return codes
+     * (of errors) are different in linux and freebsd and some options also may be different.
+     * If something goes wrong it's convinient to get info on errors using special function
+     * instead of trying to find error codes in sources: * const char *gai_strerror(int errcode);
+     * You can find more info with "man getaddrinfo". */
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
