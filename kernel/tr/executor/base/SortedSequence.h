@@ -1,3 +1,8 @@
+/*
+ * File:  SortedSequence.h
+ * Copyright (C) 2011 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef __SortedSequence_h__
 #define __SortedSequence_h__
 
@@ -25,9 +30,6 @@ struct ss_blk_hdr
     xptr nblk;              // next block
 };
 
-#define GET_FREE_SPACE(p) (shft)((uint32_t)PAGE_SIZE - ((XADDR_INT(p)) & PAGE_REVERSE_BIT_MASK))
-#define MAX_BLOCKS_IN_CHAIN 10
-
 #ifndef _data_ptr_
 #define _data_ptr_
 struct data_ptr
@@ -36,13 +38,6 @@ struct data_ptr
     shft size;
 };
 #endif
-
-//Amount of data_ptrs in one block
-#define PTR_BLK_SIZE ((PAGE_SIZE - sizeof(ss_blk_hdr)) / sizeof(data_ptr))
-//Size of block
-#define DATA_BLK_SIZE (PAGE_SIZE - sizeof(ss_blk_hdr))
-//Pointer to the block gge
-#define BLK_HEADER(p) ((ss_blk_hdr *)(XADDR(BLOCKXPTR(p))))
 
 class SortedSequence
 {

@@ -1,3 +1,8 @@
+/*
+ * File:  PPOrderBy_serializer.cpp
+ * Copyright (C) 2011 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "PPOrderBy_serializer.h"
 #include "common/bit_set.h"
 #include "tr/executor/fo/casting_operations.h"

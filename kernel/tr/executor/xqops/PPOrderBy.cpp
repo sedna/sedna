@@ -1,6 +1,6 @@
 /*
  * File:  PPOrderBy.cpp
- * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2011 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #include <iostream>
