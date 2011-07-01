@@ -1,3 +1,8 @@
+/*
+ * File:  PPOrderBy_serializer.h
+ * Copyright (C) 2011 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef __PPOrderBy_serializer_h__
 #define __PPOrderBy_serializer_h__
 

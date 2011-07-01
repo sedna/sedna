@@ -1,6 +1,6 @@
 /*
  * File:  PPOrderBy.h
- * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2011 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #ifndef _PPORDERBY_H
