@@ -316,14 +316,15 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
     //II. Execute abs path (object_path) on the desriptive schema
 
     t_scmnodes sobj;
-    executeAbsPathExpression(root_node.ptr(), *index_dsc->object, &sobj, NULL, NULL);
+    executePathExpression(root_node.ptr(), *index_dsc->object, &sobj, NULL, NULL);
 
     //III. For each schema node found (sn_obj)
     for (unsigned int i = 0; i < sobj.size(); i++)
     {
         //IV. Execute path expression (key_path) on the descriptive schema
         t_scmnodes skey;
-        executeAbsPathExpression(sobj[i], *index_dsc->key, &skey, NULL, NULL);
+        /* TODO: check, maybe we can evaluate the whole index at once? */
+        executePathExpression(sobj[i], *index_dsc->key, &skey, NULL, NULL);
         //V. For each schema node found (sn_key)
         for (unsigned int j = 0; j < skey.size(); j++)
         {

@@ -75,12 +75,12 @@ struct NodeTest {
     const char * local; /* for wildcard localname or PI name */
     const char * qname; /* for full qname */
 
-    void set(scheme_list * path_lst);
+    void set(const scheme_list * path_lst);
   public:
     NodeTest() : axis(axis_any), type(node_test_invalid), uri(NULL), local(NULL), qname(NULL) {};
 
     NodeTest(xpath::Axis _axis, xpath::NodeTestType _type) : axis(_axis), type(_type), uri(NULL), local(NULL), qname(NULL) {};
-    NodeTest(scheme_list * path_lst) : uri(NULL), local(NULL), qname(NULL) { set(path_lst); }
+    NodeTest(const scheme_list * path_lst) : uri(NULL), local(NULL), qname(NULL) { set(path_lst); }
     NodeTest(const char * str);
 
     xsd::QName getQName() const { return xsd::QName::deserialize(qname); };
@@ -105,10 +105,10 @@ struct PathExpression {
     size_t _size;
     xpath::NodeTestUnion * nodes;
 
-  void set(scheme_list* path_lst, dynamic_context* cxt);
+    void set(const scheme_list* path_lst, dynamic_context* cxt);
   public:
     PathExpression();
-    PathExpression(scheme_list * path_lst, dynamic_context * cxt);
+    PathExpression(const scheme_list * path_lst, dynamic_context * cxt);
     PathExpression(const char * str, dynamic_context * cxt);
     PathExpression(schema_node_cptr from, schema_node_cptr to);
 

@@ -113,19 +113,22 @@ namespace sedna
         {
             n.name->accept(*this);
             off_this = getOffer();
+
+            if (off_this.st.type.info.ea.nne == st_nne_name) {
+                off_this.serialized_form = "(attribute " + off_this.serialized_form + ")";
+            } else if (off_this.st.type.info.ea.nne == st_nne_wildcard) {
+                off_this.serialized_form = "(attribute any)";
+            } else {
+              /* In this case --- do nothing. That means that it is not an attribute check. */
+            }
         }
         else
         {
-            off_this.test_data = "()";
-            off_this.test_type = "wildcard_star";
-
+            off_this.serialized_form = "(attribute any)";
             off_this.st.type.info.ea.nne = st_nne_wildcard;
         }
 
         off_this.st.type.type = st_attribute;
-
-        if (off_this.test_type == "wildcard_star" || off_this.test_type == "qname")
-            off_this.test_type = "attribute";
 
         if (n.type)
         {
@@ -171,37 +174,42 @@ namespace sedna
             dbe->type = dbe_document;
             dbe->name = NULL;
             off_cont.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), NULL, counted_ptr<db_entity>(dbe)), 1);
+            off_cont.open_abs_path = true;
         }
 
-        if (n.isSuitableForAbsPath() && off_cont.opin.op) // if op == NULL then this axis starts a relative non-abspath XPath
+        if (n.isSuitableForAbsPath() && off_cont.open_abs_path) // if op == NULL then this axis starts a relative non-abspath XPath
         {
-            if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op))
+            PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op);
+            U_ASSERT(apa != NULL);
+
+            std::string lr;
+
+            lr = getlrForAxisStep(n);
+
+            off_this.opin = off_cont.opin;
+            off_this.lr_path = off_cont.lr_path + " " + lr;
+
+            // last step: should finalize abspath
+            if (n.isLast)
             {
-                std::string lr;
-
-                lr = getlrForAxisStep(n);
-
-                off_this.opin = off_cont.opin;
-                off_this.lr_path = (off_cont.lr_path + "(" + lr + ")");
-
-                // last step: should finalize abspath
-                if (n.isLast)
-                {
-                    finalizeAbsPath(apa, off_this.lr_path.c_str(), pers_path_mode);
-                    off_this.lr_path = "";
-                }
-
-                setOffer(off_this);
-
-                return;
+                finalizeAbsPath(apa, off_this.lr_path.c_str(), pers_path_mode);
+                off_this.lr_path = "";
+                off_this.open_abs_path = false;
             }
+            else
+            {
+                off_this.open_abs_path = true;
+            }
+
+            setOffer(off_this);
+
+            return;
         }
-        else if (n.cont)
+        else if (n.cont && off_cont.open_abs_path) // need to close PPAbsPath
         {
-             if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
-             {
-                 finalizeAbsPath(apa, off_cont.lr_path.c_str(), pers_path_mode);
-             }
+            U_ASSERT(dynamic_cast<PPAbsPath *>(off_cont.opin.op) != NULL);
+            finalizeAbsPath(dynamic_cast<PPAbsPath *>(off_cont.opin.op), off_cont.lr_path.c_str(), pers_path_mode);
+            off_this.open_abs_path = false;
         }
 
         // determine if we need sequence checker
@@ -521,8 +529,7 @@ namespace sedna
     {
         childOffer off_this;
 
-        off_this.test_data = "()";
-        off_this.test_type = "comment";
+        off_this.serialized_form = "(comment)";
         off_this.st.type.type = st_comment;
 
         setOffer(off_this);
@@ -613,7 +620,7 @@ namespace sedna
 
         if (!onp || onp->size() == 0) {
             setDefaultSpace(catalog_space_base);
-            onp = new xpath::PathExpression("()", dyn_cxt);
+            onp = new xpath::PathExpression();
             popDefaultSpace();
         }
 
@@ -676,7 +683,7 @@ namespace sedna
         setDefaultSpace(catalog_space_base);
 
         if (!onp || onp->size() == 0) { // should make it persistent (not-null path will be made persistent by ast-ops)
-            onp = new xpath::PathExpression("()", dyn_cxt);
+            onp = new xpath::PathExpression();
         }
 
         n.by_path->accept(*this);
@@ -691,7 +698,7 @@ namespace sedna
         delete pa; // we don't need it anymore (note that this won't destroy on_path)
 
         if (!byp || byp->size() == 0) // should make it persistent (not-null path will be made persistent by ast-ops)
-            byp = new xpath::PathExpression("()", dyn_cxt);
+            byp = new xpath::PathExpression();
 
         popDefaultSpace();
 
@@ -803,7 +810,7 @@ namespace sedna
 
 
         if (!onp || onp->size() == 0) { // should make it persistent (not-null path will be made persistent by ast-ops)
-            onp = new xpath::PathExpression("()", dyn_cxt);
+            onp = new xpath::PathExpression();
         }
 
         scheme_list *action = new scheme_list(n.do_exprs->size());
@@ -842,7 +849,7 @@ namespace sedna
             delete pa; // we don't need it anymore (note that this won't destroy onp)
 
             if (!ip || ip->size() == 0) { // should make it persistent (not-null path will be made persistent by ast-ops)
-                ip = new xpath::PathExpression("()", dyn_cxt);
+                ip = new xpath::PathExpression();
             }
 
             inserting_node innode(n.leaf_name->c_str(), n.leaf_type == 0 ? element : attribute);
@@ -946,15 +953,15 @@ namespace sedna
             n.elem_test->accept(*this);
             off_this = getOffer();
 
+            U_ASSERT(off_this.serialized_form.find("element") != std::string::npos);
+            off_this.serialized_form.replace(off_this.serialized_form.find("element"), strlen("element"), "document-node");
             off_this.st.type.type = st_document_element;
         }
         else
         {
-            off_this.test_data = "()";
+            off_this.serialized_form = "(document-node any)";
             off_this.st.type.type = st_document;
         }
-
-        off_this.test_type = "document";
 
         setOffer(off_this);
     }
@@ -1059,24 +1066,21 @@ namespace sedna
             count += n.cont->size();
         }
 
-        if (count == 0)
-        {
-            content = PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
-        }
-        else
-        {
-            seq.reserve(count);
+        seq.reserve(count);
 
-            while (count--) {
-                childOffer offer = getOffer();
+        while (count--) {
+            childOffer offer = getOffer();
 
-                if (offer.special_node) {
-                    ns = offer.opin;
-                } else {
-                    seq.push_back(offer.opin);
-                }
+            if (offer.special_node) {
+                ns = offer.opin;
+            } else {
+                seq.push_back(offer.opin);
             }
+        }
 
+        if (seq.size() == 0) {
+            content = PPOpIn(new PPNil(dyn_cxt, createOperationInfo(n)), 1);
+        } else {
             std::reverse(seq.begin(), seq.end());
 
             content = PPOpIn(new PPSequence(dyn_cxt, createOperationInfo(n), seq), 1);
@@ -1152,19 +1156,22 @@ namespace sedna
         {
             n.name->accept(*this);
             off_this = getOffer();
+
+            if (off_this.st.type.info.ea.nne == st_nne_name) {
+                off_this.serialized_form = "(element " + off_this.serialized_form + ")";
+            } else if (off_this.st.type.info.ea.nne == st_nne_wildcard) {
+                off_this.serialized_form = "(element any)";
+            } else {
+              /* In this case --- do nothing. That means that it is not an element check. */
+            }
         }
         else
         {
-            off_this.test_data = "()";
-            off_this.test_type = "wildcard_star";
-
+            off_this.serialized_form = "(element any)";
             off_this.st.type.info.ea.nne = st_nne_wildcard;
         }
 
         off_this.st.type.type = st_element;
-
-        if (off_this.test_type == "wildcard_star" || off_this.test_type == "qname")
-            off_this.test_type = "element";
 
         if (n.type)
         {
@@ -1231,24 +1238,26 @@ namespace sedna
             dbe->name = new char[6];
             strcpy(dbe->name, "dummy");
             off_cont.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), NULL, counted_ptr<db_entity>(dbe)), 1);
+            off_cont.open_abs_path = true;
         }
 
-        if (n.cont && (n.expr || n.preds || n.isLast)) // we need to close abs-path if we've got it as a context (exception, "." - expression)
+        if (n.cont && (n.expr || n.preds || n.isLast) && off_cont.open_abs_path) // we need to close abs-path if we've got it as a context (exception, "." - expression)
         {
-             if (PPAbsPath *apa = dynamic_cast<PPAbsPath *>(off_cont.opin.op)) // need to close PPAbsPath
-                     finalizeAbsPath(apa, off_cont.lr_path.c_str(), pers_path_mode);
+            finalizeAbsPath(dynamic_cast<PPAbsPath *>(off_cont.opin.op), off_cont.lr_path.c_str(), pers_path_mode);
+            off_cont.open_abs_path = false;
         }
 
         // try to propagate abs-path via '.'-expression
         if (!n.expr && !n.preds && off_cont.opin.op)
         {
-             if (dynamic_cast<PPAbsPath *>(off_cont.opin.op))
+             if (off_cont.open_abs_path)
              {
                  off_this.opin = off_cont.opin;
 
                  if (!n.isLast)
                  {
                      off_this.lr_path = off_cont.lr_path;
+                     off_this.open_abs_path = true;
                  }
 
                  setOffer(off_this);
@@ -1659,7 +1668,7 @@ namespace sedna
                 }
 
                 setDefaultSpace(local_space_base);
-                xpath::PathExpression *pe = new xpath::PathExpression("()", dyn_cxt);
+                xpath::PathExpression *pe = new xpath::PathExpression();
                 popDefaultSpace();
 
                 if (name)
@@ -1668,6 +1677,7 @@ namespace sedna
                     strcpy(dbe->name, name->lit->c_str());
 
                     off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), pe, counted_ptr<db_entity>(dbe)), 1);
+                    off_this.open_abs_path = true;
                 }
                 else
                 {
@@ -1680,6 +1690,7 @@ namespace sedna
 
                     off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), pe,
                             counted_ptr<db_entity>(dbe), off.opin), 1);
+                    off_this.open_abs_path = true;
                 }
 
                 off_this.lr_path = "";
@@ -1697,7 +1708,7 @@ namespace sedna
                 }
 
                 setDefaultSpace(local_space_base);
-                xpath::PathExpression *path_expr = new xpath::PathExpression("()", dyn_cxt);
+                xpath::PathExpression *path_expr = new xpath::PathExpression();
                 popDefaultSpace();
 
                 if (name)
@@ -1706,6 +1717,7 @@ namespace sedna
                     strcpy(dbe->name, name->lit->c_str());
 
                     off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), path_expr, counted_ptr<db_entity>(dbe)), 1);
+                    off_this.open_abs_path = true;
                 }
                 else
                 {
@@ -1718,6 +1730,7 @@ namespace sedna
 
                     off_this.opin = PPOpIn(new PPAbsPath(dyn_cxt, createOperationInfo(n), path_expr,
                             counted_ptr<db_entity>(dbe), off.opin), 1);
+                    off_this.open_abs_path = true;
                 }
 
                 off_this.lr_path = "";
@@ -2192,25 +2205,38 @@ namespace sedna
 
         if (*n.pref == "*" && *n.local == "*")
         {
-            off_this.test_data = "()";
-            off_this.test_type = "wildcard_star";
+            off_this.serialized_form = "(wildcard_star)";
             off_this.st.type.info.ea.nne = st_nne_wildcard;
         }
         else if (*n.pref == "*")
         {
-            off_this.test_data = "\"" + *n.local + "\"";
-            off_this.test_type = "wildcard_star_ncname";
+            off_this.serialized_form = "(wildcard_star_ncname \"" + *n.local + "\")";
+            off_this.st.type.info.ea.nne = st_nne_other;
         }
         else if (*n.local == "*")
         {
-            off_this.test_data = "\"" + *n.uri + "\"";
-            off_this.test_type = "wildcard_ncname_star";
+            off_this.serialized_form = "(wildcard_ncname_star \"" + *n.uri + "\")";
+            off_this.st.type.info.ea.nne = st_nne_other;
         }
         else
         {
             xsd::QName qname = xsd::QName::createUPL(n.uri->c_str(), n.pref->c_str(), n.local->c_str());
-            off_this.test_data = qname.toLRString();
-            off_this.test_type = "qname";
+
+            // If this one is enclosed in another test, return
+            ASTNode * parent = getParent();
+            if (parent == NULL || (
+                  dynamic_cast<ASTElementTest *>(parent) == NULL &&
+                  dynamic_cast<ASTAttribTest *>(parent) == NULL &&
+                  dynamic_cast<ASTSchemaElemTest *>(parent) == NULL &&
+                  dynamic_cast<ASTSchemaAttrTest *>(parent) == NULL))
+            {
+                off_this.serialized_form = "(qname " + qname.toLRString() + ")";
+            }
+            else
+            {
+                // Warning: different semantics of returned expression here !
+                off_this.serialized_form = qname.toLRString();
+            }
 
             off_this.st.type.info.ea.nne = st_nne_name;
             off_this.st.type.info.ea.qname = qname.serialize(local_space_base);
@@ -2228,8 +2254,7 @@ namespace sedna
     {
         childOffer off_this;
 
-        off_this.test_data = "()";
-        off_this.test_type = "node";
+        off_this.serialized_form = "(node)";
 
         off_this.st.type.type = st_node;
 
@@ -2556,17 +2581,15 @@ namespace sedna
 
         if (n.type == ASTPiTest::NONE)
         {
-            off_this.test_data = "()";
+            off_this.serialized_form = "(processing-instruction any)";
             off_this.st.type.info.ncname = NULL;
         }
         else
         {
             xsd::NCName name = xsd::NCName::check(n.test->c_str());
-            off_this.test_data = name.toString();
+            off_this.serialized_form = "(processing-instruction " + name.toLRString() + ")";
             off_this.st.type.info.ncname = name.serialize(local_space_base);
         }
-
-        off_this.test_type = "processing-instruction";
 
         setOffer(off_this);
     }
@@ -2905,8 +2928,7 @@ namespace sedna
     {
         childOffer off_this;
 
-        off_this.test_data = "()";
-        off_this.test_type = "text";
+        off_this.serialized_form = "(text)";
         off_this.st.type.type = st_text;
 
         setOffer(off_this);
@@ -3479,7 +3501,7 @@ namespace sedna
 
     std::string lr2por::getlrForAxisStep(const ASTAxisStep &s)
     {
-        std::string res = "(";
+        std::string res = "(test ";
         childOffer off;
 
         switch (s.axis) {
@@ -3506,9 +3528,7 @@ namespace sedna
         off = getOffer();
 
         res += " ";
-        res += off.test_type;
-        res += " ";
-        res += off.test_data;
+        res += off.serialized_form;
         res += ")";
 
         return res;
@@ -3521,7 +3541,7 @@ namespace sedna
             return;
 
         // make it list-like
-        std::string lr_list = std::string("(") + lr + ")";
+        std::string lr_list = std::string("(xpath ") + lr + ")";
 
         setDefaultSpace(pers ? catalog_space_base : local_space_base);
         xpath::PathExpression * pe = new xpath::PathExpression(lr_list.c_str(), dyn_cxt);

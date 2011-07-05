@@ -1,9 +1,20 @@
-#if (_MSC_VER > 1000)
-#pragma once
-#endif
-
 #ifndef COMMUTIL_H_INCLUDED
 #define COMMUTIL_H_INCLUDED
+
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+inline
+static int strcmpex(const char* c1, const char* c2)
+{
+  if (c1==NULL && c2==NULL) return 0;
+  if (c1==NULL || c2==NULL) return (c1==NULL) ? -1 : 1;
+  int res = strcmp(c1,c2); /// strcmp doesn't guarantee that return value either -1, 1 or 0!
+  if (res < 0) return -1;
+  if (res > 0) return 1;
+  return res;
+}
 
 /*	The following macroses are defined:
 
@@ -22,10 +33,6 @@
 	the alignment is not required to be power of 2. Any sane compiler will replace
 	% with bitwize operators when alignment is power of 2 (the most common scenario).
 */
-
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
 
 #ifndef MIN
 #define MIN(A, B) \
@@ -64,16 +71,5 @@
 
 #define ROUND_SIZE_DOWN(SIZE, K) \
 	((size_t)(SIZE)-(size_t)(SIZE)%(K))
-
-inline
-static int strcmpex(const char* c1, const char* c2)
-{
-  if (c1==NULL && c2==NULL) return 0;
-  if (c1==NULL || c2==NULL) return (c1==NULL) ? -1 : 1;
-  int res = strcmp(c1,c2); /// strcmp doesn't guarantee that return value either -1, 1 or 0!
-  if (res < 0) return -1;
-  if (res > 0) return 1;
-  return res;
-}
 
 #endif

@@ -46,16 +46,15 @@ namespace sedna
             arr_of_orb_modifier orbs; // order-by modifiers
 
             sequence_type st;  // type for typed vars
+            bool open_abs_path; // Whether or not can we continue abs path
             std::string lr_path; // for indexes, triggers, abs_path expressions
-            std::string test_type; // for node-test in axis steps (type of test, e.g node, pi)
-            std::string test_data; // for node-test in axis steps (data for test, e.g. name for pi)
+            std::string serialized_form; // for node-test in axis steps (look XPath.cpp for serialization rules)
 
             bool special_node; // Currently used to indicate that the constructed branch is NSP node with element's prefix
 
-            childOffer()
+            childOffer() : open_abs_path(false), special_node(false)
             {
                 opin.op = NULL;
-                special_node = false;
             }
         };
 

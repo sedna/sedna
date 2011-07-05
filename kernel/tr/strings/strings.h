@@ -507,7 +507,7 @@ struct text_membuf_t {
             throw USER_EXCEPTION2(SE2037, "Too long string to be copied");
         }
 
-        size = (strsize_t) size;
+        size = (strsize_t) sz;
         cstr = (char *) malloc(sz + 1);
 
         switch (ts.type) {
@@ -527,7 +527,7 @@ struct text_membuf_t {
     };
     ~text_membuf_t() { if (cstr != NULL) { free(cstr); } };
 
-    text_source_t getTextSource() const { return text_source_cstr(cstr); };
+    text_source_t getTextSource() const { return text_source_mem(cstr, size); };
     const char * getCstr() const { return cstr; }
     size_t getSize() const { return size; }
 };

@@ -174,12 +174,6 @@ xptr getRootNode(const xptr node);
 
 xmlscm_type getScmType(xptr node);
 
-/** Returns the vector of schema node descandants of the current schema node*/
-int collectChildren(const xptr& parent, const char* uri, const char* name,
-        t_item type, comp_schema cfun, xptr& first, xptr*& res);
-
-
-
 /* Legacy */
 
 inline

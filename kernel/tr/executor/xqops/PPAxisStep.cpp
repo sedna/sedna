@@ -19,10 +19,11 @@ using namespace xpath;
 
 struct NodeDocumentOrderCmp {
   bool operator()(const Node & __x, const Node& __y) const
-  { return __x < __y; }
+  { return !(__x < __y); }
 };
 
-typedef std::priority_queue<Node, std::vector<Node>, NodeDocumentOrderCmp> NodeSequenceHeap;
+// NodeDocumentOrderCmp nodeDocumentOrderCmp;
+
 typedef std::vector<int> SchemaPath;
 typedef std::vector<SchemaPath> SchemaPathList;
 typedef std::map<schema_node_xptr, SchemaPathList> DescendantMap;
@@ -34,23 +35,44 @@ struct AxisHints {
     xpath::NodeTest nt;
     t_item childTypeMask;
     ISchemaTest * schemaTest;
+    Node baseNode;
 
     DescendantMap descendantPathIndex;
-    NodeSequenceHeap nodeHeap;
 
-    std::stack<Node> nodeStack;
+    std::vector<Node> nodeHeapStorage; // It turns out, that priority_queue sucks: it have no clear() method.
+    std::list<Node> nodeStackStorage; // Same thing with stack
 
-    AxisHints() : nt(), childTypeMask(element) {};
+    AxisHints() : nt(), childTypeMask(element), schemaTest(NULL), nodeHeapStorage() {};
 
     Node nodeHeapPop() {
-        if (nodeHeap.empty()) {
+        if (nodeHeapStorage.empty()) {
             return Node();
         } else {
-            Node result = nodeHeap.top();
-            nodeHeap.pop();
+            Node result = nodeHeapStorage.front();
+            std::pop_heap(nodeHeapStorage.begin(), nodeHeapStorage.end(), NodeDocumentOrderCmp());
+            nodeHeapStorage.pop_back();
             return result;
         }
     };
+
+    void nodeHeapPush(const Node & node) {
+        nodeHeapStorage.push_back(node);
+        std::push_heap(nodeHeapStorage.begin(), nodeHeapStorage.end(), NodeDocumentOrderCmp());
+    };
+
+    Node nodeStackPop() {
+        if (nodeStackStorage.empty()) {
+            return Node();
+        } else {
+            Node result = nodeStackStorage.front();
+            nodeStackStorage.pop_front();
+            return result;
+        }
+    }
+
+    void nodeStackPush(const Node & node) {
+        nodeStackStorage.push_front(node);
+    }
 };
 
 /**
@@ -72,24 +94,58 @@ void getNodePath(schema_node_cptr from, schema_node_cptr to, SchemaPath& path) {
     }
 }
 
+static
+Node getRightBrother(Node node, Node commonAncestor) {
+    Node n = getNextDescriptorOfSameSort(node.getPtr());
+
+    /* Check if this node still is a descendant of the base one */
+    if (!n.isNull()) {
+        int relation = nid_cmp_effective(n.getPtr(), commonAncestor.getPtr());
+
+        if (relation != 2 && relation != 0) {
+            return XNULL;
+        }
+    }
+
+    return n;
+};
 
 static
-xptr getFirstNodeByPath(Node node, const SchemaPath & path) {
+xptr getFirstNodeByPath(Node node, const SchemaPath & path, Node commonAncestor) {
     xptr nodeI = node.getPtr();
 
     for (std::vector<int>::const_reverse_iterator i = path.rbegin(); i != path.rend(); ++i) {
-        nodeI = getChildAt(nodeI, *i);
-        if (nodeI == XNULL) { break; }
+        xptr nodeJ = getChildAt(nodeI, *i);
+
+  /* If we found the first child node on the step of path traversing,
+    * we should scan through all children of this type to find one, that have
+    * requested grandchild for the next step */
+
+        while (nodeJ == XNULL) {
+            nodeI = getRightBrother(nodeI, commonAncestor).getPtr();
+
+            if (nodeI == XNULL) {
+                return XNULL;
+            }
+
+            nodeJ = getChildAt(nodeI, *i);
+        }
+
+        if (nodeJ == XNULL) {
+            return XNULL;
+        }
+
+        nodeI = nodeJ;
     }
 
     return nodeI;
 }
 
 static
-void traverseSchemaPathList(Node node, const SchemaPathList * list, NodeSequenceHeap * nodes) {
+void traverseSchemaPathList(Node node, const SchemaPathList * list, AxisHints * hint) {
     for (SchemaPathList::const_iterator i = list->begin(); i != list->end(); ++i) {
-        xptr result = getFirstNodeByPath(node, *i);
-        if (result != XNULL) { nodes->push(result); }
+        xptr result = getFirstNodeByPath(node, *i, hint->baseNode);
+        if (result != XNULL) { hint->nodeHeapPush(result); }
     }
 }
 
@@ -101,14 +157,33 @@ Node nextNode_RightSiblingMerge(Node node, AxisHints * hint) {
     Node n = getRightSiblingOfSameSort(node.getPtr());
 
     if (!n.isNull()) {
-        hint->nodeHeap.push(n);
+        hint->nodeHeapPush(n);
     }
 
     /* If nothing left to merge with, return EMPTY node. */
     return hint->nodeHeapPop();
 }
 
-Node resolveAxis_XPathStep(Node node, AxisHints * hint) {
+Node nextNode_RightDescendantMerge(Node node, AxisHints * hint) {
+    U_ASSERT(!node.isNull());
+
+    /* Push the next node of the previously evaluated to node sorting heap.
+       Push it if it is not XNULL. */
+    Node n = getRightBrother(node, hint->baseNode);
+
+    if (!n.isNull()) {
+        hint->nodeHeapPush(n);
+    }
+
+    /* If nothing left to merge with, return EMPTY node. */
+    return hint->nodeHeapPop();
+}
+
+/*
+  TODO: Descendant axis is evaluated as follows: HOOOWWWWW!
+*/
+
+Node resolveAxis_Descendant(Node node, AxisHints * hint) {
     schema_node_cptr scn = getSchemaNode(node.getPtr());
 
     /* Find ready (cached) node extraction strategy for given schema node */
@@ -137,7 +212,7 @@ Node resolveAxis_XPathStep(Node node, AxisHints * hint) {
        We need all nodes to maintain document order.
        MAYBE if document order is not required, we can find just the very first one. */
 
-    traverseSchemaPathList(node, &(descMap->second), &(hint->nodeHeap));
+    traverseSchemaPathList(node, &(descMap->second), hint);
 
     /* Get the first node from heap */
     return hint->nodeHeapPop();
@@ -159,13 +234,14 @@ Node resolveAxis_NULL(Node node, AxisHints * hint) {
     return XNULL;
 }
 
-Node resolveAxis_Parent(Node node, AxisHints * hint) {
-    return getActualParentNode(node.getPtr());
-}
-
-
 Node nextNode_Parent(Node node, AxisHints * hint) {
-    return getActualParentNode(node.getPtr());
+    schema_node_cptr parent_sn = node.checkp().getSchemaNode()->parent;
+
+    if (parent_sn.found() && hint->schemaTest->test(parent_sn)) {
+      return node.checkp().getActualParent();
+    } else {
+      return XNULL;
+    }
 }
 
 Node nextNode_Null(Node node, AxisHints * hint) {
@@ -188,34 +264,57 @@ Node nextNode_RightSiblingType(Node node, AxisHints * hint) {
     return getRightSiblingByTypeMask(node.getPtr(), hint->childTypeMask);
 }
 
+Node resolveAxis_following(Node node, AxisHints * hint) {
+    Node x = node.checkp().getRight();;
+
+    while (x.isNull()) {
+        node = node.checkp().getActualParent();
+
+        if (node.isNull()) {
+            return XNULL;
+        }
+
+        x = node.checkp().getRight();
+    }
+
+    return x;
+}
+
 Node nextNode_following(Node node, AxisHints * hint) {
-    hint->nodeStack.push(node);
+    hint->nodeStackPush(node);
 
     Node x = getFirstChild(node.checkp().getPtr());
+
     while (x.isNull()) {
         /* Pop node from stack */
-        if (hint->nodeStack.empty()) {
-            node = node.getActualParent();
+        if (hint->nodeStackStorage.empty()) {
+            node = node.checkp().getActualParent();
             if (node.isNull()) {
                 return XNULL;
             }
         } else {
-            node = hint->nodeStack.top();
-            hint->nodeStack.pop();
+            node = hint->nodeStackPop();
         }
-        x = node.getRight();
+        x = node.checkp().getRight();
     }
 
     return x;
 }
 
 Node nextNode_preceding(Node node, AxisHints * hint) {
-    hint->nodeStack.push(node);
+    Node x = node.checkp().getLeft();
 
-    Node x = node.getLeft();
+    while (x.isNull()) {
+        node = node.checkp().getActualParent();
 
-    if (x.isNull()) {
-        return node.getActualParent();
+        if (node.isNull()) {
+            return XNULL;
+        } else if (nid_cmp_effective(node.getPtr(), hint->baseNode.getPtr()) != -2) {
+            return node;
+        } else {
+            x = node.checkp().getLeft();
+            continue;
+        }
     }
 
     Node y;
@@ -229,7 +328,7 @@ Node nextNode_preceding(Node node, AxisHints * hint) {
 
 
 bool testNode_PIName(Node node, AxisHints * hint) {
-    U_ASSERT(node.checkp().getNodeType() != pr_ins);
+    U_ASSERT(node.checkp().getNodeType() == pr_ins);
 
     if (!hint->nt.getLocal().valid()) {
         return true;
@@ -257,20 +356,21 @@ static const struct {
     NextNodeProc nextProc;
     EvaluateAxisProc evalProc;
 } axisResolutionProcs[] = {
-  {axis_child,              nextNode_RightSiblingMerge, resolveAxis_XPathStep},
-  {axis_descendant,         nextNode_RightSiblingMerge, resolveAxis_XPathStep},
-  {axis_attribute,          nextNode_Null,              resolveAxis_XPathStep},
-  {axis_self,               nextNode_Null,              resolveAxis_Self},
-  {axis_descendant_or_self, nextNode_RightSiblingMerge, resolveAxis_XPathStep},
-  {axis_descendant_attr,    /* Depricated */ },
-  {axis_parent,             nextNode_Null,              resolveAxis_Parent},
+  {axis_child,              nextNode_RightSiblingMerge,     resolveAxis_Descendant},
+  {axis_descendant,         nextNode_RightDescendantMerge,  resolveAxis_Descendant},
+  {axis_attribute,          nextNode_RightSiblingMerge,     resolveAxis_Descendant},
+  {axis_self,               nextNode_Null,                  resolveAxis_Self},
+  {axis_descendant_or_self, nextNode_RightDescendantMerge,  resolveAxis_Descendant},
+  {axis_descendant_attr,    nextNode_RightDescendantMerge,  resolveAxis_Descendant /* Soon to be depricated */ },
+  {axis_parent,             nextNode_Null,                  nextNode_Parent},
 
   {axis_any, /* gap */ },
 
-  {axis_ancestor,           nextNode_Parent,            resolveAxis_Parent},
+  {axis_ancestor,           nextNode_Parent,            nextNode_Parent},
   {axis_ancestor_or_self,   nextNode_Parent,            resolveAxis_Self},
-  //
-  {axis_following,          nextNode_following,         nextNode_following},
+
+ //
+  {axis_following,          nextNode_following,         resolveAxis_following},
   {axis_following_sibling,  nextNode_RightSiblingAny,   nextNode_RightSiblingAny},
   {axis_preceding,          nextNode_preceding,         nextNode_preceding},
   {axis_preceding_sibling,  nextNode_LeftSiblingAny,    nextNode_LeftSiblingAny},
@@ -305,17 +405,23 @@ PPAxisStep::PPAxisStep(dynamic_context* _cxt_, operation_info _info_, PPOpIn _ch
     nextNodeProc = axisResolutionProcs[axisIndex].nextProc;
     testNodeProc = NULL;
 
+    /* All optimizations here v v v */
+
     /* Kinda optimization =) */
     if ((nt.axis == axis_child) && ((hint->childTypeMask & ~ti_singleton_element) == 0)) {
         evaluateAxisProc = resolveAxis_ChildType;
         nextNodeProc = nextNode_RightSiblingType;
     }
 
+    if ((nt.axis == axis_attribute) && !hint->nt.isAnyQName()) {
+        nextNodeProc = nextNode_Null;
+    }
+
     if (hint->childTypeMask == pr_ins) {
         testNodeProc = testNode_PIName;
     }
 
-    if ((nt.axis == axis_self) || (nt.axis >= axis_ancestor)) {
+    if ((nt.axis == axis_self) || (nt.axis >= axis_ancestor) || (nt.axis == axis_parent)) {
         testNodeProc = schemaTest;
     }
 }
@@ -330,18 +436,23 @@ PPAxisStep::~PPAxisStep()
 void PPAxisStep::do_open ()
 {
     child.op->open();
-    currentNodeIndir = XNULL;
+    hint->baseNode = currentNodeIndir = XNULL;
 }
 
 void PPAxisStep::do_reopen()
 {
     child.op->reopen();
-    currentNodeIndir = XNULL;
+    hint->baseNode = currentNodeIndir = XNULL;
+    hint->nodeHeapStorage.clear();
+    hint->nodeStackStorage.clear();
 }
 
 void PPAxisStep::do_close()
 {
     child.op->close();
+    hint->nodeHeapStorage.clear();
+    hint->nodeStackStorage.clear();
+    hint->descendantPathIndex.clear();
 }
 
 void PPAxisStep::do_accept(PPVisitor &v)
@@ -373,7 +484,8 @@ void PPAxisStep::do_next(tuple& t)
                 throw XQUERY_EXCEPTION(XPTY0020);
             }
 
-            currentNode = evaluateAxisProc(child.get(t).get_node(), hint);
+            hint->baseNode = child.get(t).get_node();
+            currentNode = evaluateAxisProc(hint->baseNode, hint);
         }
 
         U_ASSERT(!currentNode.isNull());

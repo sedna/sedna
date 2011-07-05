@@ -11,7 +11,6 @@
 
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/XPath.h"
-#include "tr/executor/base/merge.h"
 
 struct AxisHints;
 

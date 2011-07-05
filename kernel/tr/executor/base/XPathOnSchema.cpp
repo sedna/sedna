@@ -34,8 +34,8 @@ struct SchemaTestOperatorQNameType {
 };
 
 struct SchemaTestOperatorLocalType {
-    inline static bool test(schema_node_cptr node, const SchemaNodeData * data) { return SchemaTestOperatorType::test(node, data) && strcmpex(node->get_name(), data->m_local); };
-    inline static bool testref(const sc_ref &ref, const SchemaNodeData * data) { return SchemaTestOperatorType::testref(ref, data) && strcmpex(ref.name, data->m_local); };
+    inline static bool test(schema_node_cptr node, const SchemaNodeData * data) { return SchemaTestOperatorType::test(node, data) && strcmpex(node->get_name(), data->m_local) == 0; };
+    inline static bool testref(const sc_ref &ref, const SchemaNodeData * data) { return SchemaTestOperatorType::testref(ref, data) && strcmpex(ref.name, data->m_local) == 0; };
 };
 
 struct SchemaTestOperatorUriType {
@@ -135,9 +135,11 @@ t_item getNodeTestTypeMask(const xpath::NodeTest& nt) {
 
     if (node_kind == principal_nk) {
       /* http://www.w3.org/TR/xquery/#dt-principal-node-kind */
-        return (nt.axis == axis_attribute) ? attribute : element;
-    } else if (nt.axis == axis_attribute) {
+        return (nt.axis == axis_attribute || nt.axis == axis_descendant_attr) ? attribute : element;
+    } else if (nt.axis == axis_attribute || nt.axis == axis_descendant_attr) {
         return (t_item) (node_kind & attribute);
+    } else if (nt.axis == axis_child || nt.axis == axis_descendant || nt.axis == axis_descendant_or_self) {
+        return (t_item) (node_kind & ti_dmchildren);
     } else {
         return node_kind;
     }
@@ -155,14 +157,6 @@ ISchemaTest* createSchemaTest(const xpath::NodeTest& nt)
     if ((typeTestMasks & (element | attribute)) == 0) {
         return new SchemaTest<SchemaTestOperatorType>(typeTestMasks, NULL, NULL);
     } else switch (nt.type) {
-      case xpath::node_test_element:
-      case xpath::node_test_attribute:
-        if (nt.isAnyQName()) {
-            return new SchemaTest<SchemaTestOperatorType>(typeTestMasks, NULL, NULL);
-        } else {
-            return new SchemaTest<SchemaTestOperatorQNameType>(typeTestMasks, qname.getUri(), qname.getLocalName());
-        }
-        break;
       case xpath::node_test_qname:
         return new SchemaTest<SchemaTestOperatorQNameType>(typeTestMasks, qname.getUri(), qname.getLocalName());
         break;
@@ -175,8 +169,14 @@ ISchemaTest* createSchemaTest(const xpath::NodeTest& nt)
       case xpath::node_test_wildcard_star_ncname:
         return new SchemaTest<SchemaTestOperatorLocalType>(typeTestMasks, NULL, nt.getLocal().getValue());
         break;
+      case xpath::node_test_element:
+      case xpath::node_test_attribute:
       default:
-        return new SchemaTest<SchemaTestOperatorQNameType>(typeTestMasks, qname.getUri(), qname.getLocalName());
+        if (nt.isAnyQName()) {
+            return new SchemaTest<SchemaTestOperatorType>(typeTestMasks, NULL, NULL);
+        } else {
+            return new SchemaTest<SchemaTestOperatorQNameType>(typeTestMasks, qname.getUri(), qname.getLocalName());
+        }
         break;
     }
 
@@ -205,15 +205,13 @@ void executeNodeTest(schema_node_cptr node, const NodeTest& nt, t_scmnodes* resu
         return;
     }
 
-    U_ASSERT(nt.axis != axis_descendant_attr);
-
     if (nt.axis == axis_descendant_or_self || nt.axis == axis_self) {
         if (schemaTest->test(node)) {
             result->push_back(node.ptr());
         }
     }
 
-    if (nt.axis == axis_descendant_or_self || nt.axis == axis_descendant) {
+    if (nt.axis == axis_descendant_or_self || nt.axis == axis_descendant || nt.axis == axis_descendant_attr) {
         schemaTest->getDescendants(node, result);
 
         if (extend) {
@@ -226,6 +224,18 @@ void executeNodeTest(schema_node_cptr node, const NodeTest& nt, t_scmnodes* resu
             schemaTest->getOffsprings(*extender_nodes, result);
         }
     }
+}
+
+t_scmnodes * executePathExpression(schema_node_cptr node, const PathExpression &pe, t_scmnodes * result,
+                                   t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes)
+{
+    executePathExpression(t_scmnodes(1, node.ptr()), pe, result, extended_nodes, extender_nodes);
+
+    /* QUESTION: does it really needed ? */
+    std::sort(result->begin(), result->end(), CompareSchemaNode());
+    std::unique(result->begin(), result->end(), SameSchemaNode());
+
+    return result;
 }
 
 t_scmnodes * executePathExpression(const t_scmnodes& nodes, const PathExpression &pe, t_scmnodes * result,
@@ -259,7 +269,7 @@ t_scmnodes * executePathExpression(const t_scmnodes& nodes, const PathExpression
 void executeAbsPathExpression(schema_node_cptr root, const PathExpression &pe, t_scmnodes * result,
                               t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes)
 {
-    t_scmnodes tmp(1);
+    t_scmnodes tmp;
 
     result->clear();
     tmp.push_back(root.ptr());

@@ -576,44 +576,7 @@ xptr findAttribute(xptr node, const char* name, const char* uri)
     return getChildAt(node, getSchemaNode(node)->find_child_fair(uri, name, attribute));
 }
 
-
-
-int collectChildren(const xptr& parent,const char* uri,const char* name, t_item type, comp_schema cfun, xptr& first, xptr*& res)
-{
-    CHECKP(parent);
-    xptr * ptr;
-    int chcnt = getChildList(parent, ptr);
-    int cur=0;
-    int ctr=0;
-    schema_node_cptr scm = getSchemaNode(parent);
-    sc_ref_item* sc=scm->children->first;
-
-    first=XNULL;
-
-    while (cur < chcnt && sc != NULL) {
-        if (*ptr != XNULL && cfun(sc->object.snode, uri, name, type)) {
-            if (ctr != 0) {
-                if (ctr == 1) {
-                    res = se_new xptr[chcnt];
-                    res[0]=first;
-                }
-                res[ctr++]=*ptr;
-            } else {
-                first=*ptr;
-                ctr++;
-            }
-        }
-        sc=sc->next;
-        ptr++;
-        cur++;
-    }
-    return ctr;
-}
-
-
-
 /******* LEON Special *******/
-
 
 xptr getFirstDescandantBySchema(xptr ancestor, schema_node_cptr scm)
 {

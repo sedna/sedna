@@ -31,6 +31,7 @@ PPQueryRoot::~PPQueryRoot()
 
 void PPQueryRoot::do_open()
 {
+    setDefaultSpace(local_space_base);
     local_lock_mrg->lock(lm_s);
     first = true;
     cxt->global_variables_open();
@@ -41,6 +42,7 @@ void PPQueryRoot::do_close()
 {
     child.op->close();
     cxt->global_variables_close();
+    popDefaultSpace;
 }
 
 void PPQueryRoot::do_accept(PPVisitor &v)

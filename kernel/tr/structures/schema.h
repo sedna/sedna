@@ -320,12 +320,6 @@ struct col_schema_node_object : public doc_schema_node_object
     void insert_document(const char * doc_name, xptr node);
 };
 
-/* Schema node comparison function for node utils */
-typedef bool (*comp_schema)(schema_node_cptr scm, const char* uri, const char* name, t_item type);
-
-/* returns the name of atomic type */
-// char* convertTypeToName(xmlscm_type i);
-
 /* checks if the node is the descendant of one of the nodes in the vector */
 bool hasAncestorInSet(schema_node_cptr scm_node, std::set<schema_node_xptr>* scm_nodes_set );
 

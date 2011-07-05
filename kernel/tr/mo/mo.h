@@ -30,8 +30,13 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
 inline static
 xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const xsd::QName qname, xmlscm_type type, const text_source_t source)
 {
-    U_ASSERT(source.type == text_source_t::text_mem);
-    return insert_attribute(left_sib, right_sib, parent, qname.getLocalName(), type, source.u.cstr, source.size, qname.getXmlNs());
+    if (source.type != text_source_t::text_mem) {
+        text_membuf_t buf(source);
+        text_source_t ts = buf.getTextSource();
+        return insert_attribute(left_sib, right_sib, parent, qname.getLocalName(), type, ts.u.cstr, ts.size, qname.getXmlNs());
+    } else {
+        return insert_attribute(left_sib, right_sib, parent, qname.getLocalName(), type, source.u.cstr, source.size, qname.getXmlNs());
+    }
 }
 
 inline static
