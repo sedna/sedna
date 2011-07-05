@@ -209,7 +209,7 @@ void SortedSequence::finalizeAccumulator()
         tmp_ptr_next = nextBlock(tmp_ptr);
         if (tmp_ptr_next != XNULL)
         {
-            inBlockSort(tmp_ptr, 0, ptrsInBlock - 1);
+            inBlockSort(tmp_ptr, 0, SS_PTR_BLK_SIZE - 1);
             ptrsInBlock -= SS_PTR_BLK_SIZE;
         }
         else
@@ -219,14 +219,15 @@ void SortedSequence::finalizeAccumulator()
         tmp_ptr = tmp_ptr_next;
     }
     //Merging sorted blocks
-    blocksSort(ptrsInLast);
-    makeNewChain(ptrsInLast);
+    blocksSort(ptrsInBlock);
+    makeNewChain(ptrsInBlock);
 }
 
 xptr SortedSequence::getPtr(xptr block, int ind)
 {
     return block + ind * sizeof(data_ptr);
 }
+
 
 size_t SortedSequence::getVal(void *buf, xptr block, int ind)
 {
@@ -320,10 +321,16 @@ xptr SortedSequence::mergeBlocks(xptr p1, int size1, xptr p2, int size2)
     size_t tuple_size1, tuple_size2;
 
     //Reading pointers and values
-    readData((void *)(&ptr1), sizeof(data_ptr), getPtr(p1, 0));
-    tuple_size1 = getVal(tuple_buf1, p1, 0);
-    readData((void *)(&ptr2), sizeof(data_ptr), getPtr(p2, 0));
-    tuple_size2 = getVal(tuple_buf2, p2, 0);
+    if (size1 > 0)
+    {
+        readData((void *)(&ptr1), sizeof(data_ptr), getPtr(p1, 0));
+        tuple_size1 = getVal(tuple_buf1, p1, 0);
+    }
+    if (size2 > 0)
+    {
+        readData((void *)(&ptr2), sizeof(data_ptr), getPtr(p2, 0));
+        tuple_size2 = getVal(tuple_buf2, p2, 0);
+    }
 
     //Counters of already written elements:
     int written1 = 0, written2 = 0;
