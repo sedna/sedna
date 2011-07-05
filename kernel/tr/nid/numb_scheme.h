@@ -65,6 +65,9 @@ t_prefix	nid_get_prefix(t_nid the_nid);
 
 /* doc-order comparison */
 int			nid_cmp(xptr node1, xptr node2);
+
+
+//---------------------------------------------------------
 //returns 2  if node1 is descandant of node2;
 //returns -2 if node1 is ancestor of node2;
 //returns 1  if node1 is after node2 in d.o.;

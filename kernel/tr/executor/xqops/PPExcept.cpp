@@ -6,8 +6,8 @@
 
 #include "common/sedna.h"
 
+#include "tr/executor/base/PPUtils.h"
 #include "tr/executor/xqops/PPExcept.h"
-#include "tr/executor/base/merge.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 
 

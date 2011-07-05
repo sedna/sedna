@@ -43,6 +43,7 @@ inline tuple_cell atomize(const tuple_cell& t)
 tuple_cell effective_boolean_value(const tuple_cell &t);
 tuple_cell effective_boolean_value(const sequence *s);
 
+int doc_order_merge_cmp(const void *e1, const void *e2);
 
 tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value);
 tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos);

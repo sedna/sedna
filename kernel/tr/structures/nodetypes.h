@@ -38,7 +38,7 @@ enum t_item {
 const t_item ti_first_children = (t_item) (attribute | xml_namespace);
 const t_item ti_all = (t_item) (element | text | attribute | document | virtual_root | xml_namespace | comment | pr_ins);
 const t_item ti_all_valid = (t_item) (element | text | attribute | document | xml_namespace | comment | pr_ins);
-const t_item ti_dmchildren = (t_item) (element | text | document | comment | pr_ins);
+const t_item ti_dmchildren = (t_item) (element | text | comment | pr_ins);
 const t_item ti_content = (t_item) (element | text | comment | pr_ins);
 const t_item ti_singleton_element = (t_item) (xml_namespace | text | comment | pr_ins);
 

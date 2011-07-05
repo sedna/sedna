@@ -344,36 +344,39 @@ QName QName::createResolveNode(const char* prefixAndLocal, xptr node, dynamic_co
     }
 }
 
+/* QName is stored as (qname PREFIX URI LOCAL_NAME) */
 
 void QName::toLR(std::ostream& os, const xsd::AnyURI uri, const xsd::NCName prefix, const xsd::NCName local)
 {
-    os << "(";
-    uri.toLR(os);
-    os << " ";
+    os << "(qname ";
     prefix.toLR(os);
+    os << " ";
+    uri.toLR(os);
     os << " ";
     local.toLR(os);
     os << ")";
 }
-
 
 QName QName::fromLR(scheme_list* lst)
 {
     xmlns_ptr ns = NULL_XMLNS;
     char * local = NULL;
 
-    if (lst->size() != 3 ||
-          lst->at(0).type != SCM_STRING ||
+    if (lst->size() != 4 ||
+          lst->at(0).type != SCM_SYMBOL ||
           lst->at(1).type != SCM_STRING ||
-          lst->at(2).type != SCM_STRING ) {
+          lst->at(2).type != SCM_STRING ||
+          lst->at(3).type != SCM_STRING ) {
         throw USER_EXCEPTION2(SE1004, "Path expression");
     }
 
-    if (*(lst->at(0).internal.str) != '\0' || *(lst->at(1).internal.str) != '\0') {
-        ns = xmlns_touch(lst->at(0).internal.str, lst->at(1).internal.str);
+    U_ASSERT(strcmpex(lst->at(0).internal.symb, "qname") == 0);
+
+    if (*(lst->at(1).internal.str) != '\0' || *(lst->at(2).internal.str) != '\0') {
+        ns = xmlns_touch(lst->at(1).internal.str, lst->at(2).internal.str);
     }
 
-    local = lst->at(2).internal.str;
+    local = lst->at(3).internal.str;
 
     U_ASSERT((QName::createNsN(ns, local).valid()));
 

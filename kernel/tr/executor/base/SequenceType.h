@@ -32,8 +32,9 @@ enum st_occurence_indicator
 
 enum st_node_name_enum
 {
+    st_nne_other,
     st_nne_wildcard,
-    st_nne_name
+    st_nne_name,
 };
 
 enum st_type_name_enum

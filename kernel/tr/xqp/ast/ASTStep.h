@@ -133,10 +133,7 @@ public:
     
     bool isSuitableForAbsPath() const
     {
-        // check if we've got processing-instruction test
-        ASTPiTest *pit = dynamic_cast<ASTPiTest *>(test);
-
-        return (axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !preds && (!pit || pit->type == ASTPiTest::NONE));
+        return (axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !preds);
     }
 
     void accept(ASTVisitor &v);

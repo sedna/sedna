@@ -10,7 +10,6 @@
 #include "tr/executor/xqops/PPAbsPath.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-#include "tr/executor/base/merge.h"
 #include "tr/locks/locks.h"
 #include "tr/vmm/vmm.h"
 #include "tr/structures/metadata.h"

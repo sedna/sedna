@@ -6,7 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/executor/xqops/PPIntersect.h"
-#include "tr/executor/base/merge.h"
+#include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 
 
@@ -58,6 +58,7 @@ void PPIntersect::do_close()
     child1.op->close();
     child2.op->close();
 }
+
 
 void PPIntersect::do_next (tuple &t)
 {

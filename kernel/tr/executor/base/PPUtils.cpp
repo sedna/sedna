@@ -55,6 +55,18 @@ double get_numeric_value(const tuple_cell &tc)
     }
 }
 
+int doc_order_merge_cmp(const void *e1, const void *e2)
+{
+    xptr *el1 = (xptr*)e1;
+    xptr *el2 = (xptr*)e2;
+
+    if (*el1 == XNULL && *el2 == XNULL) return 0;
+    if (*el1 == XNULL) return 1;
+    if (*el2 == XNULL) return -1;
+
+    return nid_cmp(*el1, *el2);
+}
+
 
 
 /*******************************************************************************

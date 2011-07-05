@@ -42,6 +42,9 @@ void executeNodeTest(schema_node_cptr node, const xpath::NodeTest& nt, t_scmnode
 t_scmnodes * executePathExpression(const t_scmnodes& nodes, const xpath::PathExpression &pe, t_scmnodes * result,
     t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
 
+t_scmnodes * executePathExpression(schema_node_cptr node, const xpath::PathExpression &pe, t_scmnodes * result,
+    t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
+
 /* depricated */
 void executeAbsPathExpression(schema_node_cptr root, const xpath::PathExpression &pe, t_scmnodes * result,
     t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
