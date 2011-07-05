@@ -203,17 +203,18 @@ void SortedSequence::finalizeAccumulator()
     }
     xptr tmp_ptr, tmp_ptr_next;
     tmp_ptr = firstPtrBlock;
-    int ptrsInLast = elementsCount % SS_PTR_BLK_SIZE;
+    int ptrsInBlock = elementsCount;
     while (tmp_ptr != XNULL)
     {
         tmp_ptr_next = nextBlock(tmp_ptr);
         if (tmp_ptr_next != XNULL)
         {
-            inBlockSort(tmp_ptr, 0, SS_PTR_BLK_SIZE - 1);
+            inBlockSort(tmp_ptr, 0, ptrsInBlock - 1);
+            ptrsInBlock -= SS_PTR_BLK_SIZE;
         }
         else
         {
-            inBlockSort(tmp_ptr, 0, ptrsInLast - 1);
+            inBlockSort(tmp_ptr, 0, ptrsInBlock - 1);
         }
         tmp_ptr = tmp_ptr_next;
     }
