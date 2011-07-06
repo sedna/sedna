@@ -36,7 +36,7 @@ static int cdb_s_help = 0;
 static int cdb_l_help = 0;
 static int cdb_version = 0;
 
-static const size_t cdb_narg = 17;
+static const size_t cdb_narg = 16;
 
 static arg_rec cdb_argtable[] =
 {
@@ -50,7 +50,6 @@ static arg_rec cdb_argtable[] =
   {"-data-file-init-size",     " Mbs", arg_int, &data_file_initial_size,           "100", "\tthe data file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
   {"-tmp-file-init-size",      " Mbs", arg_int, &sm_globals::tmp_file_initial_size,"100", "\tthe tmp file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
   {"-bufs-num",                " N",   arg_int, &sm_globals::bufs_num,             "1600","\t\t\tthe number of buffers in main memory,\n\t\t\t\tdefault 1600 (the size of the buffer is 64Kb)"},
-  {"-max-trs-num",             " N",   arg_int, &sm_globals::max_trs_num,          "10",  "\t\tthe number of concurrent micro transactions\n\t\t\t\tover database, default 10"},
   {"-upd-crt",                 " N",   arg_dbl, &sm_globals::upd_crt,              "0.25","\t\t\tupdate criterion parameter \n\t\t\t\t(fraction of database), default 0.25"},
   {"-max-log-files",           " N",   arg_int, &sm_globals::max_log_files,        "3",   "\t\tmaximum log files until log truncate\n\t\t\t\tdefault: 3"},
   {"-log-file-size",           " Mbs", arg_int, &log_file_size,                    "100", "\t\tmaximum one log file size (in Mb)\n\t\t\t\tdefault 100Mb"},
@@ -103,8 +102,6 @@ setup_cdb_globals(gov_config_struct* cfg)
 	   throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
    if (sm_globals::bufs_num < 1)
 	   throw USER_EXCEPTION2(SE4601, "'bufs-num' parameter is incorrect (must be >= 1)");
-   if (sm_globals::max_trs_num < 1)
-	   throw USER_EXCEPTION2(SE4601, "'max-trs-num' parameter is incorrect (must be >= 1)");
    if (sm_globals::max_log_files < 1)
 	   throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
    if (cdb_globals::layer_size != 0 && (cdb_globals::layer_size < 0 || (lsize_t)cdb_globals::layer_size * 1024 * 1024 < VMM_REGION_MIN_SIZE))
@@ -191,7 +188,6 @@ void create_cfg_file()
    cfg_file_content += "<db>\n";
    cfg_file_content += "   <name>" + db_name_str + string("</name>\n");
    cfg_file_content += "   <bufs_num>" + int2string(sm_globals::bufs_num) + string("</bufs_num>\n");
-   cfg_file_content += "   <max_trs_num>" + int2string(sm_globals::max_trs_num) + string("</max_trs_num>\n");
    cfg_file_content += "   <max_log_files>" + int2string(sm_globals::max_log_files) + string("</max_log_files>\n");
    cfg_file_content += "   <tmp_file_initial_size>" + int2string(sm_globals::tmp_file_initial_size) + string("</tmp_file_initial_size>\n");
 

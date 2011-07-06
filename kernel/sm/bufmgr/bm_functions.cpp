@@ -485,7 +485,7 @@ void bm_enter_exclusive_mode(session_id sid,
 
     xmode_sid = sid;
 
-    *number_of_potentially_allocated_blocks = sm_globals::bufs_num - sm_globals::max_trs_num;
+    *number_of_potentially_allocated_blocks = sm_globals::bufs_num;
 }
 
 void bm_exit_exclusive_mode(session_id sid)
@@ -511,7 +511,7 @@ void bm_memlock_block(session_id sid, xptr p)
         res = blocked_mem.find(offs);
         if (res == 0) return; // block already blocked
 
-        if (blocked_mem.size() >= (unsigned)sm_globals::bufs_num - sm_globals::max_trs_num)
+        if (blocked_mem.size() >= (unsigned)sm_globals::bufs_num);
             throw USER_EXCEPTION(SE1020);
     }
     else throw USER_EXCEPTION(SE1021);

@@ -43,10 +43,6 @@ void endElement_sm_cfg(void *cnt, const char *name)
      sm_globals::bufs_num = atoi(_content_.c_str());
   }
 
-  if ( _tag_name_ == "max_trs_num" )  {
-     sm_globals::max_trs_num = atoi(_content_.c_str());
-  }
-
   if ( _tag_name_ == "upd_crt" )  {
      sm_globals::upd_crt = atof(_content_.c_str());
   }

@@ -189,7 +189,6 @@ int main(int argc, char **argv)
                                       db_id,
                                       sm_globals::db_name,
                                       sm_globals::bufs_num,
-                                      sm_globals::max_trs_num,
                                       sm_globals::upd_crt,
                                       sm_globals::max_log_files,
                                       (int)MBS2PAGES(sm_globals::tmp_file_initial_size));

@@ -38,7 +38,6 @@ struct gov_db_struct
     UPID sm_pid;
 
     int bufs_num;
-    int max_trs_num;
     double upd_crt;
     int max_log_files;
     int tmp_file_initial_size;  /* size in PAGES */
