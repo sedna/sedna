@@ -142,7 +142,6 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
                                    int db_id,
                                    const char* db_name,
                                    int bufs_num,
-                                   int max_trs_num,
                                    double upd_crt,
                                    int max_log_files,
                                    int tmp_file_initial_size /* size in PAGES */)
@@ -151,7 +150,6 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
     cfg->db_vars[db_id].mode = OM_SM_DOWN;
     cfg->db_vars[db_id].sm_pid = -1;
     cfg->db_vars[db_id].bufs_num = bufs_num;
-    cfg->db_vars[db_id].max_trs_num = max_trs_num;
     cfg->db_vars[db_id].upd_crt = upd_crt;
     cfg->db_vars[db_id].max_log_files = max_log_files;
     cfg->db_vars[db_id].tmp_file_initial_size = tmp_file_initial_size;

@@ -26,7 +26,6 @@
 /* Some of these variables SM specific, some of them are shared with CDB */
 namespace sm_globals {
     extern int    bufs_num;                                /* Number of pages to allocate for buffer memory */
-    extern int    max_trs_num;                             /* Maximum transactions number */
     extern double upd_crt;                                 /* Advance snapshot criterion */
     extern int    max_log_files;                           /* Maximum log files */
     extern int    tmp_file_initial_size;                   /* Temp file initial size */

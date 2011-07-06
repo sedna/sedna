@@ -374,9 +374,6 @@ options:
                               default 100Mb
   -bufs-num N                 the number of buffers in main memory,
                               default 1600 (64Kb per buffer)
-  -max-trs-num N              the number of concurrent micro
-                              transactions over database
-                              (default 10)
   -upd-crt N                  update criterion parameter
                               (fraction of database), default 0.25
   -max-log-files N            maximum log files
@@ -435,9 +432,6 @@ the performance of the database depends of this number very much. The default
 value is 1600 buffers, which is equal to 100Mb and we do not recommend to use
 less number of buffers. The size of one buffer is 64Kb and can't be customized
 by Administrator.
-
-The \verb!-max-trs-num! option is the parameter of the Sedna Storage Manager. In
-current version of Sedna only default value can be used for this parameter.
 
 The \verb!-upd-crt! option is the parameter of the Sedna Storage Manager to
 control snapshot advancement rate. It allows Administrator to specify the
@@ -580,9 +574,6 @@ options:
                            (default on)
   -bufs-num N              the number of buffers in main memory,
                            (config file defines default value)
-  -max-trs-num N           the number of concurrent micro
-                           transactions over database
-                           (config file defines default value)
   -upd-crt N               criterion parameter to advance snapshots
                            (config file defines default value)
   -max-log-files N         maximum log files until log truncate
@@ -604,10 +595,6 @@ memory. This number is connected with the size of the main memory, but the
 performance of the database depends of this number very much. The default value
 is retrieved from configuration file. The size of one buffer is 64Kb and can't
 be customized.
-
-The \verb!-max-trs-num! option will allow setting up the number of concurrent
-micro transactions over database. In current version of Sedna only default value
-can be used for this parameter.
 
 The \verb!-upd-crt! option allows Administrator to specify the fraction of the
 database updating of which will result in snapshot advancement.

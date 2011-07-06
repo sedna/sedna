@@ -29,7 +29,6 @@ using namespace sm_globals;
 
 namespace sm_globals {
     int    bufs_num;                                /* Number of pages to allocate for buffer memory */
-    int    max_trs_num;                             /* Maximum transactions number */
     double upd_crt;                                 /* Advance snapshot criterion */
     int    max_log_files;                           /* Maximum log files */
     int    tmp_file_initial_size;                   /* Temp file initial size (in MBs)*/
@@ -45,12 +44,11 @@ static int    sm_version = 0;
    to pass them when we fork SM to run it in background mode
  */
 static int    __bufs_num__               = 0;
-static int    __max_trs_num__            = 0;
 static double __upd_crt__                = 0;
 static int    __max_log_files__          = 0;
 static int    __tmp_file_initial_size__  = 0;
 
-static const size_t narg = 10;           /* Don't forget to change this if you want to add some new param! */
+static const size_t narg = 9;           /* Don't forget to change this if you want to add some new param! */
 static arg_rec sm_argtable[] =
 {
   {"-help",            NULL,       arg_lit,  &sm_help,                  "0",    "\t\t\t   display this help and exit"},
@@ -58,7 +56,6 @@ static arg_rec sm_argtable[] =
   {"-version",         NULL,       arg_lit,  &sm_version,               "0",    "\t\t   display product version and exit"},
   {"-background-mode", " on/off",  arg_bool, &background_mode,          "on",   "  start the server in the background mode (default on)"},
   {"-bufs-num",        " N",       arg_int,  &__bufs_num__,             "0",    "\t\t   the number of buffers in main memory, \n\t\t\t   (default value retrieved from config file)" },
-  {"-max-trs-num",     " N",       arg_int,  &__max_trs_num__,          "0",    "\t   the number of concurrent micro transactions over \n\t\t\t   database, (default value retrieved from config file)" },
   {"-upd-crt",         " N",       arg_dbl,  &__upd_crt__,              "0.0" , "\t\t   criterion parameter to advance snapshots, \n\t\t\t   (default value retrieved from config file)"},
   {"-max-log-files",   " N",       arg_int,  &__max_log_files__,        "0",    "\t   maximum log files until log truncate (default: 3)"},
   {"-tmp-file-init-size", " Mbs",  arg_int,  &__tmp_file_initial_size__,"0",    "  the tmp file initial size (in Mb),\n\t\t\t   (default value retrieved from config file)"},
@@ -104,7 +101,6 @@ construct_sm_command_line(char** argv)
     string command_line = argv[0];
     command_line += " -background-mode off ";
     command_line += " -bufs-num "           + int2string(__bufs_num__);
-    command_line += " -max-trs-num "        + int2string(__max_trs_num__) + " ";
     command_line += " -max-log-files "      + int2string(__max_log_files__) + " ";
     command_line += " -tmp-file-init-size " + int2string(__tmp_file_initial_size__) + " ";
 
@@ -128,7 +124,6 @@ setup_sm_globals(gov_config_struct* cfg, int db_id)
    strcat(db_files_path, "_files/");
 
    bufs_num              = __bufs_num__      > 0 ? __bufs_num__      : cfg->db_vars[db_id].bufs_num;
-   max_trs_num           = __max_trs_num__   > 0 ? __max_trs_num__   : cfg->db_vars[db_id].max_trs_num;
    upd_crt               = __upd_crt__       > 0 ? __upd_crt__       : cfg->db_vars[db_id].upd_crt;
    max_log_files         = __max_log_files__ > 0 ? __max_log_files__ : cfg->db_vars[db_id].max_log_files;
    tmp_file_initial_size = __tmp_file_initial_size__ > 0 ? 
@@ -143,8 +138,6 @@ setup_sm_globals(gov_config_struct* cfg, int db_id)
            throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
    if (sm_globals::bufs_num < 1)
            throw USER_EXCEPTION2(SE4601, "'bufs-num' parameter is incorrect (must be >= 1)");
-   if (sm_globals::max_trs_num < 1)
-           throw USER_EXCEPTION2(SE4601, "'max-trs-num' parameter is incorrect (must be >= 1)");
    if (sm_globals::max_log_files < 1)
            throw USER_EXCEPTION2(SE4601, "'max-log-files' parameter is incorrect (must be >= 1)");
 }
