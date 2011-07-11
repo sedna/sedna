@@ -23,7 +23,7 @@ public:
     char* uri; /* persistent string */
 
     inline bool same_prefix(const char * _prefix) const { return strcmpex(prefix, _prefix) == 0; };
-    inline bool same_uri(const char * _uri) const { return strcmpex(prefix, _uri) == 0; };
+    inline bool same_uri(const char * _uri) const { return strcmpex(uri, _uri) == 0; };
 
     inline const char * get_uri() const { return uri; }
     inline const char * get_prefix() const { return prefix; }

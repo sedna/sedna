@@ -495,91 +495,86 @@ tuple_cell dm_document_uri(Node node)
 typedef std::map<std::string,xmlns_ptr> nms_map;
 void se_get_in_scope_namespaces(Node node, std::vector<xmlns_ptr> &result, dynamic_context *cxt)
 {
-    nms_map mp;
-    nms_map::iterator it;
+    /* As soon as child namespaces override parent ones, we should at first collect all
+      namespaces and then apply them */
 
-    mp["xml"] = cxt->get_xmlns_by_prefix("xml");
+    /* First part --- collection  */
 
-/*
-    const inscmap * dcins = cxt->get_inscope_namespaces();
+    std::stack<xmlns_ptr> nsStack;
+    std::stack<xmlns_ptr> attributeNsStack;
 
-    // TODO: HACK below!!!
-    inscmap::const_iterator dci = dcins->begin();
-    for (;dci != dcins->end(); dci++) {
-        if (dci->second.size() > 0) {
-            mp[dci->first] = dci->second.at(0);
-        }
-    }
-*/
-    if (!node.isNull()) while (node.getNodeType() != virtual_root) {
+    while (!node.isNull())
+    {
         node.checkp();
         schema_node_cptr scm = node.getSchemaNode();
 
-        //1. namespace nodes
-        xptr ns = getFirstChildByType(node.getPtr(), xml_namespace);
-
-        while (ns != XNULL) {
-            CHECKP(ns);
-            xmlns_ptr nsp = NSNode(ns).getNamespaceLocal();
-            const char* pref=nsp->prefix;
-            if ((it=mp.find(pref))==mp.end())
-                mp[pref]=nsp;
-            ns = getNextSiblingOfSameSort(ns);
+        //0. self namespace
+        if (scm->get_xmlns() != NULL_XMLNS) {
+            nsStack.push(scm->get_xmlns());
         }
 
-        //2. self namespace
-        if (scm->get_xmlns() != NULL_XMLNS) {
-            const char* pref=scm->get_xmlns()->prefix;
-            if ((it=mp.find(pref))==mp.end())
-            {
-                mp[pref]=scm->get_xmlns();
-            }
+        //1. namespace nodes
+        Node attr = getFirstChildByType(node.getPtr(), xml_namespace);
+        while (!attr.isNull())
+        {
+            nsStack.push(NSNode(attr.checkp()).getNamespaceLocal());
+            attr = attr.getNextSameSort();
         }
 
         //3. attributes
-        xptr attr=getFirstChildByType(node.getPtr(), attribute);
+        attr = getFirstChildByType(node.getPtr(), attribute);
+
         //3.1 filling set
-        std::set<xmlns_ptr> atns;
-        while (attr!=XNULL)
+        while (!attr.isNull())
         {
-            CHECKP(attr);
-            schema_node_cptr sca = getSchemaNode(attr);
-            if (sca->get_xmlns()!=NULL)
-                atns.insert(sca->get_xmlns());
-            attr = getNextAttribute(attr);
+            attributeNsStack.push(attr.checkp().getSchemaNode()->get_xmlns());
+            attr = getNextAttribute(attr.getPtr());
         }
 
-        //3.2 copying to map
-        int ctr = 0;
-        std::set<xmlns_ptr>::iterator sit = atns.begin();
-        while(sit != atns.end())
-        {
-            const char* pref = (*sit)->prefix;
-            if ((it=mp.find(pref))!=mp.end())
-            {
-                if (it->second!=*sit)
-                {
-                    xmlns_ptr new_ns=generate_prefix(ctr++,(*sit)->uri,cxt);
-                    mp[new_ns->prefix]=new_ns;
-                }
-            }
-            else
-            {
-                mp[pref]=(*sit);
-            }
-            ++sit;
-        }
-
-        node.checkp();
-        if (!node.hasParent()) {
-            break;
-        }
-
-        node = node.getParent();
+        node = node.getActualParent();
     }
 
-    it = mp.begin();
-    while (it!=mp.end())
+    /* Second part --- application */
+
+    nms_map mp;
+    mp["xml"] = cxt->get_xmlns_by_prefix("xml");
+
+    while (!nsStack.empty())
+    {
+        xmlns_ptr ns = nsStack.top();
+
+        U_ASSERT(ns->get_prefix() != NULL);
+
+        if (!ns->empty_uri()) {
+            mp[ns->get_prefix()] = ns;
+        } else {
+            mp.erase(ns->get_prefix());
+        }
+
+        nsStack.pop();
+    }
+
+    int ctr = 0;
+
+    while (!attributeNsStack.empty())
+    {
+        xmlns_ptr ns = attributeNsStack.top();
+
+        U_ASSERT(ns->has_prefix());
+        U_ASSERT(!ns->empty_uri());
+
+        while (mp.find(ns->get_prefix()) != mp.end()) {
+            ns = generate_prefix(ctr++, ns->get_uri(), cxt);
+        };
+
+        mp[ns->get_prefix()] = ns;
+
+        attributeNsStack.pop();
+    }
+
+    nms_map::const_iterator it = mp.begin();
+
+    while (it != mp.end())
     {
         result.push_back(it->second);
         ++it;

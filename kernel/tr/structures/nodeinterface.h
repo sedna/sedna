@@ -10,6 +10,7 @@
 #include "tr/structures/nodeblocks.h"
 #include "tr/structures/nodeoperations.h"
 #include "tr/structures/xmlns.h"
+#include "tr/structures/nodeutils.h"
 
 #include "tr/strings/strings_base.h"
 
@@ -39,6 +40,9 @@ public:
     Node getNext() const { return Node(nodeGetNext(node)); };
     inline
     Node getPrev() const { return Node(nodeGetPrev(node)); };
+
+    inline
+    Node getNextSameSort() const { return Node(getNextSiblingOfSameSort(node)); };
 
     inline
     bool hasParent() const { return getBaseFromAnyNode(node)->pdsc != XNULL; };

@@ -52,7 +52,6 @@ template<typename TestOp>
 class SchemaTest : public ISchemaTest {
   private:
     SchemaNodeData data;
-
   public:
     SchemaTest(t_item _type, const char * _uri, const char * _local) : data(_type, _uri, _local) {};
 
@@ -200,13 +199,20 @@ void executeNodeTest(schema_node_cptr node, const NodeTest& nt, t_scmnodes* resu
     bool extend = extended_nodes && extender_nodes && extended_nodes->find(node.ptr()) != extended_nodes->end();
 
     scoped_ptr<ISchemaTest> schemaTest(createSchemaTest(nt));
+    scoped_ptr<ISchemaTest> selfSchemaTest;
 
-    if (schemaTest.isnull()) {
+    if (nt.axis == axis_descendant_or_self || nt.axis == axis_self) {
+        NodeTest selfnt = nt;
+        selfnt.axis = axis_self;
+        selfSchemaTest = createSchemaTest(selfnt);
+    }
+
+    if (schemaTest.isnull() && selfSchemaTest.isnull()) {
         return;
     }
 
     if (nt.axis == axis_descendant_or_self || nt.axis == axis_self) {
-        if (schemaTest->test(node)) {
+        if (selfSchemaTest->test(node)) {
             result->push_back(node.ptr());
         }
     }
@@ -229,13 +235,14 @@ void executeNodeTest(schema_node_cptr node, const NodeTest& nt, t_scmnodes* resu
 t_scmnodes * executePathExpression(schema_node_cptr node, const PathExpression &pe, t_scmnodes * result,
                                    t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes)
 {
-    executePathExpression(t_scmnodes(1, node.ptr()), pe, result, extended_nodes, extender_nodes);
+    return executePathExpression(t_scmnodes(1, node.ptr()), pe, result, extended_nodes, extender_nodes);
+}
 
-    /* QUESTION: does it really needed ? */
-    std::sort(result->begin(), result->end(), CompareSchemaNode());
-    std::unique(result->begin(), result->end(), SameSchemaNode());
-
-    return result;
+static
+void sort_unique(t_scmnodes * buf) {
+    std::sort(buf->begin(), buf->end(), CompareSchemaNode());
+    t_scmnodes::iterator newEnd = std::unique(buf->begin(), buf->end());
+    buf->resize(newEnd - buf->begin());
 }
 
 t_scmnodes * executePathExpression(const t_scmnodes& nodes, const PathExpression &pe, t_scmnodes * result,
@@ -262,21 +269,7 @@ t_scmnodes * executePathExpression(const t_scmnodes& nodes, const PathExpression
     }
 
     result->insert(result->end(), nodeBuffer->begin(), nodeBuffer->end());
+    sort_unique(result);
 
     return result;
 }
-
-void executeAbsPathExpression(schema_node_cptr root, const PathExpression &pe, t_scmnodes * result,
-                              t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes)
-{
-    t_scmnodes tmp;
-
-    result->clear();
-    tmp.push_back(root.ptr());
-
-    executePathExpression(tmp, pe, result, extended_nodes, extender_nodes);
-
-    std::sort(result->begin(), result->end(), CompareSchemaNode());
-    std::unique(result->begin(), result->end(), SameSchemaNode());
-}
-

@@ -174,7 +174,7 @@ bool ft_index_cell_object::fits_to_index(schema_node_cptr snode)
 {
     t_scmnodes res;
     t_scmnodes objs;
-    executeAbsPathExpression(snode->root, *object, &objs, NULL, NULL);
+    executePathExpression(snode->root, *object, &objs, NULL, NULL);
     t_scmnodes::iterator it=objs.begin();
     while (it!=objs.end())
     {
@@ -228,7 +228,7 @@ ft_index_cell_xptr create_ft_index(
     // ALGORITHM: indexing data
     //II. Execute abs path (object_path) on the desriptive schema
     t_scmnodes sobj;
-    executeAbsPathExpression(_schemaroot, *_object_path, &sobj, NULL, NULL);
+    executePathExpression(_schemaroot, *_object_path, &sobj, NULL, NULL);
     //III. For each schema node found (sn_obj)
 
     std::vector<xptr> start_nodes;

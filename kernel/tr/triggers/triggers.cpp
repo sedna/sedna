@@ -332,7 +332,7 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
         {
             trigger_cell_cptr trc = *trigers_iter;
 
-            executeAbsPathExpression((const schema_node_xptr)(statement_triggers_iter->first), *trc->trigger_path, &matched_nodes, &extended_nodes, &extender_nodes);
+            executePathExpression((const schema_node_xptr)(statement_triggers_iter->first), *trc->trigger_path, &matched_nodes, &extended_nodes, &extender_nodes);
             for (std::vector<schema_node_xptr>::size_type i=0; i < matched_nodes.size(); i++)
             {
                 if (hasAncestorInSet((schema_node_xptr)(matched_nodes.at(i)),&extender_nodes))
@@ -640,7 +640,7 @@ trigger_cell_xptr create_trigger (enum trigger_time tr_time,
 
     //II. Execute abs path (object_path) on the desriptive schema
     t_scmnodes sobj;
-    executeAbsPathExpression(schemaroot, *trigger_path, &sobj, NULL, NULL);
+    executePathExpression(schemaroot, *trigger_path, &sobj, NULL, NULL);
 
     //III. For each schema node found (sn_obj)
     std::vector<xptr> start_nodes;

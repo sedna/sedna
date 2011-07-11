@@ -277,9 +277,9 @@ void PPFnPrefixFromQName::do_next (tuple &t)
         if (!(t.is_eos()))
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:prefix-from-QName function");
 
-        const char *prefix = tc.get_xs_qname().getPrefix();
-        if (prefix)
-            t.copy(tuple_cell::atomic_deep(xs_NCName, prefix));
+        if (tc.get_xs_qname().getXmlNs() != NULL_XMLNS) {
+            t.copy(tuple_cell::atomic_deep(xs_NCName, tc.get_xs_qname().getPrefix()));
+        }
         else
         {
             first_time = true;
