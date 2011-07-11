@@ -3,8 +3,6 @@
  * Copyright (C) 2011 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include <iostream>
-
 #include "common/sedna.h"
 #include "common/bit_set.h"
 
@@ -215,7 +213,7 @@ void PPOrderBy::do_next (tuple &t)
             udata.size += sort_size / 8;               // additional bytes for serialized bit_set which contains eos bitmap
             if (sort_size % 8 != 0) udata.size++;
 
-            if (udata.size > DATA_BLK_SIZE)
+            if (udata.size > PAGE_SIZE / 2)
                 throw XQUERY_EXCEPTION2(SE1003, "Order by clause contains too many specifications.");
 
             //Creating serializer and sorted sequence
