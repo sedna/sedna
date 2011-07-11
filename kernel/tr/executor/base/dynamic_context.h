@@ -370,7 +370,7 @@ public:
 
     void set_datetime();
 
-    xmlns_ptr get_xmlns_by_prefix(const char* prefix);
+    xmlns_ptr get_xmlns_by_prefix(const char* prefix, bool quiet = false);
 
     /* Adds and removes namespace to/from context. Replaces the previous one with the same prefix.
        Handles default namspace right. */

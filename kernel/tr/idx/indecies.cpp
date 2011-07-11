@@ -167,14 +167,14 @@ void index_cell_object::on_schema_node_created(schema_node_cptr snode) const
 {
     t_scmnodes res;
     t_scmnodes objs;
-    executeAbsPathExpression(snode->root, *object, &objs, NULL, NULL);
+    executePathExpression(snode->root, *object, &objs, NULL, NULL);
 
     const xpath::NodeTest node_test_nodes_deep(xpath::axis_descendant, xpath::node_test_wildcard_star);
 
     FOR_EACH(i, objs, t_scmnodes) {
         if ((*i)->is_ancestor_or_self(snode)) {
             t_scmnodes keys;
-            executeAbsPathExpression(*i, *key, &keys, NULL, NULL);
+            executePathExpression(*i, *key, &keys, NULL, NULL);
             FOR_EACH(j, keys, t_scmnodes) {
                 if (snode.ptr() == *j) {
                     snode->index_list->add(index_ref(this->p_object, *i, *j));

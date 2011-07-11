@@ -40,6 +40,32 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const xsd::QNa
 }
 
 inline static
+xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent, const text_source_t source)
+{
+    if (source.type != text_source_t::text_mem) {
+        text_membuf_t buf(source);
+        text_source_t ts = buf.getTextSource();
+        return insert_comment(left_sib, right_sib, parent, ts.u.cstr, ts.size);
+    } else {
+        return insert_comment(left_sib, right_sib, parent, source.u.cstr, source.size);
+    }
+}
+
+inline static
+xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const xsd::NCName& name, const text_source_t source)
+{
+    const char * cname = name.getValue();
+
+    if (source.type != text_source_t::text_mem) {
+        text_membuf_t buf(source);
+        text_source_t ts = buf.getTextSource();
+        return insert_pi(left_sib, right_sib, parent, cname, strlen(cname), ts.u.cstr, ts.size);
+    } else {
+        return insert_pi(left_sib, right_sib, parent, cname, strlen(cname), source.u.cstr, source.size);
+    }
+}
+
+inline static
 xptr insert_element(xptr left_sibling, xptr right_sibling, xptr parent, const xsd::QName qname, xmlscm_type type)
 {
     return insert_element(left_sibling, right_sibling, parent, qname.getLocalName(), type, qname.getXmlNs());
@@ -47,7 +73,8 @@ xptr insert_element(xptr left_sibling, xptr right_sibling, xptr parent, const xs
 
 extern xptr last_inserted_node_indirection;
 
-inline xptr get_last_mo_inderection() {
+inline static
+xptr get_last_mo_inderection() {
     U_ASSERT(last_inserted_node_indirection != XNULL);
     return last_inserted_node_indirection;
 }

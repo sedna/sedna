@@ -160,22 +160,26 @@ void dynamic_context::set_datetime()
     }
 }
 
-xmlns_ptr dynamic_context::get_xmlns_by_prefix(const char *prefix)
+xmlns_ptr dynamic_context::get_xmlns_by_prefix(const char* prefix, bool quiet)
 {
     U_ASSERT(prefix);
-    xmlns_ptr res;
 
     if (!strlen(prefix)) {
         return st_cxt->get_default_nsp();
     } else {
         inscmap::const_iterator it = insc_ns.find(prefix);
 
-        if (it != insc_ns.end() && it->second.size() > 0)
+        if (it != insc_ns.end() && it->second.size() > 0) {
             return it->second.back();
-        else if ((res = st_cxt->get_predef_nsp(prefix)) != NULL_XMLNS)
-            return res;
-        else
-            throw XQUERY_EXCEPTION(XQDY0074);
+        } else {
+            xmlns_ptr res = st_cxt->get_predef_nsp(prefix);
+
+            if (quiet || res != NULL_XMLNS) {
+                return res;
+            } else {
+                throw XQUERY_EXCEPTION(XQDY0074);
+            }
+        }
     }
 }
 

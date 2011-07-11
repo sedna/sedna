@@ -9,6 +9,8 @@
 #include "ASTNode.h"
 #include "ASTNameTest.h"
 #include "ASTElementTest.h"
+#include "ASTPiTest.h"
+
 class ASTVisitor;
 
 class ASTStep : public ASTNode
@@ -133,7 +135,9 @@ public:
     
     bool isSuitableForAbsPath() const
     {
-        return (axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !preds);
+        ASTPiTest *pit = dynamic_cast<ASTPiTest *>(test);
+
+        return (axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !preds && (!pit || pit->type == ASTPiTest::NONE));
     }
 
     void accept(ASTVisitor &v);
