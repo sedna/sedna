@@ -41,6 +41,21 @@ struct data_ptr
 
 class SortedSequence
 {
+    //Comparator for STL sort
+    class TupleComparator
+    {
+    private:
+        SortedSequence *parent;
+
+    public:
+        TupleComparator(SortedSequence *parent)
+        {
+            this -> parent = parent;
+        }
+
+        bool operator() (const data_ptr ptr1, const data_ptr ptr2);
+    };
+
     //Sorted chain
     struct SSChain
     {
@@ -89,7 +104,7 @@ private:
     size_t getVal(void *buf, xptr block, int ind);    //Returns tuple, pointed by i-th pointer in given block
     void swapPointers(xptr p1, xptr p2);    //Swap data_ptrs, pointed by p1 and p2
 
-    void inBlockSort(xptr p, int left, int right);    //Sorting elements in block using QSort
+    void inBlockSort(xptr p, int amount);    //Sorting elements in block using QSort
 
     void blocksSort(int ptrsInLast);    //Merging already sorted blocks
     xptr mergeBlocks(xptr p1, int size1, xptr p2, int size2);    //Merging two sorted sequences of blocks
