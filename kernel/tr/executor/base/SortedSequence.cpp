@@ -7,6 +7,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <vector>
+#include <algorithm>
 
 #define GET_FREE_SPACE(p) (shft)((uint32_t)PAGE_SIZE - ((XADDR_INT(p)) & PAGE_REVERSE_BIT_MASK))
 #define SS_MAX_BLOCKS_IN_CHAIN 10
@@ -209,12 +211,14 @@ void SortedSequence::finalizeAccumulator()
         tmp_ptr_next = nextBlock(tmp_ptr);
         if (tmp_ptr_next != XNULL)
         {
-            inBlockSort(tmp_ptr, 0, SS_PTR_BLK_SIZE - 1);
+            inBlockSort(tmp_ptr, SS_PTR_BLK_SIZE);
+            //inBlockSort(tmp_ptr, 0, SS_PTR_BLK_SIZE - 1);
             ptrsInBlock -= SS_PTR_BLK_SIZE;
         }
         else
         {
-            inBlockSort(tmp_ptr, 0, ptrsInBlock - 1);
+            inBlockSort(tmp_ptr, ptrsInBlock);
+            //inBlockSort(tmp_ptr, 0, ptrsInBlock - 1);
         }
         tmp_ptr = tmp_ptr_next;
     }
@@ -228,7 +232,6 @@ xptr SortedSequence::getPtr(xptr block, int ind)
     return block + ind * sizeof(data_ptr);
 }
 
-
 size_t SortedSequence::getVal(void *buf, xptr block, int ind)
 {
     xptr tmp_ptr = block + ind * sizeof(data_ptr);
@@ -238,9 +241,42 @@ size_t SortedSequence::getVal(void *buf, xptr block, int ind)
     return size;
 }
 
-void SortedSequence::inBlockSort(xptr p, int left, int right)
+//TupleComparator compare method implementation
+bool SortedSequence::TupleComparator::operator() (const data_ptr ptr1, const data_ptr ptr2)
 {
-    if (right - left + 1 <= 7)
+    void *tuple_buf1 = parent -> buf1;
+    void *tuple_buf2 = parent -> buf2;
+
+    size_t tuple_size1 = ptr1.size;
+    parent -> readData(tuple_buf1, tuple_size1, ptr1.value);
+    size_t tuple_size2 = ptr2.size;
+    parent -> readData(tuple_buf2, tuple_size2, ptr2.value);
+
+    return parent -> serializer -> compare(tuple_buf1, tuple_size1, tuple_buf2, tuple_size2) < 0;
+}
+
+void SortedSequence::inBlockSort(xptr p, int amount)
+{
+    SortedSequence::TupleComparator comparator(this);
+
+    std::vector <data_ptr> indexes(amount);
+    CHECKP(p);
+    for (int i = 0; i < amount; i++)
+    {
+        std::copy<>()
+        memcpy(&indexes[i], XADDR(p + i * sizeof(data_ptr)), sizeof(data_ptr));
+    }
+
+    std::sort(indexes.begin(), indexes.end(), comparator);
+
+    WRITEP(p);
+    for (int i = 0; i < amount; i++)
+    {
+        memcpy(XADDR(p + i * sizeof(data_ptr)), &indexes[i], sizeof(data_ptr));
+    }
+}
+
+/*    if (right - left + 1 <= 7)
     {
         //Insertion sort in small cases
         void *tuple_buf1 = buf1;
@@ -283,7 +319,7 @@ void SortedSequence::inBlockSort(xptr p, int left, int right)
         {
             tuple_size = getVal(tuple_buf, p, i);
             while (serializer -> compare(tuple_buf, tuple_size, pivot, pivot_size) < 0)
-            {
+            {(void *)
                 i++;
                 tuple_size = getVal(tuple_buf, p, i);
             }
@@ -305,7 +341,7 @@ void SortedSequence::inBlockSort(xptr p, int left, int right)
         if (i < right) inBlockSort(p, i, right);
         if (left < j) inBlockSort(p, left, j);
     }
-}
+}*/
 
 xptr SortedSequence::mergeBlocks(xptr p1, int size1, xptr p2, int size2)
 {
