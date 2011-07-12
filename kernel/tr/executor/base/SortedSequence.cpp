@@ -263,7 +263,6 @@ void SortedSequence::inBlockSort(xptr p, int amount)
     CHECKP(p);
     for (int i = 0; i < amount; i++)
     {
-        std::copy<>()
         memcpy(&indexes[i], XADDR(p + i * sizeof(data_ptr)), sizeof(data_ptr));
     }
 
