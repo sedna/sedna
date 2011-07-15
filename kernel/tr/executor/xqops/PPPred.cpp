@@ -629,8 +629,12 @@ void PPPred1::do_next(tuple &t)
     
     if(first_time)
     {
+        /* If tail expresssion (data child not representable as conjunct)
+         * doesn't depend on source expression we can evaluate data child once
+         * and buffer its value */
         if(once)
         {
+            need_reopen = true;
             if(conjuncts.size() != 0) 
             {
                 tuple_cell tc = effective_boolean_value(data_child, data, eos_reached);
@@ -642,7 +646,7 @@ void PPPred1::do_next(tuple &t)
                     if(range.is_empty()) { t.set_eos(); return;}
                     else if(range.is_any()) result_ready = true; 
                 }
-                else { t.set_eos(); return;} 
+                else { t.set_eos(); return;}
             }
             else
             {
@@ -657,7 +661,6 @@ void PPPred1::do_next(tuple &t)
                 else if( tc.get_xs_boolean() ) result_ready = true;
                 else { t.set_eos(); return;}
             }
-            need_reopen = true;     
         }
         else 
         {
@@ -699,9 +702,9 @@ void PPPred1::do_next(tuple &t)
     
             if( !any )
             {
-                if(upper_bound != 0 && pos > upper_bound) 
+                if(upper_bound != 0 && pos > upper_bound)
                 { 
-                    source_child.op->reopen(); 
+                    source_child.op->reopen();
                     break;
                 }
                 if(pos < lower_bound || !range.is_position_in_range(pos)) continue;
@@ -946,8 +949,12 @@ void PPPred2::do_next(tuple &t)
         }
         if(s->size() == 0) return;
 
+        /* If tail expresssion (data child not representable as conjunct)
+         * doesn't depend on source expression we can evaluate data child once
+         * and buffer its value */
         if(once)
         {
+            need_reopen = true;
             if(conjuncts.size() != 0) 
             {
                 tuple_cell tc = effective_boolean_value(data_child, data, eos_reached);
@@ -974,7 +981,6 @@ void PPPred2::do_next(tuple &t)
                 else if( tc.get_xs_boolean() ) result_ready = true;
                 else { t.set_eos(); return; }
             }
-            need_reopen = true;
         }
         else
         {

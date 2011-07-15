@@ -2684,7 +2684,7 @@ as the result of the XQuery constructor evaluation).
 
 For example, the following update statement inserts new \emph{warning} element
 into all \emph{blood\_pressure} elements which have \emph{systolic} value
-greater then 180:
+greater than 180:
 
 \begin{verbatim}
 UPDATE
@@ -3521,15 +3521,16 @@ other documents, or make consistency checks against other documents. The reason
 for this division of labor is that an after-trigger can be certain it is seeing
 the final value of the node, while a before-trigger cannot; there might be other
 before triggers firing after it. When designing your trigger-application note,
-that node-level triggers are typically cheaper then statement-level ones.
+that node-level triggers are typically cheaper than statement-level ones.
 
 If a trigger function executes update-statement then these commands may fire
 other triggers again (cascading triggers). Currently \emph{trigger cascading
 level} in Sedna is limited to 10.
 
 \begin{note}
-Currently is it prohibited in a trigger action to update the same document that
-is being updated by the outer update statement that has fired this trigger.
+Currently is it prohibited in a trigger action to update the same document or
+collection that is being updated by the outer update statement that has fired
+this trigger.
 \end{note}
 
 \begin{figure}[h]
@@ -3639,7 +3640,7 @@ The next statement-level trigger \emph{tr4} maintains statistics in the document
 named \emph{stat}. When this trigger is fired, the update operation is completed
 - that gives the possibility to make aggregative checks on the updated data.
 After deletion of any node in the \emph{auction} document, the trigger refreshes
-statistics in \emph{stat} and throws exception if there are more then 50 persons
+statistics in \emph{stat} and throws exception if there are more than 50 persons
 left:
 
 \small{

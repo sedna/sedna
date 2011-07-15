@@ -52,7 +52,6 @@ void PPIf::do_reopen()
     {
         if (!eos_reached) if_child.op->reopen();
         data_child->reopen();
-
         data_child = NULL;
     }
 }
@@ -66,7 +65,7 @@ void PPIf::do_close()
 
 void PPIf::do_next(tuple &t)
 {
-        if (data_child == NULL)
+    if (data_child == NULL)
     {
         eos_reached = true;
         tuple_cell c = effective_boolean_value(if_child, if_data, eos_reached);

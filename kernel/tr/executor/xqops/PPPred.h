@@ -164,12 +164,13 @@ private:
                                   //for the first time
     bool result_ready;
 
-    bool eos_reached;             //just determines if need reopen operation after
+    bool eos_reached;             //determines if we need to reopen operation after
                                   //effective boolean (or numeric) expression
-                                  //evaluation
+                                  //evaluation (for tail non-conjunct expression,
+                                  //aka data_child)
 
-    bool need_reopen;             //as-is, we need reopen some operations when 
-                                  //next next() is called
+    bool need_reopen;             //we need reopen tail non-conjunct expression sometimes
+                                  //(aka data_child) when the next() is called
 
     bool any;                     //if after evaluation of all conjuncts and inserting
                                   //of theirs results into PPPredRange instance, it
@@ -269,11 +270,14 @@ private:
                             //range doesn't restrict position at all,
                             //for example [position() > -1]
 
-    bool eos_reached;       //just for effective value evaluation,
-                            //to determine if we need to reopen next time
+    bool eos_reached;       //determines if we need to reopen operation after
+                            //effective boolean (or numeric) expression
+                            //evaluation (for tail non-conjunct expression,
+                            //aka data_child)
 
-    bool need_reopen;       //as-is - we set it, if need to reopen source child
-                            //next time we call next()
+    bool need_reopen;       //we need reopen tail non-conjunct expression sometimes
+                            //(aka data_child) when the next() is called
+
 
     int upper_bound;        //just caches preevaluated bound
     int lower_bound;        //just caches preevaluated bound

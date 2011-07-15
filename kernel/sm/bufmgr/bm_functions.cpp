@@ -511,7 +511,7 @@ void bm_memlock_block(session_id sid, xptr p)
         res = blocked_mem.find(offs);
         if (res == 0) return; // block already blocked
 
-        if (blocked_mem.size() >= (unsigned)sm_globals::bufs_num);
+        if (blocked_mem.size() >= (unsigned)sm_globals::bufs_num)
             throw USER_EXCEPTION(SE1020);
     }
     else throw USER_EXCEPTION(SE1021);

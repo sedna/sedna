@@ -66,7 +66,6 @@ tuple_cell effective_boolean_value(const tuple_cell &t)
 {
 	xmlscm_type xtype = t.get_atomic_type();    
 
-    // 3. If its operand is a sequence whose first item is a node, fn:boolean returns true
     if(xtype == xs_boolean) return t;                       
 
 	
