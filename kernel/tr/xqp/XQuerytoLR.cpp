@@ -159,12 +159,9 @@ PPQueryEssence *build_subquery_qep(const char* query, QueryType type)
     try
     {
         parse_batch(xqd, type, query, &dummy);
-
         PPQueryEssence *qep = xqd->getQEPForModule(0, true);
-
         delete xqd;
-
-	return qep;
+	    return qep;
     }
     catch (SednaUserException)
     {
