@@ -238,7 +238,7 @@ static constructor_context_t constructorContext = { NULL, NULL };
 void PPConstructor::checkInitial()
 {
     if (constructorContext.virtualRoot == NULL) {
-        constructorContext.virtualRoot = SCElementProducer::createVirtualRoot(XNULL);
+        constructorContext.virtualRoot = SCElementProducer::getVirtualRoot(XNULL);
     }
 }
 

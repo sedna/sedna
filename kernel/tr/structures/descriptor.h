@@ -61,6 +61,7 @@ namespace internal {
     struct text_node {
         node_base_t base;
         node_text_t text;
+        shft       flags;
     };
 
     struct pi_node {

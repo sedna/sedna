@@ -94,5 +94,7 @@
 
 #include "tr/executor/xqops/PPXptr.h"
 
+#include "tr/executor/xqops/PPSQL.h"
+
 
 #endif /* _OPERATION_HEADERS_H_ */

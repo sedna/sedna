@@ -13,6 +13,8 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/xqops/PPConstructors.h"
 
+class IElementProducer;
+
 enum sql_handle_type {
 	SQLH_CONNECTION,
 	SQLH_PREPARED_STMT
@@ -44,7 +46,7 @@ public:
 	virtual void execute_query (const char *query, int query_len, PPOpIn *options) = 0;
 	virtual void execute_prepared(arr_of_PPOpIn params) = 0;
 	virtual void close_query() = 0;
-	virtual void fetch(tuple &t, xptr virt_root, xptr &last_elem) = 0;
+	virtual void fetch(tuple &t, IElementProducer * producer) = 0;
 	virtual int  update_row_count() = 0;
 
 	virtual bool is_query_active() = 0;
