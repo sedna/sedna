@@ -21,6 +21,10 @@
 #include "tr/executor/xqops/PPBooleanOps.h"
 #include "tr/executor/xqops/PPFilterEL.h"
 
+#ifdef SE_ENABLE_DTSEARCH
+#include "tr/executor/xqops/PPFtScan.h"
+#endif
+
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/executor/xqops/PPFtIndexScan.h"
 #include "tr/executor/xqops/PPFtIndexDict.h"
