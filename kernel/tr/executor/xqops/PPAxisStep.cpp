@@ -242,6 +242,30 @@ Node nextNode_Null(Node node, AxisHints * hint) {
     return XNULL;
 }
 
+Node resolveNode_RightSiblingQName(Node node, AxisHints * hint) {
+    schema_node_cptr scn = node.checkp().getSchemaNode();
+
+    if (scn->type == attribute) {
+        return XNULL;
+    }
+
+    schema_node_cptr child = scn->parent->get_first_child(hint->nt.getQName(), element);
+
+    return getRightSiblingBySchema(node.getPtr(), child);
+}
+
+Node resolveNode_LeftSiblingQName(Node node, AxisHints * hint) {
+    schema_node_cptr scn = node.checkp().getSchemaNode();
+
+    if (scn->type == attribute) {
+        return XNULL;
+    }
+
+    schema_node_cptr child = scn->parent->get_first_child(hint->nt.getQName(), element);
+
+    return getLeftSiblingBySchema(node.getPtr(), child);
+}
+
 Node nextNode_RightSiblingSame(Node node, AxisHints * hint) {
     if (node.checkp().getSchemaNode()->type == attribute) {
         return XNULL;
@@ -447,6 +471,7 @@ PPAxisStep::PPAxisStep(dynamic_context* _cxt_, operation_info _info_, PPOpIn _ch
         testNodeProc = schemaTest;
 
         if (!hint->nt.isAnyQName()) {
+            evaluateAxisProc = (nt.axis == axis_following_sibling) ? resolveNode_RightSiblingQName : resolveNode_LeftSiblingQName;
             nextNodeProc = (nt.axis == axis_following_sibling) ? nextNode_RightSiblingSame : nextNode_LeftSiblingSame;
         };
     }

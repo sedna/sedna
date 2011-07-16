@@ -457,7 +457,7 @@ xptr getRightSiblingBySchema(const xptr node, schema_node_cptr scn)
 xptr getRightSiblingBySchema(const xptr node, schema_node_cptr scn)
 {
     CHECKP(node);
-    xptr parent = nodeGetParent(node);
+    xptr parent = getActualParentNode(node);
 
     if (parent == XNULL) {
         return XNULL;
@@ -475,7 +475,7 @@ xptr getRightSiblingBySchema(const xptr node, schema_node_cptr scn)
 xptr getLeftSiblingBySchema(const xptr node, schema_node_cptr scn)
 {
     CHECKP(node);
-    xptr parent = nodeGetParent(node);
+    xptr parent = getActualParentNode(node);
 
     if (parent == XNULL) {
         return XNULL;

@@ -4,6 +4,7 @@
 #ifdef SE_ENABLE_DTSEARCH
 #include "tr/executor/xqops/PPFtScan.h"
 #endif
+
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/executor/root/PPCreateFtIndex.h"
 #include "tr/executor/root/PPDropFtIndex.h"
