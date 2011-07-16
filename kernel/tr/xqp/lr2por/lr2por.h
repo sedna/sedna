@@ -50,9 +50,7 @@ namespace sedna
             std::string lr_path; // for indexes, triggers, abs_path expressions
             std::string serialized_form; // for node-test in axis steps (look XPath.cpp for serialization rules)
 
-            bool special_node; // Currently used to indicate that the constructed branch is NSP node with element's prefix
-
-            childOffer() : open_abs_path(false), special_node(false)
+            childOffer() : open_abs_path(false)
             {
                 opin.op = NULL;
             }
@@ -76,6 +74,7 @@ namespace sedna
         varInfo varCache; // cache containg info about processed global and lib variables
 
         dynamic_context *dyn_cxt; // current context for ops (different for every function-variable)
+        StaticallyKnownNamespaces * skn;
 
         PPQueryEssence *qep; // result tree
         bool is_subquery; // true if we're building a subquery
@@ -117,6 +116,7 @@ namespace sedna
             pareqs.push_back(parentRequest());
 
             dyn_cxt = dyn_cxt_;
+            skn = dyn_cxt_->get_static_context()->getStaticallyKnownNamespaces();
             qep = NULL;
             var_op_num = -1;
             virtualizableConstructors = false;

@@ -211,7 +211,7 @@ xmlns_ptr swizzle_namespace(xptr node, xmlns_ptr new_ns) {
 
     NSNode ns = getFirstChildByType(node, xml_namespace);
 
-    if (new_ns->is_reserved_prefix()) {
+    if (new_ns->same_prefix("uri")) {
         return NULL_XMLNS;
     }
 

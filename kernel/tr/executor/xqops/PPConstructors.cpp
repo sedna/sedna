@@ -38,13 +38,13 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static inline
-tuple_cell getQnameParameter(const PPOpIn &qname)
+static
+tuple_cell getNameTuple(const PPOpIn &qname, bool quietly)
 {
     tuple name(qname.ts);
 
     qname.op->next(name);
-    if (name.is_eos() || name.cells_number != 1 )
+    if (name.is_eos() || name.cells_number != 1)
         throw XQUERY_EXCEPTION2(XPTY0004, "single atomic value is expected in the name expression of an attribute/element constructor");
 
     tuple_cell res = atomize(name.cells[0]);
@@ -64,101 +64,64 @@ tuple_cell getQnameParameter(const PPOpIn &qname)
     return res;
 }
 
-static inline
-xsd::NCName getNCNameParameter(const PPOpIn &ncname)
+static
+xsd::NCName getNCNameParameter(const PPOpIn &ncname, bool quietly)
 {
-    tuple_cell name = getQnameParameter(ncname);
+    tuple_cell name = getNameTuple(ncname, quietly);
     xsd::NCName result;
 
     if (name.is_atomic_type(xs_QName)) {
-        if (name.get_xs_qname().getPrefix()[0] != '\0') {
-            throw XQUERY_EXCEPTION2(XPTY0004, "no prefix supposed for NCName");
+        if (name.get_xs_qname().getXmlNs() != NULL_XMLNS) {
+            if (quietly) {
+                return xsd::NCName();
+            } else {
+                throw XQUERY_EXCEPTION2(XPTY0004, "no prefix supposed for NCName");
+            }
         }
 
-        result = xsd::NCName::check(name.get_xs_qname().getLocalName(), false);
+        result = xsd::NCName::check(name.get_xs_qname().getLocalName(), quietly);
     } else {
-        result = xsd::NCName::check(name.get_str_mem(), false);
+        result = xsd::NCName::check(name.get_str_mem(), quietly);
     }
 
     return result;
 }
 
-static bool
-getStringParameter(PPOpIn content)
-{
-    tuple value(content.ts);
-    content.op->next(value);
-    sequence at_vals(1);
-    if (value.is_eos())
-    {
-        executor_globals::tmp_op_str_buf.clear();
-        executor_globals::tmp_op_str_buf.append(EMPTY_STRING_TC);
-        return true;
-    }
-    else
-    {
-        at_vals.add(value);
+void getAtomicSequence(const char * direct_content, PPOpIn content, sequence * a) {
+    if (direct_content != NULL) {
+        a->add(tuple(tuple_cell::atomic(xs_string, strcpy((char *) malloc(strlen(direct_content) + 1), direct_content))));
+    } else {
+        tuple value(content.ts);
         content.op->next(value);
-    }
 
-    while (!(value.is_eos()))
-    {
-        if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPConstructor");
-        at_vals.add(value);
-        content.op->next(value);
-    }
-    executor_globals::tmp_op_str_buf.clear();
-    sequence::iterator it=at_vals.begin();
-    do
-    {
-        tuple_cell res=atomize((*it).cells[0]);
-        res=cast(res, xs_string);
-        res=tuple_cell::make_sure_light_atomic(res);
-        executor_globals::tmp_op_str_buf.append(res);
-        it++;
+        while (!value.is_eos()) {
+            if (value.cells_number != 1) {
+                throw USER_EXCEPTION2(SE1003, "in PPConstructor");
+            }
 
+            a->add(tuple(cast(atomize(value.cells[0]), xs_string)));
+
+            content.op->next(value);
+        };
     }
-    while (it!=at_vals.end());
-    return false;
 }
 
-static void
-getStringWSParameter(PPOpIn content)
-{
+void concatSequence(sequence * a) {
     executor_globals::tmp_op_str_buf.clear();
-    tuple value(content.ts);
-    content.op->next(value);
-    sequence at_vals(1);
-    if (value.is_eos()) return;
 
-    while (!(value.is_eos()))
-    {
-        if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPConstructor");
-        at_vals.add(value);
-        content.op->next(value);
-    }
-    executor_globals::tmp_op_str_buf.clear();
-    sequence::iterator it=at_vals.begin();
-    do
-    {
-        tuple_cell res=atomize((*it).cells[0]);
-        res=cast(res, xs_string);
-        res=tuple_cell::make_sure_light_atomic(res);
-        executor_globals::tmp_op_str_buf.append(res);
+    sequence::iterator it = a->begin();
+    while (it != a->end()) {
+        executor_globals::tmp_op_str_buf.append(tuple_cell::make_sure_light_atomic((*it).cells[0]));
         it++;
-
-    }
-    while (it!=at_vals.end());
+    };
 }
 
-
-text_source_t getTextContent(const char * cstr, PPOpIn op, bool preserveWS) {
+text_source_t getTextContent(const char * cstr, PPOpIn op) {
     if (cstr == NULL) {
-        if (preserveWS) {
-            getStringWSParameter(op);
-        } else {
-            getStringParameter(op);
-        }
+        sequence atvals(1);
+
+        getAtomicSequence(cstr, op, &atvals);
+        concatSequence(&atvals);
 
         return text_source_strbuf(&(executor_globals::tmp_op_str_buf));
     } else {
@@ -167,18 +130,19 @@ text_source_t getTextContent(const char * cstr, PPOpIn op, bool preserveWS) {
 }
 
 static inline
-bool isNameValid(xsd::QName qname, bool check_name = true)
+bool isPrefixValid(xsd::QName qname)
 {
     const char* name = qname.getLocalName();
     xmlns_ptr ns = qname.getXmlNs();
 
-    /* It has no namespace prefix and its local name is xmlns */
-    if(check_name && (ns == NULL_XMLNS || !ns->has_prefix()) && strcmpex(name,"xmlns") == 0) return false;
-
-    if(ns == NULL_XMLNS) return true;
+    if (ns == NULL_XMLNS) {
+        return true;
+    }
 
     /* Its namespace prefix is xmlns. */
-    if (ns->same_prefix("xmlns")) { return false; }
+    if (ns->same_prefix("xmlns") || ns->same_uri("http://www.w3.org/2000/xmlns/")) {
+        return false;
+    }
 
     bool xmlNs = ns->same_prefix("xml");
     bool xmlUri = ns->same_uri("http://www.w3.org/XML/1998/namespace");
@@ -228,14 +192,15 @@ process_atomic_values(xptr& left, const xptr& parent, sequence& at_vals) {
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-xsd::QName PPConstructor::resolveQName(const char* nameString, PPOpIn qname, dynamic_context* cxt) {
+static
+xsd::QName resolveQName(const char* nameString, PPOpIn qname, INamespaceMap * skn) {
     xsd::QName result;
 
     tuple_cell qnameTuple; /* TRICKY It is defined here, because string, it contains must be used as a parameter in resolve context
      Destructor must not free it earlier that it is needed */
 
     if (NULL == nameString) {
-        qnameTuple = getQnameParameter(qname);
+        qnameTuple = getNameTuple(qname, false);
         if (qnameTuple.is_atomic_type(xs_QName)) {
             result = qnameTuple.get_xs_qname();
             nameString = NULL;
@@ -245,14 +210,7 @@ xsd::QName PPConstructor::resolveQName(const char* nameString, PPOpIn qname, dyn
     }
 
     if (NULL != nameString) {
-        result = xsd::QName::createResolveContext(nameString, cxt, false);
-    }
-
-    U_ASSERT(result.valid());
-
-    /* Check constraints on full name */
-    if (!isNameValid(result, false)) {
-        throw XQUERY_EXCEPTION(XQDY0096);
+        result = xsd::QName::createResolve(nameString, skn, true);
     }
 
     return result;
@@ -303,7 +261,6 @@ Node PPConstructor::getVirtualRoot()
     return dynamic_cast<SCElementProducer *>(constructorContext.virtualRoot)->getNode();
 }
 
-
 class ProperNamespace {
   private:
     tuple contentIterator;
@@ -320,7 +277,7 @@ class ProperNamespace {
 
     void add(xmlns_ptr _ns) {
         /* Default namespace handling should be done automatically in add_to_context */
-        cxt->add_to_context(_ns);
+        cxt->get_static_context()->getStaticallyKnownNamespaces()->setNamespace(_ns);
         nsList.push(_ns);
     }
 
@@ -347,131 +304,11 @@ class ProperNamespace {
 
     void clear() {
         while (!nsList.empty()) {
-            cxt->remove_from_context(nsList.top());
+            cxt->get_static_context()->getStaticallyKnownNamespaces()->setNamespace(xmlns_touch(nsList.top()->get_prefix(), ""));
             nsList.pop();
         }
     }
 };
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-/// PPVirtualConstructor
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
-        operation_info _info_, PPOpIn _qname_, PPOpIn _content_, bool _deep_copy, PPOpIn _ns) :
-            PPConstructor(_cxt_, _info_, _deep_copy), qname(_qname_), content(_content_), inner_ns_node(_ns)
-
-{
-    el_name=NULL;
-}
-
-PPVirtualConstructor::PPVirtualConstructor(dynamic_context *_cxt_,
-        operation_info _info_, const char* name, PPOpIn _content_, bool _deep_copy, PPOpIn _ns) :
-            PPConstructor(_cxt_, _info_, _deep_copy), content(_content_), inner_ns_node(_ns)
-{
-    el_name=se_new char[strlen(name)+1];
-    strcpy(el_name,name);
-
-}
-PPVirtualConstructor::~PPVirtualConstructor()
-{
-    if (el_name!=NULL) {
-        delete [] el_name;
-    } else {
-        delete qname.op;
-        qname.op = NULL;
-    }
-
-    delete content.op;
-
-    content.op = NULL;
-}
-
-void PPVirtualConstructor::do_open ()
-{
-    checkInitial();
-    if (el_name==NULL) qname.op->open();
-    content.op->open();
-
-    if (inner_ns_node.op != NULL) {
-        inner_ns_node.op->open();
-    }
-
-    first_time = true;
-}
-
-void PPVirtualConstructor::do_reopen()
-{
-    if (el_name==NULL)  qname.op->reopen();
-    content.op->reopen();
-
-    if (inner_ns_node.op != NULL) {
-        inner_ns_node.op->reopen();
-    }
-
-    first_time = true;
-}
-
-void PPVirtualConstructor::do_close()
-{
-    if (el_name==NULL) qname.op->close();
-    content.op->close();
-
-    if (inner_ns_node.op != NULL) {
-        inner_ns_node.op->close();
-    }
-}
-
-inline static
-bool isNamespaceTuple(const tuple &t) {
-    return t.cells[0].is_node() && getNodeType(checkp(t.cells[0].get_node())) == xml_namespace;
-}
-
-tuple_cell PPVirtualConstructor::parent_element;
-
-static inline
-void atomics_to_text(portal::VirtualElementWriter &element, sequence &atomic_acc, xptr text_root_indirection) {
-    xptr atomic_node = XNULL;
-    if (process_atomic_values(atomic_node, text_root_indirection, atomic_acc)) {
-        element.add(tuple_cell::node_indir(atomic_node));
-    }
-}
-
-void PPVirtualConstructor::do_next (tuple &t)
-{
-    if (first_time) {
-        first_time = false;
-        portal::VirtualElementWriter elementProducer(cxt);
-
-        U_ASSERT(false);
-        // TODO: implement
-
-    } else {
-        first_time = true;
-        t.set_eos();
-    }
-}
-
-PPIterator* PPVirtualConstructor::do_copy(dynamic_context *_cxt_)
-{
-    PPVirtualConstructor *res ;
-    if (el_name!=NULL)
-        res = se_new PPVirtualConstructor(_cxt_, info, el_name, content, deep_copy, inner_ns_node);
-    else
-    {
-        res = se_new PPVirtualConstructor(_cxt_, info, qname, content, deep_copy, inner_ns_node);
-        res->qname.op = qname.op->copy(_cxt_);
-    }
-    res->content.op = content.op->copy(_cxt_);
-    return res;
-}
-
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -480,37 +317,45 @@ PPIterator* PPVirtualConstructor::do_copy(dynamic_context *_cxt_)
 ///////////////////////////////////////////////////////////////////////////////
 
 
-PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_,
-                                           operation_info _info_,
-                                           PPOpIn _qname_,
-                                           PPOpIn _content_,
-                                           bool _deep_copy,
-                                           PPOpIn _ns) : PPConstructor(_cxt_, _info_, _deep_copy),
-                                                              qname(_qname_),
-                                                              content(_content_),
-                                                              el_name(NULL),
-                                                              inner_ns_node(_ns)
+PPElementConstructor::PPElementConstructor(
+    dynamic_context *_cxt_,
+    operation_info _info_,
+    PPOpIn _qname_,
+    PPOpIn _content_,
+    bool _deep_copy,
+    int _sknMarker,
+    bool _virtualElement) :
+        PPConstructor(_cxt_, _info_, _deep_copy),
+        qname(_qname_),
+        content(_content_),
+        el_name(NULL),
+        sknSnapshot(NULL),
+        sknMarker(_sknMarker),
+        virtualElement(_virtualElement)
 {
 }
 
-PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_,
-                                           operation_info _info_,
-                                           const char* name,
-                                           PPOpIn _content_,
-                                           bool _deep_copy,
-                                           PPOpIn _ns): PPConstructor(_cxt_, _info_, _deep_copy),
-                                                             qname(),
-                                                             content(_content_),
-                                                             el_name(NULL),
-                                                             inner_ns_node(_ns)
+PPElementConstructor::PPElementConstructor(
+    dynamic_context *_cxt_,
+    operation_info _info_,
+    const char* name,
+    PPOpIn _content_,
+    bool _deep_copy,
+    int _sknMarker,
+    bool _virtualElement):
+        PPConstructor(_cxt_, _info_, _deep_copy),
+        qname(),
+        content(_content_),
+        el_name(NULL),
+        sknSnapshot(NULL),
+        sknMarker(_sknMarker),
+        virtualElement(_virtualElement)
 {
-    el_name=se_new char[strlen(name)+1];
-    strcpy(el_name, name);
-
+    el_name = strcpy(se_new char[strlen(name)+1], name);
 }
+
 PPElementConstructor::~PPElementConstructor()
 {
-
     if (el_name!=NULL)
     {
         delete [] el_name;
@@ -532,10 +377,6 @@ void PPElementConstructor::do_open ()
     if (el_name == NULL) qname.op->open();
     content.op->open();
 
-    if (inner_ns_node.op != NULL) {
-        inner_ns_node.op->open();
-    }
-
     first_time = true;
 }
 
@@ -544,20 +385,12 @@ void PPElementConstructor::do_reopen()
     if (el_name==NULL)  qname.op->reopen();
     content.op->reopen();
 
-    if (inner_ns_node.op != NULL) {
-        inner_ns_node.op->reopen();
-    }
-
     first_time = true;
 }
 
 void PPElementConstructor::do_close()
 {
     if (el_name==NULL) qname.op->close();
-
-    if (inner_ns_node.op != NULL) {
-        inner_ns_node.op->close();
-    }
 
     content.op->close();
 }
@@ -567,12 +400,20 @@ void PPElementConstructor::do_next (tuple &t)
     if (first_time) {
         first_time = false;
 
-        /* Resolve namespace */
-        ProperNamespace nsHandler(&inner_ns_node, cxt);
-        nsHandler.collect();
+        cxt->get_static_context()->getStaticallyKnownNamespaces()->gotoMark(sknMarker);
 
         /* Resolve name */
-        xsd::QName name = resolveQName(el_name, qname, cxt);
+        xsd::QName name = resolveQName(el_name, qname, cxt->get_static_context()->getStaticallyKnownNamespaces());
+
+        if (!name.valid()) {
+            throw XQUERY_EXCEPTION(XQDY0074);
+        }
+
+        /* Check constraints on prefix */
+        if (!isPrefixValid(name)) {
+            throw XQUERY_EXCEPTION(XQDY0096);
+        }
+
         bool preserveType = cxt->get_static_context()->get_construction_mode();
 
         scoped_ptr<IElementProducer> producer
@@ -582,11 +423,6 @@ void PPElementConstructor::do_next (tuple &t)
         /* Save context */
         IElementProducer * oldParent = constructorContext.producer;
         constructorContext.producer = producer.get();
-
-        /* Insert proper namespace node */
-        if (nsHandler.getNamespace() != NULL_XMLNS) {
-            producer->addNS(nsHandler.getNamespace());
-        }
 
         /* Process content nodes */
         tuple contentTuple(content.ts); /* Content iterator, used throughout the function */
@@ -602,25 +438,15 @@ void PPElementConstructor::do_next (tuple &t)
 
                     U_ASSERT(nodeType != virtual_root);
 
-                    if (nodeType == xml_namespace) {
-                        xmlns_ptr ns = NSNode(node).getNamespaceLocal();
-                        nsHandler.add(ns);
-
-                        if (!ns->has_prefix()) {
-                            // Default namespace should only appear in inner_ns_node, so pass it
-                            continue;
-                        }
-                    }
-
                     if (!producer->hasNode(tc)) {
                         producer->addNode(tc, preserveType);
                     }
                 }
             } while (false);
+
             content.op->next(contentTuple);
         }
 
-        nsHandler.clear();
         constructorContext.producer = oldParent;
 
         /* Result */
@@ -637,10 +463,10 @@ PPIterator* PPElementConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPElementConstructor *res ;
     if (el_name!=NULL)
-        res = se_new PPElementConstructor(_cxt_, info, el_name,content, deep_copy, inner_ns_node);
+        res = se_new PPElementConstructor(_cxt_, info, el_name,content, deep_copy, sknMarker, virtualElement);
     else
     {
-        res = se_new PPElementConstructor(_cxt_, info, qname,content, deep_copy, inner_ns_node);
+        res = se_new PPElementConstructor(_cxt_, info, qname,content, deep_copy, sknMarker, virtualElement);
         res->qname.op = qname.op->copy(_cxt_);
     }
     res->content.op = content.op->copy(_cxt_);
@@ -745,19 +571,17 @@ void PPAttributeConstructor::do_close()
 }
 
 static
-xmlns_ptr swizzle_context_namespace(dynamic_context * cxt, xmlns_ptr ns) {
+xmlns_ptr swizzle_context_namespace(StaticallyKnownNamespaces * skn, xmlns_ptr ns) {
     U_ASSERT(ns != NULL_XMLNS);
 
-    xmlns_ptr cns = cxt->get_xmlns_by_prefix(ns->get_prefix(), true);
+    xmlns_ptr cns = skn->resolvePrefix(ns->get_prefix());
 
     if (cns == NULL_XMLNS || cns == ns) {
-        return NULL_XMLNS;
+        return ns;
     } else {
-        return swizzle_context_namespace(cxt,
+        return swizzle_context_namespace(skn,
             generate_prefix(ns->has_prefix() ? ns->get_prefix() : "new", ns->get_uri()));
     }
-
-    return NULL_XMLNS;
 };
 
 
@@ -765,40 +589,63 @@ void PPAttributeConstructor::do_next (tuple &t)
 {
     if (first_time) {
         first_time = false;
-        xsd::QName name = resolveQName(at_name, qname, cxt);
 
-        if (name.getXmlNs() != NULL_XMLNS && !name.getXmlNs()->has_prefix()) {
-          /* TRICKY, REVIEW . From here : http://www.w3.org/TR/xquery/#id-attributes
-            <<  If the attribute name has no namespace prefix, the attribute is in no namespace. >>
-            But this is only valid for "direct" attribute constructors */
-            if (at_name != NULL) {
-                // A direct constructor
-                name = xsd::QName::createNsN(NULL_XMLNS, name.getLocalName());
-            } else {
-                // A computed constructor
-          /* TRICKY:
-            << If the expanded QName returned by the atomized name expression has a namespace URI but
-            has no prefix, it is given an implementation-dependent prefix. >> */
-                name = xsd::QName::createNsN(
-                    swizzle_context_namespace(cxt,
-                        generate_prefix("new", name.getXmlNs()->get_uri())),
-                    name.getLocalName());
-            }
-        }
-
-        text_source_t value = getTextContent(at_value, content, true);
-
+        // HACK ! This is to be fixed, and work only in assumtion, that 1) element constructor moved SKN,
+        // and 2) all att. constructors are before all element constructors
+        StaticallyKnownNamespaces * skn = cxt->get_static_context()->getStaticallyKnownNamespaces();
+        xsd::QName name = resolveQName(at_name, qname, skn);
         IElementProducer * parent = constructorContext.getParent(deep_copy);
 
-        /* Swizzle namespace if needed */
-        if (name.getXmlNs() != NULL_XMLNS) {
-            xmlns_ptr newns = swizzle_context_namespace(cxt, name.getXmlNs());
-
-            if (newns != NULL_XMLNS) {
-                parent->addNS(newns);
-                name = xsd::QName::createNsN(newns, name.getLocalName());
-            }
+        if (!name.valid()) {
+            throw XQUERY_EXCEPTION(XQDY0074);
         }
+
+        if (name.getXmlNs() != NULL_XMLNS) do {
+            /* TRICKY, REVIEW . From here : http://www.w3.org/TR/xquery/#id-attributes
+              <<  If the attribute name has no namespace prefix, the attribute is in no namespace. >>
+              But this is only valid for "direct" attribute constructors
+              It should be done BEFORE xmlns name check */
+
+              if (at_name != NULL && !name.getXmlNs()->has_prefix()) {
+                  // A direct constructor
+                  name = xsd::QName::createNsN(NULL_XMLNS, name.getLocalName());
+                  break;
+              }
+
+              if (!isPrefixValid(name)) {
+                  throw XQUERY_EXCEPTION(XQDY0044);
+              }
+
+              if (at_name == NULL && !name.getXmlNs()->has_prefix()) {
+                      // A computed constructor
+                /* TRICKY:
+                  << If the expanded QName returned by the atomized name expression has a namespace URI but
+                  has no prefix, it is given an implementation-dependent prefix. >>
+                  It should be done AFTER xmlns name check
+                */
+                  name = xsd::QName::createNsN(
+                      swizzle_context_namespace(skn,
+                          generate_prefix("new", name.getXmlNs()->get_uri())),
+                      name.getLocalName());
+              }
+
+              /* Swizzle namespace if needed */
+              if (skn->resolvePrefix(name.getXmlNs()->get_prefix()) != name.getXmlNs()) {
+                  xmlns_ptr newns = swizzle_context_namespace(skn, name.getXmlNs());
+
+                  if (newns != NULL_XMLNS) {
+                      parent->addNS(newns);
+                      name = xsd::QName::createNsN(newns, name.getLocalName());
+                  }
+              }
+        } while (false);
+
+        if (name.getXmlNs() == NULL_XMLNS && strcmp(name.getLocalName(), "xmlns") == 0) {
+          /* It has no namespace prefix and its local name is xmlns, it's an error. */
+            throw XQUERY_EXCEPTION(XQDY0044);
+        }
+
+        text_source_t value = getTextContent(at_value, content);
 
         tuple_cell result = parent->addAttribute(name, value, xs_untypedAtomic);
 
@@ -904,8 +751,9 @@ void PPNamespaceConstructor::do_next (tuple &t)
     if (first_time) {
         first_time = false;
 
-        text_source_t content_value = getTextContent(at_value, content, false);
-        xmlns_ptr ns = xmlns_touch(at_name, content_value.u.cstr);
+        text_source_t content_value = getTextContent(at_value, content);
+        xsd::AnyURI uri = xsd::AnyURI::check(content_value.u.cstr);
+        xmlns_ptr ns = xmlns_touch(at_name, uri.getValue());
 
         tuple_cell result = constructorContext.getParent(deep_copy)->addNS(ns);
 
@@ -989,7 +837,7 @@ void PPCommentConstructor::do_next (tuple &t)
     {
         first_time = false;
 
-        text_membuf_t textbuf(getTextContent(at_value, content, false));
+        text_membuf_t textbuf(getTextContent(at_value, content));
 
         int rst = strm.parse(textbuf.getCstr(), textbuf.getSize(), NULL,NULL);
 
@@ -1146,19 +994,28 @@ void PPPIConstructor::do_next (tuple &t)
         res1.set_eos();
         xsd::NCName name;
 
-        if (at_name == NULL) {
-            name = getNCNameParameter(qname);
-        } else {
+        do {
             stmt_str_buf res;
-            collapse_string_normalization(at_name, res); /* Perform name normalization */
-            name = xsd::NCName::check(res.get_tuple_cell().get_str_mem(), false);
+            if (at_name == NULL) {
+                name = getNCNameParameter(qname, true);
+                if (!name.valid()) { break; }
+                collapse_string_normalization(name.getValue(), res);
+            } else {
+                collapse_string_normalization(at_name, res); /* Perform name normalization */
+            }
+
+            name = xsd::NCName::check(res.get_tuple_cell().get_str_mem(), true);
+        } while (false);
+
+        if (!name.valid()) {
+            throw XQUERY_EXCEPTION(XQDY0041);
         }
 
         if (charset_handler->matches(name.getValue(), "^(?i:xml)$")) {
             throw XQUERY_EXCEPTION(XQDY0064);
         }
 
-        text_membuf_t textbuf(getTextContent(at_value, content, false));
+        text_membuf_t textbuf(getTextContent(at_value, content));
 
         /* TRICKY This is just a search for "?>" or "--", that should not be in content (IT) */
         if (strm.parse(textbuf.getCstr(), textbuf.getSize(), NULL, NULL) != 0) {
@@ -1219,6 +1076,7 @@ PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_,
     at_value=se_new char[strlen(value)+1];
     strcpy(at_value,value);
 }
+
 PPTextConstructor::~PPTextConstructor()
 {
 
@@ -1251,20 +1109,31 @@ void PPTextConstructor::do_close()
 
 void PPTextConstructor::do_next (tuple &t)
 {
-    if (first_time)
-    {
+    tuple_cell result = tuple_cell::eos();
+
+    if (first_time) {
         first_time = false;
-        text_source_t text_source = getTextContent(at_value, content, false);
 
-        tuple_cell result = constructorContext.getParent(deep_copy)->addText(text_source);
+        if (at_value != NULL) {
+            result = constructorContext.getParent(deep_copy)->addText(text_source_cstr(at_value));
+        } else {
+            sequence atomized_content(1);
+            getAtomicSequence(NULL, content, &atomized_content);
 
-        //Result
-        t.copy(result);
+            if (atomized_content.size() == 0) {
+                result = tuple_cell::eos();
+            } else {
+                concatSequence(&atomized_content);
+                result = constructorContext.getParent(deep_copy)->addText(text_source_strbuf(&executor_globals::tmp_op_str_buf));
+            }
+        }
     }
-    else
-    {
+
+    if (result.is_eos()) {
         first_time = true;
         t.set_eos();
+    } else {
+        t.copy(result);
     }
 }
 
@@ -1436,11 +1305,3 @@ void PPTextConstructor::do_accept(PPVisitor &v)
     v.pop();
 }
 
-void PPVirtualConstructor::do_accept (PPVisitor &v)
-{
-    v.visit (this);
-    v.push  (this);
-    if (el_name==NULL) qname.op->accept(v);
-    content.op->accept(v);
-    v.pop();
-}

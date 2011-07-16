@@ -137,7 +137,7 @@ t_item getNodeTestTypeMask(const xpath::NodeTest& nt) {
         return (nt.axis == axis_attribute || nt.axis == axis_descendant_attr) ? attribute : element;
     } else if (nt.axis == axis_attribute || nt.axis == axis_descendant_attr) {
         return (t_item) (node_kind & attribute);
-    } else if (nt.axis == axis_child || nt.axis == axis_descendant || nt.axis == axis_descendant_or_self) {
+    } else if (nt.axis == axis_child || nt.axis == axis_descendant || nt.axis == axis_descendant_or_self || nt.axis >= axis_following) {
         return (t_item) (node_kind & ti_dmchildren);
     } else {
         return node_kind;

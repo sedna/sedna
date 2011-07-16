@@ -13,6 +13,7 @@
 #include "tr/structures/xmlns.h"
 #include "tr/crmutils/global_options.h"
 #include "tr/crmutils/str_matcher.h"
+#include "tr/executor/base/namespaces.h"
 
 /// query prolog enumerations
 enum xq_boundary_space {xq_boundary_space_strip, xq_boundary_space_preserve};
@@ -74,8 +75,7 @@ private:
     // it seems that collation_manager should be static since it doesn't contatin any dynamic info
     static CollationManager collation_manager;
 
-    std::vector<xmlns_ptr>   def_ns;
-    std::set<xmlns_ptr>      predefined_ns;
+    StaticallyKnownNamespaces staticallyKnownNamespaces;
 
     // serialization parameters: indent, method, etc.
     GlobalSerializationOptions serializationOptions;
@@ -88,6 +88,11 @@ private:
 public:
     static_context();
     ~static_context();
+
+    inline StaticallyKnownNamespaces * getStaticallyKnownNamespaces()
+    {
+        return &staticallyKnownNamespaces;
+    }
 
     inline GlobalSerializationOptions * get_serialization_options()
     {
@@ -182,6 +187,7 @@ public:
     {
         return cn_preserve;
     }
+
     inline void set_namespace_preserve(bool np)
     {
         cn_preserve = np;
@@ -192,6 +198,7 @@ public:
     {
         return cn_inherit;
     }
+
     inline void set_namespace_inherit(bool ni)
     {
         cn_inherit = ni;
@@ -204,42 +211,10 @@ public:
         set_field_flag(SC_OUTPUT_INDENT);
     }
 
-    inline xmlns_ptr get_default_nsp()
-    {
-        if (def_ns.empty()) {
-            return NULL_XMLNS;
-        } else {
-            xmlns_ptr p = def_ns.back();
-            if (is_empty_ns_declaration(p)) {
-                p = NULL_XMLNS;
-            }
-            return p;
-        }
-    }
-
-    inline void set_default_nsp(xmlns_ptr ns)
-    {
-        def_ns.push_back(ns);
-        set_field_flag(SC_DEFAULT_NAMESPACE);
-    }
-
     inline void set_nsp(xmlns_ptr ns)
     {
         set_field_flag(SC_NAMESPACE);
     }
-
-    inline void unset_default_nsp()
-    {
-        if (def_ns.size() > 0)
-            def_ns.pop_back();
-    }
-
-    bool is_nsp_predefined(xmlns_ptr ns) const
-    {
-        return (predefined_ns.find(ns) != predefined_ns.end());
-    }
-
-    xmlns_ptr get_predef_nsp(const char *prefix);
 };
 
 #endif /* _STATIC_CONTEXT_H */

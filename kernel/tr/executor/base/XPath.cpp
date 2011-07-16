@@ -384,7 +384,7 @@ void NodeTest::set(const scheme_list* lst)
                 throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression : NCName expected");
             }
 
-            local = xsd::NCName::check(test_expr->at(1).internal.str).serialize(default_context_space);
+            local = xsd::NCName::check(test_expr->at(1).internal.str, true).serialize(default_context_space);
         } break;
 
         case node_test_qname:
@@ -416,7 +416,7 @@ void NodeTest::set(const scheme_list* lst)
             if (CL_CHECK_SYMBOL(test_expr, 1, "any")) {
                 local = NULL;
             } else if (test_expr->at(1).type == SCM_STRING) {
-                local = xsd::NCName::check(test_expr->at(1).internal.str).serialize(default_context_space);
+                local = xsd::NCName::check(test_expr->at(1).internal.str, true).serialize(default_context_space);
             } else {
                 throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression: any or NCName expected");
             }

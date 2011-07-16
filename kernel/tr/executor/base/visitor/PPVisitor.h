@@ -67,7 +67,6 @@ public:
     virtual void visit(PPTextConstructor* op)            = 0;
     virtual void visit(PPDocumentConstructor* op)        = 0;
     virtual void visit(PPPIConstructor* op)              = 0;
-    virtual void visit(PPVirtualConstructor* op)         = 0;
 
     /* Error and trace functions */
     virtual void visit(PPFnError* op)                    = 0;

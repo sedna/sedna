@@ -81,7 +81,6 @@ class PPCalculate;
 class PPCheckpoint;
 class PPConst;
 class PPConstructor;
-class PPVirtualConstructor;
 class PPElementConstructor;
 class PPAttributeConstructor;
 class PPNamespaceConstructor;

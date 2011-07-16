@@ -34,7 +34,7 @@ enum Axis
     axis_descendant_attr, /* Depricated, should not be used. There is no such axis in XQuery. */
     axis_parent,
 
-    __axis_last,
+    __axis_err,
 
     axis_ancestor,
     axis_ancestor_or_self,
@@ -42,6 +42,8 @@ enum Axis
     axis_following_sibling,
     axis_preceding,
     axis_preceding_sibling,
+
+    __axis_last,
 };
 
 enum NodeTestType

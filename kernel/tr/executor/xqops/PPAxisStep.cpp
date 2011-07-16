@@ -235,13 +235,7 @@ Node resolveAxis_NULL(Node node, AxisHints * hint) {
 }
 
 Node nextNode_Parent(Node node, AxisHints * hint) {
-    schema_node_cptr parent_sn = node.checkp().getSchemaNode()->parent;
-
-    if (parent_sn.found() && hint->schemaTest->test(parent_sn)) {
-      return node.checkp().getActualParent();
-    } else {
-      return XNULL;
-    }
+    return node.checkp().getActualParent();
 }
 
 Node nextNode_Null(Node node, AxisHints * hint) {
@@ -249,18 +243,42 @@ Node nextNode_Null(Node node, AxisHints * hint) {
 }
 
 Node nextNode_RightSiblingSame(Node node, AxisHints * hint) {
+    if (node.checkp().getSchemaNode()->type == attribute) {
+        return XNULL;
+    }
+
     return getRightSiblingOfSameSort(node.getPtr());
 }
 
 Node nextNode_RightSiblingAny(Node node, AxisHints * hint) {
+    if (node.checkp().getSchemaNode()->type == attribute) {
+        return XNULL;
+    }
+
     return getRightSiblingByTypeMask(node.getPtr(), hint->childTypeMask);
 }
 
+Node nextNode_LeftSiblingSame(Node node, AxisHints * hint) {
+    if (node.checkp().getSchemaNode()->type == attribute) {
+        return XNULL;
+    }
+
+    return getLeftSiblingOfSameSort(node.getPtr());
+}
+
 Node nextNode_LeftSiblingAny(Node node, AxisHints * hint) {
+    if (node.checkp().getSchemaNode()->type == attribute) {
+        return XNULL;
+    }
+
     return getLeftSiblingByType(node.getPtr(), hint->childTypeMask);
 }
 
 Node nextNode_RightSiblingType(Node node, AxisHints * hint) {
+    if (node.checkp().getSchemaNode()->type == attribute) {
+        return XNULL;
+    }
+
     return getRightSiblingByTypeMask(node.getPtr(), hint->childTypeMask);
 }
 
@@ -424,6 +442,14 @@ PPAxisStep::PPAxisStep(dynamic_context* _cxt_, operation_info _info_, PPOpIn _ch
     if ((nt.axis == axis_self) || (nt.axis >= axis_ancestor) || (nt.axis == axis_parent)) {
         testNodeProc = schemaTest;
     }
+
+    if (nt.axis == axis_following_sibling || nt.axis == axis_preceding_sibling) {
+        testNodeProc = schemaTest;
+
+        if (!hint->nt.isAnyQName()) {
+            nextNodeProc = (nt.axis == axis_following_sibling) ? nextNode_RightSiblingSame : nextNode_LeftSiblingSame;
+        };
+    }
 }
 
 PPAxisStep::~PPAxisStep()
@@ -436,13 +462,15 @@ PPAxisStep::~PPAxisStep()
 void PPAxisStep::do_open ()
 {
     child.op->open();
-    hint->baseNode = currentNodeIndir = XNULL;
+    hint->baseNode = XNULL;
+    currentNodeIndir = XNULL;
 }
 
 void PPAxisStep::do_reopen()
 {
     child.op->reopen();
-    hint->baseNode = currentNodeIndir = XNULL;
+    hint->baseNode = XNULL;
+    currentNodeIndir = XNULL;
     hint->nodeHeapStorage.clear();
     hint->nodeStackStorage.clear();
 }

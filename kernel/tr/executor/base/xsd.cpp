@@ -56,17 +56,17 @@ const char * Name::serialize(void * parent)
 NCName NCName::check(const char* name, bool quietly)
 {
     if (check_constraints_for_xs_NCName(name)) {
-        return NCName(materialize(name));
-    } else if (!quietly) {
-        throw XQUERY_EXCEPTION(XQDY0074);
-    } else {
+        return NCName(nameStorage.intern(name));
+    } else if (quietly) {
         return NCName();
+    } else {
+        throw XQUERY_EXCEPTION(FOCA0002);
     }
 }
 
-AnyURI AnyURI::check(const char* uri, bool quietly)
+AnyURI AnyURI::check(const char* uri)
 {
-    return AnyURI(materialize(uri));
+    return AnyURI(nameStorage.intern(uri));
 }
 
 QName::QName() : ns(NULL_XMLNS), localName(NULL) { }
@@ -171,34 +171,15 @@ std::string QName::getColonizedName(NCName prefix, NCName local)
         return prefix.toString() + ":" + local.toString();
     }
 }
-QName QName::createUL(const char* uri, const char* localName, bool quietly)
-{
-    xmlns_ptr ns;
-
-    if (uri != NULL && *uri != '\0') {
-        ns = xmlns_touch("", uri);
-    } else {
-        ns = NULL_XMLNS;
-    }
-
-    if (!check_constraints_for_xs_NCName(localName)) {
-        if (quietly) { return QName(); } else {
-            throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
-        }
-    }
-
-    return QName(ns, localName);
-}
-
 
 QName QName::createUPL(const char* uri, const char* prefix, const char* localName, bool quietly)
 {
     xmlns_ptr ns;
 
     if (uri != NULL && *uri != '\0') {
-        if (prefix != NULL && (*prefix != '\0') && !check_constraints_for_xs_NCName(prefix)) {
-            if (quietly) { return QName(); } else {
-                throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
+        if (prefix != NULL && *prefix != '\0') {
+            if (!NCName::check(prefix, quietly).valid()) {
+                return QName();
             }
         }
 
@@ -207,52 +188,46 @@ QName QName::createUPL(const char* uri, const char* prefix, const char* localNam
         ns = NULL_XMLNS;
     }
 
-    if (!check_constraints_for_xs_NCName(localName)) {
-        if (quietly) { return QName(); } else {
-            throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
-        }
-    }
-
-    return QName(ns, localName);
+    return createNsN(ns, localName, quietly);
 }
 
-QName QName::createNsCn(xmlns_ptr ns, const char* prefixAndLocal, bool quietly)
+typedef std::pair<xsd::NCName, xsd::NCName> ColonizedName;
+
+ColonizedName resolveColonizedName(const char* prefixAndLocal, bool quietly)
 {
-    const char * localName = strchr(prefixAndLocal, ':') + 1;
+    ColonizedName result;
+    const char * localName = strchr(prefixAndLocal, ':');
 
+    if (localName == NULL) {
+        result.first = NCName();
+        result.second = NCName::check(prefixAndLocal, quietly);
 
-    if ((ns == NULL_XMLNS && localName != NULL) || (ns != NULL_XMLNS && localName == NULL)) // Logical XOR =)
-    {
-        if (quietly) { return QName(); } else {
-            throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
+        if (!result.second.valid()) {
+            return ColonizedName(NCName(), NCName());
+        }
+    } else {
+        size_t prefixLen = localName - prefixAndLocal;
+
+        result.first = NCName::check(std::string(prefixAndLocal, prefixLen).c_str(), quietly);
+        result.second = NCName::check(localName + 1, quietly);
+
+        if (!result.first.valid() || !result.second.valid()) {
+            return ColonizedName(NCName(), NCName());
         }
     }
 
-    if (ns != NULL_XMLNS && strncmp(ns->get_prefix(), prefixAndLocal, strlen(prefixAndLocal)) != 0) {
-        if (quietly) { return QName(); } else {
-            throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
-        }
-    }
-
-    return QName(ns, localName);
+    return result;
 }
 
 QName QName::createNsN(xmlns_ptr ns, const char* local, bool quietly)
 {
-    if (!quietly) {
-        if (!check_constraints_for_xs_NCName(local)) {
-            throw XQUERY_EXCEPTION(XQDY0074);
-        }
+    if (!NCName::check(local, quietly).valid()) {
+        return QName();
+    }
 
-        if  (ns != NULL_XMLNS && ns->has_prefix()) {
-            if (strcmpex(ns->get_prefix(), "xmlns") == 0) {
-                throw XQUERY_EXCEPTION(XQDY0096);
-            }
-
-            if(!check_constraints_for_xs_NCName(ns->get_prefix())) {
-                throw XQUERY_EXCEPTION(XQDY0074);
-            }
-        }
+    if  (ns != NULL_XMLNS && ns->has_prefix() &&
+          !NCName::check(ns->get_prefix(), quietly).valid()) {
+        return QName();
     }
 
     return QName(ns, local);
@@ -261,86 +236,59 @@ QName QName::createNsN(xmlns_ptr ns, const char* local, bool quietly)
 
 QName QName::createUCn(const char* uri, const char* prefixAndLocal, bool quietly)
 {
-    const char * localName = strchr(prefixAndLocal, ':');
+    ColonizedName cn = resolveColonizedName(prefixAndLocal, quietly);
 
-    if (uri == NULL || *uri == '\0') {
-        if (localName != NULL) {
-            if (quietly) { return QName(); } else {
-                throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
-            }
-        }
-
-        return QName(NULL_XMLNS, prefixAndLocal);
-    } else if (localName == NULL) {
-        return QName(xmlns_touch("", uri), prefixAndLocal);
-    } else {
-        size_t prefixLen = localName - prefixAndLocal;
-        std::string prefix(prefixAndLocal, prefixLen);
-
-        return createUPL(uri, prefix.c_str(), localName + 1);
+    if (!cn.second.valid()) {
+        return QName();
     }
-}
 
-// TODO : reimplement
+    if (uri != NULL && *uri == '\0') { uri = NULL; }
 
-static inline
-xmlns_ptr se_resolve_prefix(const char * prefix, Node node, dynamic_context* cxt)
-{
-    std::vector<xmlns_ptr> xmlns;
-    se_get_in_scope_namespaces(node, xmlns, cxt);
-
-    for (size_t i = 0; i < xmlns.size(); i++) {
-        if (strcmp(xmlns[i]->prefix, prefix) == 0) {
-            return xmlns[i];
+    /* Prefix exists, but uri is NULL */
+    if (cn.first.valid() && uri == NULL) {
+        if (quietly) {
+            return QName();
+        } else {
+            throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions xs:QName");
         }
     }
 
-    return NULL_XMLNS;
+    return QName(xmlns_touch(cn.first.getValue(), uri), cn.second.getValue());
 }
 
-
-
-QName QName::createResolveContext(const char* prefixAndLocal, dynamic_context* cxt, bool quietly)
+QName QName::createResolve(const char* prefixAndLocal, INamespaceMap* namespaces, bool quietly)
 {
-    const char * localName = strchr(prefixAndLocal, ':');
+    ColonizedName cn = resolveColonizedName(prefixAndLocal, quietly);
 
-    if (localName == NULL) {
-        return QName::createNsN(cxt->get_default_namespace(), prefixAndLocal, quietly);
+    if (!cn.second.valid()) {
+        return QName();
+    }
+
+    if (!cn.first.valid()) {
+        return QName(namespaces->getDefaultNamespace(), cn.second.getValue());
     } else {
-        size_t prefixLen = localName - prefixAndLocal;
-        std::string prefix(prefixAndLocal, prefixLen);
+        xmlns_ptr ns;
+        /* TRICKY: THAT IS DAMN XQUERY.
+          We should check for xmlns prefix before resolving it, it's kinda hack.
+          The worst thing is that there are different errors for attrbutes and for elements  */
 
-        xmlns_ptr ns = cxt->get_xmlns_by_prefix(prefix.c_str());
+        if (strcmp(cn.first.getValue(), "xmlns") == 0) {
+            ns = xmlns_touch("xmlns", "http://www.w3.org/2000/xmlns/");
+        } else {
+            ns = namespaces->resolvePrefix(cn.first.getValue());
+        }
+
+        /* Name not found */
 
         if (ns == NULL_XMLNS) {
-            if (quietly) { return QName(); } else {
+            if (quietly) {
+                return QName();
+            } else {
                 throw XQUERY_EXCEPTION2(FONS0004, "Error in functions fn:resolve-QName");
             }
         }
 
-        return QName::createNsN(ns, localName + 1, quietly);
-    }
-}
-
-QName QName::createResolveNode(const char* prefixAndLocal, xptr node, dynamic_context* cxt, bool quietly)
-{
-    const char * localName = strchr(prefixAndLocal, ':');
-
-    if (localName == NULL) {
-        return QName(cxt->get_default_namespace() , prefixAndLocal);
-    } else {
-        size_t prefixLen = localName - prefixAndLocal;
-        std::string prefix(prefixAndLocal, prefixLen);
-
-        xmlns_ptr ns = se_resolve_prefix(prefix.c_str(), node, cxt);
-
-        if (ns == NULL_XMLNS) {
-            if (quietly) { return QName(); } else {
-                throw XQUERY_EXCEPTION2(FONS0004, "Error in functions fn:resolve-QName");
-            }
-        }
-
-        return QName(ns, localName + 1);
+        return QName(ns, cn.second.getValue());
     }
 }
 

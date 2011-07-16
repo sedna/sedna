@@ -47,13 +47,9 @@ ASTNode *ASTElem::createNode(scheme_list &sl)
 
     res = new ASTElem(cd, pref, local, attrs, cont);
 
-    U_ASSERT(sl[6].type == SCM_BOOL && sl[7].type == SCM_NUMBER);
+    U_ASSERT(sl[6].type == SCM_BOOL);
 
     res->deep_copy = sl[6].internal.b;
-
-    // We store only nsp node index, we need to restore nsp_node
-    res->nsp_node_index = atoi(sl[7].internal.num);
-    res->nsp_node = (res->nsp_node_index == -1) ? NULL : dynamic_cast<ASTNsp *>(attrs->at(res->nsp_node_index));
 
     return res;
 }

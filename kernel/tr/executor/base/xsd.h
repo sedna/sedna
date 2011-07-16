@@ -16,6 +16,7 @@
 #include "tr/structures/xmlns.h"
 #include "tr/executor/por2qep/scheme_tree.h"
 
+class INamespaceMap;
 class dynamic_context;
 
 /**
@@ -100,7 +101,7 @@ class NCName : public Name {
     NCName(const char * value) : Name(value) {};
     NCName(const NCName & from) : Name(from) {};
 
-    static NCName check(const char * name, bool quietly = false);
+    static NCName check(const char * name, bool quietly);
 };
 
 inline static char * materialize(const char * in) { return cat_strcpy(default_context_space, in); };
@@ -112,7 +113,7 @@ class AnyURI : public Name {
     AnyURI(const char * value) : Name(value) {};
     AnyURI(const AnyURI & from) : Name(from) {};
 
-    static AnyURI check(const char * uri, bool quietly = false);
+    static AnyURI check(const char * uri);
 };
 
 /// XML Schema Part 2 QName (qualified name from Namespaces in XML standard)
@@ -200,12 +201,11 @@ class QName {
     static QName fromLR(scheme_list* lst);
 
     static QName createNsN(xmlns_ptr ns, const char * local, bool quietly = false);
-    static QName createNsCn(xmlns_ptr ns, const char * prefixAndLocal, bool quietly = false);
     static QName createUCn(const char * uri, const char * prefixAndLocal, bool quietly = false);
-    static QName createUL(const char * uri, const char * localName, bool quietly = false);
     static QName createUPL(const char * uri, const char * prefix, const char * localName, bool quietly = false);
-    static QName createResolveContext(const char * prefixAndLocal, dynamic_context *cxt, bool quietly = false);
-    static QName createResolveNode(const char * prefixAndLocal, xptr node, dynamic_context *cxt, bool quietly = false);
+    static QName createResolve(const char * prefixAndLocal, INamespaceMap * namespaces, bool quietly = false);
+
+    static inline QName getConstantQName(xmlns_ptr ns, const char * name) { return QName(ns, name); };
 };
 
 }

@@ -38,17 +38,13 @@ ASTNode *ASTNsp::createNode(scheme_list &sl)
 
     name = new std::string(sl[2].internal.str);
 
-    bool boundToElement = sl[3].internal.b;
-
-    if (sl.size() > 4)
+    if (sl.size() > 3)
     {
-        U_ASSERT(sl[4].type == SCM_STRING);
-        cont = new std::string(sl[4].internal.str);
+        U_ASSERT(sl[3].type == SCM_STRING);
+        cont = new std::string(sl[3].internal.str);
     }
 
     ASTNsp * result = new ASTNsp(cd, name, cont);
-
-    result->boundToElement = boundToElement;
 
     return result;
 }

@@ -273,7 +273,7 @@ xptr getRightSiblingByTypeMask(const xptr node, typemask_t tmask)
      *  then there will be no attribute or ns nodes further
      */
     t_item nodetype = getNodeType(i);
-    if (((tmask & ti_first_children) > 0) && (nodetype & ti_first_children) == 0) { return XNULL; }
+    if (((tmask & ~ti_first_children) == 0) && (nodetype & ti_first_children) == 0) { return XNULL; }
 
     i = nodeGetRightSibling(i);
 
@@ -281,7 +281,7 @@ xptr getRightSiblingByTypeMask(const xptr node, typemask_t tmask)
         CHECKP(i);
         nodetype = getNodeType(i);
 
-        if (((tmask & ti_first_children) > 0) && (nodetype & ti_first_children) == 0) { break; }
+        if (((tmask & ~ti_first_children) == 0) && (nodetype & ti_first_children) == 0) { break; }
 
         if ((nodetype & tmask) > 0) {
             return i;

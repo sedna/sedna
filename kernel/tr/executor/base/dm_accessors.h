@@ -28,7 +28,7 @@ tuple_cell dm_parent      (Node node);
 tuple_cell dm_string_value(Node node);
 tuple_cell dm_typed_value (Node node);
 
-void se_get_in_scope_namespaces(Node node, std::vector<xmlns_ptr> &result, dynamic_context *cxt);
+//void se_get_in_scope_namespaces(Node node, std::vector<xmlns_ptr> &result, dynamic_context *cxt);
 
 
 /*

@@ -25,11 +25,11 @@ public:
     inline bool same_prefix(const char * _prefix) const { return strcmpex(prefix, _prefix) == 0; };
     inline bool same_uri(const char * _uri) const { return strcmpex(uri, _uri) == 0; };
 
-    inline const char * get_uri() const { return uri; }
-    inline const char * get_prefix() const { return prefix; }
-    inline bool has_prefix() const { return prefix != NULL && prefix[0] != '\0'; }
-    inline bool empty_uri() const { return uri == NULL || uri[0] == '\0'; }
-    inline bool is_reserved_prefix() const { return prefix != NULL && ((strcmp(prefix, "xml") == 0) || (strcmp(prefix, "xmlns") == 0)); }
+    inline const char * get_uri() const { U_ASSERT(uri != NULL); return uri; }
+    inline const char * get_prefix() const { U_ASSERT(prefix != NULL); return prefix; }
+
+    inline bool has_prefix() const { return *prefix != '\0'; }
+    inline bool empty_uri() const { return *uri == '\0'; }
 };
 
 struct xmlns_indb_object : public catalog_object {
@@ -68,6 +68,7 @@ xmlns_ptr xmlns_touch(const char * prefix, const char * uri);
 
 inline
 xmlns_ptr xmlns_touch(xmlns_ptr_pers xmlns) {
+    if (xmlns == XNULL) { return NULL_XMLNS; }
     catalog_cptr_template<xmlns_indb_object> a = xmlns;
     return xmlns_touch(a->prefix, a->uri);
 }
@@ -97,6 +98,8 @@ bool same_xmlns_uri(xmlns_ptr ns1, xmlns_ptr ns2) {
 
 inline
 bool same_xmlns_uri(xmlns_ptr ns1, const char * uri) {
+    if (uri != NULL && *uri == '\0') { uri = NULL; }
+
     if (ns1 == NULL_XMLNS && uri == NULL) {
         return true;
     }
@@ -106,13 +109,6 @@ bool same_xmlns_uri(xmlns_ptr ns1, const char * uri) {
     }
 
     return strcmpex(ns1->uri, uri) == 0;
-}
-
-inline
-bool is_empty_ns_declaration(xmlns_ptr ns)
-{
-    U_ASSERT(ns == NULL_XMLNS || (ns->prefix != NULL && ns->uri != NULL));
-    return ns != NULL_XMLNS && strlen(ns->prefix)==0 && strlen(ns->uri)==0;
 }
 
 class dynamic_context;

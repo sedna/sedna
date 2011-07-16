@@ -96,7 +96,7 @@ PPExplainVisitor::PPExplainVisitor(dynamic_context* _cxt_,
                                                           var_names(_var_names_),
                                                           profiler_mode(_profiler_mode_)
 {
-    explain_ns = cxt->get_default_namespace();
+    explain_ns = cxt->get_static_context()->getStaticallyKnownNamespaces()->getDefaultNamespace();
 }
 
 PPExplainVisitor::~PPExplainVisitor()
@@ -383,18 +383,6 @@ void PPExplainVisitor::visit(PPElementConstructor* op)
     const char* name = op->get_name();
     if(NULL != name)
     {
-        attr_left = insert_attribute_i(XNULL,XNULL,left,"element-name",xs_untypedAtomic, name, strlen(name), NULL_XMLNS);
-    }
-    const char* deep_copy = op->is_deep_copy() ? "true" : "false";
-    attr_left = insert_attribute_i(attr_left,XNULL,left,"deep-copy",xs_untypedAtomic, deep_copy, strlen(deep_copy), NULL_XMLNS);
-}
-
-void PPExplainVisitor::visit(PPVirtualConstructor* op)
-{
-    insertOperationElement("PPVirtualConstructor", left, parent, op);
-    xptr attr_left = XNULL;
-    const char* name = op->get_name();
-    if(NULL != name) {
         attr_left = insert_attribute_i(XNULL,XNULL,left,"element-name",xs_untypedAtomic, name, strlen(name), NULL_XMLNS);
     }
     const char* deep_copy = op->is_deep_copy() ? "true" : "false";

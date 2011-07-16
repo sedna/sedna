@@ -89,7 +89,6 @@ public:
     virtual void visit(PPTextConstructor* op);
     virtual void visit(PPDocumentConstructor* op);
     virtual void visit(PPPIConstructor* op);
-    virtual void visit(PPVirtualConstructor* op);
     virtual void visit(PPFnError* op);
     virtual void visit(PPFnTrace* op);
     virtual void visit(PPExcept* op);
