@@ -615,7 +615,7 @@ ft_index_template_t* ft_rebuild_cust_tree(const char *custom_tree_buf, unsigned 
 			ns = xmlns_touch(ns_pref, ns_uri);
 		}
 
-		res->push_back(ft_index_pair_t(xsd::QName::createNsCn(ns, name, true), ind_type));
+		res->push_back(ft_index_pair_t(xsd::QName::createNsN(ns, name, true), ind_type));
 	}
 	return res;
 }

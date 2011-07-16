@@ -70,7 +70,7 @@ void PPExplain::do_next (tuple &t)
     {
         first_time = false;
         char buf[20];
-        xmlns_ptr defnsptr = data_cxt->get_default_namespace();
+        xmlns_ptr defnsptr = data_cxt->get_static_context()->getStaticallyKnownNamespaces()->getDefaultNamespace();
         profile_info pi_total;
 
         if(profiler_mode)
@@ -84,7 +84,7 @@ void PPExplain::do_next (tuple &t)
             pi_total.time = stop - start;
         }
 
-        xmlns_ptr explain_ns = cxt->add_to_context(xmlns_touch("", SEDNA_NAMESPACE_URI));
+        xmlns_ptr explain_ns = xmlns_touch("", SEDNA_NAMESPACE_URI);
         xptr root = insert_doc_node(scm, "$explain", NULL);
         xptr left = XNULL;
 
@@ -147,6 +147,8 @@ void PPExplain::do_next (tuple &t)
                                           tmp, left, explain_ns);
 
         /* Insert namespace declarations */
+        U_ASSERT(false);
+/*
         std::vector<xmlns_ptr> nss = data_cxt->get_explicit_namespaces();
         std::vector<xmlns_ptr>::iterator it_end = nss.end();
         for(std::vector<xmlns_ptr>::iterator it = nss.begin(); it != it_end; it++)
@@ -155,7 +157,7 @@ void PPExplain::do_next (tuple &t)
             xptr aleft = insert_attribute_i(XNULL,XNULL,tmp,"prefix",xs_untypedAtomic, (*it)->prefix, strlen((*it)->prefix), NULL_XMLNS);
             insert_attribute_i(aleft,XNULL,tmp,"uri",xs_untypedAtomic, (*it)->uri, strlen((*it)->uri), NULL_XMLNS);
         }
-
+*/
         /* Insert default element namespace declaration */
         if(defnsptr != NULL_XMLNS)
         {

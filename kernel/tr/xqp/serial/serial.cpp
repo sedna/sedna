@@ -486,7 +486,6 @@ void IntVisitor::visit(ASTElem &n)
     dumpASTNodesVector(n.attrs);
     dumpASTNodesVector(n.cont);
     DUMP_BOOL(n.deep_copy);
-    DUMP_INT(n.nsp_node_index);
     int_str.append(")");
 }
 
@@ -856,8 +855,6 @@ void IntVisitor::visit(ASTNsp &n)
     int_str.append(int2string(AST_NSP));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.name);
-
-    DUMP_BOOL(n.boundToElement);
 
     if (n.cont)
         DUMP_STR(*n.cont);

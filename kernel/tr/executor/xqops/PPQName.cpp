@@ -8,6 +8,7 @@
 #include "tr/executor/xqops/PPQName.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+#include "tr/executor/base/inscns.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,34 +64,35 @@ void PPFnResolveQName::do_next(tuple &t)
         first_time = false;
         tuple_cell qname_tc = atomize(child_qname.get(t));
 
-        if (!is_string_type(qname_tc.get_atomic_type()))
+        if (!is_string_type(qname_tc.get_atomic_type())) {
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong first argument of fn:resolve-QName function");
+        }
 
         child_qname.op->next(t);
-        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong first argument of fn:resolve-QName function");
+        if (!(t.is_eos())) {
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong first argument of fn:resolve-QName function");
+        }
 
         qname_tc = tuple_cell::make_sure_light_atomic(qname_tc);
 
-
         child_elem.op->next(t);
-
-        if (t.is_eos())
+        if (t.is_eos() || !child_elem.get(t).is_node()) {
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
-
-        if (!child_elem.get(t).is_node())
-            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
+        }
 
         xptr node = child_elem.get(t).get_node();
 
         child_elem.op->next(t);
-        if (!(t.is_eos()))
+        if (!(t.is_eos())) {
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
+        }
 
         CHECKP(node);
         if (getNodeType(node) != element)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
 
-        t.copy(tuple_cell::atomic(xsd::QName::createResolveNode(qname_tc.get_str_mem(), node, cxt)));
+        scoped_ptr<InscopeNamespaceMap> inscopeNamespaces = new InscopeNamespaceMap(node, cxt->get_static_context()->getStaticallyKnownNamespaces());
+        t.copy(tuple_cell::atomic(xsd::QName::createResolve(qname_tc.get_str_mem(), inscopeNamespaces.get())));
     }
     else
     {
@@ -557,18 +559,19 @@ void PPFnNamespaceUriForPrefix::do_next(tuple &t)
         if (getNodeType(node) != element)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
 
-        std::vector<xmlns_ptr> xmlns;
-        se_get_in_scope_namespaces(node, xmlns, cxt);
+        scoped_ptr<InscopeNamespaceMap> inscopeNamespaces = new InscopeNamespaceMap(node, cxt->get_static_context()->getStaticallyKnownNamespaces());
 
-        for (unsigned int i = 0; i < xmlns.size(); ++i)
-        {
-            const char *pr = (xmlns[i]->prefix ? xmlns[i]->prefix : "");
-            if (strcmp(pr, prefix) == 0)
-            {
-                t.copy(tuple_cell::atomic_deep(xs_anyURI, xmlns[i]->uri));
-                first_time = false;
-                return;
-            }
+        xmlns_ptr x = inscopeNamespaces->resolvePrefix(prefix);
+
+        if (x != NULL_XMLNS) {
+            t.copy(tuple_cell::atomic_deep(xs_anyURI, x->get_uri()));
+            first_time = false;
+            return;
+        } else if (*prefix == '\0') {
+            // For default prefix we should always return some value.
+            t.copy(EMPTY_STRING_TC);
+            first_time = false;
+            return;
         }
     }
 
@@ -602,7 +605,7 @@ void PPFnNamespaceUriForPrefix::do_accept(PPVisitor &v)
 PPFnInScopePrefixes::PPFnInScopePrefixes(dynamic_context *_cxt_,
                                          operation_info _info_,
                                          PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPFnInScopePrefixes"),
-                                                           child(_child_)
+                                                           child(_child_), namespaces(NULL)
 {
 }
 
@@ -622,14 +625,18 @@ void PPFnInScopePrefixes::do_reopen()
 {
     child.op->reopen();
     pos = -1;
-    xmlns.clear();
+
+    delete namespaces;
+    namespaces = NULL;
 }
 
 void PPFnInScopePrefixes::do_close()
 {
     child.op->close();
     pos = -1;
-    xmlns.clear();
+
+    delete namespaces;
+    namespaces = NULL;
 }
 
 void PPFnInScopePrefixes::do_next (tuple &t)
@@ -654,15 +661,16 @@ void PPFnInScopePrefixes::do_next (tuple &t)
         if (getNodeType(node) != element)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
 
+        namespaces = new InscopeNamespaceIterator(node, cxt->get_static_context()->getStaticallyKnownNamespaces());
 
-        se_get_in_scope_namespaces(node, xmlns, cxt);
         pos = 0;
     }
 
-    if (pos < (signed)xmlns.size())
+    if (namespaces->next())
     {
-        xmlns_ptr ns = xmlns[pos++];
-        if (ns->prefix)
+        xmlns_ptr ns = namespaces->get();
+
+        if (ns->has_prefix())
             t.copy(tuple_cell::atomic_deep(xs_NCName, ns->prefix));
         else
             t.copy(EMPTY_STRING_TC);
@@ -671,7 +679,9 @@ void PPFnInScopePrefixes::do_next (tuple &t)
     {
         t.set_eos();
         pos = -1;
-        xmlns.clear();
+
+        delete namespaces;
+        namespaces = NULL;
     }
 }
 

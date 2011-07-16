@@ -15,6 +15,8 @@
 
 tuple_cell SCElementProducer::addAttribute(const xsd::QName& qname, const text_source_t value, xmlscm_type type)
 {
+    processAtomics();
+
     if (node_kind == document) {
         throw XQUERY_EXCEPTION2(XPTY0004, "Attribute node in the document constructor content sequence");
     }
@@ -36,6 +38,8 @@ tuple_cell SCElementProducer::addAttribute(const xsd::QName& qname, const text_s
 
 tuple_cell SCElementProducer::addNS(const xmlns_ptr ns)
 {
+    processAtomics();
+
     if (node_kind == document) {
         throw XQUERY_EXCEPTION2(XPTY0004, "Namespace node in the document constructor content sequence");
     }

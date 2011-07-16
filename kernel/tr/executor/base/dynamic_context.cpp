@@ -79,12 +79,7 @@ function_context::~function_context()
 dynamic_context::dynamic_context(static_context *_st_cxt_) : st_cxt(_st_cxt_)
 {
     current_var_cxt = NULL;
-
-    // xml is always in inscope namespaces
-    insc_ns["xml"].push_back(xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace"));
-
     curr_var_dsc = curr_gvar_dsc = curr_func_id = 0;
-
     datetime_initialized = false;
 }
 
@@ -158,73 +153,4 @@ void dynamic_context::set_datetime()
         current_time = XMLDateTime(tm).convertTo(xs_time);
         implicit_timezone = XMLDateTime(tm).getTimezone();
     }
-}
-
-xmlns_ptr dynamic_context::get_xmlns_by_prefix(const char* prefix, bool quiet)
-{
-    U_ASSERT(prefix);
-
-    if (!strlen(prefix)) {
-        return st_cxt->get_default_nsp();
-    } else {
-        inscmap::const_iterator it = insc_ns.find(prefix);
-
-        if (it != insc_ns.end() && it->second.size() > 0) {
-            return it->second.back();
-        } else {
-            xmlns_ptr res = st_cxt->get_predef_nsp(prefix);
-
-            if (quiet || res != NULL_XMLNS) {
-                return res;
-            } else {
-                throw XQUERY_EXCEPTION(XQDY0074);
-            }
-        }
-    }
-}
-
-xmlns_ptr dynamic_context::add_to_context(xmlns_ptr xmlns)
-{
-    if (!xmlns->has_prefix()) {
-        st_cxt->set_default_nsp(xmlns);
-    } else {
-        insc_ns[std::string(xmlns->get_prefix())].push_back(xmlns);
-        st_cxt->set_nsp(xmlns); // QUESTION: WTF???
-    }
-
-    return xmlns;
-}
-
-void dynamic_context::remove_from_context(const char* prefix)
-{
-    U_ASSERT(NULL != prefix);
-
-    if (strcmp(prefix, "") == 0) {
-        st_cxt->unset_default_nsp();
-    } else {
-        inscmap::iterator it = insc_ns.find(std::string(prefix));
-        if (it != insc_ns.end() && it->second.size() > 0) {
-            it->second.pop_back();
-        } else {
-            throw SYSTEM_EXCEPTION("dynamic context Error");
-        }
-    }
-}
-
-/* Returns all explicitly defined (except predefined) namespaces */
-std::vector<xmlns_ptr> dynamic_context::get_explicit_namespaces() const
-{
-    std::vector<xmlns_ptr> res;
-
-    inscmap::const_iterator it_end = insc_ns.end();
-    for (inscmap::const_iterator it = insc_ns.begin(); it != it_end; it++)
-    {
-        xmlns_ptr tmp = it->second.front();
-        if (!st_cxt->is_nsp_predefined(tmp))
-        {
-            res.push_back(tmp);
-        }
-    }
-    return res;
-
 }

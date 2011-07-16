@@ -10,6 +10,8 @@
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
 
+class InscopeNamespaceIterator;
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnResolveQName
 ///////////////////////////////////////////////////////////////////////////////
@@ -173,7 +175,7 @@ class PPFnInScopePrefixes : public PPIterator
 {
 protected:
     PPOpIn child;
-    std::vector<xmlns_ptr> xmlns;
+    InscopeNamespaceIterator * namespaces;
     int pos;
 
 private:

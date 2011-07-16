@@ -59,7 +59,7 @@ ft_index_template_t *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context 
             throw USER_EXCEPTION(SE1071);
         tc = tuple_cell::make_sure_light_atomic(tc);
 
-        xsd::QName qname = xsd::QName::createResolveContext(tc.get_str_mem(), cxt);
+        xsd::QName qname = xsd::QName::createResolve(tc.get_str_mem(), cxt->get_static_context()->getStaticallyKnownNamespaces());
 
         cust_rules->op->next(t);
         if (t.is_eos())

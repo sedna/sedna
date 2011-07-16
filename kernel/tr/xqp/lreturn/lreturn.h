@@ -57,8 +57,6 @@ namespace sedna
             bool use_position;              // true, if child uses fn:position()
             bool in_abs_path;               // true, if we continue AbsPath chain -- see PPAbsPath execution logic
 
-            ASTNode * nspNode;
-
             childOffer()
             {
                 exi.isOrdered = true;
@@ -73,8 +71,6 @@ namespace sedna
                 in_abs_path = false;
 
                 isCached = false;
-
-                nspNode = NULL;
             }
         };
 

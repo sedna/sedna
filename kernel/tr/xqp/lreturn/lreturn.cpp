@@ -891,7 +891,6 @@ namespace sedna
 
         n.deep_copy = getParentRequest().deep_copy;
 
-        // check if prefix is redefined later with xmlns:
         if (n.attrs)
         {
             parentRequest req;
@@ -904,31 +903,6 @@ namespace sedna
             offa = mergeOffers(n.attrs->size());
 
             off.usedVars.insert(offa.usedVars.begin(), offa.usedVars.end());
-
-            // check if prefix is redefined later with xmlns:
-            ASTNodesVector::const_iterator cit;
-
-            int node_index = 0;
-            for (cit = n.attrs->begin(); cit != n.attrs->end(); cit++)
-            {
-                if (const ASTNsp *nsp = dynamic_cast<const ASTNsp *>(*cit))
-                {
-                    if (*nsp->name == *n.pref)
-                    {
-                        n.nsp_node = nsp;
-                        n.nsp_node_index = node_index;
-                        break;
-                    }
-                }
-                ++node_index;
-            }
-
-            if (cit == n.attrs->end())
-                n.nsp_node_index = -1;
-        }
-        else
-        {
-            n.nsp_node_index = -1;
         }
 
         setOffer(off);
@@ -1845,19 +1819,8 @@ namespace sedna
 
     void LReturn::visit(ASTNsp &n)
     {
+        // nothing to do
         childOffer off;
-
-        std::string * prefix;
-
-        if (const ASTElem * p = dynamic_cast<ASTElem *>(getParent())) {
-            prefix = p->pref;
-        }
-
-        if (prefix != NULL && prefix->compare(*n.name) == 0) {
-            off.nspNode = &n;
-            n.boundToElement = true;
-        }
-
         setOffer(off);
     }
 

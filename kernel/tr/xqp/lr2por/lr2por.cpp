@@ -926,7 +926,7 @@ namespace sedna
     {
         // we don't add default function namespace, since it is resolved in sema
         if (n.type == ASTDefNamespaceDecl::ELEMENT) {
-            dyn_cxt->add_to_context(xmlns_touch("", n.uri->c_str()));
+            skn->setNamespace(xmlns_touch("", n.uri->c_str()));
         }
     }
 
@@ -1054,6 +1054,8 @@ namespace sedna
         childOffer off_this;
         PPOpIn ns;
 
+        int sknMark = skn->mark();
+
         if (n.attrs)
         {
             ASTVisitor::VisitNodesVector(n.attrs, *this);
@@ -1070,12 +1072,7 @@ namespace sedna
 
         while (count--) {
             childOffer offer = getOffer();
-
-            if (offer.special_node) {
-                ns = offer.opin;
-            } else {
-                seq.push_back(offer.opin);
-            }
+            seq.push_back(offer.opin);
         }
 
         if (seq.size() == 0) {
@@ -1090,15 +1087,12 @@ namespace sedna
                            *n.local :
                            *n.pref + ":" + *n.local;
 
-        if (virtualizableConstructors) {
-            off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, ns);
-        } else {
-            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, ns);
-        }
-
+        off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, skn->mark(), virtualizableConstructors);
         off_this.opin.ts = 1;
 
         setOffer(off_this);
+
+        skn->rollbackToMark(sknMark);
     }
 
     void lr2por::visit(ASTElemConst &n)
@@ -1123,11 +1117,7 @@ namespace sedna
 
         if (n.name)
         {
-            if (virtualizableConstructors) {
-                off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, PPOpIn());
-            } else {
-                off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, PPOpIn());
-            }
+            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, skn->mark(), virtualizableConstructors);
         }
         else
         {
@@ -1135,11 +1125,7 @@ namespace sedna
                                *n.local :
                                *n.pref + ":" + *n.local;
 
-            if (virtualizableConstructors) {
-                off_this.opin.op = new PPVirtualConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, PPOpIn());
-            } else {
-                off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, PPOpIn());
-            }
+            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, skn->mark(), virtualizableConstructors);
         }
 
         off_this.opin.ts = 1;
@@ -2247,7 +2233,7 @@ namespace sedna
 
     void lr2por::visit(ASTNamespaceDecl &n)
     {
-        dyn_cxt->add_to_context(xmlns_touch(n.name->c_str(), n.uri->c_str()));
+        skn->setNamespace(xmlns_touch(n.name->c_str(), n.uri->c_str()));
     }
 
     void lr2por::visit(ASTNodeTest &n)
@@ -2267,12 +2253,14 @@ namespace sedna
         PPOpIn cont;
         tuple_cell tc;
 
-        off_this.special_node = n.boundToElement;
-
         tc = string2tuple_cell(n.cont ? *n.cont : "", xs_string);
         cont = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
 
-//        off_this.opin.op = new PPNamespaceConstructor(dyn_cxt, createOperationInfo(n), n.name->c_str(), n.cont->c_str());
+        U_ASSERT(dynamic_cast<ASTElem *>(getParent()) != NULL);
+
+        U_ASSERT(n.name != NULL);
+        skn->setNamespace(xmlns_touch(n.name->c_str(), n.cont != NULL ? n.cont->c_str() : ""));
+
         off_this.opin.op = new PPNamespaceConstructor(dyn_cxt, createOperationInfo(n), n.name->c_str(), cont);
         off_this.opin.ts = 1;
 
@@ -2312,7 +2300,7 @@ namespace sedna
                             len = end - start;
                         }
 
-                        dyn_cxt->add_cdata_section_element(xsd::QName::createResolveContext(value.substr(start, len).c_str(), dyn_cxt));
+                        dyn_cxt->add_cdata_section_element(xsd::QName::createResolve(value.substr(start, len).c_str(), skn));
                     }
                 }
             }
@@ -2586,7 +2574,7 @@ namespace sedna
         }
         else
         {
-            xsd::NCName name = xsd::NCName::check(n.test->c_str());
+            xsd::NCName name = xsd::NCName::check(n.test->c_str(), false);
             off_this.serialized_form = "(processing-instruction " + name.toLRString() + ")";
             off_this.st.type.info.ncname = name.serialize(local_space_base);
         }

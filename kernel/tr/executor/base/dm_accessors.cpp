@@ -14,7 +14,7 @@
 inline static
 xptr dm_base_uri_attribute(Node node, dynamic_context *context)
 {
-    return getNodeAttribute(node.getPtr(), "base", context->get_static_context()->get_predef_nsp("xml"));
+    return getNodeAttribute(node.getPtr(), "base", context->get_static_context()->getStaticallyKnownNamespaces()->resolvePrefix("xml"));
 }
 
 inline static
@@ -493,6 +493,8 @@ tuple_cell dm_document_uri(Node node)
 }
 
 typedef std::map<std::string,xmlns_ptr> nms_map;
+
+static
 void se_get_in_scope_namespaces(Node node, std::vector<xmlns_ptr> &result, dynamic_context *cxt)
 {
     /* As soon as child namespaces override parent ones, we should at first collect all
@@ -537,7 +539,7 @@ void se_get_in_scope_namespaces(Node node, std::vector<xmlns_ptr> &result, dynam
     /* Second part --- application */
 
     nms_map mp;
-    mp["xml"] = cxt->get_xmlns_by_prefix("xml");
+    mp["xml"] = cxt->get_static_context()->getStaticallyKnownNamespaces()->resolvePrefix("xml");
 
     while (!nsStack.empty())
     {
@@ -558,16 +560,22 @@ void se_get_in_scope_namespaces(Node node, std::vector<xmlns_ptr> &result, dynam
 
     while (!attributeNsStack.empty())
     {
-        xmlns_ptr ns = attributeNsStack.top();
+        do {
+            xmlns_ptr ns = attributeNsStack.top();
 
-        U_ASSERT(ns->has_prefix());
-        U_ASSERT(!ns->empty_uri());
+            U_ASSERT(ns->has_prefix());
+            U_ASSERT(!ns->empty_uri());
 
-        while (mp.find(ns->get_prefix()) != mp.end()) {
-            ns = generate_prefix(ctr++, ns->get_uri(), cxt);
-        };
+            while (mp.find(ns->get_prefix()) != mp.end()) {
+                if (mp[ns->get_prefix()] == ns) {
+                    break;
+                }
 
-        mp[ns->get_prefix()] = ns;
+                ns = generate_prefix(ctr++, ns->get_uri(), cxt);
+            };
+
+            mp[ns->get_prefix()] = ns;
+        } while (false);
 
         attributeNsStack.pop();
     }

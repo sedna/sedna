@@ -15,13 +15,17 @@ struct xmlns_hash_object {
     struct xmlns_hash_object *next;
 };
 
-struct xmlns_hash_object * xmlns_hash[XMLNS_HASH_SIZE];
+struct xmlns_hash_object * xmlns_hash[XMLNS_HASH_SIZE] = {NULL};
 
 inline int str_hash(const char * a) {
-    if (a == NULL) return 0;
-    unsigned int i = 0;
-    while (*a != '\0') { i += (* (uint8_t *) a) * 7; a++; }
-    return i % XMLNS_HASH_SIZE;
+    unsigned long hash = 5381;
+    int c;
+
+    while ('\0' != (c = (* (unsigned char *) a++))) {
+        hash = ((hash << 5) + hash) + c;
+    }
+
+    return hash;
 };
 
 inline int mystrcmp(const char * str1, const char * str2)
@@ -36,7 +40,10 @@ xmlns_ptr xmlns_touch(const char * prefix, const char * uri)
 {
     if ((prefix == NULL) && (uri == NULL)) return NULL_XMLNS;
 
-    int original_hash = str_hash(prefix);
+    if (prefix == NULL) { prefix = ""; }
+    if (uri == NULL) { uri = ""; }
+
+    int original_hash = (str_hash(prefix) + 33 * str_hash(uri)) % XMLNS_HASH_SIZE;
     struct xmlns_hash_object * i = xmlns_hash[original_hash];
 
     while (i != NULL) {

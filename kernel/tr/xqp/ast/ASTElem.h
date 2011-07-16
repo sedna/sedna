@@ -20,17 +20,11 @@ public:
     ASTNodesVector *cont; // element content; may be NULL
 
     bool deep_copy; // element will be attached to virtual_root and copied on demand
-
-    const ASTNsp * nsp_node; /* Namespace node, needed to resolve prefix */
-    int nsp_node_index; // Needed to store namespace node
-
 public:
     ASTElem(const ASTNodeCommonData &loc, std::string *name, ASTNodesVector *attrs_ = NULL, ASTNodesVector *cont_ = NULL) :
             ASTNode(loc),
             attrs(attrs_),
-            cont(cont_),
-            nsp_node(NULL),
-            nsp_node_index(-1)
+            cont(cont_)
     {
         ASTParseQName(name, &pref, &local);
 
@@ -42,9 +36,7 @@ public:
             pref(elem_pref),
             local(elem_local),
             attrs(attrs_),
-            cont(cont_),
-            nsp_node(NULL),
-            nsp_node_index(-1)
+            cont(cont_)
     {
     }
 

@@ -21,6 +21,7 @@
 
 #include "tr/executor/base/SequenceType.h"
 #include "tr/executor/base/static_context.h"
+#include "tr/executor/base/INamespaceMap.h"
 
 /*******************************************************************************
  * List of classes used
@@ -29,6 +30,7 @@ class PPIterator;
 class PPVarIterator;
 class sequence;
 class dynamic_context;
+class StaticallyKnownNamespaces;
 
 /*******************************************************************************
  * Different auxiliary types
@@ -48,11 +50,6 @@ typedef std::list<unsigned>    free_entries_list;
 
 /// function descriptor
 typedef std::pair<dynamic_context *, unsigned> function_id;
-
-/// namespaces
-typedef std::pair<std::string,std::string> str_pair;
-typedef std::map< str_pair, xmlns_ptr> ns_map;
-typedef std::map<std::string, std::vector<xmlns_ptr> > inscmap;
 
 /// map var_dsc->var_name
 typedef std::pair<std::string, std::string> var_name_exp;
@@ -206,9 +203,6 @@ private:
     static_context *st_cxt;  // corresponding static context
     var_map_id_name var_map; // some debug-explain info
 
-    // TODO: get this out of dynamic context!
-    inscmap insc_ns;         // inscope nsps
-
     // some additional stuff
     std::vector<xptr> temp_docs;
 
@@ -217,6 +211,7 @@ private:
     XMLDateTime current_date;
     XMLDateTime current_time;
     XMLDateTime implicit_timezone;
+
     bool datetime_initialized;
 public:
     dynamic_context(static_context *_st_cxt_);
@@ -369,32 +364,6 @@ public:
     }
 
     void set_datetime();
-
-    xmlns_ptr get_xmlns_by_prefix(const char* prefix, bool quiet = false);
-
-    /* Adds and removes namespace to/from context. Replaces the previous one with the same prefix.
-       Handles default namspace right. */
-    xmlns_ptr add_to_context(xmlns_ptr xmlns);
-    void           remove_from_context(const char* prefix);
-
-    inline void    remove_from_context(xmlns_ptr ns)
-    {
-        remove_from_context(ns->prefix);
-    }
-
-    inline
-    const inscmap * get_inscope_namespaces() const {
-        return &(this->insc_ns);
-    }
-
-    /* Returns current default namespaces or NULL_XMLNS if there's no one */
-    xmlns_ptr get_default_namespace()
-    {
-        return st_cxt->get_default_nsp();
-    }
-
-    /* Returns defined namespaces except predefined */
-    std::vector<xmlns_ptr> get_explicit_namespaces() const;
 };
 
 #endif /* _DYNAMIC_CONTEXT_H */

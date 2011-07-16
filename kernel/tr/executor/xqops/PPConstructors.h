@@ -28,45 +28,9 @@ protected:
 public:
     static void checkInitial();
     static void clear_virtual_root();
-    static xsd::QName resolveQName(const char * nameString, PPOpIn qname, dynamic_context * cxt);
     static Node getVirtualRoot();
 
     inline bool is_deep_copy() { return deep_copy; }
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// PPVirtualConstructor
-///////////////////////////////////////////////////////////////////////////////
-class PPVirtualConstructor : public PPConstructor
-{
-protected:
-    PPOpIn qname;
-    PPOpIn content;
-    char* el_name;
-    PPOpIn inner_ns_node;
-
-    // EOS by default constructor. Error if not!
-    static tuple_cell parent_element;
-
-private:
-    virtual void do_open   ();
-    virtual void do_reopen ();
-    virtual void do_close  ();
-    virtual void do_next   (tuple &t) ;
-    virtual void do_accept (PPVisitor &v);
-
-    virtual PPIterator* do_copy(dynamic_context *_cxt_);
-public:
-    PPVirtualConstructor(dynamic_context *_cxt_, operation_info _info_,
-            PPOpIn _qname_, PPOpIn _content_, bool _deep_copy, PPOpIn _ns);
-
-    PPVirtualConstructor(dynamic_context *_cxt_, operation_info _info_,
-            const char* name, PPOpIn _content_, bool _deep_copy, PPOpIn _ns);
-
-    virtual ~PPVirtualConstructor();
-
-    /* May return NULL if name is not predefined */
-    inline const char* get_name() { return el_name; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -78,8 +42,11 @@ protected:
     PPOpIn qname;
     PPOpIn content;
     char* el_name;
-    PPOpIn inner_ns_node;
 
+    NamespaceSnapshot * sknSnapshot;
+    int sknMarker;
+
+    bool virtualElement;
 private:
     virtual void do_open   ();
     virtual void do_reopen ();
@@ -90,20 +57,21 @@ private:
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:
-
     PPElementConstructor(dynamic_context *_cxt_,
                          operation_info _info_,
                          PPOpIn _qname_,
                          PPOpIn _content_,
                          bool _deep_copy,
-                         PPOpIn _ns);
+                         int sknMarker,
+                         bool virtualElement);
 
     PPElementConstructor(dynamic_context *_cxt_,
                          operation_info _info_,
                          const char* name,
                          PPOpIn _content_,
                          bool _deep_copy,
-                         PPOpIn _ns);
+                         int sknMarker,
+                         bool virtualElement);
 
     virtual ~PPElementConstructor();
 
