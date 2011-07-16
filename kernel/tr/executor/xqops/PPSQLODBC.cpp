@@ -17,6 +17,7 @@
 #include <sys/mman.h>
 #endif
 
+#include "tr/executor/base/SCElementProducer.h"
 
 //#define LOCK_MEM
 
@@ -639,7 +640,7 @@ void SQLODBCExecutor::close_query()
 //TODO - this is not good to limit strings from SQL connection this way
 #define MAX_ATTR_LENGTH 65535
 
-void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
+void SQLODBCExecutor::fetch(tuple &t, IElementProducer * producer)
 {
 	SQLRETURN rc;
 	rc = SQLODBCBase::fSQLFetch(hstmt);
@@ -651,10 +652,7 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 		return;
 	}
 
-	xptr elem = insert_element(indirectionDereferenceCP(last_elem), XNULL, virt_root, "tuple", xs_untyped, NULL);
-	xptr indir = get_last_mo_inderection();
-	xptr left = XNULL;
-	last_elem = indir;
+    scoped_ptr<IElementProducer> element = producer->addElement(xsd::QName::createNsN(NULL_XMLNS, "tuple"), xs_untyped);
 
 	for (int i = 0; i < results_count; i++)
 	{
@@ -705,18 +703,13 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 			//insert_text(XNULL, XNULL, elem, (char *)res_buf, res_len);
 			//return elem;
 
-			if (left != XNULL)
-				left = insert_attribute(left, XNULL, XNULL, (char *)results[i].col_name, xs_untypedAtomic,
-							(char *)res_buf, res_len, NULL);
-			else
-				left = insert_attribute(XNULL, XNULL, elem, (char *)results[i].col_name, xs_untypedAtomic,
-							(char *)res_buf, res_len, NULL);
+            element->addAttribute(xsd::QName::createNsN(NULL_XMLNS, (char *) results[i].col_name), text_source_mem(res_buf, res_len), xs_untypedAtomic);
 		}
 		//if both if's failed assume that res_len == SQL_NULL_DATA
 		// thus we don't need to do anything else here
 	}
 
-	t.copy(tuple_cell::node_indir(last_elem));
+	t.copy(element->close());
 }
 
 int  SQLODBCExecutor::update_row_count()

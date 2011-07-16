@@ -36,6 +36,7 @@
 #include "tr/executor/xqops/PPQName.h"
 #include "tr/executor/xqops/PPTest.h"
 #include "tr/executor/xqops/PPNodeComparison.h"
+#include "tr/executor/xqops/PPSQL.h"
 
 PPOpIn l2pFnAbs(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {

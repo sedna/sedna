@@ -15,6 +15,7 @@
 #include "tr/executor/base/visitor/PPVisitor.h"
 
 #include "tr/structures/nodeutils.h"
+#include "tr/executor/base/SCElementProducer.h"
 
 const char *sqlns_uri = "http://modis.ispras.ru/Sedna/SQL";
 
@@ -515,7 +516,8 @@ void PPFnSQLExecute::do_next(tuple &t)
     }
     else
     {
-        executor->fetch(t, get_virtual_root(), last_elem);
+        executor->fetch(t, SCElementProducer::getVirtualRoot(XNULL));
+
         if (t.is_eos()) {
             first_time = true;
         }

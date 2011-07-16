@@ -16,6 +16,7 @@
 
 #include "tr/executor/xqops/PPSQL.h"
 #include "tr/executor/xqops/PPConstructors.h"
+#include "tr/structures/producer.h"
 
 //FIXME??
 #ifndef SQL_API
@@ -176,7 +177,7 @@ public:
 	virtual void execute_query (const char *query, int query_len, PPOpIn *options);
 	virtual void execute_prepared(arr_of_PPOpIn params);
 	virtual void close_query();
-	virtual void fetch(tuple &t, xptr virt_root, xptr &last_elem);
+	virtual void fetch(tuple &t, IElementProducer * producer);
 	virtual int  update_row_count();
 
 	virtual bool is_query_active();

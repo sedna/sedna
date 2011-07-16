@@ -17,6 +17,7 @@ class SCElementProducer : public IElementProducer
     SCElementProducer * parent;
 
     static xptr virtualRoot;
+    static SCElementProducer * virtualRootProducer;
 
     t_item node_kind;
     xptr parentNode;
@@ -49,8 +50,8 @@ class SCElementProducer : public IElementProducer
     Node getNode();
 
     static void deleteVirtualRoot();
+    static SCElementProducer * getVirtualRoot(xptr vr);
 
-    static SCElementProducer * createVirtualRoot(xptr vr);
     static SCElementProducer * createTemporaryDocument(const xsd::AnyURI& name, dynamic_context * cxt);
 };
 

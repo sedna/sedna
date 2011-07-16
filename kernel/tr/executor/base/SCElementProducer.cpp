@@ -275,6 +275,7 @@ SCElementProducer* SCElementProducer::createTemporaryDocument(const xsd::AnyURI&
 }
 
 xptr SCElementProducer::virtualRoot = XNULL;
+SCElementProducer * SCElementProducer::virtualRootProducer = NULL;
 
 void SCElementProducer::deleteVirtualRoot()
 {
@@ -285,11 +286,16 @@ void SCElementProducer::deleteVirtualRoot()
     vmm_delete_block(virtualRoot);
     scnVirtualRoot->drop();
     virtualRoot = XNULL;
+
+    delete virtualRootProducer;
+    virtualRootProducer = NULL;
 }
 
-SCElementProducer* SCElementProducer::createVirtualRoot(xptr vr)
+SCElementProducer* SCElementProducer::getVirtualRoot(xptr vr)
 {
-    SCElementProducer* result = NULL;
+    if (virtualRootProducer != NULL) {
+        return virtualRootProducer;
+    };
 
     U_ASSERT(vr == XNULL);
 
@@ -298,9 +304,9 @@ SCElementProducer* SCElementProducer::createVirtualRoot(xptr vr)
     xptr blk = createBlock(scnVirtualRoot, XNULL);
     virtualRoot = insertNodeFirst(blk, &node_info);
 
-    result = new SCElementProducer(getIndirectionSafeCP(virtualRoot));
-    result->node_kind = virtual_root;
-    return result;
+    virtualRootProducer = new SCElementProducer(getIndirectionSafeCP(virtualRoot));
+    virtualRootProducer->node_kind = virtual_root;
+    return virtualRootProducer;
 }
 
 SCElementProducer::SCElementProducer(SCElementProducer* _parent, xptr node)
