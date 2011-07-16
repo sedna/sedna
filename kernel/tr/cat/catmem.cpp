@@ -25,6 +25,7 @@ void setDefaultSpace(void * space) {
 void * popDefaultSpace() {
     default_context_space = contextstack.top();
     contextstack.pop();
+    return default_context_space;
 };
 
 
