@@ -145,7 +145,7 @@ void PPFtScan::do_next(tuple &t)
             ft_index_template_t::iterator tmp=templ->begin();
             while (tmp!=templ->end())
             {
-                ptr->put(new ft_custom_cell(XNULL, tmp->first.first, tmp->first.second, tmp->second));
+                ptr->put(new ft_custom_cell(XNULL, tmp->first, tmp->second));
                 tmp++;
             }
             delete_cust_rules_vector(templ);

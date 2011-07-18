@@ -158,8 +158,10 @@ std::string QName::getColonizedName() const
 {
     if (!valid()) {
         return std::string();
-    } else {
+    } else if (*getPrefix() != '\0') {
         return std::string(getPrefix()) + ":" + getLocalName();
+    } else {
+        return getLocalName();
     }
 }
 
@@ -167,8 +169,10 @@ std::string QName::getColonizedName(NCName prefix, NCName local)
 {
     if (!local.valid()) {
         return std::string();
-    } else {
+    } else if (prefix.valid()) {
         return prefix.toString() + ":" + local.toString();
+    } else {
+        return local.toString();
     }
 }
 

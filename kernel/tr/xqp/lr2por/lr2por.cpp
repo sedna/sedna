@@ -2233,7 +2233,10 @@ namespace sedna
 
     void lr2por::visit(ASTNamespaceDecl &n)
     {
-        skn->setNamespace(xmlns_touch(n.name->c_str(), n.uri->c_str()));
+        xmlns_ptr ns = xmlns_touch(n.name->c_str(), n.uri->c_str());
+
+        dyn_cxt->get_static_context()->addPrologueNamespace(ns);
+        skn->setNamespace(ns);
     }
 
     void lr2por::visit(ASTNodeTest &n)

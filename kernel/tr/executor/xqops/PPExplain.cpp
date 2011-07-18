@@ -147,9 +147,7 @@ void PPExplain::do_next (tuple &t)
                                           tmp, left, explain_ns);
 
         /* Insert namespace declarations */
-        U_ASSERT(false);
-/*
-        std::vector<xmlns_ptr> nss = data_cxt->get_explicit_namespaces();
+        std::vector<xmlns_ptr> nss = *data_cxt->get_static_context()->getPrologueNamespaces();
         std::vector<xmlns_ptr>::iterator it_end = nss.end();
         for(std::vector<xmlns_ptr>::iterator it = nss.begin(); it != it_end; it++)
         {
@@ -157,7 +155,7 @@ void PPExplain::do_next (tuple &t)
             xptr aleft = insert_attribute_i(XNULL,XNULL,tmp,"prefix",xs_untypedAtomic, (*it)->prefix, strlen((*it)->prefix), NULL_XMLNS);
             insert_attribute_i(aleft,XNULL,tmp,"uri",xs_untypedAtomic, (*it)->uri, strlen((*it)->uri), NULL_XMLNS);
         }
-*/
+
         /* Insert default element namespace declaration */
         if(defnsptr != NULL_XMLNS)
         {

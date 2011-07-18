@@ -271,9 +271,9 @@ get_indexes (xptr node,const char* /* title */)
         print_type_name(dsc.keytype, buf);
         node = insert_attribute_i(node,XNULL,XNULL,"as_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
 
-        std::string str = dsc.object->toString();
+        std::string str = dsc.object->toXPathString();
         node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(), str.length(),NULL_XMLNS);
-        str = dsc.key->toString();
+        str = dsc.key->toXPathString();
         node = insert_attribute_i(node,XNULL,XNULL,"by_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
     }
 }
@@ -315,7 +315,7 @@ get_triggers (xptr node,const char* /* title */)
         (tc->trigger_granularity == TRIGGER_FOR_EACH_NODE) ? trigger_granularity="FOR_EACH_NODE" : trigger_granularity="FOR_EACH_STATEMENT";
         node = insert_attribute_i(node,XNULL,XNULL,"granularity", xs_untypedAtomic, trigger_granularity.c_str(), trigger_granularity.length(), NULL_XMLNS);
 
-        std::string str = tc->trigger_path->toString();
+        std::string str = tc->trigger_path->toXPathString();
         node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
     }
 }
@@ -368,7 +368,7 @@ get_ftindexes (xptr node,const char* /* title */)
         print_ft_type_name(ic->ftype,buf);
         node = insert_attribute_i(node,XNULL,XNULL,"ft_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
 
-        std::string str  = ic->object->toString();
+        std::string str  = ic->object->toXPathString();
         node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
 
 		op_str_buf tbuf;
