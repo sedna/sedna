@@ -238,7 +238,7 @@ void PPExplainVisitor::visit(PPFnSumAvg* op)
 void PPExplainVisitor::visit(PPAbsPath* op)
 {
     insertOperationElement("PPAbsPath", left, parent, op);
-    string path_expr = op->getPathExpr()->toString();
+    string path_expr = op->getPathExpr()->toXPathString();
     xptr attr_left = insertAttributeHelper("root", XNULL, left, op->getDocColl()->to_string());
     if(path_expr.length() != 0)
     {
@@ -249,7 +249,7 @@ void PPExplainVisitor::visit(PPAbsPath* op)
 void PPExplainVisitor::visit(PPAxisStep* op)
 {
     insertOperationElement("PPAxisStep", left, parent, op);
-    string node_test = op->getNodeTest().toString();
+    string node_test = op->getNodeTest().toXPathString();
     insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
 }
 

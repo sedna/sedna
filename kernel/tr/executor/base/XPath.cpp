@@ -46,45 +46,6 @@ string NodeTest::toString() const
     ostringstream oss(std::ios::out | std::ios::binary);
     toStream(oss);
     return oss.str();
-/*
-    string result;
-
-    if (axis != axis_any) {
-        result += string(axisTypeToStr(axis)) + "::";
-    }
-
-    const char * typeName = nodeTypeToLR(type);
-
-    switch (type) {
-      case node_test_pi:
-        result += string(typeName) + "(" + xsd::NCName(local).toString() + ")"; break;
-      case node_test_comment :
-      case node_test_text :
-      case node_test_node :
-        result += string(typeName) + "()"; break;
-      case node_test_element :
-      case node_test_attribute :
-        result += string(typeName) + "(" + xsd::QName::getColonizedName(prefix, local) + ")"; break;
-      case node_test_document :
-        if (xsd::NCName(local).valid()) {
-            result += "document-node(element(" + xsd::QName::getColonizedName(prefix, local) + "))";
-        } else {
-            result += "document-node()";
-        }; break;
-      case node_test_qname :
-        result += xsd::QName::getColonizedName(prefix, local); break;
-      case node_test_wildcard_star :
-        result += "*"; break;
-      case node_test_wildcard_ncname_star :
-        result +=  xsd::NCName(prefix).toString() + ":*"; break;
-      case node_test_wildcard_star_ncname :
-        result += "*:" + xsd::NCName(local).toString(); break;
-      default :
-        result += typeName; break;
-    }
-
-    return result;
-*/
 }
 
 string NodeTestUnion::toString() const
@@ -299,6 +260,86 @@ const char * nodeTypeToLR(xpath::NodeTestType node) {
         return NULL;
     }
 }
+
+
+
+string NodeTest::toXPathString() const
+{
+    string result;
+
+    if (axis != axis_any) {
+        result += string(axisTypeToStr(axis)) + "::";
+    }
+
+    const char * typeName = nodeTypeToLR(type);
+
+    switch (type) {
+      case node_test_pi:
+        result += string(typeName) + "(" + (local != NULL ? getLocal().getValue() : "") + ")"; break;
+      case node_test_comment :
+      case node_test_text :
+      case node_test_node :
+        result += string(typeName) + "()"; break;
+      case node_test_element :
+      case node_test_attribute :
+        result += string(typeName) + "(" + (isAnyQName() ? "" : getQName().getColonizedName()) + ")"; break;
+      case node_test_document :
+        if (xsd::NCName(local).valid()) {
+            result += string("document-node(element(") + getLocal().getValue() + "))";
+        } else {
+            result += string("document-node()");
+        }; break;
+      case node_test_qname :
+        result += getQName().getColonizedName(); break;
+      case node_test_wildcard_star :
+        result += string("*"); break;
+      case node_test_wildcard_ncname_star :
+        result += string("declare-ns(") + getUri().getValue() + "):*"; break;
+      case node_test_wildcard_star_ncname :
+        result += string("*:") + getLocal().getValue(); break;
+      default :
+        result += typeName; break;
+    }
+
+    return result;
+}
+
+string NodeTestUnion::toXPathString() const
+{
+    string result;
+
+    U_ASSERT((size > 0));
+
+    if (size == 1) {
+        return nodes[0].toXPathString();
+    } else {
+        result = string("( ") + nodes[0].toXPathString();
+
+        for (size_t i = 1; i < size; i++) {
+            result += " | " + nodes[i].toXPathString();
+        }
+
+        result += ")";
+    }
+
+    return result;
+}
+
+string PathExpression::toXPathString() const
+{
+    if (size() > 0) {
+        string result = nodes[0].toXPathString();
+
+        for (size_t i = 1; i < size(); i++) {
+            result += string("/") + nodes[i].toXPathString();
+        }
+
+        return result;
+    }
+
+    return string();
+}
+
 
 #define CL_CHECK_SYMBOL(X, Pos, Symb) (((X)->at(Pos).type == SCM_SYMBOL) && strcmpex((X)->at(Pos).internal.symb, (Symb)) == 0)
 

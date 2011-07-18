@@ -90,7 +90,7 @@ class StaticallyKnownNamespaces : public INamespaceMap {
     void setNamespace(xmlns_ptr ns);
     void rollbackToMark(int mark);
 
-    int mark() { return namespaceStack.size(); }
+    int mark() { return (int) namespaceStack.size(); }
     void gotoMark(int mark);
 
     int getPredefinedMark() const { return predefinedMark; }

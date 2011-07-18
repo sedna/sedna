@@ -77,6 +77,8 @@ private:
 
     StaticallyKnownNamespaces staticallyKnownNamespaces;
 
+    std::vector<xmlns_ptr> prologueNamespaces; /* It is here only for PPExplain. WHYY?? */
+
     // serialization parameters: indent, method, etc.
     GlobalSerializationOptions serializationOptions;
 
@@ -98,6 +100,9 @@ public:
     {
         return &serializationOptions;
     };
+
+    inline const std::vector<xmlns_ptr> * getPrologueNamespaces() const { return &prologueNamespaces; };
+    inline void addPrologueNamespace(const xmlns_ptr ns) { prologueNamespaces.push_back(ns); };
 
     bool is_field_set_in_prolog(static_context_fields_flags flag)
     {

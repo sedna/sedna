@@ -91,6 +91,7 @@ struct NodeTest {
     bool isAnyQName() const { return qname == NULL; }
 
     std::string toString() const;
+    std::string toXPathString() const;
     std::ostream& toStream(std::ostream& str) const;
 };
 
@@ -99,6 +100,7 @@ struct NodeTestUnion {
     xpath::NodeTest * nodes;
 
     std::string toString() const;
+    std::string toXPathString() const;
     std::ostream& toStream(std::ostream& str) const;
 };
 
@@ -121,6 +123,7 @@ struct PathExpression {
     void operator delete(void * mem);
 
     std::string toString() const;
+    std::string toXPathString() const;
     std::string toLRString() const { return toString(); };
     std::ostream& toStream(std::ostream& str) const;
 };
