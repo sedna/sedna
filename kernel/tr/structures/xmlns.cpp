@@ -17,7 +17,8 @@ struct xmlns_hash_object {
 
 struct xmlns_hash_object * xmlns_hash[XMLNS_HASH_SIZE] = {NULL};
 
-inline int str_hash(const char * a) {
+inline
+unsigned long str_hash(const char * a) {
     unsigned long hash = 5381;
     int c;
 
@@ -43,7 +44,7 @@ xmlns_ptr xmlns_touch(const char * prefix, const char * uri)
     if (prefix == NULL) { prefix = ""; }
     if (uri == NULL) { uri = ""; }
 
-    int original_hash = (str_hash(prefix) + 33 * str_hash(uri)) % XMLNS_HASH_SIZE;
+    size_t original_hash = (unsigned int) ((str_hash(prefix) + 33 * str_hash(uri)) % XMLNS_HASH_SIZE);
     struct xmlns_hash_object * i = xmlns_hash[original_hash];
 
     while (i != NULL) {
