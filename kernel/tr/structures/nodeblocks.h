@@ -34,8 +34,6 @@ namespace internal {
         xptr nblk_indir;        /* next block with free indirection space*/
 
         t_item node_type;       /* duplicates type of node declaration from schema node */
-
-        char additional_data[];
     };
 
     inline static shft getBlockCapacity(node_blk_hdr * hdr) {
