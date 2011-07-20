@@ -59,9 +59,9 @@ xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const xsd::NCName& na
     if (source.type != text_source_t::text_mem) {
         text_membuf_t buf(source);
         text_source_t ts = buf.getTextSource();
-        return insert_pi(left_sib, right_sib, parent, cname, strlen(cname), ts.u.cstr, ts.size);
+        return insert_pi(left_sib, right_sib, parent, cname, strlen(cname), ts.u.cstr, (size_t) ts.size);
     } else {
-        return insert_pi(left_sib, right_sib, parent, cname, strlen(cname), source.u.cstr, source.size);
+        return insert_pi(left_sib, right_sib, parent, cname, strlen(cname), source.u.cstr, (size_t) source.size);
     }
 }
 
