@@ -596,7 +596,10 @@ public:
     TextBufferReader(const text_source_t text) : cursor(get_text_cursor(text)), buffer((char*) malloc(PAGE_SIZE)) {};
     ~TextBufferReader() { free(cursor); free(buffer); };
 
-    bool read() { return ((size = cursor->copy_blk(buffer)) != 0); }
+    bool read() {
+        /* ASSERTION: Returned value is bounded by PAGE_SIZE at most, so can be safely casted */
+        return ((size = cursor->copy_blk(buffer)) != 0);
+    }
 };
 
 

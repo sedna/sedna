@@ -16,7 +16,7 @@ namespace internal {
     struct node_blk_hdr {
         vmm_sm_blk_hdr __vmm_data;  /* sm/vmm parameters */
 
-        shft sz;
+        shft sz;		/* size of this structure, not currently used */
 
         xptr pblk;              /* previoius block */
         xptr nblk;              /* next block */
@@ -37,7 +37,7 @@ namespace internal {
     };
 
     inline static shft getBlockCapacity(node_blk_hdr * hdr) {
-        return ((PAGE_SIZE - hdr->sz) / (hdr->dsc_size + sizeof(xptr)));
+        return (shft) ((PAGE_SIZE - hdr->sz) / (hdr->dsc_size + sizeof(xptr)));
     }
 
     inline static
