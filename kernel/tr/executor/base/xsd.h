@@ -206,6 +206,19 @@ class QName {
     static QName createResolve(const char * prefixAndLocal, INamespaceMap * namespaces, bool quietly = false);
 
     static inline QName getConstantQName(xmlns_ptr ns, const char * name) { return QName(ns, name); };
+
+    struct FastCompare {
+        /* The idea of this comparison: since localName is always internated (or NULL),
+          their pointers are somehow duplicate-safe ordered, it is valid for namespaces too */
+
+        bool operator()(const QName &qname1, const QName &qname2) const {
+            if (qname1.ns == NULL_XMLNS && qname2.ns == NULL_XMLNS) {
+                return (qname1.localName - qname2.localName) > 0;
+            } else {
+                return (qname1.ns - qname2.ns) > 0;
+            }
+        }
+    };
 };
 
 }

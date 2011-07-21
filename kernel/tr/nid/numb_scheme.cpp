@@ -27,7 +27,7 @@ static doc_schema_node_xptr nid_holder; /*current persistent block holder*/
 
 int nid_block_count = 0;
 t_nid NIDNULL;
-std::pair<int /*size*/,int /*increment*/>* sizehnt=NULL;
+nid_hint_t * sizehnt = NULL;
 
 void
 nid_set_proportion(fnumber p) {
@@ -517,14 +517,14 @@ void	nid_create_right(xptr left, xptr parent, xptr result) {
 	if (sizehnt)
 	{
 		int pos=lp.size-1;
-		if (((int)lp.prefix[pos])+sizehnt->second<ALPHABET_SIZE)
-			lp.prefix[pos]+=sizehnt->second;
+		if (((int)lp.prefix[pos])+sizehnt->increment<ALPHABET_SIZE)
+			lp.prefix[pos]+=sizehnt->increment;
 		else
 		{
-			lp.prefix[pos]=(unsigned char)((int)sizehnt->second+lp.prefix[pos]-MAX_LETTER);
+			lp.prefix[pos]=(unsigned char)((int)sizehnt->increment+lp.prefix[pos]-MAX_LETTER);
 			while (true)
 			{
-				if (pos==lp.size-sizehnt->first)
+				if (pos==lp.size-sizehnt->size)
 					throw USER_EXCEPTION(SE2023);
 				pos--;
 				lp.prefix[pos]++;
@@ -577,10 +577,10 @@ void	nid_create_child(xptr parent, xptr result)
 	//generation
 	if (sizehnt)
 	{
-		for (int i=0;i<sizehnt->first-1;i++)
+		for (int i=0;i<sizehnt->size-1;i++)
 			pp.prefix[pp.size+i]=1;
-		pp.prefix[pp.size+sizehnt->first-1]=1+sizehnt->second;
-		pp.size+=sizehnt->first;
+		pp.prefix[pp.size+sizehnt->size-1]=1+sizehnt->size;
+		pp.size+=sizehnt->size;
 	}
 	else
 	{
