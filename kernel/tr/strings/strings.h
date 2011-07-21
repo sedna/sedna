@@ -598,7 +598,7 @@ public:
 
     bool read() {
         /* ASSERTION: Returned value is bounded by PAGE_SIZE at most, so can be safely casted */
-        return ((size = cursor->copy_blk(buffer)) != 0);
+        return ((size = (int) cursor->copy_blk(buffer)) != 0);
     }
 };
 
