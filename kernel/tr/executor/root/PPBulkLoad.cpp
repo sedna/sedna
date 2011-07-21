@@ -12,6 +12,7 @@
 #include "tr/locks/locks.h"
 #include "tr/log/log.h"
 #include "tr/auth/auc.h"
+#include "tr/updates/bulkload.h"
 
 PPBulkLoad::PPBulkLoad(PPOpIn _filename_,
                        PPOpIn _document_,
@@ -129,21 +130,25 @@ void PPBulkLoad::do_execute()
     bool boundary_space_strip = (cxt->get_static_context()->get_boundary_space() == xq_boundary_space_strip);
 
     try {
-   	    if (collection.op == NULL)
+        BulkLoadFrontend bulkLoadManager;
+        bulkLoadManager.options.stripBoundarySpaces = boundary_space_strip;
+        bulkLoadManager.setSourceFile(cf_vec[0].f);
+
+        if (collection.op == NULL)
         {
             local_lock_mrg->put_lock_on_document(tc_document.get_str_mem());
             auth_for_load_document(tc_document.get_str_mem());
 
-            if (!write_to_logical_log) hl_disable_log();
+            if (!write_to_logical_log) {
+                hl_disable_log();
+            }
 
-            doc_root = loadfile(cf_vec[0].f,
-                                *tr_globals::client->get_se_ostream(),
-                                tc_document.get_str_mem(),
-                                boundary_space_strip,
-                                tr_globals::client->is_print_progress());
+            doc_root = bulkLoadManager.loadDocument(tc_document.get_str_mem()).getPtr();
 
-            if (!write_to_logical_log) hl_enable_log();
-            if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), NULL, true);
+            if (!write_to_logical_log) {
+                hl_enable_log();
+                hl_logical_log_document(doc_root, tc_document.get_str_mem(), NULL, true);
+            }
         }
         else
         {
@@ -162,17 +167,16 @@ void PPBulkLoad::do_execute()
             local_lock_mrg->put_lock_on_collection(tc_collection.get_str_mem());
             auth_for_load_document_collection(tc_document.get_str_mem(), tc_collection.get_str_mem());
 
-            if (!write_to_logical_log) hl_disable_log();
+            if (!write_to_logical_log) {
+                hl_disable_log();
+            }
 
-            doc_root = loadfile(cf_vec[0].f,
-                                *tr_globals::client->get_se_ostream(),
-                                tc_document.get_str_mem(),
-                                tc_collection.get_str_mem(),
-                                boundary_space_strip,
-                                tr_globals::client->is_print_progress());
+            doc_root = bulkLoadManager.loadCollectionDocument(tc_collection.get_str_mem(), tc_document.get_str_mem()).getPtr();
 
-            if (!write_to_logical_log) hl_enable_log();
-            if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), tc_collection.get_str_mem(), true);
+            if (!write_to_logical_log) {
+                hl_enable_log();
+                hl_logical_log_document(doc_root, tc_document.get_str_mem(), tc_collection.get_str_mem(), true);
+            }
         }
     } catch (ANY_SE_EXCEPTION) {
         tr_globals::client->close_file_from_client(cf_vec[0]);

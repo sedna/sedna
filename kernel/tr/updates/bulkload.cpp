@@ -8,7 +8,7 @@
 #include <map>
 #include <ostream>
 
-#include "common/sedna.h"
+#include "bulkload.h"
 
 #include "tr/structures/metadata.h"
 #include "expat.h"
@@ -17,742 +17,760 @@
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
-#include "tr/updates/updates.h"
 #endif
 
-/*
- * We parse document part by part through this buffer. Since Expat
- * methods use 'int' instead of size_t we have to cast in some places.
- * The only guarantee for us is the size of this buffer is not
- * greater than INT_MAX.
- */
-#define BUFFSIZE     8192
+#include "tr/updates/updates.h"
+#include "tr/structures/producer.h"
+#include "tr/executor/base/SCElementProducer.h"
+
+#define BUFFER_SIZE (16*1024)
+#define MAX_QNAME 1024
+#define TEXT_BUFFER_SIZE PAGE_SIZE
 #define SEPARATOR    '>'
 
-static char Buff[BUFFSIZE];
-static int mark;
-static xptr parent;
-static xptr left;
-static schema_node_xptr sc_parent = XNULL;
-static bool wpstrip;
+static
+bool whitespaceOnly(const text_source_t &x) {
+    U_ASSERT(x.type == text_source_t::text_mem);
 
-static bool text_inserted;
-static bool print_p = true;
-static int is_ns;
-static char* wptail;
-static int wptailsize;
-static int maxwpsize=0;
-static char* nodenames;
-static size_t maxnm=0;
-static int nodescnt=0;
-static int curcnt=0;
-static int curproc=0;
-static bool is_coll=false;
+    for (size_t i = 0; i < (size_t) x.size; i++) {
+        int c = x.u.cstr[i];
 
-typedef std::pair<int,int> stat_pair;
-typedef std::pair<std::string,std::string> str_pair;
-typedef std::map<str_pair, xmlns_ptr> ns_map;
-
-static ns_map  xm_nsp;
-static ns_map::iterator it_map;
-static std::vector<xmlns_ptr> nss;
-
-static std::vector<int> curr_fo;
-static std::map<schema_node_xptr,stat_pair> max_fo;
-static std::vector<stat_pair*> curp;
-
-
-static void remove_hints(schema_node_cptr nd)
-{
-    nd.modify()->lastnode_ind=XNULL;
-
-    cat_list<sc_ref>::item * sc;
-    for (sc = nd->children->first; sc != NULL; sc = sc->next) {
-        remove_hints(sc->object.snode);
+        if (!isspace(c)) {
+            return false;
+        }
     }
-}
 
-static bool isWP(const char* data, int size )
-{
-    char s;
-    for (int i=0;i<size;i++)
-    {
-        s=data[i];
-        if (s!=32 && s!=9 && s!=10 && s!=13 )return false;
-    }
     return true;
 }
 
-static void separateName(const char* triplet,
-                         const char*& uri,
-                         const char*& local,
-                         const char*& prefix)
-{
-    const char* sec=NULL;
-    const char* third=NULL;
-    int sepcnt = 0;
-    for (size_t i=0; i < strlen(triplet); i++)
-    {
-        if (triplet[i] == SEPARATOR)
-        {
-            if (sepcnt == 0)
-                sec = triplet + i + 1;
-            else
-                third = triplet + i + 1;
-            sepcnt++;
+static
+text_source_t clearLeftSpaces(const text_source_t &x) {
+    U_ASSERT(x.type == text_source_t::text_mem);
+
+    text_source_t result = NULL_TEXT; /* NULL_TEXT is text_mem ! */
+
+    for (size_t i = 0; i < (size_t) x.size; i++) {
+        int c = x.u.cstr[i];
+
+        if (!isspace(c)) {
+            result.u.cstr = x.u.cstr + i;
+            result.size = x.size - i;
+            return result;
         }
     }
-    if (sepcnt)
-    {
-        size_t tripsize = strlen(triplet)+1;
-        if (tripsize > maxnm)
-        {
-            if (maxnm != 0) delete [] nodenames;
-            maxnm = tripsize;
-            nodenames = new char[tripsize];
-        }
-        memcpy(nodenames, triplet, tripsize);
-        uri = nodenames;
-        local = nodenames + (sec-triplet);
-        nodenames[sec-triplet-1] = '\0';
-        if (third != NULL)
-        {
-            prefix=local+(third-sec);
-            nodenames[third-triplet-1]='\0';
-        }
-        else prefix=NULL;
-    }
-    else
-    {
-        uri=NULL;
-        local=triplet;
-        prefix=NULL;
-    }
+
+    U_ASSERT(result.type == text_source_t::text_mem);
+    return result;
 }
 
-static  void analyzeWP(const char** data, int& size )
-{
- const char* ds=*data;
- const char* es=*data+(size-1);
- char s;
- int i;
- for ( i=0;i<size;i++)
- {
-     s=*ds;
-     if (s==32 || s==9 || s==10 || s==13 )
-         ds++;
-     else break;
- }
- size=size-i;
- *data=ds;
- for ( i=0;i<size;i++)
- {
-    if (s==32 || s==9 || s==10 || s==13 )   es--;
-    else break;
- }
- size=size-i;
+static
+text_source_t getRightSpaces(const text_source_t &x) {
+    U_ASSERT(x.type == text_source_t::text_mem);
+
+    text_source_t result = NULL_TEXT; /* NULL_TEXT is text_mem ! */
+
+    for (size_t i = (size_t) x.size; i > 0; i--) {
+        int c = x.u.cstr[i-1];
+
+        if (!isspace(c)) {
+            result.u.cstr = x.u.cstr + i;
+            result.size = x.u.cstr + x.size - result.u.cstr;
+            return result;
+        }
+    }
+
+    if (result.size == 0) {
+        result = NULL_TEXT;
+    }
+
+    U_ASSERT(result.type == text_source_t::text_mem);
+    return result;
 }
 
-static void processWP(const char** s, int& len)
-{
-    const char* d=*s;
-    int size=len;
-    analyzeWP(&d,size);
-    if (size!=0||text_inserted)
-    {
-        if (wptailsize>0)
-        {
-            xptr new_node;
-            if (mark)
-                new_node=insert_text(XNULL, XNULL, parent, text_source_mem(wptail, wptailsize));
-            else
-            {
-                new_node=insert_text(left, XNULL, XNULL, text_source_mem(wptail, wptailsize));
+static char qnameBuffer[MAX_QNAME] = {}; /* zero-filled string */
+
+static
+xsd::QName parseQName(const char * x) {
+    strncpy(qnameBuffer, x, MAX_QNAME);
+
+    if (qnameBuffer[MAX_QNAME] != '\0') {
+        throw USER_EXCEPTION2(SE2005, "Too long qname, you may recompile sedna to load document, anyway, please inform the developers of having this error.");
+    }
+
+    const char * parts[3] = {NULL, NULL, NULL};
+    int partsCount = 0;
+
+    char * c = qnameBuffer;
+
+    do {
+        parts[partsCount++] = c;
+        c = strchr(c, SEPARATOR);
+
+        if (c != NULL) {
+            *(c++) = '\0';
+        }
+    } while (c != NULL && partsCount < 3);
+
+    U_ASSERT(c == NULL);
+
+    switch (partsCount) {
+      case 3 : return xsd::QName::createUPL(parts[0], parts[2], parts[1]);
+      case 2 : return xsd::QName::createUPL(parts[0], NULL, parts[1]);
+      case 1 : return xsd::QName::createNsN(NULL_XMLNS, parts[0]);
+      default : U_ASSERT(false); break;
+    }
+
+    return xsd::QName();
+}
+
+class SafeParser {
+    XML_Parser p;
+  public:
+    SafeParser() : p(NULL) {
+        p = XML_ParserCreateNS(NULL, SEPARATOR);
+
+        if (!p) {
+            throw USER_ENV_EXCEPTION("Couldn't allocate memory for parser", true);
+        }
+    }
+
+    ~SafeParser() { XML_ParserFree(p); };
+
+    XML_Parser get() const { return p; }
+};
+
+inline static
+int maxInt(int a, int b) { return MAX(a, b); }
+
+inline static
+int minInt(int a, int b) { return MIN(a, b); }
+
+typedef std::vector<int> NodeCountStatistics;
+
+class BulkLoader {
+  private:
+    char parseBuffer[BUFFER_SIZE];
+
+    IElementProducer * producer;
+    std::stack<IElementProducer *> producerStack;
+
+    void parseDocument() {
+        SafeParser xmlParser;
+
+        XML_Parser p = xmlParser.get();
+
+        XML_SetUserData(p, this);
+        XML_SetReturnNSTriplet(p,1);
+        XML_SetElementHandler(p, elementStart, elementEnd);
+        XML_SetStartNamespaceDeclHandler(p, namespaceHandler);
+        XML_SetCommentHandler(p, commentHandler);
+        XML_SetProcessingInstructionHandler(p, piHandler);
+        XML_SetCharacterDataHandler(p, dataHandler);
+        XML_SetCdataSectionHandler(p, startCDataHandler, endCDataHandler);
+
+        /*
+         * We have to cast since Expat uses 'int' instead of size_t,
+         * it's safe since BUFFSIZE < INT_MAX
+         */
+
+        int len;
+        int isFinal;
+
+        do {
+            len = (int) fread(parseBuffer, 1, BUFFER_SIZE, inputFile);
+
+            if (ferror(inputFile)) {
+                throw USER_ENV_EXCEPTION("Read error", true);
             }
-            CHECKP(new_node);
-            getSchemaNode(new_node).modify()->lastnode_ind=nodeGetIndirection(new_node);
-#ifdef SE_ENABLE_FTSEARCH
-            if (is_coll)
-                update_insert_sequence(new_node,getSchemaNode(new_node));
-#endif
-            mark=0;
-            left=new_node;
-            CHECKP(left);
-            parent = nodeGetParent(left);
-        }
-        wptailsize=0;
-    }
-    else
-    {
-        if (wptailsize+len>maxwpsize)
-        {
-            char* z=se_new char[wptailsize+len];
-            if (wptailsize>0) memcpy(z,wptail,wptailsize);
-            memcpy(z+wptailsize,*s,len);
-            wptailsize+=len;
-            maxwpsize=wptailsize;
-            delete [] wptail;
-            wptail=z;
-        }
-        else
-        {
-            memcpy(wptail+wptailsize,*s,len);
-            wptailsize+=len;
-        }
-        len=0;
-    }
-}
 
-static void clear_text()
-{
-    text_inserted=false;
-    wptailsize=0;
-}
-
-static void start(void *s, const char *el, const char **attr)
-{
-    const char* uri;
-    const char* local;
-    const char* prefix;
-    separateName((char*)el,uri,local,prefix);
-    clear_text();
-    xptr new_node;
-    xmlns_ptr ns = NULL_XMLNS;
-
-    if (uri != NULL || prefix != NULL)
-    {
-        if (!uri) uri="";
-        else if (!prefix) prefix="";
-        ns = xm_nsp.find(str_pair(prefix,uri))->second;
-    }
-    if (mark)
-        new_node=insert_element(XNULL,XNULL,parent,local,xs_untyped,ns);
-    else
-    {
-        new_node=insert_element(left,XNULL,XNULL,local,xs_untyped,ns);
-        mark = 1;
-    }
-    CHECKP(new_node);
-    getSchemaNode(new_node).modify()->lastnode_ind=nodeGetIndirection(new_node);
-#ifdef SE_ENABLE_FTSEARCH
-    if (is_coll)
-        update_insert_sequence(new_node, schema_node_cptr(getSchemaNode(new_node)));
-    CHECKP(new_node);
-#endif
-    xptr par_ind=nodeGetIndirection(new_node);
-    stat_pair* pr=&max_fo[getSchemaPointer(new_node)];
-    curp.push_back(pr);
-    sizehnt= pr;
-    parent=new_node;
-    xptr att=XNULL;
-    if (is_ns)
-    {
-        std::vector<xmlns_ptr>::const_iterator it=nss.begin();
-        while(it!=nss.end())
-        {
-            att=insert_namespace(att,XNULL,(att==XNULL)?new_node:XNULL,*it);
-            it++;
-        }
-        is_ns=0;
-        nss.clear();
-    }
-
-    for (int i = 0; attr[i]; i += 2)
-    {
-        separateName((char*)attr[i],uri,local,prefix);
-        if (uri != NULL || prefix != NULL)
-        {
-            if (!uri) uri="";
-            else if (!prefix) prefix="";
-            ns = xm_nsp.find(str_pair(prefix,uri))->second;
-        }
-        else ns = NULL;
-        att=insert_attribute(att,XNULL,(att==XNULL)?new_node:XNULL,local,xs_untypedAtomic,attr[i + 1],strlen(attr[i + 1]),ns);
-#ifdef SE_ENABLE_FTSEARCH
-        if (is_coll)
-            update_insert_sequence(att, schema_node_cptr(getSchemaNode(att)));
-#endif
-    }
-
-    if (att!=XNULL)
-    {
-        left=att;
-        mark=0;
-        parent=indirectionDereferenceCP(par_ind);
-    }
-    curcnt++;
-    if ((curcnt*100.)/nodescnt>curproc)
-    {
-     if(print_p)
-      *(se_ostream*)s << curproc << "%" << '\n';
-     curproc++;
-    }
-}
-
-
-static void end(void *s, const char *el)
-{
-  clear_text();
-  left=parent;
-  CHECKP(left);
-  parent = nodeGetParent(left);
-  mark=0;
-  curp.pop_back();
-  sizehnt=curp.back();
-}
-
-
-
-static void data(void *userData, const char *s, int len)
-{
-    if (wpstrip)
-    {
-        processWP(&s,len);
-        if (len==0) return;
-    }
-    text_inserted=true;
-    xptr new_node;
-    if (mark)
-        new_node=insert_text(XNULL, XNULL, parent, text_source_mem(s, len));
-    else
-    {
-        new_node=insert_text(left, XNULL, XNULL, text_source_mem(s, len));
-    }
-    CHECKP(new_node);
-    getSchemaNode(new_node).modify()->lastnode_ind=nodeGetIndirection(new_node);
-#ifdef SE_ENABLE_FTSEARCH
-    if (is_coll)
-        update_insert_sequence(new_node, getSchemaNode(new_node));
-#endif
-    mark=0;
-    left=new_node;
-    CHECKP(left);
-    parent= nodeGetParent(left);
-}
-
-
-static void sc_start(void *data, const char *el, const char **attr)
-{
-    const char* uri;
-    const char* local;
-    const char* prefix;
-    separateName((char*)el,uri,local,prefix);
-    xmlns_ptr ns = NULL_XMLNS;
-    if (uri!=NULL || prefix!=NULL)
-    {
-        if (!uri) uri="";
-        else if (!prefix) prefix="";
-        ns=xm_nsp.find(str_pair(prefix,uri))->second;
-    }
-    schema_node_cptr child=sc_parent->get_first_child(ns,local,element);
-    if (!child.found()) child=sc_parent->add_child(ns,local,element);
-
-    curr_fo.back()++;
-    clear_text();
-    curr_fo.push_back(0);
-    sc_parent=child.ptr();
-    if (is_ns)
-    {
-        if (sc_parent->get_first_child(NULL_XMLNS,NULL,xml_namespace) == XNULL)
-            sc_parent->add_child(NULL_XMLNS,NULL,xml_namespace);
-
-        curr_fo.back()+=is_ns;
-
-        is_ns=0;
-    }
-    schema_node_cptr atts = XNULL;
-    nodescnt++;
-    for (int i = 0; attr[i]; i += 2)
-    {
-        separateName((char*)attr[i],uri,local,prefix);
-        if (uri!=NULL || prefix!=NULL)
-        {
-            if (!uri) uri="";
-            else if (!prefix) prefix="";
-            ns=xm_nsp.find(str_pair(prefix,uri))->second;
-        }
-        else
-            ns=NULL_XMLNS;
-        atts=sc_parent->get_first_child(ns,local,attribute);
-        if (!atts.found())atts=sc_parent->add_child(ns,local,attribute);
-        curr_fo.back()++;
-    }
-}
-
-
-static void sc_end(void *data, const char *el)
-{
-    std::map<schema_node_xptr,stat_pair>::iterator it= max_fo.find(sc_parent);
-    if (it==max_fo.end())
-        max_fo[sc_parent]=stat_pair(curr_fo.back(),0);
-    else
-        if (it->second.first<curr_fo.back()) it->second.first=curr_fo.back();
-    curr_fo.pop_back();
-    sc_parent=sc_parent->parent;
-    clear_text();
-}
-
-static void sc_data(void *userData, const char *s, int len)
-{
-    if (!text_inserted)
-    {
-        if (wpstrip && isWP(s,len)) return;
-        schema_node_cptr xsn=sc_parent->get_first_child(NULL_XMLNS,NULL,text);
-        if (!xsn.found())xsn=sc_parent->add_child(NULL_XMLNS,NULL,text);
-        curr_fo.back()++;
-        text_inserted=true;
-    }
-}
-
-static void el_ns (void *userData, const char *prefix, const char *uri)
-{
-    if(prefix == NULL && uri == NULL) return;
-
-    const char* prefixm;
-    if (prefix==NULL)
-        prefixm="";
-    else
-        prefixm=prefix;
-    str_pair sp(prefixm,uri);
-    it_map=xm_nsp.find(sp);
-    if (it_map == xm_nsp.end())
-    {
-        throw SYSTEM_EXCEPTION("Error of namespace parsing");
-    }
-    else
-        nss.push_back(it_map->second);
-    is_ns++;
-}
-
-static void sc_ns (void *userData, const char *prefix, const char *uri)
-{
-    /*
-     * This is situation xmlns="". The attribute value in a default namespace
-     * declaration MAY be empty. This has the same effect, within the scope of
-     * the declaration, of there being no default namespace.
-     */
-    if(prefix == NULL && uri == NULL) return;
-
-    const char* prefixm;
-
-    if (prefix==NULL) prefixm="";
-    else prefixm = prefix;
-
-    str_pair sp(prefixm,uri);
-    it_map=xm_nsp.find(sp);
-    if (it_map== xm_nsp.end())
-    {
-        xm_nsp[sp] = xmlns_touch(prefixm, uri);
-    }
-    is_ns++;
-}
-
-
-static void sc_comment (void *userData, const char *data)
-{
-    schema_node_cptr xsn=sc_parent->get_first_child(NULL_XMLNS,NULL,comment);
-    if (!xsn.found())xsn=sc_parent->add_child(NULL_XMLNS,NULL,comment);
-    curr_fo.back()++;
-    clear_text();
-}
-
-
-static void dt_comment (void *userData, const char *data)
-{
-    xptr new_node;
-    clear_text();
-    if (mark)
-        new_node=insert_comment(XNULL,XNULL,parent,data,strlen(data));
-    else
-    {
-        new_node=insert_comment(left,XNULL,XNULL,data,strlen(data));
-    }
-#ifdef SE_ENABLE_FTSEARCH
-    if (is_coll) {
-        update_insert_sequence(new_node,getSchemaNode(new_node));
-    }
-#endif
-    mark=0;
-    left=new_node;
-    CHECKP(left);
-    parent=nodeGetParent(left);
-}
-
-
-static void sc_pi (void *userData, const char *target, const char *data)
-{
-    schema_node_cptr xsn=sc_parent->get_first_child(NULL_XMLNS,NULL,pr_ins);
-    if (!xsn.found())xsn=sc_parent->add_child(NULL_XMLNS,NULL,pr_ins);
-    clear_text();
-    curr_fo.back()++;
-}
-
-
-static void dt_pi (void *userData, const char *target, const char *data)
-{
-    xptr new_node;
-    clear_text();
-    if (mark)
-        new_node=insert_pi(XNULL,XNULL,parent,target,strlen(target),data,strlen(data));
-    else
-    {
-        new_node=insert_pi(left,XNULL,XNULL,target,strlen(target),data,strlen(data));
-    }
-#ifdef SE_ENABLE_FTSEARCH
-    if (is_coll)
-        update_insert_sequence(new_node,getSchemaNode(new_node));
-#endif
-    mark=0;
-    left=new_node;
-    CHECKP(left);
-    xptr par_ind= nodeGetParentIndirection(left);
-    parent=indirectionDereferenceCP(par_ind);
-}
-
-
-static void parse_load(FILE* f, se_ostream &ostr)
-{
-    XML_Parser p = XML_ParserCreateNS(NULL,SEPARATOR);
-    if (! p) throw USER_ENV_EXCEPTION("Couldn't allocate memory for parser\n",true);
-    XML_SetReturnNSTriplet(p,1);
-    int done;
-    int len;
-    XML_SetStartNamespaceDeclHandler(p,el_ns);
-    XML_SetElementHandler(p, start, end);
-    XML_SetCommentHandler(p, dt_comment);
-    XML_SetProcessingInstructionHandler(p, dt_pi);
-    XML_SetCharacterDataHandler(p, data);
-    XML_SetUserData (p, &ostr);
-
-    /*
-     * We have to cast since Expat uses 'int' instead of size_t,
-     * it's safe since BUFFSIZE < INT_MAX
-     */
-    len = (int)fread(Buff, 1, BUFFSIZE, f);
-
-    if (ferror(f))
-    {
-        XML_ParserFree(p);
-        throw USER_ENV_EXCEPTION("Read error",true);
-    }
-    done = feof(f);
-    while (!done)
-    {
-        if (XML_Parse(p, Buff, len, done) != XML_STATUS_ERROR)
-        {
-            /*
-             * We have to cast since Expat uses 'int' instead of size_t,
-             * it's safe since BUFFSIZE < INT_MAX
-             */
-            len = (int)fread(Buff, 1, BUFFSIZE, f);
-            if (ferror(f))
-            {
-                XML_ParserFree(p);
-                throw USER_ENV_EXCEPTION("Read error",true);
+            if (len == 0) {
+                break;
             }
-            done = feof(f);
-        }
-        else
-        {
-            char tmp[256];
-            sprintf(tmp, "line %d:\n%s\n",
-                XML_GetCurrentLineNumber(p),
-                XML_ErrorString(XML_GetErrorCode(p)));
-            XML_ParserFree(p);
-            throw USER_EXCEPTION2(SE2005, tmp);
-        }
-    }
-    if (XML_Parse(p, Buff, len, done)== XML_STATUS_ERROR)
-    {
-        char tmp[256];
-        sprintf(tmp, "line %d:\n%s\n",
-            XML_GetCurrentLineNumber(p),
-            XML_ErrorString(XML_GetErrorCode(p)));
-        XML_ParserFree(p);
-        throw USER_EXCEPTION2(SE2005, tmp);
-    }
-    sizehnt=NULL;
-    XML_ParserFree(p);
-}
 
-static void parse_schema(FILE* f)
-{
-    xm_nsp.clear();
-    xm_nsp[str_pair("xml","http://www.w3.org/XML/1998/namespace")] = xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace");
-    curr_fo.clear();
-    curr_fo.push_back(0);
-    max_fo.clear();
-    XML_Parser p = XML_ParserCreateNS(NULL,SEPARATOR);
-    if (! p) throw USER_ENV_EXCEPTION("Couldn't allocate memory for parser",true);
-    XML_SetReturnNSTriplet(p,1);
-    int done;
-    int len;
-    is_ns=0;
-    XML_SetElementHandler(p, sc_start,sc_end);
-    XML_SetStartNamespaceDeclHandler(p,sc_ns);
-    XML_SetCommentHandler(p, sc_comment);
-    XML_SetProcessingInstructionHandler(p, sc_pi);
-    XML_SetCharacterDataHandler(p, sc_data);
-    /*
-     * We have to cast since Expat uses 'int' instead of size_t,
-     * it's safe since BUFFSIZE < INT_MAX
-     */
-    len = (int)fread(Buff, 1, BUFFSIZE, f);
-    if (ferror(f))
-    {
-        XML_ParserFree(p);
-        throw USER_ENV_EXCEPTION("Read error",true);
-    }
-    done = feof(f);
-    while (!done)
-    {
-        if (XML_Parse(p, Buff, len, done) != XML_STATUS_ERROR)
-        {
-            /*
-             * We have to cast since Expat uses 'int' instead of size_t,
-             * it's safe since BUFFSIZE < INT_MAX
-             */
-            len = (int)fread(Buff, 1, BUFFSIZE, f);
-            if (ferror(f))
-            {
-                XML_ParserFree(p);
-                throw USER_ENV_EXCEPTION("Read error",true);
+            isFinal = feof(inputFile);
+            if (XML_Parse(p, parseBuffer, len, isFinal) != XML_STATUS_OK) {
+                char errorDetails[256];
+
+                sprintf(errorDetails, "line %d:\n%s\n", (int) XML_GetCurrentLineNumber(p), XML_ErrorString(XML_GetErrorCode(p)));
+
+                throw USER_EXCEPTION2(SE2005, errorDetails);
             }
-            done = feof(f);
+        } while (!isFinal);
+    }
+
+  public:
+    FILE * inputFile;
+
+    char textBuffer[TEXT_BUFFER_SIZE];
+    size_t textBufferSize;
+    bool updateIndexes;
+    bool insideCDataSection;
+    bool loadNewDocument;
+
+    BulkLoadOptions options;
+
+    std::stringstream tailingWhitespaceBuffer;
+    NodeCountStatistics nodeStatistics;
+    std::vector< nid_hint_t > numbSchemeHints;
+
+    BulkLoader(bool newDocumentOpt) :
+        producer(NULL), inputFile(NULL),
+        textBufferSize(0), updateIndexes(false), insideCDataSection(false), loadNewDocument(newDocumentOpt)
+    {};
+
+    ~BulkLoader() { };
+
+    void loadDocument(xptr doc_node, schema_node_cptr schema_node);
+
+    static
+    void elementStart(void * _loader, const char *el, const char **attr) {
+        BulkLoader * loader = (BulkLoader *) _loader;
+        xsd::QName qname = parseQName(el);
+        IElementProducer * producer = loader->producer;
+
+        loader->producerStack.push(producer);
+        loader->producer = loader->producer->addElement(qname, xs_untyped);
+
+        while (attr[0] != NULL) {
+            loader->producer->addAttribute(parseQName(attr[0]), text_source_cstr(attr[1]), xs_untyped);
+            attr += 2;
         }
-        else
+    };
+
+    static
+    void elementEnd(void * _loader, const char *el) {
+        BulkLoader * loader = (BulkLoader *) _loader;
+        loader->producer->close();
+        loader->producer = loader->producerStack.top();
+        loader->producerStack.pop();
+    };
+
+    static
+    void namespaceHandler(void * loader, const char * prefix, const char * uri) {
+        ((BulkLoader *) loader)->producer->addNS(xmlns_touch(prefix, uri));
+    };
+
+    static
+    void dataHandler(void * loader, const char * data, int len) {
+        ((BulkLoader *) loader)->producer->addText(text_source_mem(data, (size_t) len));
+    };
+
+    static
+    void commentHandler(void * loader, const char * data) {
+        ((BulkLoader *) loader)->producer->addComment(text_source_cstr(data));
+    }
+
+    static
+    void piHandler(void * loader, const char * name, const char * data) {
+        ((BulkLoader *) loader)->producer->addPI(xsd::NCName::check(name, false), text_source_cstr(data));
+    }
+
+    static
+    void startCDataHandler(void * loader) {
+        ((BulkLoader *) loader)->insideCDataSection = true;
+    }
+
+    static
+    void endCDataHandler(void * loader) {
+        ((BulkLoader *) loader)->insideCDataSection = false;
+    }
+};
+
+static const tuple_cell NULL_TC = tuple_cell::eos();
+
+class SchemaParser : public IElementProducer {
+  private:
+    friend class DataParser;
+
+    BulkLoader * parent;
+    unsigned int level;
+
+    int nextChildNamespaceCount;
+    schema_node_cptr schemaNode;
+
+    typedef std::map<xsd::QName, SchemaParser *, xsd::QName::FastCompare> ChildMap;
+    typedef std::set<xsd::QName, xsd::QName::FastCompare> ChildSet;
+
+    ChildMap children;
+    ChildSet attributes;
+
+    int textCount;
+    int commentCount;
+    int piCount;
+    int count;
+  public:
+    SchemaParser(BulkLoader * _parent, schema_node_cptr _schemaNode, int) :
+        parent(_parent), level(0), nextChildNamespaceCount(0), schemaNode(_schemaNode),
+        textCount(0), commentCount(0), piCount(0), count(0)
+    {
+        parent->nodeStatistics.push_back(0);
+    }
+
+    SchemaParser(SchemaParser * _parentParser, schema_node_cptr _schemaNode) :
+      parent(_parentParser->parent), level(_parentParser->level + 1), nextChildNamespaceCount(0),
+      schemaNode(_schemaNode), textCount(0), commentCount(0), piCount(0), count(0)
+    {
+        while (parent->nodeStatistics.size() <= (NodeCountStatistics::size_type) level) {
+            parent->nodeStatistics.push_back(0);
+        }
+    }
+
+    virtual ~SchemaParser() {
+        for (ChildMap::const_iterator i = children.begin(); i != children.end(); ++i) {
+            delete i->second;
+        }
+    };
+
+    virtual tuple_cell addNS(const xmlns_ptr ns) {
+        nextChildNamespaceCount = 0;
+        return NULL_TC;
+    };
+
+    virtual IElementProducer* addElement(const xsd::QName& qname, xmlscm_type type) {
+        ChildMap::const_iterator iterator = children.find(qname);
+        SchemaParser * result;
+
+        if (iterator == children.end()) {
+            schema_node_cptr child = parent->loadNewDocument ? XNULL : schemaNode->add_child(qname, element);
+
+            if (!child.found()) {
+                child = schemaNode->add_child(qname, element);
+            }
+
+            result = new SchemaParser(this, child);
+
+            if (nextChildNamespaceCount > 0) {
+                if (parent->loadNewDocument || child->get_first_child(NULL_XMLNS, NULL, xml_namespace) == XNULL) {
+                    result->schemaNode->add_child(NULL_XMLNS, NULL, xml_namespace);
+                }
+
+                count += nextChildNamespaceCount;
+                nextChildNamespaceCount = 0;
+            }
+
+            children.insert(ChildMap::value_type(qname, result));
+        } else {
+            result = iterator->second;
+        }
+
+        count++;
+        return result;
+    };
+
+    virtual tuple_cell addAttribute(const xsd::QName& qname, const text_source_t value, xmlscm_type type) {
+        if (attributes.count(qname) == 0) {
+            if (parent->loadNewDocument || schemaNode->get_first_child(qname, attribute) == XNULL) {
+                schemaNode->add_child(qname, attribute);
+            }
+
+            attributes.insert(qname);
+        }
+
+        count++;
+        return NULL_TC;
+    }
+
+    virtual tuple_cell addComment(const text_source_t value) {
+        if (commentCount == 0 &&
+              (parent->loadNewDocument || schemaNode->get_first_child(NULL_XMLNS, NULL, comment) == XNULL))
         {
-            char tmp[256];
-            sprintf(tmp, "line %d:\n%s\n",
-                XML_GetCurrentLineNumber(p),
-                XML_ErrorString(XML_GetErrorCode(p)));
-            XML_ParserFree(p);
-            throw USER_EXCEPTION2(SE2005, tmp);
+            schemaNode->add_child(NULL_XMLNS, NULL, comment);
+        }
 
+        commentCount++;
+        count++;
+        return NULL_TC;
+    }
+
+    virtual tuple_cell addPI(const xsd::NCName& name, const text_source_t value) {
+        if (piCount == 0 &&
+              (parent->loadNewDocument || schemaNode->get_first_child(NULL_XMLNS, NULL, pr_ins) == XNULL))
+        {
+            schemaNode->add_child(NULL_XMLNS, NULL, pr_ins);
+        }
+
+        piCount++;
+        count++;
+        return NULL_TC;
+    }
+
+    virtual tuple_cell addText(const text_source_t value) {
+        if (textCount > 0 || (parent->options.stripBoundarySpaces && whitespaceOnly(value))) {
+            return NULL_TC;
+        } else if (parent->loadNewDocument || schemaNode->get_first_child(NULL_XMLNS, NULL, text) == XNULL) {
+            schemaNode->add_child(NULL_XMLNS, NULL, text);
+        }
+
+        textCount++;
+        count++;
+        return NULL_TC;
+    }
+
+    virtual tuple_cell close() {
+        if (parent->nodeStatistics.at(level) < count) {
+            parent->nodeStatistics.at(level) = count;
+        }
+
+        count = 0;
+        return NULL_TC;
+    };
+
+    virtual tuple_cell addNode(const tuple_cell& node, bool preserveType) { U_ASSERT(false); return NULL_TC; }
+    virtual tuple_cell addAtomic(const tuple_cell& node) { U_ASSERT(false); return NULL_TC; };
+    virtual bool hasNode(const tuple_cell& node) { U_ASSERT(false); return false; };
+};
+
+class DataParser : public IElementProducer {
+  private:
+    BulkLoader * parent;
+    unsigned int level;
+
+    typedef std::vector<xmlns_ptr> NamspaceList;
+    NamspaceList nextChildNamespaces;
+
+    schema_node_cptr schemaNode;
+
+    bool stripLeftSpaces;
+    typedef std::map<xsd::QName, DataParser *, xsd::QName::FastCompare> ChildMap;
+
+    ChildMap children;
+
+    schema_node_cptr textNode;
+    schema_node_cptr commentNode;
+    schema_node_cptr piNode;
+
+    xptr left;
+    xptr self;
+
+    text_source_t tailingWhitespace;
+  public:
+    virtual ~DataParser() {
+        for (ChildMap::const_iterator i = children.begin(); i != children.end(); ++i) {
+            delete i->second;
+        }
+
+        /* remove hints */
+        schemaNode->lastnode_ind = XNULL;
+    };
+
+    DataParser(SchemaParser * schemaParser) :
+      parent(schemaParser->parent), level(schemaParser->level), schemaNode(schemaParser->schemaNode),
+      left(XNULL), self(XNULL), tailingWhitespace(NULL_TEXT)
+    {
+        for (SchemaParser::ChildMap::const_iterator i = schemaParser->children.begin(); i != schemaParser->children.end(); ++i) {
+            children.insert(ChildMap::value_type(i->first, new DataParser(i->second)));
+        }
+    };
+
+    inline
+    void updateNode(xptr nodei) {
+        xptr node = checkp(indirectionDereferenceCP(nodei));
+        schema_node_cptr scm = getSchemaNode(node);
+        scm.modify();
+        scm->lastnode_ind = nodei;
+
+#ifdef SE_ENABLE_FTSEARCH
+        if (parent->updateIndexes) {
+            update_insert_sequence(node, scm);
+        }
+#endif
+    }
+
+    void addTextNode(const text_source_t buffer) {
+        text_source_t value = buffer;
+
+        U_ASSERT(value.type == text_source_t::text_mem);
+        U_ASSERT(self != XNULL);
+
+        if (parent->options.stripBoundarySpaces) {
+            if (stripLeftSpaces) {
+                value = clearLeftSpaces(value);
+
+                if (value.size > 0) {
+                    stripLeftSpaces = false;
+                } else {
+                    return;
+                }
+            }
+
+            tailingWhitespace = getRightSpaces(value);
+            value.size -= tailingWhitespace.size;
+        }
+
+        if (value.size > 0) {
+            if (left != XNULL) {
+                insert_text(indirectionDereferenceCP(left), XNULL, XNULL, value, parent->insideCDataSection);
+            } else {
+                insert_text(XNULL, XNULL, indirectionDereferenceCP(self), value, parent->insideCDataSection);
+            }
+
+            left = get_last_mo_inderection();
+            updateNode(left);
         }
     }
-    if (XML_Parse(p, Buff, len, done)== XML_STATUS_ERROR)
-    {
-        char tmp[256];
-        sprintf(tmp, "line %d:\n%s\n",
-            XML_GetCurrentLineNumber(p),
-            XML_ErrorString(XML_GetErrorCode(p)));
-        XML_ParserFree(p);
-        throw USER_EXCEPTION2(SE2005, tmp);
+
+    inline
+    void processText() {
+        if (parent->textBufferSize > 0) {
+            addTextNode(text_source_mem(parent->textBuffer, parent->textBufferSize));
+            parent->textBufferSize = 0;
+        }
+    };
+
+    virtual tuple_cell addNS(const xmlns_ptr ns) {
+        nextChildNamespaces.push_back(ns);
+        return NULL_TC;
     }
 
-    std::map<schema_node_xptr,stat_pair>::iterator it= max_fo.find(sc_parent);
-    if (it==max_fo.end())
-        max_fo[sc_parent]=stat_pair(curr_fo.back(),0);
-    else
-        if (it->second.first<curr_fo.back()) it->second.first=curr_fo.back();
-    curr_fo.pop_back();
-    it= max_fo.begin();
-    while (it!=max_fo.end())
-    {
-        int cnt=s_max(it->second.first,1);
-        it->second.first=(int)ceil(s_max (log10(1.*cnt)/log10((double)MAX_LETTER),1.));
-        it->second.second=s_min(DEF_LETTER,((int)pow((double)MAX_LETTER,it->second.first))/(2+cnt));
-        it++;
+    void init(xptr selfXptr) {
+        self = selfXptr;
+        left = XNULL;
+        stripLeftSpaces = true;
+
+        /* Numbering scheme hint */
+        sizehnt = &(parent->numbSchemeHints.at(level));
+
+        U_ASSERT(parent->textBufferSize == 0);
     }
-    curp.push_back(&max_fo[sc_parent]);
-    sizehnt=curp.back();
-    XML_ParserFree(p);
+
+    void actualAddNamespace(const xmlns_ptr ns) {
+        if (left != XNULL) {
+            insert_namespace(indirectionDereferenceCP(left), XNULL, XNULL, ns);
+        } else {
+            insert_namespace(XNULL, XNULL, indirectionDereferenceCP(self), ns);
+        }
+
+        left = get_last_mo_inderection();
+        updateNode(left);
+    }
+
+    virtual IElementProducer* addElement(const xsd::QName& qname, xmlscm_type type) {
+        processText();
+
+        ChildMap::const_iterator iterator = children.find(qname);
+        U_ASSERT(iterator != children.end());
+        DataParser * result = iterator->second;
+
+        if (left != XNULL) {
+            insert_element(indirectionDereferenceCP(left), XNULL, XNULL, qname, type);
+        } else {
+            insert_element(XNULL, XNULL, indirectionDereferenceCP(self), qname, type);
+        }
+
+        left = get_last_mo_inderection();
+        updateNode(left);
+
+        result->init(left);
+
+        for (NamspaceList::const_iterator i = nextChildNamespaces.begin(); i != nextChildNamespaces.end(); ++i) {
+            result->actualAddNamespace(*i);;
+        }
+
+        nextChildNamespaces.clear();
+
+        return result;
+    }
+
+    virtual tuple_cell addAttribute(const xsd::QName& qname, const text_source_t value, xmlscm_type type) {
+        if (left != XNULL) {
+            insert_attribute(indirectionDereferenceCP(left), XNULL, XNULL, qname, type, value);
+        } else {
+            insert_attribute(XNULL, XNULL, indirectionDereferenceCP(self), qname, type, value);
+        }
+
+        left = get_last_mo_inderection();
+        updateNode(left);
+
+        return NULL_TC;
+    }
+
+    virtual tuple_cell addComment(const text_source_t value) {
+        processText();
+
+        if (left != XNULL) {
+            insert_comment(indirectionDereferenceCP(left), XNULL, XNULL, value);
+        } else {
+            insert_comment(XNULL, XNULL, indirectionDereferenceCP(self), value);
+        }
+
+        left = get_last_mo_inderection();
+        updateNode(left);
+
+        return NULL_TC;
+    }
+
+    virtual tuple_cell addPI(const xsd::NCName& name, const text_source_t value) {
+        processText();
+
+        if (left != XNULL) {
+            insert_pi(indirectionDereferenceCP(left), XNULL, XNULL, name, value);
+        } else {
+            insert_pi(XNULL, XNULL, indirectionDereferenceCP(self), name, value);
+        }
+
+        left = get_last_mo_inderection();
+        updateNode(left);
+
+        return NULL_TC;
+    }
+
+    virtual tuple_cell addText(const text_source_t value) {
+        U_ASSERT(value.type == text_source_t::text_mem);
+
+        if (value.size > TEXT_BUFFER_SIZE) {
+            U_ASSERT(false); /* This cannot be true while parsebuffer is smaller then textbuffer */
+
+            processText();
+            addTextNode(value);
+
+            return NULL_TC;
+        }
+
+        size_t rest = (TEXT_BUFFER_SIZE - parent->textBufferSize);
+
+        if (value.size > rest) {
+            /* Very very rare accessed branch */
+            if (rest > 0) {
+                memcpy(parent->textBuffer + parent->textBufferSize, value.u.cstr, rest);
+                parent->textBufferSize += rest;
+            }
+
+            processText();
+
+            U_ASSERT(parent->textBufferSize == 0);
+
+            if (parent->options.stripBoundarySpaces && tailingWhitespace.size > 0) {
+                // TODO: Check this works!
+
+                /* This is the same buffer !!! */
+                memmove(parent->textBuffer, tailingWhitespace.u.cstr, (size_t) tailingWhitespace.size);
+                parent->textBufferSize = tailingWhitespace.size;
+                tailingWhitespace = NULL_TEXT;
+
+                rest = (TEXT_BUFFER_SIZE - parent->textBufferSize);
+
+                if (value.size > rest) {
+                    U_ASSERT(false); // This situation is almost unreal!
+                    parent->tailingWhitespaceBuffer.write(parent->textBuffer, parent->textBufferSize);
+                    parent->textBufferSize = 0;
+
+                    // TODO : implement the unlimited whitespace buffer
+                }
+            }
+
+            memcpy(parent->textBuffer + parent->textBufferSize, value.u.cstr + rest, value.size - rest);
+            parent->textBufferSize += (value.size - rest);
+        } else {
+            memcpy(parent->textBuffer + parent->textBufferSize, value.u.cstr, value.size);
+            parent->textBufferSize += value.size;
+        }
+
+        return NULL_TC;
+    }
+
+    virtual tuple_cell close() {
+        processText();
+        tailingWhitespace = NULL_TEXT;
+
+        if (parent->options.stripBoundarySpaces) {
+            parent->tailingWhitespaceBuffer.str("");
+            parent->tailingWhitespaceBuffer.clear();
+        }
+
+        sizehnt = NULL;
+
+        U_ASSERT(nextChildNamespaces.empty());
+        U_ASSERT(parent->textBufferSize == 0);
+
+        return NULL_TC;
+    };
+
+    virtual tuple_cell addNode(const tuple_cell& node, bool preserveType) { U_ASSERT(false); return NULL_TC; }
+    virtual tuple_cell addAtomic(const tuple_cell& node) { U_ASSERT(false); return NULL_TC; };
+    virtual bool hasNode(const tuple_cell& node) { U_ASSERT(false); return false; };
+};
+
+
+
+void BulkLoader::loadDocument(xptr doc_node, schema_node_cptr schema_node)
+{
+    nid_set_proportion(fnumber()); // Nobody knows WTF.
+
+    scoped_ptr<SchemaParser> schemaParser(new SchemaParser(this, schema_node, 0));
+    producer = schemaParser.get();
+
+    fseek(inputFile, 0, SEEK_SET);
+    parseDocument();
+
+    /* TODO: process node count statistics */
+    for (NodeCountStatistics::const_iterator i = nodeStatistics.begin(); i != nodeStatistics.end(); ++i) {
+        nid_hint_t nidHint = {};
+        int count = MAX(*i, 1);
+
+        nidHint.size = maxInt((int) ceil(log10(1. * count) / log10((double) MAX_LETTER)), 1);
+        nidHint.increment = minInt(DEF_LETTER, ((int) pow((double) MAX_LETTER, nidHint.size)) / (2 + count));
+
+        numbSchemeHints.push_back(nidHint);
+    }
+
+    scoped_ptr<DataParser> dataParser(new DataParser(schemaParser.get()));
+    dataParser->init(doc_node);
+
+    schemaParser = NULL; /* This will delete schema parser */
+
+    U_ASSERT(producerStack.empty());
+    producer = dataParser.get();
+
+    fseek(inputFile, 0, SEEK_SET);
+    parseDocument();
+}
+
+
+BulkLoadFrontend::BulkLoadFrontend() : file(NULL)
+{
+    options.preserveCDataSection = false;
+    options.stripBoundarySpaces = true;
+}
+
+BulkLoadFrontend::~BulkLoadFrontend()
+{
 
 }
 
-xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,bool stripped, bool print_progress)
+Node BulkLoadFrontend::loadDocument(const char* documentName)
 {
-    //test_cnt=0;
-    is_coll=false;
-    if (!print_progress) print_p = print_progress;
-    wpstrip=stripped;
-    nid_set_proportion(fnumber());
-    xptr docnode=insert_document(uri);
-    parent=docnode;
-    left=XNULL;
-    mark=1;
-    sc_parent = getSchemaPointer(docnode);
+    BulkLoader loader(true);
 
-    try
-    {
-        parse_schema(f);
-        fseek (f, 0, SEEK_SET);
-        docnode = nodeGetIndirection(docnode);
-        parse_load(f, ostr);
+    loader.options = options;
+    loader.updateIndexes = false;
+    loader.inputFile = file;
 
-        if (print_p)
-            ostr << "100%" << '\n';
+    xptr docNode = insert_document(documentName);
 
-        nodescnt=0;
-        curcnt=0;
-        curproc=0;
-        CHECKP(docnode);
+    loader.loadDocument(getIndirectionSafeCP(docNode), getSchemaNode(checkp(docNode)));
 
-        remove_hints(sc_parent);
-        sc_parent = XNULL;
-    }
-    catch (SednaUserException)
-    {
-        remove_hints(sc_parent);
-        sc_parent = XNULL;
-
-        delete_document(uri);
-        throw;
-    }
-
-    if (!print_progress) print_p=true;
-
-    return docnode;
+    return docNode;
 }
 
-xptr loadfile(FILE* f, se_ostream &ostr, const char* uri,const char * collection, bool stripped, bool print_progress)
+Node BulkLoadFrontend::loadCollectionDocument(const char* collectionName, const char* documentName)
 {
-    is_coll=true;
-    if (!print_progress) print_p = print_progress;
-    wpstrip=stripped;
-    nid_set_proportion(fnumber());
+    BulkLoader loader(false);
 
-    xptr docnode=insert_document_into_collection(collection,uri);
-    parent=docnode;
-    left=XNULL;
-    mark=1;
-    CHECKP(docnode);
-    sc_parent = getSchemaNode(docnode).ptr();
+    loader.options = options;
+    loader.updateIndexes = true;
+    loader.inputFile = file;
+
+    xptr docNode = insert_document_into_collection(collectionName, documentName);
+
 #ifdef SE_ENABLE_FTSEARCH
-    update_insert_sequence(docnode, schema_node_cptr(sc_parent));
+    update_insert_sequence(docNode, getSchemaNode(checkp(docNode)));
 #endif
-    try
-    {
-        parse_schema(f);
-        fseek(f, 0, SEEK_SET);
-        docnode = nodeGetIndirection(docnode);
-        parse_load (f, ostr);
 
-        if (print_p)
-            ostr << "100%" << '\n';
-
-        nodescnt=0;
-        curcnt=0;
-        curproc=0;
-        CHECKP(docnode);
-
-        remove_hints(sc_parent);
-        sc_parent = XNULL;
-    }
-    catch (SednaUserException)
-    {
-        remove_hints(sc_parent);
-        sc_parent = XNULL;
-
-        delete_document_from_collection(collection, uri);
-        throw;
-    }
-
-    if (!print_progress) print_p=true;
+    loader.loadDocument(getIndirectionSafeCP(docNode), getSchemaNode(checkp(docNode)));
 
 #ifdef SE_ENABLE_FTSEARCH
     execute_modifications();
 #endif
-    return docnode;
+
+    return docNode;
 }

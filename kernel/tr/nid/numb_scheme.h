@@ -27,7 +27,13 @@ typedef struct t_nid t_nid;
 
 extern int nid_block_count;
 extern t_nid NIDNULL;
-extern std::pair<int,int>* sizehnt;
+
+struct nid_hint_t {
+    int size;
+    int increment;
+};
+
+extern nid_hint_t * sizehnt;
 
 inline
 shft nid_get_size(const t_nid * nid) {
