@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <string.h>
 
-inline
-static int strcmpex(const char* c1, const char* c2)
+inline static
+int strcmpex(const char* c1, const char* c2)
 {
   if (c1==NULL && c2==NULL) return 0;
   if (c1==NULL || c2==NULL) return (c1==NULL) ? -1 : 1;
@@ -14,6 +14,39 @@ static int strcmpex(const char* c1, const char* c2)
   if (res < 0) return -1;
   if (res > 0) return 1;
   return res;
+}
+
+inline static
+unsigned int strhash(const char * a) {
+    unsigned long hash = 5381;
+    int c;
+
+    while ('\0' != (c = (* (unsigned char *) a++))) {
+        hash = ((hash << 5) + hash) + c;
+    }
+
+    return hash;
+};
+
+inline static
+unsigned int strnhash(const char * a, size_t len) {
+    unsigned long hash = 5381;
+    int c;
+
+    while ('\0' != (c = (* (unsigned char *) a++)) && len-- > 0) {
+        hash = ((hash << 5) + hash) + c;
+    }
+
+    return hash;
+};
+
+inline static
+int strcmpnull(const char * str1, const char * str2)
+{
+    if ((str1 == NULL) && (str2 == NULL)) return 0;
+    if ((str1 == NULL) || (str2 == NULL)) return (((ptrdiff_t) str1) - ((ptrdiff_t) str2));
+
+    return strcmp(str1, str2);
 }
 
 /*	The following macroses are defined:

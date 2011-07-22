@@ -17,26 +17,6 @@ struct xmlns_hash_object {
 
 struct xmlns_hash_object * xmlns_hash[XMLNS_HASH_SIZE] = {NULL};
 
-inline
-unsigned long str_hash(const char * a) {
-    unsigned long hash = 5381;
-    int c;
-
-    while ('\0' != (c = (* (unsigned char *) a++))) {
-        hash = ((hash << 5) + hash) + c;
-    }
-
-    return hash;
-};
-
-inline int mystrcmp(const char * str1, const char * str2)
-{
-    if ((str1 == NULL) && (str2 == NULL)) return 0;
-    if ((str1 == NULL) || (str2 == NULL)) return (((ptrdiff_t) str1) - ((ptrdiff_t) str2));
-
-    return strcmp(str1, str2);
-}
-
 xmlns_ptr xmlns_touch(const char * prefix, const char * uri)
 {
     if ((prefix == NULL) && (uri == NULL)) return NULL_XMLNS;
@@ -44,11 +24,11 @@ xmlns_ptr xmlns_touch(const char * prefix, const char * uri)
     if (prefix == NULL) { prefix = ""; }
     if (uri == NULL) { uri = ""; }
 
-    size_t original_hash = (unsigned int) ((str_hash(prefix) + 33 * str_hash(uri)) % XMLNS_HASH_SIZE);
+    unsigned int original_hash = (strhash(prefix) + 33 * strhash(uri)) % XMLNS_HASH_SIZE;
     struct xmlns_hash_object * i = xmlns_hash[original_hash];
 
     while (i != NULL) {
-        if ((mystrcmp(i->object.prefix, prefix) == 0) && (mystrcmp(i->object.uri, uri) == 0)) {
+        if ((strcmpnull(i->object.prefix, prefix) == 0) && (strcmpnull(i->object.uri, uri) == 0)) {
             return &(i->object);
         }
         i = i->next;
@@ -63,6 +43,29 @@ xmlns_ptr xmlns_touch(const char * prefix, const char * uri)
     return &(i->object);
 }
 
+xmlns_ptr xmlns_touch_len(const char* prefix, const char* uri, size_t uri_len)
+{
+    U_ASSERT(uri != NULL);
+    if (prefix == NULL) { prefix = ""; }
+
+    unsigned int original_hash = (strhash(prefix) + 33 * strnhash(uri, uri_len)) % XMLNS_HASH_SIZE;
+    struct xmlns_hash_object * i = xmlns_hash[original_hash];
+
+    while (i != NULL) {
+        if ((strcmpnull(i->object.prefix, prefix) == 0) && (strncmp(i->object.uri, uri, uri_len) == 0)) {
+            return &(i->object);
+        }
+        i = i->next;
+    }
+
+    i = (struct xmlns_hash_object *) cat_malloc_context(CATALOG_COMMON_CONTEXT, sizeof(struct xmlns_hash_object));
+    i->object.prefix = cat_strcpy(i, prefix);
+    i->object.uri = cat_strncpy(i, uri, uri_len);
+    i->next = xmlns_hash[original_hash];
+    xmlns_hash[original_hash] = i;
+
+    return &(i->object);
+}
 
 void free_xmlns_hash()
 {

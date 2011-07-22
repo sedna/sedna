@@ -205,6 +205,8 @@ class QName {
     static QName createUPL(const char * uri, const char * prefix, const char * localName, bool quietly = false);
     static QName createResolve(const char * prefixAndLocal, INamespaceMap * namespaces, bool quietly = false);
 
+    static QName bulkloadParse(const char * triplet);
+
     static inline QName getConstantQName(xmlns_ptr ns, const char * name) { return QName(ns, name); };
 
     struct FastCompare {

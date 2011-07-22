@@ -9,7 +9,8 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include "counted_ptr.h"
+
+#include "commutil.h"
 
 namespace sedna {
 
@@ -20,20 +21,8 @@ class StringStorage {
 
     hash_table m_table;
 
-    static size_t hash(const char * str) {
-        /* This is a djb2 hash function */
-        unsigned long hash = 5381;
-        int c;
-
-        while ('\0' != (c = (* (unsigned char *) str++))) {
-            hash = ((hash << 5) + hash) + c;
-        }
-
-        return hash;
-    }
-
     bucket & get_bucket(const char * str) {
-        return m_table.at(hash(str) % m_table.size());
+        return m_table.at(strhash(str) % m_table.size());
     }
 
     const char * insert(bucket & b, const std::string& str) {

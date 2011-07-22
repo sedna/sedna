@@ -296,6 +296,31 @@ QName QName::createResolve(const char* prefixAndLocal, INamespaceMap* namespaces
     }
 }
 
+QName QName::bulkloadParse(const char* triplet)
+{
+    const char * c = triplet;
+
+    c = strchr(c, '>');
+
+    if (c == NULL) {
+        return QName(NULL_XMLNS, triplet);
+    }
+
+    const char * uri = triplet;
+    size_t uri_len = c - uri;
+    const char * name = c + 1;
+    c = strchr(name, '>');
+
+    if (c == NULL) {
+        return xsd::QName(xmlns_touch_len(NULL, uri, uri_len), name);
+    }
+
+    size_t name_len = c - name;
+    const char * ns = c + 1;
+
+    return xsd::QName(xmlns_touch_len(ns, uri, uri_len), name, name_len);
+}
+
 /* QName is stored as (qname PREFIX URI LOCAL_NAME) */
 
 void QName::toLR(std::ostream& os, const xsd::AnyURI uri, const xsd::NCName prefix, const xsd::NCName local)
