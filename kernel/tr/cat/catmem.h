@@ -415,4 +415,6 @@ void cat_free_(void * p);
 // src MUST be null-terminated.
 char * cat_strcpy(void * parent, const char * src);
 
+char * cat_strncpy(void * parent, const char * src, size_t len);
+
 #endif /* CATMEM_H */

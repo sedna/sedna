@@ -66,6 +66,8 @@ void free_xmlns_hash();
 
 xmlns_ptr xmlns_touch(const char * prefix, const char * uri);
 
+xmlns_ptr xmlns_touch_len(const char * prefix, const char * uri, size_t uri_len);
+
 inline
 xmlns_ptr xmlns_touch(xmlns_ptr_pers xmlns) {
     if (xmlns == XNULL) { return NULL_XMLNS; }

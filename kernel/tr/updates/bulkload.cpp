@@ -87,42 +87,6 @@ text_source_t getRightSpaces(const text_source_t &x) {
     return result;
 }
 
-static char qnameBuffer[MAX_QNAME] = {}; /* zero-filled string */
-
-static
-xsd::QName parseQName(const char * x) {
-    strncpy(qnameBuffer, x, MAX_QNAME);
-
-    if (qnameBuffer[MAX_QNAME] != '\0') {
-        throw USER_EXCEPTION2(SE2005, "Too long qname, you may recompile sedna to load document, anyway, please inform the developers of having this error.");
-    }
-
-    const char * parts[3] = {NULL, NULL, NULL};
-    int partsCount = 0;
-
-    char * c = qnameBuffer;
-
-    do {
-        parts[partsCount++] = c;
-        c = strchr(c, SEPARATOR);
-
-        if (c != NULL) {
-            *(c++) = '\0';
-        }
-    } while (c != NULL && partsCount < 3);
-
-    U_ASSERT(c == NULL);
-
-    switch (partsCount) {
-      case 3 : return xsd::QName::createUPL(parts[0], parts[2], parts[1]);
-      case 2 : return xsd::QName::createUPL(parts[0], NULL, parts[1]);
-      case 1 : return xsd::QName::createNsN(NULL_XMLNS, parts[0]);
-      default : U_ASSERT(false); break;
-    }
-
-    return xsd::QName();
-}
-
 class SafeParser {
     XML_Parser p;
   public:
@@ -216,7 +180,7 @@ class BulkLoader {
     BulkLoader(bool newDocumentOpt) :
         producer(NULL), inputFile(NULL),
         textBufferSize(0), updateIndexes(false), insideCDataSection(false), loadNewDocument(newDocumentOpt)
-    {};
+    { /* qnameBuffer[MAX_QNAME - 1] = '\0'; */ };
 
     ~BulkLoader() { };
 
@@ -225,14 +189,14 @@ class BulkLoader {
     static
     void elementStart(void * _loader, const char *el, const char **attr) {
         BulkLoader * loader = (BulkLoader *) _loader;
-        xsd::QName qname = parseQName(el);
+        xsd::QName qname = xsd::QName::bulkloadParse(el);
         IElementProducer * producer = loader->producer;
 
         loader->producerStack.push(producer);
         loader->producer = loader->producer->addElement(qname, xs_untyped);
 
         while (attr[0] != NULL) {
-            loader->producer->addAttribute(parseQName(attr[0]), text_source_cstr(attr[1]), xs_untyped);
+            loader->producer->addAttribute(xsd::QName::bulkloadParse(attr[0]), text_source_cstr(attr[1]), xs_untyped);
             attr += 2;
         }
     };
@@ -322,7 +286,7 @@ class SchemaParser : public IElementProducer {
     };
 
     virtual tuple_cell addNS(const xmlns_ptr ns) {
-        nextChildNamespaceCount = 0;
+        nextChildNamespaceCount++;
         return NULL_TC;
     };
 

@@ -221,3 +221,11 @@ char * cat_strcpy(void * parent, const char * src)
     char * dest = (char *) cat_malloc(parent, n);
     return strncpy(dest, src, n);
 }
+
+char* cat_strncpy(void* parent, const char* src, size_t len)
+{
+    if (src == NULL) { return NULL; }
+    int n = strnlen(src, len - 1) + 1;
+    char * dest = (char *) cat_malloc(parent, n);
+    return strncpy(dest, src, n);
+}
