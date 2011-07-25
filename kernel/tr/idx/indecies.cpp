@@ -48,6 +48,8 @@ index_backend_t str2index_type(const char *str)
     }
 }
 
+
+
 //inits metadata library
 void index_on_session_begin()
 {
@@ -257,13 +259,22 @@ void index_cell_object::delete_from_index(xptr key_node, xptr object_indir)
 */
 
 /* Throws invalid index type exception if we try to create index
- * with unsupported type */
+ * with unsupported type
+ * At this moment:
+ * B-tree supports xs:string, xs:integer, xs:float, * xs:double, xs:date, xs:time, xs:dateTime,
+ *                xs_yearMonthDuration, xs_dateTimeDuration
+ * BST supports xs:string only
+ */
 
 static void inline
-check_index_key_type(xmlscm_type type) {
+check_index_key_type(xmlscm_type type, index_backend_t tree_type) {
+  if (tree_type == index_btree) {
     if (type != xs_integer && type != xs_float && type != xs_double && type != xs_string && type != xs_date &&
         type != xs_dateTime && type != xs_time && type != xs_yearMonthDuration && type != xs_dayTimeDuration)
         throw USER_EXCEPTION2(SE2034, xmlscm_type2c_str(type));
+  } else if (tree_type == index_bstrie) {
+    if (type != xs_string) throw USER_EXCEPTION2(SE2042, xmlscm_type2c_str(type));
+  } else throw USER_EXCEPTION(SE4084);
 }
 
 //Declaration of serializer for SortedSequence
@@ -291,7 +302,7 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
     const xpath::NodeTest node_test_nodes_deep(xpath::axis_descendant, xpath::node_test_wildcard_star);
 
     // 0. Check index type
-    check_index_key_type(index_dsc->keytype);
+    check_index_key_type(index_dsc->keytype, index_dsc->backend_type);
 
     // I. Create and fill new index cell
     if (catalog_find_name(catobj_indicies, index_dsc->index_title) != NULL) {
