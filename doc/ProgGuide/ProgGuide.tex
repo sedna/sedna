@@ -3086,9 +3086,10 @@ the key for searching the node \verb!X!.
 each index in the database.
 
 \verb!type! is an atomic type which the value of the keys should be cast to. The
-following types are supported: \verb!xs:string!, \verb!xs:integer!,
+following types are supported for B-tree: \verb!xs:string!, \verb!xs:integer!,
 \verb!xs:float!, \verb!xs:double!, \verb!xs:date!, \verb!xs:time!,
-\verb!xs:dateTime!, \verb!xs_yearMonthDuration!, \verb!xs_dateTimeDuration!.
+\verb!xs:dateTime!, \verb!xs_yearMonthDuration!, \verb!xs_dateTimeDuration!. Note
+that BST supports \verb!xs:string! only.
 
 \verb!tree-type! defines the structure that would be used for index storage.
 This argument is optional. Index is stored using B+ tree structure by default

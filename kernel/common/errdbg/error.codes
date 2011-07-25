@@ -663,7 +663,7 @@ sedna-err:SE2033
     An index with the same name already exists.
 sedna-err:SE2034
 
-    Invalid index type, only xs:string, xs:integer, xs:float, xs:double, xs:date, xs:time, xs:dateTime, xs_yearMonthDuration, xs_dateTimeDuration are supported.
+    Invalid index type, only xs:string, xs:integer, xs:float, xs:double, xs:date, xs:time, xs:dateTime, xs_yearMonthDuration, xs_dateTimeDuration are supported in B-tree based index.
 sedna-err:SE2035
 
     Invalid mode in index_scan_between function.
@@ -676,6 +676,9 @@ sedna-err:SE2037
 sedna-err:SE2038
 
    An attempt to insert attribute node after element.
+sedna-err:SE2042
+
+   Invalid index type, only xs:string is supported in BST based index.
 ########### sql ####################
 sedna-err:SE2100
 
