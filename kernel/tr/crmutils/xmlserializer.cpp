@@ -18,6 +18,8 @@
 #include "tr/crmutils/xdm.h"
 #include "tr/structures/xmlns.h"
 
+#define MAX_INDENT 64
+
 inline static
 void filterText(StrMatcher &stm, se_ostream * crmout, int sclass, TextBufferReader &reader)
 {
@@ -32,6 +34,17 @@ static const char * XML_docTagEnd = "?>";
 static const char * XML_openTag = "<";
 static const char * XML_closeTag = ">";
 
+void XMLPrintQName(xsd::QName qname, se_ostream* crmout)
+{
+    U_ASSERT(qname.valid());
+
+    if (qname.getXmlNs() != NULL_XMLNS && qname.getXmlNs()->has_prefix()) {
+        *crmout << qname.getXmlNs()->get_prefix() << ":";
+    }
+
+    *crmout << qname.getLocalName();
+}
+
 inline static
 bool isAttributeAt(IXDMNodeList * list) {
     const IXDMNode * node = list->getNode();
@@ -45,14 +58,9 @@ bool isNamespaceAt(IXDMNodeList * list) {
 }
 
 inline static
-bool setContainsString(std::set<std::string> * set, const char * item) {
-    std::string s = item;
-    return set->find(s) != set->end();
-}
-
-inline static
-void printIndent(se_ostream * crmout, int level, const char * indent) {
-    for (int i=0; i < level; i++) { (*crmout) << indent; }
+void printIndent(se_ostream * crmout, int level, const char * indent_cache, size_t indent_len) {
+    if (level >= MAX_INDENT) { level = MAX_INDENT - 1; }
+    crmout->write(indent_cache, indent_len * level);
 }
 
 inline static
@@ -242,6 +250,15 @@ void XMLSerializer::initialize()
     indentNext = indentElements;
     separatorNeeded = options->separateTuples;
     indentSequence = options->indentSequence;
+    indentSequenceLength = strlen(indentSequence);
+    indentCache = (char *) malloc(indentSequenceLength * MAX_INDENT);
+
+    char * c = indentCache;
+    for (size_t i = 0; i < MAX_INDENT; ++i) {
+        memcpy(c, indentSequence, indentSequenceLength);
+        c += indentSequenceLength;
+    }
+
     useCharmapFlag = (int) (options->useCharmap ? pat_charmap : 0);
 
     // FIXME: we should reinitialize StrMatcher here
@@ -253,7 +270,7 @@ void XMLSerializer::initialize()
 
 void XMLSerializer::printElementName(IXDMNode* element)
 {
-    element->printNodeName(*crmout);
+    XMLPrintQName(element->getQName(), crmout);
 }
 
 
@@ -270,7 +287,7 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     if (indentNext) {
         if (indentLevel > 0) {
             (*crmout) << "\n";
-            printIndent(crmout, indentLevel, indentSequence);
+            printIndent(crmout, indentLevel, indentCache, indentSequenceLength);
         }
         ++indentLevel;
     }
@@ -278,11 +295,7 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
 
     (*crmout) << openTagSeq;
 
-#ifndef SE_ENABLE_DTSEARCH
-    elementInterface->printNodeName(*crmout);
-#else /* SE_ENABLE_DTSEARCH */
     printElementName(elementInterface);
-#endif /* SE_ENABLE_DTSEARCH */
 
     /* If null element namespace implies non-null default namespace */
 
@@ -302,8 +315,8 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
 
     while (isAttributeAt(children)) {
         IXDMNode * node = children->getNode();
-        const xsd::QName qname = node->getQName();
-        const xmlns_ptr ns = qname.getXmlNs();
+        t_item kind = node->getNodeKind();
+        const xmlns_ptr ns = kind == attribute ? node->getQName().getXmlNs() : node->getNamespaceValue();
 
         if (ns != NULL_XMLNS && declareNamespace(ns)) {
             (*crmout) << " ";
@@ -311,7 +324,7 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
             ++namespaceCount;
         }
 
-        if (node->getNodeKind() == attribute) {
+        if (kind == attribute) {
             (*crmout) << " ";
             printAttribute(node);
         }
@@ -328,14 +341,10 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
             printNode(children->getNode());
         } while (children->next());
 
-        if (indented && indentNext) { (*crmout) << "\n"; printIndent(crmout, indentLevel-1, indentSequence); }
+        if (indented && indentNext) { (*crmout) << "\n"; printIndent(crmout, indentLevel-1, indentCache, indentSequenceLength); }
 
         (*crmout) << openTagSeq << "/";
-#ifndef SE_ENABLE_DTSEARCH
-        elementInterface->printNodeName(*crmout);
-#else /* SE_ENABLE_DTSEARCH */
         printElementName(elementInterface);
-#endif /* SE_ENABLE_DTSEARCH */
         (*crmout) << closeTagSeq;
     }
 
@@ -358,7 +367,7 @@ void XMLSerializer::printNamespace(xmlns_ptr ns)
 
 void XMLSerializer::printAttribute(IXDMNode * attribute)
 {
-    attribute->printNodeName(*crmout);
+    XMLPrintQName(attribute->getQName(), crmout);
     (*crmout) << "=\"";
     TextBufferReader reader(attribute->getValue());
     filterText(stringFilter, crmout, pat_attribute | useCharmapFlag, reader);
@@ -457,7 +466,7 @@ void SXMLSerializer::printAttribute(IXDMNode * attribute)
 {
     TextBufferReader reader(attribute->getValue());
     (*crmout) << " (";
-    attribute->printNodeName(*crmout);
+    XMLPrintQName(attribute->getQName(), crmout);
     (*crmout) << " \"";
     filterText(stringFilter, crmout, pat_text, reader);
     (*crmout) << "\")";
@@ -472,7 +481,7 @@ void SXMLSerializer::printElement(IXDMNode * elementInterface)
     elementContext = &context;
 
     (*crmout) << " (";
-    elementInterface->printNodeName(*crmout);
+    XMLPrintQName(elementInterface->getQName(), crmout);
 
     IXDMNodeList * children = elementInterface->getAllChildren();
 
@@ -495,7 +504,7 @@ void SXMLSerializer::printElement(IXDMNode * elementInterface)
     elementContext = parentContext;
 }
 
-XMLSerializer::XMLSerializer() : docPISeqOpen(XML_docTagStart), docPISeqClose( XML_docTagEnd), openTagSeq(XML_openTag), closeTagSeq(XML_closeTag)
+XMLSerializer::XMLSerializer() : indentCache(NULL), docPISeqOpen(XML_docTagStart), docPISeqClose( XML_docTagEnd), openTagSeq(XML_openTag), closeTagSeq(XML_closeTag)
 {
     stringFilter.add_str(">","&gt;", pat_attribute | pat_element);
     stringFilter.add_str("<","&lt;", pat_attribute | pat_element);

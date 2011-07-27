@@ -91,7 +91,7 @@ private:
     xmlns_ptr_pers xmlns_pers; /* persistent */
     mutable xmlns_ptr xmlns_local;
     mutable int indexInParent;
-
+    mutable xsd::QName qname;
 public:
 
 /* Common catalog object interface */
@@ -115,6 +115,16 @@ public:
     t_item type; /* type of node: element/text/attribute/simple */ /* persistent */
     xptr bblk; /* pointer to the first block of block chain */ /* persistent */
     xptr bblk_indir; /* beggining block with free indirection quota*/ /* persistent */
+
+    inline
+    xsd::QName get_qname() const {
+        if (name != NULL && !qname.valid()) {
+            U_ASSERT(*name != '\0');
+            qname = xsd::QName::createUnchecked(get_xmlns(), get_name());
+        }
+
+        return qname;
+    };
 
     int getIndex() const {
         if (indexInParent == -2) {

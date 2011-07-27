@@ -204,6 +204,7 @@ class QName {
     static QName createUCn(const char * uri, const char * prefixAndLocal, bool quietly = false);
     static QName createUPL(const char * uri, const char * prefix, const char * localName, bool quietly = false);
     static QName createResolve(const char * prefixAndLocal, INamespaceMap * namespaces, bool quietly = false);
+    static QName createUnchecked(xmlns_ptr ns, const char * local);
 
     static QName bulkloadParse(const char * triplet);
 
