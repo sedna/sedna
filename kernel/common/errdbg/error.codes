@@ -676,9 +676,7 @@ sedna-err:SE2037
 sedna-err:SE2038
 
    An attempt to insert attribute node after element.
-sedna-err:SE2042
 
-   Invalid index type, only xs:string is supported in BST based index.
 ########### sql ####################
 sedna-err:SE2100
 
@@ -1744,22 +1742,21 @@ sedna-err:SE3081
 err:XQDY0096
 
    It is a dynamic error the node-name of a node constructed by a computed element constructor has any of the following properties: its namespace prefix is xmlns, its namespace URI is http://www.w3.org/2000/xmlns/, its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace, its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
-
 sedna-err:SE3082
 
     Prolog is prohibited in CREATE TRIGGER statements
-
 sedna-err:SE2301
 
   Unsupported serialization method
 sedna-err:SE2302
 
   Serialization internal error: unknown node type passed
-
 sedna-err:SE2901
 
   The feature is no longer supported
-
 sedna-err:SE4084
 
   Unsupported index type
+sedna-err:SE2042
+
+   Invalid index type, only xs:string is supported in BST based index.
