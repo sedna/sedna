@@ -155,7 +155,7 @@ void FTSerializer::printElementName(IXDMNode * elementInterface)
     if (ignoreTagNames) {
         (* crmout) << "x";
     } else {
-        elementInterface->printNodeName(*crmout);
+        XMLPrintQName(elementInterface->getQName(), crmout);
     }
 }
 

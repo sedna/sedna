@@ -30,6 +30,8 @@ enum pat_class
 };
 
 
+void XMLPrintQName(xsd::QName qname, se_ostream * crmout);
+
 class XDMSerializer : public Serializer {
   private:
     typedef std::map<std::string, xmlns_ptr> NSPrefixMap;
@@ -64,6 +66,8 @@ class XDMSerializer : public Serializer {
     virtual void printAttribute(IXDMNode * attribute) = 0;
     virtual void printText(t_item type, const text_source_t value) = 0;
 
+    virtual void printElementName(IXDMNode * element) = 0;
+
     XDMSerializer();
 
     virtual void serialize(tuple &t);
@@ -75,7 +79,10 @@ class XMLSerializer : public XDMSerializer {
     int indentLevel;
     bool indentElements;
     int useCharmapFlag;
+
+    char * indentCache;
     const char* indentSequence;
+    size_t indentSequenceLength;
 
     const char * docPISeqOpen;
     const char * docPISeqClose;
@@ -86,11 +93,11 @@ class XMLSerializer : public XDMSerializer {
     StrMatcher stringFilter;
 
     /* Dummy constructor, used only by heir classes */
-    inline XMLSerializer(int dummy) {};
+    inline XMLSerializer(int dummy) : indentCache(NULL) {};
   public:
     /* Default constructor, it do implements some stuff, i.e. stringFilter initialization */
     XMLSerializer();
-    inline ~XMLSerializer() {};
+    inline ~XMLSerializer() { free(indentCache); };
 
     virtual void printAtomic(const tuple_cell &t);
     virtual void printDocument(const text_source_t docname, IXDMNode * content);
@@ -98,6 +105,7 @@ class XMLSerializer : public XDMSerializer {
     virtual void printNamespace(xmlns_ptr ns);
     virtual void printAttribute(IXDMNode * attribute);
     virtual void printText(t_item type, const text_source_t value);
+
     virtual void printElementName(IXDMNode * element);
 
     virtual bool supports(enum se_output_method method) { return method == se_output_method_xml; };

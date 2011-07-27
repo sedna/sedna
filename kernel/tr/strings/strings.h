@@ -589,13 +589,18 @@ str_cursor * get_text_cursor(const text_source_t text) {
 class TextBufferReader {
 private:
     str_cursor * cursor;
+    char in_buffer[PAGE_SIZE];
 public:
     char * buffer;
     int size;
 
+/* It turned out, that huge malloc is slow in this place, so we optimize it, moving it to stack from heap  */
+    TextBufferReader(const text_source_t text) : cursor(get_text_cursor(text)), buffer(in_buffer) {};
+    ~TextBufferReader() { free(cursor); };
+/*
     TextBufferReader(const text_source_t text) : cursor(get_text_cursor(text)), buffer((char*) malloc(PAGE_SIZE)) {};
     ~TextBufferReader() { free(cursor); free(buffer); };
-
+*/
     bool read() {
         /* ASSERTION: Returned value is bounded by PAGE_SIZE at most, so can be safely casted */
         return ((size = (int) cursor->copy_blk(buffer)) != 0);

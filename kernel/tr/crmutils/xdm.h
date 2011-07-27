@@ -18,6 +18,13 @@
 
 class IXDMNodeList;
 
+struct xdm_node_t {
+    t_item kind;
+    xsd::QName qname;
+    xmlns_ptr ns_value;
+    text_source_t text_value;
+};
+
 /* interface */ class IXDMNode {
   public:
     virtual ~IXDMNode() {};
@@ -25,8 +32,7 @@ class IXDMNodeList;
     virtual t_item getNodeKind() const = 0;
     virtual xsd::QName getQName() const = 0;
     virtual const text_source_t getValue() const = 0;
-
-    virtual void printNodeName(se_ostream & out) const = 0;
+    virtual xmlns_ptr getNamespaceValue() const = 0;
 
     /* Here "all children" means children and attributes  */
     virtual IXDMNodeList * getAllChildren() = 0;
@@ -56,12 +62,9 @@ class SednaNode : public IXDMNode {
     ~SednaNode();
 
     virtual t_item getNodeKind() const;
-    virtual const char * getLocalName() const;
-    virtual xmlns_ptr getNamespace() const;
     virtual xsd::QName getQName() const;
     virtual const text_source_t getValue() const;
-
-    virtual void printNodeName(se_ostream & out) const;
+    virtual xmlns_ptr getNamespaceValue() const;
 
     virtual IXDMNodeList * getAllChildren();
 };

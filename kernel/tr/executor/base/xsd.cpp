@@ -88,6 +88,11 @@ QName::QName(xmlns_ptr ns, const char* aLocalName, size_t len) : ns(ns), localNa
     localName = nameStorage.intern(aLocalName, len);
 }
 
+QName QName::createUnchecked(xmlns_ptr ns, const char* local)
+{
+    return QName(ns, local);
+}
+
 static
 char * encodePtr(char * c, uintptr_t p) {
     uintptr_t a = ~ (uintptr_t) 0;

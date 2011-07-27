@@ -56,16 +56,6 @@ namespace portal {
         if (nodeSedna != NULL) { delete nodeSedna; }
     };
 
-    void VirtualNode::printNodeName(se_ostream & out) const {
-        U_ASSERT(snode.found());
-        const xmlns_ptr ns = snode->get_xmlns();
-
-        if (ns != NULL_XMLNS && ns->has_prefix()) {
-            out << ns->get_prefix() << ":";
-        }
-        out << snode->get_name();
-    }
-
     IXDMNode * VirtualNode::getNode() {
         if (atend) { return NULL; }
 

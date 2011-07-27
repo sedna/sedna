@@ -20,12 +20,7 @@ t_item SednaNode::getNodeKind() const {
     return snode->type;
 }
 
-const char * SednaNode::getLocalName() const {
-    if (!snode.found()) { snode = getSchemaNode(checkp(node)); }
-    return snode->get_name();
-}
-
-xmlns_ptr SednaNode::getNamespace() const {
+xmlns_ptr SednaNode::getNamespaceValue() const {
     if (!snode.found()) { snode = getSchemaNode(checkp(node)); }
     if (snode->type == xml_namespace) {
         return NSNode(node).getNamespaceLocal();
@@ -36,7 +31,17 @@ xmlns_ptr SednaNode::getNamespace() const {
 
 xsd::QName SednaNode::getQName() const {
     if (!snode.found()) { snode = getSchemaNode(checkp(node)); }
-    return xsd::QName::createNsN(snode->get_xmlns(), snode->get_name(), true);
+
+    if (snode->type == xml_namespace) {
+        xmlns_ptr ns = NSNode(node).getNamespaceLocal();
+        if (ns->has_prefix()) {
+            return xsd::QName::createUnchecked(xmlns_touch("xmlns", "http://www.w3.org/2000/xmlns/"), ns->get_prefix());
+        } else {
+            return xsd::QName::createUnchecked(NULL_XMLNS, "xmlns");
+        }
+    };
+
+    return snode->get_qname();
 }
 
 const text_source_t SednaNode::getValue() const {
@@ -44,24 +49,6 @@ const text_source_t SednaNode::getValue() const {
         return text_source_cstr(NSNode(checkp(node)).getNamespaceLocal()->get_uri());
     } else {
         return text_source_node(node);
-    }
-}
-
-void SednaNode::printNodeName(se_ostream & out) const {
-    if (!snode.found()) { snode = getSchemaNode(checkp(node)); }
-    if (snode->type == xml_namespace) {
-        const xmlns_ptr ns = NSNode(checkp(node)).getNamespaceLocal();
-        U_ASSERT(ns != NULL_XMLNS);
-        out << "xmlns";
-        if (ns->has_prefix()) {
-          out << ":" << ns->get_prefix();
-        }
-    } else {
-        const xmlns_ptr ns = snode->get_xmlns();
-        if (ns != NULL_XMLNS && ns->has_prefix()) {
-            out << ns->get_prefix() << ":";
-        }
-        out << snode->get_name();
     }
 }
 
