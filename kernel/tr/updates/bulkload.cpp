@@ -196,7 +196,7 @@ class BulkLoader {
         loader->producer = loader->producer->addElement(qname, xs_untyped);
 
         while (attr[0] != NULL) {
-            loader->producer->addAttribute(xsd::QName::bulkloadParse(attr[0]), text_source_cstr(attr[1]), xs_untyped);
+            loader->producer->addAttribute(xsd::QName::bulkloadParse(attr[0]), text_source_cstr(attr[1]), xs_untypedAtomic);
             attr += 2;
         }
     };

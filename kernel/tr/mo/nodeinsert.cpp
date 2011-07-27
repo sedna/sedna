@@ -41,6 +41,8 @@ void init_node(node_base_t* node, t_item ntype, xmlscm_type type) {
     case(attribute) :
         ((attribute_node *) node)->type = type;
         break;
+    case(text):
+        ((text_node *) node)->flags = 0;
     default:
         break;
     }

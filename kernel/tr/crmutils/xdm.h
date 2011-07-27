@@ -23,8 +23,6 @@ class IXDMNodeList;
     virtual ~IXDMNode() {};
 
     virtual t_item getNodeKind() const = 0;
-    virtual const char * getLocalName() const = 0;
-    virtual xmlns_ptr getNamespace() const = 0;
     virtual xsd::QName getQName() const = 0;
     virtual const text_source_t getValue() const = 0;
 
