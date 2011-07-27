@@ -164,7 +164,7 @@ void FTSerializer::printElement(IXDMNode * elementInterface)
     ft_index_type save_serialization_type = serialization_type;
 
     if (custom_tree != NULL) {
-        ft_custom_tree_t::sedna_rbtree_entry * sc = custom_tree->get(elementInterface->getLocalName(), elementInterface->getNamespace());
+        ft_custom_tree_t::sedna_rbtree_entry * sc = custom_tree->get(elementInterface->getQName().getLocalName(), elementInterface->getQName().getXmlNs());
         if (sc != NULL) {
             setSerializationType(sc->obj->cm);
         } else if (serialization_type == ft_customized_value) {

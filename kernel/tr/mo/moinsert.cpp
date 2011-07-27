@@ -173,7 +173,7 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent, const char* name
 
 enum text_insert_t { ti_new_node, ti_addtext_after, ti_addtext_before };
 
-xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t source, bool cdataflag)
+xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t source, int cdataflag)
 {
     node_info_t node_info = {left_sib, right_sib, parent, text, 0, NULL_XMLNS};
     schema_node_cptr parent_snode;
@@ -200,7 +200,9 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
             insertNodeWithLeftBrother(node_info.left_sibling, &node_info);
         } else {
             node_info.node_xptr = node_info.left_sibling;
-            if (source.size > 0) { insertTextValue(ip_tail, node_info.node_xptr, source); }
+            if (source.size > 0) {
+                insertTextValue(ip_tail, node_info.node_xptr, source);
+            }
             insert_type = ti_addtext_after;
         }
     } else if (node_info.right_sibling != XNULL && getNodeType(checkp(node_info.right_sibling)) == text) {
@@ -208,7 +210,9 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
             insertNodeWithRightBrother(node_info.right_sibling, &node_info);
         } else {
             node_info.node_xptr = node_info.right_sibling;
-            if (source.size > 0) { insertTextValue(ip_head, node_info.node_xptr, source); }
+            if (source.size > 0) {
+                insertTextValue(ip_head, node_info.node_xptr, source);
+            }
             insert_type = ti_addtext_before;
         }
     } else {
@@ -217,6 +221,10 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
 
     if (insert_type == ti_new_node) {
         insertTextValue(node_info.node_xptr, source);
+
+        if (cdataflag & cdata_section > 0) {
+            ((internal::text_node *) xaddr(checkp(node_info.node_xptr)))->flags |= cdata_section;
+        }
     } else {
         node_info.indirection = getIndirectionSafeCP(node_info.node_xptr);
     }

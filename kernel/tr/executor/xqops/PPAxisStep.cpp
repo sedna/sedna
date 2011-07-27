@@ -251,6 +251,10 @@ Node resolveNode_RightSiblingQName(Node node, AxisHints * hint) {
 
     schema_node_cptr child = scn->parent->get_first_child(hint->nt.getQName(), element);
 
+    if (!child.found()) {
+        return XNULL;
+    }
+
     return getRightSiblingBySchema(node.getPtr(), child);
 }
 
@@ -262,6 +266,10 @@ Node resolveNode_LeftSiblingQName(Node node, AxisHints * hint) {
     }
 
     schema_node_cptr child = scn->parent->get_first_child(hint->nt.getQName(), element);
+
+    if (!child.found()) {
+        return XNULL;
+    }
 
     return getLeftSiblingBySchema(node.getPtr(), child);
 }

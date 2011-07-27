@@ -301,7 +301,9 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     IXDMNodeList * children = elementInterface->getAllChildren();
 
     while (isAttributeAt(children)) {
-        const xmlns_ptr ns = children->getNode()->getNamespace();
+        IXDMNode * node = children->getNode();
+        const xsd::QName qname = node->getQName();
+        const xmlns_ptr ns = qname.getXmlNs();
 
         if (ns != NULL_XMLNS && declareNamespace(ns)) {
             (*crmout) << " ";
@@ -309,10 +311,11 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
             ++namespaceCount;
         }
 
-        if (children->getNode()->getNodeKind() == attribute) {
+        if (node->getNodeKind() == attribute) {
             (*crmout) << " ";
-            printAttribute(children->getNode());
+            printAttribute(node);
         }
+
         children->next();
     }
 
