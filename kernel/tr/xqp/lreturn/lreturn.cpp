@@ -1449,8 +1449,7 @@ namespace sedna
             off_this.exi = xqf->merger(params);
 
             // for index-scan functions we need custom ddo
-            if (*n.int_name == "!fn!index-scan" || *n.int_name == "!fn!index-scan-between" || *n.int_name == "!fn!ftindex-scan" ||
-                *n.int_name == "!fn!ftwindex-scan")
+            if (*n.int_name == "!fn!index-scan" || *n.int_name == "!fn!index-scan-between")
             {
                 if (!getParentRequest().distinctOnly && isModeOrdered && !dynamic_cast<ASTStep *>(getParent()))
                 {
