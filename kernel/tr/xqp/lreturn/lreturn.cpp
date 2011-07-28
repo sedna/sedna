@@ -1057,7 +1057,7 @@ namespace sedna
                 off_this = off_pe = off_cont;
                 off_this.isCached = false;
                 off_pe.usedVars.insert("$%v"); // since . is a context
-                trying_abs_path = !n.preds; // since . without preds cannot destroy abspath
+                trying_abs_path = off_cont.in_abs_path && !n.preds; // since . without preds cannot destroy abspath
             }
             else
             {
