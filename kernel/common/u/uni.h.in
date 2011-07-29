@@ -1,0 +1,19 @@
+/* This template is supposed to contain definitions for missing functions.
+ * You may check function existance using cmake function "CHECK_FUNCTION_EXISTS(func_name variable)".
+ * If the function exists cmake will set "variable" to 1, otherwise it would be set to 0. Also
+ * /kernel/common/u/CMakeLists.txt contains a directive to generate uni.h file from this (uni.h.in)
+ * template.
+ * You can use directive "cmakedefine variable" in this file. If cmake has set "variable" to 1 then
+ * the output file "uni.h" would contain define variable, otherwise it would contain "undef variable"
+ */
+
+#cmakedefine __STRNLEN_DEFINED
+
+#ifndef __STRNLEN_DEFINED
+inline static
+size_t strnlen(const char *s, size_t max) {
+    register const char *p;
+    for(p = s; *p && max--; ++p);
+    return(p - s);
+}
+#endif

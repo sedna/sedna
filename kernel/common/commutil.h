@@ -5,14 +5,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#ifdef SunOS
-inline static
-size_t strnlen(const char *s, size_t max) {
-    register const char *p;
-    for(p = s; *p && max--; ++p);
-    return(p - s);
-}
-#endif
 
 inline static
 int strcmpex(const char* c1, const char* c2)

@@ -9,6 +9,7 @@
 
 
 #include "common/u/u.h"
+#include "common/u/uni.h"
 #include "sp_defs.h"
 #include "common/mmgr/se_alloc.h"
 #include "common/errdbg/event_log.h"
