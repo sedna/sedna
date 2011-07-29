@@ -137,7 +137,7 @@ int uerrno(const char *funcname, const void* arg)
     }
     else if (   strcmp(funcname, "WSACleanup") == 0
              || strcmp(funcname, "socket") == 0
-             || strcmp(funcname, "gethostbyname") == 0
+             || strcmp(funcname, "getaddrinfo") == 0
              || strcmp(funcname, "bind") == 0
              || strcmp(funcname, "connect") == 0
              || strcmp(funcname, "setsockopt") == 0
