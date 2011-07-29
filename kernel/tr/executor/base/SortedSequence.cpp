@@ -17,7 +17,7 @@
 #define SS_PTR_BLK_SIZE ((PAGE_SIZE - sizeof(ss_blk_hdr)) / sizeof(data_ptr))
 //Size of block
 #define SS_DATA_BLK_SIZE (PAGE_SIZE - sizeof(ss_blk_hdr))
-//Pointer to the block gge
+//Pointer to the block header
 #define SS_BLK_HEADER(p) ((ss_blk_hdr *)(XADDR(BLOCKXPTR(p))))
 
 //Initialization and deinitialization
@@ -93,17 +93,17 @@ void SortedSequence::add(const tuple& t)
     data_ptr tmp_data_ptr;
     tmp_data_ptr.value = valPlace;
     tmp_data_ptr.size = size;
-    xptr tmp_ptr = BLOCKXPTR(ptrPlace);
-    ptrPlace = writeData((void *)(&tmp_data_ptr), sizeof(data_ptr), ptrPlace);
-    if (tmp_ptr != BLOCKXPTR(ptrPlace))
+    xptr tmp_ptr = ptrPlace;
+    ptrPlace = writeData((void *)(&tmp_data_ptr), sizeof(data_ptr), ptrPlace, false);
+    if (!same_block(tmp_ptr, ptrPlace))
     {
         blocksCount++;
     }
 
     //Writing value
-    tmp_ptr = BLOCKXPTR(valPlace);
-    valPlace = writeData(tuple_buf, size, valPlace);
-    if (tmp_ptr != BLOCKXPTR(valPlace))
+    tmp_ptr = valPlace;
+    valPlace = writeData(tuple_buf, size, valPlace, true);
+    if (!same_block(tmp_ptr, valPlace))
     {
         blocksCount++;
     }
@@ -212,13 +212,11 @@ void SortedSequence::finalizeAccumulator()
         if (tmp_ptr_next != XNULL)
         {
             inBlockSort(tmp_ptr, SS_PTR_BLK_SIZE);
-            //inBlockSort(tmp_ptr, 0, SS_PTR_BLK_SIZE - 1);
             ptrsInBlock -= SS_PTR_BLK_SIZE;
         }
         else
         {
             inBlockSort(tmp_ptr, ptrsInBlock);
-            //inBlockSort(tmp_ptr, 0, ptrsInBlock - 1);
         }
         tmp_ptr = tmp_ptr_next;
     }
@@ -227,9 +225,10 @@ void SortedSequence::finalizeAccumulator()
     makeNewChain(ptrsInBlock);
 }
 
-xptr SortedSequence::getPtr(xptr block, int ind)
+void SortedSequence::getPtr(data_ptr &ptr, xptr block, int ind)
 {
-    return block + ind * sizeof(data_ptr);
+    readData(&ptr, sizeof(data_ptr), block + ind * sizeof(data_ptr));
+    return;
 }
 
 size_t SortedSequence::getVal(void *buf, xptr block, int ind)
@@ -259,12 +258,11 @@ void SortedSequence::inBlockSort(xptr p, int amount)
 {
     SortedSequence::TupleComparator comparator(this);
 
-    std::vector <data_ptr> indexes(amount);
+    //Tricky: We should copy all the pointers in block to other place to avoid CHECKP on getting any pointer
+
     CHECKP(p);
-    for (int i = 0; i < amount; i++)
-    {
-        memcpy(&indexes[i], XADDR(p + i * sizeof(data_ptr)), sizeof(data_ptr));
-    }
+    data_ptr * data = (data_ptr *) XADDR(p);
+    std::vector <data_ptr> indexes(data, data + amount);
 
     std::sort(indexes.begin(), indexes.end(), comparator);
 
@@ -274,73 +272,6 @@ void SortedSequence::inBlockSort(xptr p, int amount)
         memcpy(XADDR(p + i * sizeof(data_ptr)), &indexes[i], sizeof(data_ptr));
     }
 }
-
-/*    if (right - left + 1 <= 7)
-    {
-        //Insertion sort in small cases
-        void *tuple_buf1 = buf1;
-        void *tuple_buf2 = buf2;
-        size_t tuple_size1, tuple_size2;
-        for (int i = left + 1; i <= right; i++)
-        {
-            tuple_size1 = getVal(tuple_buf1, p, i);
-            int j = i - 1;
-            do
-            {
-                tuple_size2 = getVal(tuple_buf2, p, j);
-                if (serializer -> compare(tuple_buf1, tuple_size1, tuple_buf2, tuple_size2) < 0)
-                {
-                    swapPointers(getPtr(p, j), getPtr(p, j + 1));
-                }
-                else
-                {
-                    break;
-                }
-                j--;
-            }
-            while (j >= 0);
-        }
-    }
-    else
-    {
-        //Quick sort in other cases
-        void *pivot = buf1;
-        void *tuple_buf = buf2;
-        size_t pivot_size, tuple_size;
-
-        int i = left, j = right;
-
-        //Choosing partition element
-        int pivot_ind = (left + right) / 2;
-        pivot_size = getVal(pivot, p, pivot_ind);
-
-        while (i < j)
-        {
-            tuple_size = getVal(tuple_buf, p, i);
-            while (serializer -> compare(tuple_buf, tuple_size, pivot, pivot_size) < 0)
-            {(void *)
-                i++;
-                tuple_size = getVal(tuple_buf, p, i);
-            }
-
-            tuple_size = getVal(tuple_buf, p, j);
-            while (serializer -> compare(tuple_buf, tuple_size, pivot, pivot_size) > 0)
-            {
-                j--;
-                tuple_size = getVal(tuple_buf, p, j);
-            }
-
-            if (i <= j)
-            {
-                swapPointers(getPtr(p, i), getPtr(p, j));
-                i++, j--;
-            }
-        }
-
-        if (i < right) inBlockSort(p, i, right);
-        if (left < j) inBlockSort(p, left, j);
-    }
-}*/
 
 xptr SortedSequence::mergeBlocks(xptr p1, int size1, xptr p2, int size2)
 {
@@ -358,12 +289,12 @@ xptr SortedSequence::mergeBlocks(xptr p1, int size1, xptr p2, int size2)
     //Reading pointers and values
     if (size1 > 0)
     {
-        readData((void *)(&ptr1), sizeof(data_ptr), getPtr(p1, 0));
+        getPtr(ptr1, p1, 0);
         tuple_size1 = getVal(tuple_buf1, p1, 0);
     }
     if (size2 > 0)
     {
-        readData((void *)(&ptr2), sizeof(data_ptr), getPtr(p2, 0));
+        getPtr(ptr2, p2, 0);
         tuple_size2 = getVal(tuple_buf2, p2, 0);
     }
 
@@ -376,7 +307,7 @@ xptr SortedSequence::mergeBlocks(xptr p1, int size1, xptr p2, int size2)
         if (written2 == size2 || (written1 < size1 && serializer -> compare(tuple_buf1, tuple_size1, tuple_buf2, tuple_size2) < 0))
         {
             //Element in the first sequence less than element in second
-            ptr_place = writeData((void *)(&ptr1), sizeof(data_ptr), ptr_place);
+            ptr_place = writeData((void *)(&ptr1), sizeof(data_ptr), ptr_place, false);
             written1++;
 
             if (written1 % SS_PTR_BLK_SIZE == 0 || size1 == written1)
@@ -388,14 +319,14 @@ xptr SortedSequence::mergeBlocks(xptr p1, int size1, xptr p2, int size2)
             }
             if (written1 < size1)
             {
-                readData((void *)(&ptr1), sizeof(data_ptr), getPtr(p1, written1 % SS_PTR_BLK_SIZE));
+                getPtr(ptr1, p1, written1 % SS_PTR_BLK_SIZE);
                 tuple_size1 = getVal(tuple_buf1, p1, written1 % SS_PTR_BLK_SIZE);
             }
         }
         else
         {
             //Otherwise
-            ptr_place = writeData((void *)(&ptr2), sizeof(data_ptr), ptr_place);
+            ptr_place = writeData((void *)(&ptr2), sizeof(data_ptr), ptr_place, false);
             written2++;
 
             if (written2 % SS_PTR_BLK_SIZE == 0 || size2 == written2)
@@ -407,7 +338,7 @@ xptr SortedSequence::mergeBlocks(xptr p1, int size1, xptr p2, int size2)
             }
             if (written2 < size2)
             {
-                readData((void *)(&ptr2), sizeof(data_ptr), getPtr(p2, written2 % SS_PTR_BLK_SIZE));
+                getPtr(ptr2, p2, written2 % SS_PTR_BLK_SIZE);
                 tuple_size2 = getVal(tuple_buf2, p2, written2 % SS_PTR_BLK_SIZE);
             }
         }
@@ -420,8 +351,13 @@ void SortedSequence::blocksSort(int ptrsInLast)
     //Vector of blocks and number of containing elements
     typedef std::vector < xptr > t_blk_ptr_array;
     typedef std::vector < int > t_blk_size_array;
-    t_blk_ptr_array *blocks = new t_blk_ptr_array, *old_blocks = new t_blk_ptr_array;
-    t_blk_size_array *sizes = new t_blk_size_array, *old_sizes = new t_blk_size_array;
+
+    t_blk_ptr_array tbpa1, tbpa2;
+    t_blk_size_array tbsa1, tbsa2;
+
+    t_blk_ptr_array *blocks = &tbpa1, *old_blocks = &tbpa2;
+    t_blk_size_array *sizes = &tbsa1, *old_sizes = &tbsa2;
+
     t_blk_ptr_array *tmp_ptr;
     t_blk_size_array *tmp_size;
 
@@ -456,10 +392,6 @@ void SortedSequence::blocksSort(int ptrsInLast)
         old_sizes -> clear();
     }
     firstPtrBlock = blocks -> front();
-    delete blocks;
-    delete sizes;
-    delete old_blocks;
-    delete old_sizes;
 }
 
 void SortedSequence::makeNewChain(int ptrsInLast)
@@ -514,8 +446,8 @@ SortedSequence::SSChain::~SSChain()
 
 void SortedSequence::SSChain::add(void *buf, size_t tuple_size)
 {
-    place = parent -> writeData((void *)(&tuple_size), sizeof(size_t), place);
-    place = parent -> writeData(buf, tuple_size, place);
+    place = parent -> writeData((void *)(&tuple_size), sizeof(size_t), place, true);
+    place = parent -> writeData(buf, tuple_size, place, true);
     toRead++;
 }
 
@@ -651,18 +583,28 @@ xptr SortedSequence::readData(void *buf, size_t size, xptr place)
     }
 }
 
-xptr SortedSequence::writeData(void* buf, size_t size, xptr place)
+xptr SortedSequence::writeData(void* buf, size_t size, xptr place, bool splittingAllowed)
 {
     size_t fspace = GET_FREE_SPACE(place);
     if (fspace <= size)
     {
         //Data doesn't fit to given block
-        WRITEP(place);
-        xptr new_block = addBlockToChain(place);
-        memcpy(XADDR(place), (char *) buf, fspace);
-        WRITEP(new_block);
-        memcpy(XADDR(new_block), ((char *) buf + fspace), size - fspace);
-        return new_block + size - fspace;
+        if (!splittingAllowed)
+        {
+            xptr new_block = addBlockToChain(place);
+            WRITEP(new_block);
+            memcpy(XADDR(new_block), ((char *)buf), size);
+            return new_block + size;
+        }
+        else
+        {
+            WRITEP(place);
+            xptr new_block = addBlockToChain(place);
+            memcpy(XADDR(place), (char *) buf, fspace);
+            WRITEP(new_block);
+            memcpy(XADDR(new_block), ((char *) buf + fspace), size - fspace);
+            return new_block + size - fspace;
+        }
     }
     else
     {
@@ -671,25 +613,6 @@ xptr SortedSequence::writeData(void* buf, size_t size, xptr place)
         memcpy(XADDR(place), (char *) buf, size);
         return place + size;
     }
-}
-
-void SortedSequence::swapPointers(xptr p1, xptr p2)
-{
-    data_ptr *buf1 = new data_ptr;
-    data_ptr *buf2 = new data_ptr;
-
-    CHECKP(p1);
-    memcpy((char *) buf1, XADDR(p1), sizeof(data_ptr));
-
-    WRITEP(p2);
-    memcpy((char *) buf2, XADDR(p2), sizeof(data_ptr));
-    memcpy(XADDR(p2), (char *) buf1, sizeof(data_ptr));
-
-    WRITEP(p1);
-    memcpy(XADDR(p1), (char *) buf2, sizeof(data_ptr));
-
-    delete buf1;
-    delete buf2;
 }
 
 xptr SortedSequence::nextBlock(xptr p)

@@ -100,9 +100,8 @@ private:
     int blocksCount; //Amount of used blocks in accumulator
     int elementsCount; //Amount of stored elements in accumulator
 
-    xptr getPtr(xptr block, int ind);    //Returns pointer to i-th pointer in given block
-    size_t getVal(void *buf, xptr block, int ind);    //Returns tuple, pointed by i-th pointer in given block
-    void swapPointers(xptr p1, xptr p2);    //Swap data_ptrs, pointed by p1 and p2
+    void getPtr(data_ptr &ptr, xptr block, int ind); //Returns ind-th pointer in given block
+    size_t getVal(void *buf, xptr block, int ind);    //Returns tuple, pointed by ind-th pointer in given block
 
     void inBlockSort(xptr p, int amount);    //Sorting elements in block using QSort
 
@@ -143,7 +142,7 @@ private:
 
     xptr readData(void *buf, size_t size, xptr place);
     //Reads data of given size from block memory. Returns pointer to the place after red data
-    xptr writeData(void *buf, size_t size, xptr place);
+    xptr writeData(void *buf, size_t size, xptr place, bool splittingAllowed);
     //Writes data of given size to block memory. Returns pointer to the place after written data
 
     bool finalized; //Indicates that the sequence already sorted and we can't add new elements
