@@ -585,16 +585,29 @@ xptr SortedSequence::readData(void *buf, size_t size, xptr place)
 
 xptr SortedSequence::writeData(void* buf, size_t size, xptr place, bool splittingAllowed)
 {
+    //Dangerous function with a lot of non-obvious cases
     size_t fspace = GET_FREE_SPACE(place);
+
     if (fspace <= size)
     {
         //Data doesn't fit to given block
         if (!splittingAllowed)
         {
             xptr new_block = addBlockToChain(place);
-            WRITEP(new_block);
-            memcpy(XADDR(new_block), ((char *)buf), size);
-            return new_block + size;
+            if (fspace == size)
+            {
+                //If we have exactly as size free space in block
+                WRITEP(place);
+                xptr new_block = addBlockToChain(place);
+                memcpy(XADDR(place), (char *) buf, size);
+                return new_block;
+            }
+            else
+            {
+                WRITEP(new_block);
+                memcpy(XADDR(new_block), ((char *)buf), size);
+                return new_block + size;
+            }
         }
         else
         {
