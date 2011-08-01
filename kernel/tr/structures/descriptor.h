@@ -35,7 +35,8 @@ namespace internal {
     enum { maxDescriptorTextSize = sizeof(xptr) };
 
     /* For simplicity the same as document child count */
-    enum { maxElementChildCount = ((int) ((PAGE_SIZE - sizeof(internal::node_blk_hdr) / 4) / sizeof(xptr))) };
+//    enum { maxElementChildCount = ((int) ((PAGE_SIZE - sizeof(internal::node_blk_hdr) / 4) / sizeof(xptr))) };
+    enum { maxElementChildCount = 1024 };
 
     struct element_node {
         node_base_t base;
