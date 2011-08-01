@@ -295,7 +295,7 @@ class SchemaParser : public IElementProducer {
         SchemaParser * result;
 
         if (iterator == children.end()) {
-            schema_node_cptr child = parent->loadNewDocument ? XNULL : schemaNode->add_child(qname, element);
+            schema_node_cptr child = parent->loadNewDocument ? XNULL : schemaNode->get_first_child(qname, element);
 
             if (!child.found()) {
                 child = schemaNode->add_child(qname, element);
@@ -440,44 +440,63 @@ class DataParser : public IElementProducer {
 #endif
     }
 
-    void addTextNode(const text_source_t buffer) {
-        text_source_t value = buffer;
-
-        U_ASSERT(value.type == text_source_t::text_mem);
-        U_ASSERT(self != XNULL);
-
-        if (parent->options.stripBoundarySpaces) {
-            if (stripLeftSpaces) {
-                value = clearLeftSpaces(value);
-
-                if (value.size > 0) {
-                    stripLeftSpaces = false;
-                } else {
-                    return;
-                }
-            }
-
-            tailingWhitespace = getRightSpaces(value);
-            value.size -= tailingWhitespace.size;
+    void addTextNode(const text_source_t value) {
+        if (left != XNULL) {
+            insert_text(indirectionDereferenceCP(left), XNULL, XNULL, value, parent->insideCDataSection);
+        } else {
+            insert_text(XNULL, XNULL, indirectionDereferenceCP(self), value, parent->insideCDataSection);
         }
 
-        if (value.size > 0) {
-            if (left != XNULL) {
-                insert_text(indirectionDereferenceCP(left), XNULL, XNULL, value, parent->insideCDataSection);
-            } else {
-                insert_text(XNULL, XNULL, indirectionDereferenceCP(self), value, parent->insideCDataSection);
-            }
-
-            left = get_last_mo_inderection();
-            updateNode(left);
-        }
+        left = get_last_mo_inderection();
+        updateNode(left);
     }
 
-    inline
-    void processText() {
+    void processText(bool saveTrailingWhitespaces) {
+        U_ASSERT(self != XNULL);
+
         if (parent->textBufferSize > 0) {
-            addTextNode(text_source_mem(parent->textBuffer, parent->textBufferSize));
+            text_source_t value = text_source_mem(parent->textBuffer, parent->textBufferSize);
+
+            tailingWhitespace.size = 0;
+            if (parent->options.stripBoundarySpaces) {
+                // Clear heading whitespaces
+                if (stripLeftSpaces) {
+                    value = clearLeftSpaces(value);
+
+                    if (value.size > 0) {
+                        // No more clearing heading whitespaces in this text
+                        stripLeftSpaces = false;
+                    } else {
+                        parent->textBufferSize = 0;
+                        return;
+                    }
+                }
+
+                tailingWhitespace = getRightSpaces(value);
+                value.size -= tailingWhitespace.size;
+            }
+
+            if (value.size > 0) {
+                if (parent->options.stripBoundarySpaces) {
+                    if (!parent->tailingWhitespaceBuffer.str().empty()) {
+                        parent->tailingWhitespaceBuffer.flush();
+                        const std::string& str = parent->tailingWhitespaceBuffer.str();
+                        addTextNode(text_source_mem(str.c_str(), str.length()));
+                        parent->tailingWhitespaceBuffer.str("");
+                        parent->tailingWhitespaceBuffer.clear();
+                    }
+                }
+
+                addTextNode(value);
+            }
+
             parent->textBufferSize = 0;
+
+            if (saveTrailingWhitespaces && tailingWhitespace.size > 0) {
+                memmove(parent->textBuffer, tailingWhitespace.u.cstr, (size_t) tailingWhitespace.size);
+                parent->textBufferSize = tailingWhitespace.size;
+                tailingWhitespace = NULL_TEXT;
+            }
         }
     };
 
@@ -509,7 +528,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual IElementProducer* addElement(const xsd::QName& qname, xmlscm_type type) {
-        processText();
+        processText(false);
 
         ChildMap::const_iterator iterator = children.find(qname);
         U_ASSERT(iterator != children.end());
@@ -549,7 +568,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual tuple_cell addComment(const text_source_t value) {
-        processText();
+        processText(false);
 
         if (left != XNULL) {
             insert_comment(indirectionDereferenceCP(left), XNULL, XNULL, value);
@@ -564,7 +583,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual tuple_cell addPI(const xsd::NCName& name, const text_source_t value) {
-        processText();
+        processText(false);
 
         if (left != XNULL) {
             insert_pi(indirectionDereferenceCP(left), XNULL, XNULL, name, value);
@@ -583,44 +602,29 @@ class DataParser : public IElementProducer {
 
         if (value.size > TEXT_BUFFER_SIZE) {
             U_ASSERT(false); /* This cannot be true while parsebuffer is smaller then textbuffer */
-
-            processText();
-            addTextNode(value);
-
+            throw SYSTEM_EXCEPTION("Text buffer exceeds parse buffer. Normaly it should not have happend, so report it as a bug.");
             return NULL_TC;
         }
 
-        size_t rest = (TEXT_BUFFER_SIZE - parent->textBufferSize);
+        const size_t rest = (TEXT_BUFFER_SIZE - parent->textBufferSize);
 
         if (value.size > rest) {
-            /* Very very rare accessed branch */
             if (rest > 0) {
                 memcpy(parent->textBuffer + parent->textBufferSize, value.u.cstr, rest);
                 parent->textBufferSize += rest;
             }
 
-            processText();
+            processText(true);
 
-            U_ASSERT(parent->textBufferSize == 0);
+            if (value.size > (TEXT_BUFFER_SIZE - parent->textBufferSize)) {
+                U_ASSERT(false);
+                parent->tailingWhitespaceBuffer.write(parent->textBuffer, parent->textBufferSize);
+                parent->textBufferSize = 0;
+                // FIXME: This works well, but actually, it is currently processed invalid
+//                processText(false);
+            };
 
-            if (parent->options.stripBoundarySpaces && tailingWhitespace.size > 0) {
-                // TODO: Check this works!
-
-                /* This is the same buffer !!! */
-                memmove(parent->textBuffer, tailingWhitespace.u.cstr, (size_t) tailingWhitespace.size);
-                parent->textBufferSize = tailingWhitespace.size;
-                tailingWhitespace = NULL_TEXT;
-
-                rest = (TEXT_BUFFER_SIZE - parent->textBufferSize);
-
-                if (value.size > rest) {
-                    U_ASSERT(false); // This situation is almost unreal!
-                    parent->tailingWhitespaceBuffer.write(parent->textBuffer, parent->textBufferSize);
-                    parent->textBufferSize = 0;
-
-                    // TODO : implement the unlimited whitespace buffer
-                }
-            }
+            U_ASSERT(value.size <= (TEXT_BUFFER_SIZE - parent->textBufferSize));
 
             memcpy(parent->textBuffer + parent->textBufferSize, value.u.cstr + rest, value.size - rest);
             parent->textBufferSize += (value.size - rest);
@@ -633,7 +637,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual tuple_cell close() {
-        processText();
+        processText(false);
         tailingWhitespace = NULL_TEXT;
 
         if (parent->options.stripBoundarySpaces) {
