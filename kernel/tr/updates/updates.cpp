@@ -307,7 +307,11 @@ xptr deep_copy_node(xptr left, xptr right, xptr parent, xptr node, upd_ns_map** 
                     return left;
                 }
             } else {
+                if (getTextFlags(node, cdata_section) > 0) {
+                     cdataflag_hint = cdata_section | cdata_inherit;
+                }
                 result = insert_text(left, right, parent, text_source_node(node));
+                cdataflag_hint = 0;
             }
                    }
                    break;

@@ -1061,17 +1061,19 @@ PPIterator* PPPIConstructor::do_copy(dynamic_context *_cxt_)
 PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_,
                                      operation_info _info_,
                                      PPOpIn _content_,
-                                     bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy),
-                                                        content(_content_)
+                                     bool _deep_copy,
+                                     bool _cdataflag) : PPConstructor(_cxt_, _info_, _deep_copy),
+                                                        content(_content_), cdataflag(_cdataflag)
 {
     at_value=NULL;
-
 }
 
 PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_,
                                      operation_info _info_,
                                      const char* value,
-                                     bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy)
+                                     bool _deep_copy,
+                                     bool _cdataflag) : PPConstructor(_cxt_, _info_, _deep_copy),
+                                                        cdataflag(_cdataflag)
 {
     at_value=se_new char[strlen(value)+1];
     strcpy(at_value,value);
@@ -1114,6 +1116,10 @@ void PPTextConstructor::do_next (tuple &t)
     if (first_time) {
         first_time = false;
 
+        if (cdataflag) {
+            cdataflag_hint = cdata_section | cdata_infect;
+        }
+
         if (at_value != NULL) {
             result = constructorContext.getParent(deep_copy)->addText(text_source_cstr(at_value));
         } else {
@@ -1127,6 +1133,8 @@ void PPTextConstructor::do_next (tuple &t)
                 result = constructorContext.getParent(deep_copy)->addText(text_source_strbuf(&executor_globals::tmp_op_str_buf));
             }
         }
+
+        cdataflag_hint = cdata_inherit;
     }
 
     if (result.is_eos()) {
@@ -1139,13 +1147,15 @@ void PPTextConstructor::do_next (tuple &t)
 
 PPIterator* PPTextConstructor::do_copy(dynamic_context *_cxt_)
 {
-    PPTextConstructor *res ;
-    if (at_value!=NULL) res = se_new PPTextConstructor(_cxt_, info, at_value, deep_copy);
-    else
-    {
-        res = se_new PPTextConstructor(_cxt_, info, content, deep_copy);
+    PPTextConstructor *res;
+
+    if (at_value!=NULL) {
+        res = se_new PPTextConstructor(_cxt_, info, at_value, deep_copy, cdataflag);
+    } else {
+        res = se_new PPTextConstructor(_cxt_, info, content, deep_copy, cdataflag);
         res->content.op = content.op->copy(_cxt_);
     }
+
     return res;
 }
 

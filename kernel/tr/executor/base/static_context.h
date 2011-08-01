@@ -79,6 +79,9 @@ private:
 
     std::vector<xmlns_ptr> prologueNamespaces; /* It is here only for PPExplain. WHYY?? */
 
+    typedef std::map<std::string, std::string> OptionMap;
+    OptionMap localOptions;
+
     // serialization parameters: indent, method, etc.
     GlobalSerializationOptions serializationOptions;
 
@@ -90,6 +93,19 @@ private:
 public:
     static_context();
     ~static_context();
+
+    inline void setLocalOption(const std::string &opt, const std::string &val) {
+        localOptions.insert(OptionMap::value_type(opt, val));
+    };
+
+    inline
+    std::string getLocalOption(const std::string &opt) const {
+        if (localOptions.find(opt) != localOptions.end()) {
+            return localOptions.at(opt);
+        } else {
+            return "";
+        }
+    }
 
     inline StaticallyKnownNamespaces * getStaticallyKnownNamespaces()
     {

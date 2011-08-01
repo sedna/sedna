@@ -78,7 +78,7 @@ struct ElementContext {
 };
 
 
-XDMSerializer::XDMSerializer() {
+XDMSerializer::XDMSerializer() : savedCData(false) {
     const xmlns_ptr ns = xmlns_touch("xml", "http://www.w3.org/XML/1998/namespace");
     nsPrefixMap.insert(std::pair<std::string, xmlns_ptr>(std::string(ns->get_prefix()), ns));
 }
@@ -147,8 +147,17 @@ void XDMSerializer::printNode(const Node node)
           SednaNode attribute(node.getPtr());
           printAttribute(&attribute);
       } break;
-      case comment : case pr_ins : case text : {
+      case comment : case pr_ins : {
           printText(t, text_source_node(node.getPtr()));
+      } break;
+      case text : {
+          if (getTextFlags(node.getPtr(), cdata_section) > 0) {
+              savedCData = true;
+          }
+
+          printText(t, text_source_node(node.getPtr()));
+
+          savedCData = false;
       } break;
       default : throw USER_EXCEPTION(SE2302);
     }
@@ -167,8 +176,18 @@ void XDMSerializer::printNode(IXDMNode * node)
           printAttribute(node); break;
       case comment :
       case pr_ins :
-      case text :
           printText(t, node->getValue()); break;
+      case text : {
+          SednaNode* _cdataHack = dynamic_cast<SednaNode*>(node);
+
+          if (_cdataHack != NULL && getTextFlags(_cdataHack->getXptr(), cdata_section) > 0) {
+              savedCData = true;
+          }
+
+          printText(t, node->getValue());
+
+          savedCData = false;
+      } break;
       default :
         throw USER_EXCEPTION(SE2302);
     }
@@ -382,10 +401,9 @@ void XMLSerializer::printText(t_item type, const text_source_t value)
 
     if (type == text) {
         indentNext = false;
-        if (elementContext != NULL && options != NULL &&
-              (options->cdataSectionElements.find(elementContext->qname) != options->cdataSectionElements.end())) {
+        if (savedCData || (elementContext != NULL && options != NULL &&
+              (options->cdataSectionElements.find(elementContext->qname) != options->cdataSectionElements.end()))) {
             (*crmout) << "<![CDATA[";
-
             // StringMatcher must substitute "]]>" with "]]>]]<![CDATA[<"
             filterText(stringFilter, crmout, pat_cdata, reader);
             (*crmout) << "]]>";

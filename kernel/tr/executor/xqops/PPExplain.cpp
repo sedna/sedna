@@ -70,7 +70,6 @@ void PPExplain::do_next (tuple &t)
     {
         first_time = false;
         char buf[20];
-        xmlns_ptr defnsptr = data_cxt->get_static_context()->getStaticallyKnownNamespaces()->getDefaultNamespace();
         profile_info pi_total;
 
         if(profiler_mode)
@@ -157,6 +156,7 @@ void PPExplain::do_next (tuple &t)
         }
 
         /* Insert default element namespace declaration */
+        xmlns_ptr defnsptr = data_cxt->get_static_context()->getStaticallyKnownNamespaces()->getDefaultNamespace();
         if(defnsptr != NULL_XMLNS)
         {
             tmp = insert_element_i(tmp,XNULL,left,"default-element-namespace",xs_untyped,explain_ns);

@@ -516,11 +516,12 @@ namespace sedna
     void lr2por::visit(ASTCharCont &n)
     {
         childOffer off_this;
-        tuple_cell tc;
 
-        tc = string2tuple_cell(*n.cont, xs_string);
-
-        off_this.opin = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), tc), 1);
+        if (n.orig == ASTCharCont::CDATA) {
+            off_this.opin = PPOpIn(new PPTextConstructor(dyn_cxt, createOperationInfo(n), n.cont->c_str(), true, true), 1);
+        } else {
+            off_this.opin = PPOpIn(new PPConst(dyn_cxt, createOperationInfo(n), string2tuple_cell(*n.cont, xs_string)), 1);
+        }
 
         setOffer(off_this);
     }
@@ -2308,6 +2309,12 @@ namespace sedna
                 }
             }
         }
+        else if (*n.local == "bulk-load")
+        {
+            for (it = n.options->begin(); it != n.options->end(); it++) {
+                dyn_cxt->sc()->setLocalOption("bulk-load-" + it->first, it->second);
+            }
+        }
         else if (*n.local == "character-map")
         {
             for (it = n.options->begin(); it != n.options->end(); it++)
@@ -2909,7 +2916,7 @@ namespace sedna
         n.expr->accept(*this);
         off_cont = getOffer();
 
-        off_this.opin.op = new PPTextConstructor(dyn_cxt, createOperationInfo(n), off_cont.opin, n.deep_copy);
+        off_this.opin.op = new PPTextConstructor(dyn_cxt, createOperationInfo(n), off_cont.opin, n.deep_copy, false);
         off_this.opin.ts = 1;
 
         setOffer(off_this);

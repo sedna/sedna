@@ -44,6 +44,7 @@ class XDMSerializer : public Serializer {
     NSSwizzlingMap nsSwizzlingMap;
   protected:
     bool separatorNeeded;
+    bool savedCData;
 
     /*  declareNamespace appears in traversing the element subtree if element
       has or implies any namespace declaration. If namespace is unknown or swizzeled

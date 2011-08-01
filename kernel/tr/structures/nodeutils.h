@@ -38,6 +38,11 @@ xptr getLeftSiblingByType(const xptr node, t_item t);
 xptr __getNextBlockDescriptorOfSameSort(xptr nodex);
 
 static inline
+int getTextFlags(const xptr node, int tocheck) {
+    return reinterpret_cast<internal::text_node*>(xaddr(checkp(node)))->flags & tocheck;
+};
+
+static inline
 xptr getNextDescriptorOfSameSort(xptr nodex)
 {
     CHECKP(nodex);

@@ -132,6 +132,13 @@ void PPBulkLoad::do_execute()
     try {
         BulkLoadFrontend bulkLoadManager;
         bulkLoadManager.options.stripBoundarySpaces = boundary_space_strip;
+
+        if (cxt->get_static_context()->getLocalOption("bulk-load-cdata-section-preserve") == "yes") {
+            bulkLoadManager.options.preserveCDataSection = true;
+        } else {
+            bulkLoadManager.options.preserveCDataSection = false;
+        }
+
         bulkLoadManager.setSourceFile(cf_vec[0].f);
 
         if (collection.op == NULL)

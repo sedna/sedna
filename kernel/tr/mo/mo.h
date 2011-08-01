@@ -25,11 +25,9 @@ xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent, const char* valu
 xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const char* target, size_t tsize, const char* data, size_t dsize);
 xptr insert_doc_node(doc_schema_node_cptr doc_snode, const char * doc_name, const char * collection_name);
 
-enum cdata_t {
-    cdata_section = 1, cdata_inherit = 2, cdata_infect = 4
-};
+extern int cdataflag_hint;
 
-xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t source, int cdataflags = 0);
+xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t source);
 
 inline static
 xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const xsd::QName qname, xmlscm_type type, const text_source_t source)

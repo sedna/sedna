@@ -26,6 +26,8 @@ using namespace internal;
 
 xptr last_inserted_node_indirection = XNULL;
 
+int cdataflag_hint = 0;
+
 inline
 void check_ns_constraints_on_insert(xmlns_ptr ns)
 {
@@ -173,7 +175,7 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent, const char* name
 
 enum text_insert_t { ti_new_node, ti_addtext_after, ti_addtext_before };
 
-xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t source, int cdataflag)
+xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t source)
 {
     node_info_t node_info = {left_sib, right_sib, parent, text, 0, NULL_XMLNS};
     schema_node_cptr parent_snode;
@@ -187,7 +189,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
 
     if (source.size < 1 && (IS_DATA_BLOCK(node_info.parent))) throw USER_EXCEPTION(SE2009);
 
-    node_info.cdataflag = cdataflag;
+    node_info.cdataflag = cdataflag_hint;
 
 //    if (source.size < 1 && parent != XNULL && parent_snode->type != virtual_root) throw USER_EXCEPTION(SE2009);
 
@@ -222,7 +224,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
     if (insert_type == ti_new_node) {
         insertTextValue(node_info.node_xptr, source);
 
-        if (cdataflag & cdata_section > 0) {
+        if (cdataflag_hint & cdata_section > 0) {
             ((internal::text_node *) xaddr(checkp(node_info.node_xptr)))->flags |= cdata_section;
         }
     } else {

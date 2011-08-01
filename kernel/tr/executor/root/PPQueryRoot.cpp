@@ -42,7 +42,7 @@ void PPQueryRoot::do_close()
 {
     child.op->close();
     cxt->global_variables_close();
-    popDefaultSpace;
+    popDefaultSpace();
 }
 
 void PPQueryRoot::do_accept(PPVisitor &v)
