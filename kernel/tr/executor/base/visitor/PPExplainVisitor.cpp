@@ -96,7 +96,7 @@ PPExplainVisitor::PPExplainVisitor(dynamic_context* _cxt_,
                                                           var_names(_var_names_),
                                                           profiler_mode(_profiler_mode_)
 {
-    explain_ns = cxt->get_static_context()->getStaticallyKnownNamespaces()->getDefaultNamespace();
+    explain_ns = xmlns_touch("", SEDNA_NAMESPACE_URI);
 }
 
 PPExplainVisitor::~PPExplainVisitor()

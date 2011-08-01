@@ -209,7 +209,8 @@ class PPTextConstructor : public PPConstructor
 {
 protected:
     PPOpIn content;
-	char* at_value;
+    char* at_value;
+    bool cdataflag;
 
 private:
     virtual void do_open   ();
@@ -224,12 +225,14 @@ public:
     PPTextConstructor(dynamic_context *_cxt_,
                       operation_info _info_,
                       PPOpIn _content_,
-                      bool _deep_copy);
+                      bool _deep_copy,
+                      bool cdataflag);
 
 	PPTextConstructor(dynamic_context *_cxt_,
                       operation_info _info_,
                       const char* value,
-                      bool _deep_copy);
+                      bool _deep_copy,
+                      bool cdataflag);
 
     virtual ~PPTextConstructor();
     /* May return NULL if value is not predefined */

@@ -118,7 +118,7 @@ class BulkLoader {
     IElementProducer * producer;
     std::stack<IElementProducer *> producerStack;
 
-    void parseDocument() {
+    void parseDocument(bool parseSchema) {
         SafeParser xmlParser;
 
         XML_Parser p = xmlParser.get();
@@ -130,7 +130,10 @@ class BulkLoader {
         XML_SetCommentHandler(p, commentHandler);
         XML_SetProcessingInstructionHandler(p, piHandler);
         XML_SetCharacterDataHandler(p, dataHandler);
-        XML_SetCdataSectionHandler(p, startCDataHandler, endCDataHandler);
+
+        if (!parseSchema && options.preserveCDataSection) {
+            XML_SetCdataSectionHandler(p, startCDataHandler, endCDataHandler);
+        }
 
         /*
          * We have to cast since Expat uses 'int' instead of size_t,
@@ -168,7 +171,7 @@ class BulkLoader {
     char textBuffer[TEXT_BUFFER_SIZE];
     size_t textBufferSize;
     bool updateIndexes;
-    bool insideCDataSection;
+    bool saveWSOption;
     bool loadNewDocument;
 
     BulkLoadOptions options;
@@ -179,7 +182,7 @@ class BulkLoader {
 
     BulkLoader(bool newDocumentOpt) :
         producer(NULL), inputFile(NULL),
-        textBufferSize(0), updateIndexes(false), insideCDataSection(false), loadNewDocument(newDocumentOpt)
+        textBufferSize(0), updateIndexes(false), saveWSOption(false), loadNewDocument(newDocumentOpt)
     { /* qnameBuffer[MAX_QNAME - 1] = '\0'; */ };
 
     ~BulkLoader() { };
@@ -231,12 +234,14 @@ class BulkLoader {
 
     static
     void startCDataHandler(void * loader) {
-        ((BulkLoader *) loader)->insideCDataSection = true;
+        cdataflag_hint = cdata_section | cdata_infect;
+        ((BulkLoader *) loader)->saveWSOption = ((BulkLoader *) loader)->options.stripBoundarySpaces;
+        ((BulkLoader *) loader)->options.stripBoundarySpaces = false;
     }
 
     static
     void endCDataHandler(void * loader) {
-        ((BulkLoader *) loader)->insideCDataSection = false;
+        ((BulkLoader *) loader)->options.stripBoundarySpaces = ((BulkLoader *) loader)->saveWSOption;
     }
 };
 
@@ -442,9 +447,9 @@ class DataParser : public IElementProducer {
 
     void addTextNode(const text_source_t value) {
         if (left != XNULL) {
-            insert_text(indirectionDereferenceCP(left), XNULL, XNULL, value, parent->insideCDataSection);
+            insert_text(indirectionDereferenceCP(left), XNULL, XNULL, value);
         } else {
-            insert_text(XNULL, XNULL, indirectionDereferenceCP(self), value, parent->insideCDataSection);
+            insert_text(XNULL, XNULL, indirectionDereferenceCP(self), value);
         }
 
         left = get_last_mo_inderection();
@@ -468,6 +473,7 @@ class DataParser : public IElementProducer {
                         stripLeftSpaces = false;
                     } else {
                         parent->textBufferSize = 0;
+                        cdataflag_hint = cdata_inherit;
                         return;
                     }
                 }
@@ -488,6 +494,7 @@ class DataParser : public IElementProducer {
                 }
 
                 addTextNode(value);
+                cdataflag_hint = cdata_inherit;
             }
 
             parent->textBufferSize = 0;
@@ -668,7 +675,7 @@ void BulkLoader::loadDocument(xptr doc_node, schema_node_cptr schema_node)
     producer = schemaParser.get();
 
     fseek(inputFile, 0, SEEK_SET);
-    parseDocument();
+    parseDocument(true);
 
     /* TODO: process node count statistics */
     for (NodeCountStatistics::const_iterator i = nodeStatistics.begin(); i != nodeStatistics.end(); ++i) {
@@ -690,7 +697,7 @@ void BulkLoader::loadDocument(xptr doc_node, schema_node_cptr schema_node)
     producer = dataParser.get();
 
     fseek(inputFile, 0, SEEK_SET);
-    parseDocument();
+    parseDocument(false);
 }
 
 

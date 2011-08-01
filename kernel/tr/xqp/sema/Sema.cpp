@@ -1400,44 +1400,65 @@ namespace sedna
         n.uri = new std::string(uri); // add info about resolved uri into AST
         n.options = new std::vector<ASTOption::option>;
 
-        // ignore all options except 'se:output' and 'se:character-map'
-        if (*n.uri == "http://www.modis.ispras.ru/sedna" && *n.local == "output")
-        {
-            // parse options string; if error it will be signaled by the function
-            parseOption(n.getLocation(), *n.opt, *n.options, ';');
-
-            for (unsigned int i = 0; i < n.options->size(); i++)
+        // ignore all options except 'se:output' and 'se:character-map' and 'se:bulk-load'
+        if (*n.uri == "http://www.modis.ispras.ru/sedna") {
+            if (*n.local == "output")
             {
-                key = (*n.options)[i].first;
-                val = (*n.options)[i].second;
+                // parse options string; if error it will be signaled by the function
+                parseOption(n.getLocation(), *n.opt, *n.options, ';');
 
-                if (key == "indent")
+                for (unsigned int i = 0; i < n.options->size(); i++)
                 {
-                    if (val != "yes" && val != "no")
-                        drv->error(n.getLocation(), SE5072, val.c_str());
+                    key = (*n.options)[i].first;
+                    val = (*n.options)[i].second;
+
+                    if (key == "indent")
+                    {
+                        if (val != "yes" && val != "no")
+                            drv->error(n.getLocation(), SE5072, val.c_str());
+                    }
+                    else if (key == "method")
+                    {
+                        if (val != "xml" && val != "html")
+                            drv->error(n.getLocation(), SE5071, val.c_str());
+                    }
+                    else if (key == "cdata-section-elements")
+                    {
+                        // PASS
+                    }
+                    else
+                        drv->error(n.getLocation(), SE5068, key.c_str());
                 }
-                else if (key == "method")
-                {
-                    if (val != "xml" && val != "html")
-                        drv->error(n.getLocation(), SE5071, val.c_str());
-                }
-                else if (key == "cdata-section-elements")
-                {
-                    // PASS
-                }
-                else
-                    drv->error(n.getLocation(), SE5068, key.c_str());
             }
-        }
-        else if (*n.uri == "http://www.modis.ispras.ru/sedna" && *n.local == "character-map")
-        {
-            // parse options string; if error it will be signaled by the function
-            parseOption(n.getLocation(), *n.opt, *n.options, '!');
-
-            for (unsigned int i = 0; i < n.options->size(); i++)
+            else if (*n.local == "bulk-load")
             {
-                key = (*n.options)[i].first;
-                val = (*n.options)[i].second;
+                // parse options string; if error it will be signaled by the function
+                parseOption(n.getLocation(), *n.opt, *n.options, ';');
+
+                for (unsigned int i = 0; i < n.options->size(); i++)
+                {
+                    key = (*n.options)[i].first;
+                    val = (*n.options)[i].second;
+
+                    if (key == "cdata-section-preserve")
+                    {
+                        if (val != "yes" && val != "no")
+                            drv->error(n.getLocation(), SE5069, val.c_str());
+                    }
+                    else
+                        drv->error(n.getLocation(), SE5068, key.c_str());
+                }
+            }
+            else if (*n.local == "character-map")
+            {
+                // parse options string; if error it will be signaled by the function
+                parseOption(n.getLocation(), *n.opt, *n.options, '!');
+
+                for (unsigned int i = 0; i < n.options->size(); i++)
+                {
+                    key = (*n.options)[i].first;
+                    val = (*n.options)[i].second;
+                }
             }
         }
     }
@@ -1605,9 +1626,10 @@ namespace sedna
         {
             (*n.decls)[i]->accept(*this);
 
-            // delete (as "ignore") all options except 'se:output' and 'se:character-map'
+            // delete (as "ignore") all options except 'se:output' and 'se:character-map' and 'se:bulk-load'
+
             if ((opt = dynamic_cast<ASTOption *>((*n.decls)[i])) && opt->uri &&
-                 (*opt->uri != "http://www.modis.ispras.ru/sedna" || (*opt->local != "output" && *opt->local != "character-map")))
+                 (*opt->uri != "http://www.modis.ispras.ru/sedna" || (*opt->local != "output" && *opt->local != "character-map" && *opt->local != "bulk-load")))
             {
                 delete *(n.decls->begin() + i);
                 n.decls->erase(n.decls->begin() + i);

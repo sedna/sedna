@@ -35,6 +35,8 @@ enum t_item {
     pr_ins = 0x80
 };
 
+enum { cdata_section = 1, cdata_inherit = 2, cdata_infect = 4 };
+
 const t_item ti_first_children = (t_item) (attribute | xml_namespace);
 const t_item ti_all = (t_item) (element | text | attribute | document | virtual_root | xml_namespace | comment | pr_ins);
 const t_item ti_all_valid = (t_item) (element | text | attribute | document | xml_namespace | comment | pr_ins);

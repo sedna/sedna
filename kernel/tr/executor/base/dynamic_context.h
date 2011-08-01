@@ -249,6 +249,11 @@ public:
         return st_cxt;
     }
 
+    inline static_context *sc()
+    {
+        return st_cxt;
+    }
+
     inline void add_function(const function_declaration &fd, unsigned id)
     {
         funct_cxt.fun_decls[id] = fd;
