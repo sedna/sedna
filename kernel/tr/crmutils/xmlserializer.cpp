@@ -270,6 +270,11 @@ void XMLSerializer::initialize()
     separatorNeeded = options->separateTuples;
     indentSequence = options->indentSequence;
     indentSequenceLength = strlen(indentSequence);
+
+    if (indentCache != NULL) {
+        free(indentCache);
+    }
+
     indentCache = (char *) malloc(indentSequenceLength * MAX_INDENT);
 
     char * c = indentCache;
