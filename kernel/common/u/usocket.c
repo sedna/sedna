@@ -101,7 +101,7 @@ USOCKET usocket(int af, int type, int protocol, sys_call_error_fun fun)
 int ubind_tcp(USOCKET s, unsigned short port, const char * addr, sys_call_error_fun fun)
 {
     struct addrinfo hints, *hp;
-    char buf[5];
+    char buf[8];
 #ifndef _WIN32
     int t_reuse = 1;
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &t_reuse, sizeof(int));
@@ -129,9 +129,12 @@ int ubind_tcp(USOCKET s, unsigned short port, const char * addr, sys_call_error_
 
     if (bind(s, (struct sockaddr *) hp->ai_addr, hp->ai_addrlen) != 0)
     {
+        freeaddrinfo(hp);
         sys_call_error("bind");
         return U_SOCKET_ERROR;
     }
+
+    freeaddrinfo(hp);
     return 0;
 }
 
@@ -166,8 +169,10 @@ int uconnect_tcp(USOCKET s, unsigned short port, const char *hostname, sys_call_
     if (connect(s, (struct sockaddr *) hp->ai_addr, hp->ai_addrlen) != 0)
     {
         sys_call_error("connect");
+        freeaddrinfo(hp);
         return U_SOCKET_ERROR;
     }
+    freeaddrinfo(hp);
     return 0;
 }
 
