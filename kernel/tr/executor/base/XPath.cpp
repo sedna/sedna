@@ -28,8 +28,7 @@ template <typename T> struct de_scheme_list_delete {
 
 NodeTest::NodeTest(const char* str) : uri(NULL), local(NULL), qname(NULL)
 {
-    scoped_ptr<scheme_list> lst = make_tree_from_scheme_list(str);
-    set(lst.get());
+    set(AutoSchemeList(str).get());
 }
 
 PathExpression::PathExpression() : _size(0), nodes(NULL)
@@ -65,8 +64,7 @@ string PathExpression::toString() const
 
 PathExpression::PathExpression(const char* str, dynamic_context* cxt)
 {
-    scoped_ptr<scheme_list> lst = make_tree_from_scheme_list(str);
-    set(lst.get(), cxt);
+    set(AutoSchemeList(str).get(), cxt);
 }
 
 void* PathExpression::operator new(size_t size)

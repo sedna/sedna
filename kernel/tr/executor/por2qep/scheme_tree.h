@@ -44,5 +44,22 @@ void delete_scheme_list(scheme_list *);
 
 void walk_scheme_list(scheme_list *, std::string);
 
+class AutoSchemeList {
+  private:
+    scheme_list * list;
+  public:
+    const scheme_list * get() const { return list; };
+
+    AutoSchemeList(const char * str) : list(NULL) {
+        list = make_tree_from_scheme_list(str);
+    };
+
+    ~AutoSchemeList() {
+        if (list != NULL) {
+            delete_scheme_list(list);
+        }
+    }
+};
+
 #endif
 

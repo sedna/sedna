@@ -487,6 +487,7 @@ PPAxisStep::PPAxisStep(dynamic_context* _cxt_, operation_info _info_, PPOpIn _ch
 
 PPAxisStep::~PPAxisStep()
 {
+    delete hint->schemaTest;
     delete hint;
     delete child.op;
     child.op = NULL;
