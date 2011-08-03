@@ -431,9 +431,10 @@ SortedSequence::SSChain::SSChain(SortedSequence *_parent_)
 
 SortedSequence::SSChain::~SSChain()
 {
+    delete[] value;
+
     if (!initialized) return;
 
-    delete[] value;
     xptr it = firstBlock, tmp;
     do
     {
