@@ -295,6 +295,8 @@ public:
 	void append(const char *str);//always copy to inner buffer
 	void append(const tuple_cell &tc);
 	const char *c_str();
+	///get string as char*, valid only for mem_only buffers, also clears buffer
+	///returned string must later be freed using delete[] by the caller
 	char *get_str();
     static void free_str(char *str)
     {
@@ -359,7 +361,9 @@ public:
 	void append(const char *str, int add_len) {m_impl->append(str, add_len);}
 
 	tuple_cell get_tuple_cell() {return m_impl->get_tuple_cell(); } //also clears
-	char *get_str() { return m_impl->get_str(); } //also clears, applicable to mem_only buffers only
+	///get string as char*, valid only for mem_only buffers, also clears buffer
+	///returned string must later be freed using delete[] by the caller
+	char *get_str() { return m_impl->get_str(); }
 
 	stmt_str_buf(const stmt_str_buf&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for stmt_str_buf is not implemented"); }
     stmt_str_buf& operator=(const stmt_str_buf&) { throw USER_EXCEPTION2(SE1003, "Assign operator for stmt_str_buf is not implemented"); }

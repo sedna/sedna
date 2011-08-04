@@ -51,7 +51,10 @@ tuple_cell get_base_uri_deep(Node node, dynamic_context *context)
                      base_uri = tuple_cell::make_sure_light_atomic(base_uri);
                      result = tuple_cell::make_sure_light_atomic(result);
                      if (Uri::resolve(result.get_str_mem(), base_uri.get_str_mem(), resolved_uri)) {
-                         result = tuple_cell::atomic_deep(xs_anyURI, resolved_uri.get_str());;
+						 char *resolved_uri_cstr = resolved_uri.get_str();
+						 //FIXME: atomic_deep is not really needed here
+                         result = tuple_cell::atomic_deep(xs_anyURI, resolved_uri_cstr);
+						 delete[] resolved_uri_cstr;
                      }
                  }
             }
