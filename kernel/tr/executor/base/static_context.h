@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <set>
+#include <map>
 
 #include "tr/strings/utf8.h"
 #include "tr/structures/xmlns.h"
@@ -100,8 +101,9 @@ public:
 
     inline
     std::string getLocalOption(const std::string &opt) const {
-        if (localOptions.find(opt) != localOptions.end()) {
-            return localOptions.at(opt);
+        OptionMap::const_iterator x = localOptions.find(opt);
+        if (x != localOptions.end()) {
+            return x->second;
         } else {
             return "";
         }
