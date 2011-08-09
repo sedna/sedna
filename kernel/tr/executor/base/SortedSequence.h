@@ -77,7 +77,6 @@ class SortedSequence
         ~SSChain();
 
     private:
-        bool initialized;
         xptr firstBlock; //Pointer to the stored values
         xptr place;  //Where to write new element in adding phase and from where to read in reading phase
         int toRead; //counts amount of unread elements in chain

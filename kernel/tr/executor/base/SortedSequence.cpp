@@ -433,8 +433,6 @@ SortedSequence::SSChain::~SSChain()
 {
     delete[] value;
 
-    if (!initialized) return;
-
     xptr it = firstBlock, tmp;
     do
     {
