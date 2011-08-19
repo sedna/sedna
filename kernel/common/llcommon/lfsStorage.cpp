@@ -605,8 +605,8 @@ static int _lfsFlushBufLSN(LSN ulsn)
 	}
 
 	// correct buffer and lfs metainfo
-	lfsInfo->BufKeepBytes -= (unsigned int)toflush;
-	assert(lfsInfo->BufKeepBytes >= 0);
+	assert(lfsInfo->BufKeepBytes >= (unsigned int)toflush);
+    lfsInfo->BufKeepBytes -= (unsigned int)toflush;
 
 	lfsInfo->NextLSN += toflush;
 

@@ -1,5 +1,11 @@
-#ifndef HASHMAP
-#define HASHMAP
+/*
+* File:  internstr.h
+* Copyright (C) 2011 ISP RAS
+* The Institute for System Programming of the Russian Academy of Sciences
+*/
+
+#ifndef __INTERNSTR_H
+#define __INTERNSTR_H
 
 #include <list>
 #include <set>
@@ -60,4 +66,4 @@ class StringStorage {
 
 };
 
-#endif /* HASHMAP */
+#endif /* __INTERNSTR_H */
