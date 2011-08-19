@@ -308,4 +308,3 @@ void getDebugInfo(schema_node_cptr snode, xptr& node)
         insertNidAndStringsStatistics(getFirstBlockNode(snode->bblk), left);
     }
 }
-

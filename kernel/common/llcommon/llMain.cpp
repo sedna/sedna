@@ -715,8 +715,6 @@ int llScanRecords(llRecInfo *RecordsInfo, unsigned int RecordsInfoLen, LSN start
 
 		cop = *(RecBuf);
 
-		assert(cop >= 0);
-
 		if (RecordsInfoLen > cop && RecordsInfo[cop].rec_oper == (llOperations)cop)
 		{
 			if (funPrereq == NULL || funPrereq(lsn, RecBuf)) RecordsInfo[cop].fun(lsn, RecBuf);

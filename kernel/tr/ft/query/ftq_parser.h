@@ -11,4 +11,4 @@
 
 FtQuery *ft_parse_query(str_cursor *cur, ftc_index_t idx);
 
-#endif
+#endif /* _FTQ_PARSER_H */
