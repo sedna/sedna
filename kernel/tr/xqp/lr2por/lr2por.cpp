@@ -1408,7 +1408,7 @@ namespace sedna
     void lr2por::visit(ASTFLWOR &n)
     {
         ASTNodesVector::iterator it;
-        unsigned int var_count = 0;
+        size_t var_count = 0;
         std::vector<PPOpIn> fl_ops;
         childOffer off_ob, off_this, off_where;
         PPOpIn where, fl_close, nil;
@@ -1901,7 +1901,7 @@ namespace sedna
     void lr2por::visit(ASTFuncDecl &n)
     {
         unsigned id;
-        unsigned int arity = (n.params) ? n.params->size() : 0;
+        size_t arity = (n.params) ? n.params->size() : 0;
         XQFunction *xqf;
         std::string full_name = CREATE_INTNAME_FUN(*n.func_uri, *n.local, arity);
 

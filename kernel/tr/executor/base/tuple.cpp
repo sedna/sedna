@@ -152,7 +152,7 @@ tuple_cell tuple_cell::make_sure_light_atomic(const tuple_cell& tc)
 		 
 		 /* Convsersion is valid since we've checked length */
          size_t sizep = (size_t)tc.get_strlen_vmm();
-		 char *tmp = se_new char[sizep + 1];
+		 char *tmp = new char[sizep + 1];
          tc.copy_string(tmp);
 		 return atomic(tc.get_atomic_type(), tmp);
     }

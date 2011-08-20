@@ -24,7 +24,7 @@ public:
 
 	MallocAllocator() : pind(-1), cursize(0), left(0) {}
 
-	ptr_t alloc(size_t size) { 
+	ptr_t alloc(size_t size) {
 		if (left >= size)
 		{
 			left -= size;
@@ -75,6 +75,7 @@ public:
 		typename AllocatorT::ptr_t s_parent;
 		str_len_t str_len;
 		bool black;
+
 #ifdef _MSC_VER
 #pragma warning( disable : 4200 )
 #endif
@@ -82,25 +83,25 @@ public:
 #ifdef _MSC_VER
 #pragma warning( default : 4200 )
 #endif
-		
+
 		inline const char *get_str() const { return (this->str);}
 		inline str_len_t get_str_len() const { return (this->str_len);}
-		
+
 		inline typename AllocatorT::ptr_t left_ptr() {return (this->s_left);}
 		inline typename AllocatorT::ptr_t right_ptr() {return (this->s_right);}
 		inline typename AllocatorT::ptr_t parent_ptr() {return (this->s_parent);}
 		inline pers_sset_entry* left(const AllocatorT &allocator) {return (pers_sset_entry*)allocator.deref(this->s_left);}
 		inline pers_sset_entry* right(const AllocatorT &allocator) {return (pers_sset_entry*)allocator.deref(this->s_right);}
 		inline pers_sset_entry* parent(const AllocatorT &allocator) {return (pers_sset_entry*)allocator.deref(this->s_parent);}
-		inline void set_left(typename AllocatorT::ptr_t entry) 
+		inline void set_left(typename AllocatorT::ptr_t entry)
 		{
 			this->s_left=entry;
 		}
-		inline void set_right(typename AllocatorT::ptr_t entry) 
+		inline void set_right(typename AllocatorT::ptr_t entry)
 		{
 			this->s_right=entry;
 		}
-		inline void set_parent(typename AllocatorT::ptr_t entry) 
+		inline void set_parent(typename AllocatorT::ptr_t entry)
 		{
 			this->s_parent=entry;
 		}
@@ -116,7 +117,10 @@ public:
 	};
 	typename AllocatorT::ptr_t root;
 	static typename AllocatorT::ptr_t init(AllocatorT *allocator);
-	static string_map *get_map(typename AllocatorT::ptr_t ptr, const AllocatorT &alloc)
+
+    static const size_t MAX_STRING_SIZE = USHRT_MAX;
+
+    static string_map *get_map(typename AllocatorT::ptr_t ptr, const AllocatorT &alloc)
 	{
 		return (string_map*)alloc.deref(ptr);
 	}
@@ -197,8 +201,10 @@ template<class T, class AllocatorT> typename string_map<T,AllocatorT>::pers_sset
 	typename AllocatorT::ptr_t res_ptr;
 	typename AllocatorT::ptr_t str_ptr;
 	pers_sset_entry *res;
-	int str_len = strlen(str);
+	size_t str_len = strlen(str);
 
+    if(str_len > MAX_STRING_SIZE)
+        throw SYSTEM_EXCEPTION("Too long string value for string map");
 
 	res_ptr = allocator->alloc(sizeof(pers_sset_entry) + str_len + 1);
 	if (res_ptr == AllocatorT::null_ptr())
@@ -206,7 +212,8 @@ template<class T, class AllocatorT> typename string_map<T,AllocatorT>::pers_sset
 	str_ptr = res_ptr + sizeof(pers_sset_entry);
 	res = (pers_sset_entry *)allocator->deref(res_ptr);
 
-	pers_sset_entry::init(res,str,str_len,obj);
+	// it's safe to cast str_len since we've checked it already
+    pers_sset_entry::init(res,str,(str_len_t)str_len,obj);
 	rb_insert(res_ptr);
 
 	return res;
@@ -413,7 +420,7 @@ template<class T, class AllocatorT> typename string_map<T,AllocatorT>::pers_sset
 /*template<class T, class X> void pers_sset<T,X>::sset_free(pers_sset<T,X>* set)
 {
 	scm_free(set->mem_pool,IS_PH_PTR(set));
-	scm_free(set,IS_PH_PTR(set));	
+	scm_free(set,IS_PH_PTR(set));
 }
 
 template<class T, class X> void pers_sset<T,X>::clear()
@@ -497,7 +504,7 @@ template<class T, class X> void pers_sset<T,X>::rb_fixup(pers_sset_entry* entry,
 				x=root;
 			}
 		}
-		else		
+		else
 		{
 			pers_sset_entry* w=px->left(mem_pool);
 			if (!w->black)

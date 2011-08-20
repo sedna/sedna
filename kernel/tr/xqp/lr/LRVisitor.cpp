@@ -626,7 +626,7 @@ void LRVisitor::visit(ASTDropUser &n)
 
 void LRVisitor::visit(ASTElem &n)
 {
-    unsigned int count = 0;
+    size_t count = 0;
 
     lr_str.append("(element ");
     LR_QNAME(n.pref, n.local);
@@ -1466,7 +1466,7 @@ void LRVisitor::visit(ASTPragma &n)
 
 void LRVisitor::visit(ASTPred &n)
 {
-    unsigned int sz = n.others.size(), and_cnt = 0;
+    size_t sz = n.others.size(), and_cnt = 0;
     lr_str = "(predicate " + lr_str + "(fun-def ((!xs!anyType (var (\"\" \"$%v\")))) ";
 
     if (sz > 1)

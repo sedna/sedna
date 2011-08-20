@@ -1006,9 +1006,9 @@ namespace sedna
                 (*n.params)[i]->accept(*this);
 
             // check for duplicate params
-            for (unsigned int i = bound_vars.size() - 1; i >= bound_vars.size() - param_count + 1; i--)
+            for (size_t i = bound_vars.size() - 1; i >= bound_vars.size() - param_count + 1; i--)
             {
-                for (unsigned int j = bound_vars.size() - param_count; j < i; j++)
+                for (size_t j = bound_vars.size() - param_count; j < i; j++)
                 {
                     if (bound_vars[j].int_name == bound_vars[i].int_name)
                     {
@@ -1597,15 +1597,13 @@ namespace sedna
 
     void Sema::visit(ASTProlog &n)
     {
-        unsigned int i = 0;
-        ASTOption *opt;
+        size_t i = 0;
 
         has_prolog = (n.decls->size() != 0);
 
         while (i < n.decls->size())
         {
             (*n.decls)[i]->accept(*this);
-
             i++;
         }
     }
@@ -2112,19 +2110,27 @@ namespace sedna
         beg = 0;
         while (beg < pos && IS_WHITESPACE(opt[beg])) beg++;
 
-        end = pos - 1;
-        while (end >= 0 && IS_WHITESPACE(opt[end])) end--;
-
-        key = std::string(opt, beg, end - beg + 1);
+        if(beg == pos) key == "";
+        else {
+            // beg < pos; pos > 0 there and there is at least one non-whitespace
+            // symbol at position 'beg'
+            end = pos - 1;
+            while (end > beg && IS_WHITESPACE(opt[end])) end--;
+            key = std::string(opt, beg, end - beg + 1);
+        }
 
         // trim WSes for value
         beg = pos + 1;
         while (beg < opt.size() && IS_WHITESPACE(opt[beg])) beg++;
 
-        end = opt.size() - 1;
-        while (end > pos && IS_WHITESPACE(opt[end])) end--;
-
-        val = std::string(opt, beg, end - beg + 1);
+        if(beg == opt.size()) val = "";
+        else {
+            // beg < opt.size(); pos < opt.size() there and there is at least one non-whitespace
+            // symbol at position 'beg'
+            end = opt.size() - 1;
+            while (end > beg && IS_WHITESPACE(opt[end])) end--;
+            val = std::string(opt, beg, end - beg + 1);
+        }
 
         return true;
     }

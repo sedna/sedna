@@ -45,7 +45,8 @@ inline static
 int strcmpnull(const char * str1, const char * str2)
 {
     if ((str1 == NULL) && (str2 == NULL)) return 0;
-    if ((str1 == NULL) || (str2 == NULL)) return (((ptrdiff_t) str1) - ((ptrdiff_t) str2));
+    if (str1 == NULL) return -1;
+    if (str2 == NULL) return 1;
 
     return strcmp(str1, str2);
 }
