@@ -316,7 +316,6 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
     doc_schema_node_cptr root_node = index_dsc->owner->get_schema_node();
     root_node.modify()->full_index_list->add(idc.ptr());
 
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     idx_serializer *serializer = new idx_serializer(index_dsc -> keytype);
     SortedSequence *ss = new SortedSequence(serializer);
 

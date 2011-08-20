@@ -97,8 +97,8 @@ namespace sedna
 
         void VisitNodesVector(ASTNodesVector *nodes, ASTVisitor &v, parentRequest req);
 
-        childOffer mergeOffers(unsigned int count);
-        childOffer mergeOffersSwitch(unsigned int count);
+        childOffer mergeOffers(size_t count);
+        childOffer mergeOffersSwitch(size_t count);
 
         parentRequest parentReq; // request from parent to child
         std::vector<parentRequest> pareqs; // parent requests

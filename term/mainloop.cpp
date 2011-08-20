@@ -330,10 +330,9 @@ const char *find_alias(char *cmd)
     if (!strlen(cmd)) return NULL;
 
     // first, trim trailing spaces
-    for (i = strlen(cmd) - 1; i >= 0 && isspace(cmd[i]); i--)
-        ;
-
-    cmd[i + 1] = '\0';
+    for (i = strlen(cmd) - 1; i > 0 && isspace(cmd[i]); i--);
+    if(i == 0 && isspace(cmd[0])) cmd[0] = '\0';
+    else cmd[i + 1] = '\0';
 
     // then, look for alias
     for (i = 0; aliases[i].alias != NULL; i++)

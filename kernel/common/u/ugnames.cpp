@@ -5,19 +5,19 @@
 #include "common/errdbg/exceptions.h"
 #include "ugnames.h"
 
-/* {% globals */ 
+/* {% globals */
 
 static UGlobalNamesRegistryItem *registry = NULL;
 static UGlobalNamesRegistrySearchProc searchProc = NULL;
 
-/* }% */ 
+/* }% */
 
 #ifdef _WIN32
 #define IPC_PRIVATE 0
 #ifndef snprintf
 #define snprintf _snprintf
 #endif
-#else 
+#else
 #include <sys/types.h>
 #include <sys/ipc.h>
 #endif
@@ -29,7 +29,7 @@ UReleaseGlobalNamesRegistry()
 	searchProc = NULL;
 }
 
-static 
+static
 const UGlobalNamesRegistryItem *
 SearchGlobalNamesRegistry(const UGlobalNamesRegistryItem *registry,
 						  const char *basename)
@@ -46,23 +46,23 @@ static void ThrowSystemException(const char *msg)
 
 static int ValidateBaseName(const char *baseName)
 {
-	/* TODO: implement validation */ 
+	/* TODO: implement validation */
 	return 1;
 }
 
 static int ValidateGlobalName(const char *globalName)
 {
-	/* TODO: implement validation */ 
+	/* TODO: implement validation */
 	return 1;
 }
 
 static int ValidateCompoundName(const char *compoundName)
 {
-	/* TODO: implement validation */ 
+	/* TODO: implement validation */
 	return 1;
 }
 
-void 
+void
 UInitGlobalNamesRegistry(UGlobalNamesRegistryItem *registryParam,
 						 UGlobalNamesRegistrySearchProc searchProcParam,
 						 int rangeBegin,
@@ -73,12 +73,12 @@ UInitGlobalNamesRegistry(UGlobalNamesRegistryItem *registryParam,
 	char errorBuf[128];
 
 	assert(registryParam);
-	/* first let's estimate the required range size */ 
-	for (i = registryParam; i->basename; ++i) 
+	/* first let's estimate the required range size */
+	for (i = registryParam; i->basename; ++i)
 	{
 		if (!ValidateBaseName(i->basename) || i->nObjectsMax<1 || (i->prefix==NULL && i->nObjectsMax > 1))
 		{
-			snprintf(errorBuf, sizeof errorBuf, 
+			snprintf(errorBuf, sizeof errorBuf,
 				"UInitGlobalNamesRegistry: bad item '%s'", i->basename);
 			errorBuf[(sizeof errorBuf)-1]=0;
 			ThrowSystemException(errorBuf);
@@ -86,16 +86,16 @@ UInitGlobalNamesRegistry(UGlobalNamesRegistryItem *registryParam,
 		rangeSizeMin+=i->nObjectsMax;
 	}
 	registry = registryParam;
-	/* check if the passed range is ok */ 
+	/* check if the passed range is ok */
 	if (rangeEnd - rangeBegin < rangeSizeMin)
 		ThrowSystemException("InitGlobalNamesRegistry: range too small");
-	/* now initialize per-entry ranges */ 
+	/* now initialize per-entry ranges */
 	for (i = registry; i->basename; ++i)
 	{
 		i->rangeBegin = rangeBegin;
 		rangeBegin = i->rangeEnd = rangeBegin + i->nObjectsMax;
 	}
-	/* complete initialization */ 
+	/* complete initialization */
 	searchProc = (searchProcParam ? searchProcParam : SearchGlobalNamesRegistry);
 }
 
@@ -108,7 +108,7 @@ UCreateGlobalName(const char *basename,
 	char prefix[32] = "", errorBuf[128];
 	int ordinal = 0;
 	const UGlobalNamesRegistryItem *item = NULL;
-	size_t stored = 0;
+	int stored = 0;
 
 	assert (basename);
 	item = searchProc(registry, basename);
@@ -129,7 +129,7 @@ UCreateGlobalName(const char *basename,
 		ThrowSystemException("CreateGlobalName: generated ordinal out of range");
 
 	stored = snprintf(buf, bufSize, "SEDNA%d.%s%s@%d", registry->rangeBegin, prefix, basename, ordinal);
-	if (stored<0 || stored>=bufSize)
+	if (stored<0 || (size_t)stored>=bufSize)
 		ThrowSystemException("CreateGlobalName: buffer too small");
 
 	return buf;
@@ -179,28 +179,28 @@ const char *StrNameFromGlobalName(const char *globalName,
 								  size_t bufSize)
 {
 	char bufjr[16];
-	size_t partSz = 0, stored = 0;
+	int partSz = 0, stored = 0;
 	GlobalNameComponents components = {NULL};
 
 	assert(prefix);
 	ParseGlobalName(&components,globalName);
-	if (globalName == NULL) 
+	if (globalName == NULL)
 	{
 		buf = NULL;
 	}
 	else
 	{
-		partSz = (size_t)(components.strNameEnd - components.strNameBegin);
+		partSz = (int)(components.strNameEnd - components.strNameBegin);
 		stored = snprintf(buf, bufSize, "%s%.*s", prefix, partSz, components.strNameBegin);
-		if (stored<0 || stored>=bufSize)
+		if (stored<0 || (size_t)stored>=bufSize)
 			ThrowSystemException("StrNameFromGlobalName: buffer too small");
-		if (limit>0 && stored>limit)
+		if (limit>0 && (size_t)stored>limit)
 		{
 			stored = snprintf(bufjr, sizeof bufjr, "~%d", components.ordinal);
 			if (stored<0 || stored>=sizeof bufjr) ThrowSystemException("StrNameFromGlobalName: internal error");
-			if (stored>limit) ThrowSystemException("StrNameFromGlobalName: impossible limit");
+			if ((size_t)stored>limit) ThrowSystemException("StrNameFromGlobalName: impossible limit");
 			strcpy(buf+limit-stored, bufjr);
-		}			
+		}
 	}
 	return buf;
 }
@@ -264,7 +264,7 @@ UCreateCompoundName(const char **namesVec,
 	{
 		if (nameCur!=namesVec)
 		{
-			/* checked there is enough room in buf on previous iteration */ 
+			/* checked there is enough room in buf on previous iteration */
 			strcpy(bufpos,",");
 			++bufpos; bufSize-=1;
 		}
@@ -327,4 +327,3 @@ UGlobalNameFromCompoundName(const char *compoundName,
 	}
 	return buf;
 }
-

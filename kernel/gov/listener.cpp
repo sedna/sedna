@@ -23,7 +23,7 @@ static int maxi = -1, nres;
 
 static int clRegisterClient(USOCKET sock, clProcess_fun fun)
 {
-    for (int i = 0; i < U_SSET_SIZE; i++)
+    for (unsigned int i = 0; i < U_SSET_SIZE; i++)
     {
         if (clClients[i].sock == U_INVALID_SOCKET)
         {
@@ -33,7 +33,8 @@ static int clRegisterClient(USOCKET sock, clProcess_fun fun)
             U_SSET_SET(sock, &allset);
 
             if (maxfd < sock) maxfd = sock;
-            if (maxi < i) maxi = i;
+            /* Don't forget to cast, otherwise it won't work at all */
+            if (maxi < (signed)i) maxi = (signed)i;
 
             return i;
         }
@@ -89,7 +90,7 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
     U_SSET_SET(sockfd, &allset);
     maxfd = sockfd;
 
-    for (int i = 0; i < U_SSET_SIZE; i++)
+    for (unsigned int i = 0; i < U_SSET_SIZE; i++)
     {
         clClients[i].sock = U_INVALID_SOCKET;
         clClients[i].clProcess = NULL;
@@ -398,9 +399,7 @@ int sess_registering(USOCKET s, char* msg_buf)
     net_int2int(&db_name_len_net, msg_buf + off);
     off += sizeof(int32_t);
 
-    if( db_name_len_net > SE_MAX_DB_NAME_LENGTH || 
-        db_name_len_net < 0 ||
-        (uint32_t)db_name_len_net > SIZE_MAX) throw USER_EXCEPTION(SE3015);
+    if( db_name_len_net > SE_MAX_DB_NAME_LENGTH ) throw USER_EXCEPTION(SE3015);
     /* 
     * Here we quite sure that size_t is enough to store
     * database name length.
@@ -501,9 +500,7 @@ int sm_registering(USOCKET s, char* msg_buf)
     net_int2int(&db_name_len_net, msg_buf + off);
     off += sizeof(int32_t);
 
-    if( db_name_len_net > SE_MAX_DB_NAME_LENGTH || 
-        db_name_len_net < 0 ||
-        (uint32_t)db_name_len_net > SIZE_MAX) throw USER_EXCEPTION(SE3015);
+    if( db_name_len_net > SE_MAX_DB_NAME_LENGTH ) throw USER_EXCEPTION(SE3015);
     /* 
     * Here we quite sure that size_t is enough to store
     * database name length.

@@ -278,7 +278,6 @@ xptr SortedSequence::mergeBlocks(xptr p1, int size1, xptr p2, int size2)
     //Pointers to new sequence:
     xptr first_block = getFreeBlock();
     xptr ptr_place = first_block;
-    xptr tmp_ptr;
 
     //Buffers for merging:
     data_ptr ptr1, ptr2;

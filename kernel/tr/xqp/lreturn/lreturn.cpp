@@ -66,7 +66,7 @@ namespace sedna
 
     void LReturn::visit(ASTAttr &n)
     {
-        unsigned int count = (n.cont) ? n.cont->size() : 0;
+        size_t count = (n.cont) ? n.cont->size() : 0;
         childOffer off;
 
         if (n.cont)
@@ -1366,7 +1366,7 @@ namespace sedna
     void LReturn::visit(ASTFunCall &n)
     {
         std::string int_name = CREATE_INTNAME(*n.uri, *n.local);
-        unsigned int arity = (n.params) ? n.params->size() : 0;
+        size_t arity = (n.params) ? n.params->size() : 0;
         XQFunction *xqf;
         childOffer off_this, off_params;
         bool standFunc = (*n.int_name != "");
@@ -1523,7 +1523,7 @@ namespace sedna
 
     void LReturn::visit(ASTFuncDecl &n)
     {
-        unsigned int arity = (n.params) ? n.params->size() : 0;
+        size_t arity = (n.params) ? n.params->size() : 0;
         childOffer off_this, boff;
         std::string name = CREATE_INTNAME(*n.func_uri, *n.local);
 
@@ -1852,7 +1852,7 @@ namespace sedna
 
     void LReturn::visit(ASTOrderBy &n)
     {
-        unsigned int count = n.specs->size();
+        size_t count = n.specs->size();
         childOffer off;
         parentRequest req;
 
@@ -2183,7 +2183,7 @@ namespace sedna
     {
         parentRequest req;
         childOffer off;
-        unsigned int count = n.exprs->size();
+        size_t count = n.exprs->size();
 
         req = getParentRequest(); // careful to propagate atomize property
         req.distinctOnly = false;
@@ -2662,7 +2662,7 @@ namespace sedna
     }
 
     // merge offers in sequence-like manner (when result will be union of the expressions)
-    LReturn::childOffer LReturn::mergeOffers(unsigned int count)
+    LReturn::childOffer LReturn::mergeOffers(size_t count)
     {
         childOffer res;
 
@@ -2697,7 +2697,7 @@ namespace sedna
     }
 
     // merge offers in typeswitch-like manner (when result will be one of the expressions)
-    LReturn::childOffer LReturn::mergeOffersSwitch(unsigned int count)
+    LReturn::childOffer LReturn::mergeOffersSwitch(size_t count)
     {
         childOffer res;
 
