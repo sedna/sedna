@@ -221,7 +221,8 @@ int se_analyze_line(char *buffer, int lineno)
 
     /* should we accept input? */
     // find first non-space character
-    for (i = buffer; i < lastchar && isspace(*i); ++i);
+    for (i = buffer; i < lastchar && isspace(*i); ++i)
+        ;
 
     if (!lineno && (i == lastchar || *i == '\\'))
     {
