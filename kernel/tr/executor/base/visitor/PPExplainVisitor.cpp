@@ -64,14 +64,14 @@ static inline
 xptr insertVariableHelper(const char* name,
                           const xptr& left,
                           const xptr& parent,
-                          int dsc,
+                          var_dsc dsc,
                           const var_map_id_name& var_names)
 {
     xptr var = left;
-    if(dsc >= 0)
+    if(dsc != INVALID_VAR_DSC)
     {
         var = insert_element_i(left,XNULL,parent,"variable",xs_untyped,explain_ns);
-        xptr attr_left = insertAttributeHelper("descriptor", XNULL, var, int2string(dsc));
+        xptr attr_left = insertAttributeHelper("descriptor", XNULL, var, var_dsc2string(dsc));
         var_map_id_name::const_iterator it = var_names.find(dsc);
         if(it != var_names.end() && it->second.first.length() != 0)
         {

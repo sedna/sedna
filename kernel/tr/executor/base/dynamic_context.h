@@ -1,6 +1,7 @@
 /*
  * File:  dynamic_context.h
- * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2010 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #ifndef _DYNAMIC_CONTEXT_H
@@ -16,6 +17,7 @@
 
 #include "common/sedna.h"
 #include "common/counted_ptr.h"
+#include "common/utils.h"
 
 #include "tr/structures/xmlns.h"
 
@@ -37,10 +39,17 @@ class StaticallyKnownNamespaces;
  ******************************************************************************/
 /// Declaration of variable descriptor and auxilary structures
 typedef unsigned var_dsc;    // var descriptor
-typedef std::pair<dynamic_context *, var_dsc> global_var_dsc;    // global-var descriptor
 typedef unsigned var_c_id;   // var consumption id
 
 #define INVALID_VAR_DSC UINT32_MAX
+
+inline std::string var_dsc2string(var_dsc id)
+{
+    return uint2string(id);
+}
+
+// global-var descriptor
+typedef std::pair<dynamic_context *, var_dsc> global_var_dsc;
 
 // every element of the array is the info about consumption of specific consumer
 typedef std::vector<bool> simple_var_consumption;

@@ -1,3 +1,8 @@
+/*
+ * File:  term_funcs.cpp
+ * Copyright (C) 2011 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
+ */
 
 #include "common/sedna.h"
 
@@ -20,13 +25,24 @@ void term_output1(const char *buf)
     }
 }
 
-void term_output2(const char *buf, const void* arg1)
+void term_output2(const char *buf, const char* arg1)
 {
     if (term_globals::echo)
     {
-    	char echo_buf[256];
-    	sprintf(echo_buf,buf,arg1);
-    	fprintf(res_os, "%s", echo_buf);
+        char echo_buf[256];
+        sprintf(echo_buf,buf,arg1);
+        fprintf(res_os, "%s", echo_buf);
+        fflush(res_os);
+    }
+}
+
+void term_output2(const char *buf, int arg1)
+{
+    if (term_globals::echo)
+    {
+        char echo_buf[256];
+        sprintf(echo_buf,buf,arg1);
+        fprintf(res_os, "%s", echo_buf);
         fflush(res_os);
     }
 }

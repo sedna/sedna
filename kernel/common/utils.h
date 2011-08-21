@@ -18,6 +18,7 @@
 
 
 std::string int2string(int64_t value);
+std::string uint2string(uint64_t value);
 
 /* datatypes and functions to with time (time in sec + time in millisec)*/
 #ifndef _WIN32

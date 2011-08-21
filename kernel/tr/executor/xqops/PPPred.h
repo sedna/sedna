@@ -209,7 +209,7 @@ public:
             arr_of_comp_cond _conditions_,
             PPOpIn _data_child_,
             bool _once_,
-            var_dsc _pos_dsc_ = -1);
+            var_dsc _pos_dsc_ = INVALID_VAR_DSC);
     
     virtual ~PPPred1();
 
@@ -220,7 +220,7 @@ public:
         U_ASSERT(i < conjuncts.size());
         return conditions.at(i);
     }
-    /* Returns -1 if position var is not used */
+    /* Returns INVALID_VAR_DSC if position var is not used */
     inline var_dsc get_position_var_dsc() { return pos_dsc; }
     inline const arr_of_var_dsc& get_variable_descriptors() { return var_dscs; }
 };
@@ -308,7 +308,7 @@ public:
             PPOpIn _data_child_,
             bool _once_,
             var_dsc _lst_dsc_,
-            var_dsc _pos_dsc_ = -1);
+            var_dsc _pos_dsc_ = INVALID_VAR_DSC);
 
     virtual ~PPPred2();
     
@@ -319,7 +319,7 @@ public:
         U_ASSERT(i < conjuncts.size());
         return conditions.at(i);
     }
-    /* Returns -1 if position var is not used */
+    /* Returns INVALID_VAR_DSC if position var is not used */
     inline var_dsc get_position_var_dsc() { return pos_dsc; }
     inline var_dsc get_last_var_dsc()     { return lst_dsc; }
     inline const arr_of_var_dsc& get_variable_descriptors() { return var_dscs; }

@@ -55,7 +55,7 @@ int LocateVersionsHeader(int bufferId, VersionsHeader **veHeader)
 void WuLogHeader(int bufferId)
 {
     VersionsHeader *header;
-    ramoffs rof = -1;
+    ramoffs rof = RAMOFFS_OUT_OFF_BOUNDS;
     
     if (!LocateVersionsHeader(bufferId, &header))
     {

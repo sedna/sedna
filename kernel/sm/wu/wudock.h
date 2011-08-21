@@ -35,12 +35,12 @@ inline int BufferIdFromRamoffs(ramoffs ofs)
 {
     assert(ofs % PAGE_SIZE == 0);
     /* explicit cast is safe here since bufs number is int everywhere on se_sm */
-    return (int)(ofs / PAGE_SIZE);
+    return ofs == RAMOFFS_OUT_OFF_BOUNDS ? -1 : (int)(ofs / PAGE_SIZE);
 }
 
 inline ramoffs RamoffsFromBufferId(int id)
 {
-    return (ramoffs)id * PAGE_SIZE;
+    return id == -1 ? RAMOFFS_OUT_OFF_BOUNDS : (ramoffs)id * PAGE_SIZE;
 }
 
 #define WU_CATCH_EXCEPTIONS() \

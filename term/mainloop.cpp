@@ -1,6 +1,7 @@
 /*
  * File:  mainloop.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2004 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #include <cctype>
@@ -514,7 +515,7 @@ int process_command(char* buffer)
                 fflush(stderr);
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
-            term_output2("Timeout for query execution is set to %d.\n", (const void*)value);
+            term_output2("Timeout for query execution is set to %d.\n", value);
             return EXIT_SUCCESS;
         }
         else if (strncmp(buffer+4, "LOG_LESS_MODE", 13) == 0)

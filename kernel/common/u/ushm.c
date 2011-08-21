@@ -9,6 +9,10 @@
 #include "common/errdbg/d_printf.h"
 #include "common/u/ugnames.h"
 
+#if (defined(SunOS))
+#include <sys/mman.h>
+#endif
+
 int uCreateShMem(UShMem *id, global_name name, size_t size, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 {
 #ifdef _WIN32
