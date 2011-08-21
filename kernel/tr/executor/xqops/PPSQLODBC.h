@@ -236,8 +236,8 @@ private:
 public:
 	SQLODBCDriver();
 
-	virtual const char*		prefix() const { return "odbc:"; }
-	virtual const int		prefix_len() const { return 5; }
+	virtual const char*     prefix() const { return "odbc:"; }
+	virtual int             prefix_len() const { return 5; }
 	virtual SQLConnection*	new_connection(const char *connect_str, int connect_str_len,
 											  const char *uid, int uid_len,
 											  const char *pass, int pass_len, PPOpIn *options);

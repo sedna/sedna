@@ -158,7 +158,8 @@ bool PPQueryRoot::do_next()
 
 void PPQueryRoot::do_execute()
 {
-    while (do_next());
+    while (do_next())
+        ;
 }
 
 /*

@@ -223,7 +223,6 @@ void PPIndexScan::next_between(tuple &t)
 {
     tuple_cell current_key;
     if (first_time) {
-        bool key_equal;
 
         initialize();
 

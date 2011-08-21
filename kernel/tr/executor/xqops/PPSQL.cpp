@@ -122,7 +122,7 @@ bool SQLOptionParse(const tuple_cell &opt, char *&opt_name, char *&opt_value)
 
 SQLHandleManager::SQLHandleManager()
 {
-    sql_odbc_driver = se_new SQLODBCDriver();
+    sql_odbc_driver = new SQLODBCDriver();
 }
 
 SQLHandleManager::~SQLHandleManager()
@@ -378,9 +378,10 @@ PPFnSQLExecute::PPFnSQLExecute(dynamic_context *_cxt_,
                                const arr_of_PPOpIn &_arr_,
                                bool _exec_update_) : PPFnSQLBase(_cxt_, _info_),
                                                      arr(_arr_),
-                                                     handle(NULL),
-                                                     executor(NULL),
-                                                     exec_update(_exec_update_)
+                                                     exec_update(_exec_update_),
+													 first_time(true),
+													 handle(NULL),
+                                                     executor(NULL)
 {
 }
 

@@ -122,7 +122,7 @@ UCreateGlobalName(const char *basename,
 	if (item->prefix)
 	{
 		stored = snprintf(prefix, sizeof prefix, "%s%d.", item->prefix, objectId);
-		if (stored<0 || stored>=(sizeof prefix))
+		if (stored<0 || (size_t)stored>=(sizeof prefix))
 			ThrowSystemException("UCreateGlobalName: prefix too long");
 	}
 	if (ordinal >= item->rangeEnd || ordinal < item->rangeBegin)
@@ -197,7 +197,7 @@ const char *StrNameFromGlobalName(const char *globalName,
 		if (limit>0 && (size_t)stored>limit)
 		{
 			stored = snprintf(bufjr, sizeof bufjr, "~%d", components.ordinal);
-			if (stored<0 || stored>=sizeof bufjr) ThrowSystemException("StrNameFromGlobalName: internal error");
+			if (stored<0 || (size_t)stored>=sizeof bufjr) ThrowSystemException("StrNameFromGlobalName: internal error");
 			if ((size_t)stored>limit) ThrowSystemException("StrNameFromGlobalName: impossible limit");
 			strcpy(buf+limit-stored, bufjr);
 		}

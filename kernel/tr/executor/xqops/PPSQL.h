@@ -65,8 +65,8 @@ public:
 class SQLDriver
 {
 public:
-	virtual const char*		prefix() const = 0;
-	virtual const int		prefix_len() const = 0;
+	virtual const char*     prefix() const = 0;
+	virtual int             prefix_len() const = 0;
 	virtual SQLConnection*	new_connection(const char *connect_str, int connect_str_len,
 											  const char *uid, int uid_len,
 											  const char *pass, int pass_len, PPOpIn *options) = 0;

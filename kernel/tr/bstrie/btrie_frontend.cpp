@@ -224,7 +224,6 @@ bool btrie_replace_object(const btrie_record_t p, const char * object)
 
 btrie_enum_t btrie_find_prefix(const btrie_t tree, const char * key, size_t key_length, bool * first_key_equal) {
     struct st_path * states;
-    struct state_descriptor dsc;
 
     if (tree->root_page == XNULL) {
         btrie_last_error = ST_ERROR_NOT_FOUND;
