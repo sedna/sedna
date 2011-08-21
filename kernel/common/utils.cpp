@@ -26,6 +26,13 @@ string int2string(int64_t value)
     return string(buf);
 }
 
+string uint2string(uint64_t value)
+{
+    char buf[20];
+    u_ui64toa(value, buf, 10);
+    return string(buf);
+}
+
 string to_string(u_timeb t)
 {
     char buf[80];

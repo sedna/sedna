@@ -48,7 +48,7 @@ t_ramoffs_list used_mem;
 t_ramoffs_list blocked_mem;
 
 // A single buffer that is protected from beeng flushed
-ramoffs buffer_on_stake = -1;
+ramoffs buffer_on_stake = RAMOFFS_OUT_OFF_BOUNDS;
 
 // File mappings
 UShMem  file_mapping;

@@ -1721,7 +1721,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
                 setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
                 return SEDNA_ERROR;
             }
-            strncpy(conn->session_directory, attrValue, attrValueLength);
+            strncpy(conn->session_directory, (const char *)attrValue, attrValueLength);
             conn->session_directory[attrValueLength] = '\0';
             return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
 

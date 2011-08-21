@@ -362,7 +362,7 @@ int AllocateDataBlockAndCopyData (XPTR *xptr, int *bufferId, int srcBufferId)
 			destHeader->roffs = RamoffsFromBufferId(*bufferId);
 			success = 1;
 		}
-		buffer_on_stake = -1;
+		buffer_on_stake = RAMOFFS_OUT_OFF_BOUNDS;
 	}
 	
 	wulog(("WULOG: Allocated new block for new version, lxptr = %"PRI_XPTR", xptr = %"PRI_XPTR, srcHeader->versionsHeader.xptr[0], *xptr));
