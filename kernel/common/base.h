@@ -23,7 +23,7 @@
 // memory area by defining offset of buffer from the beginning of the shared
 // memory
 typedef size_t ramoffs;
-#define RAMOFFS_OUT_OFF_BOUNDS SIZE_MAX
+#define RAMOFFS_OUT_OFF_BOUNDS ((size_t)-1)
 
 //typedef __int64 LSN;
 //typedef long LSN;
@@ -50,6 +50,7 @@ typedef int transaction_id;
 #define MAX_RESOURCE_NAME_LENGTH                100
 #define MAX_DATABASE_NAME_LENGTH                100
 
+#define INVALID_SIZE ((size_t)-1)
 
 /* shift in the block */
 typedef unsigned short int shft;

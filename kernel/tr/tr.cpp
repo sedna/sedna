@@ -33,13 +33,14 @@ u_timeb t_total1, t_total2, t_qep1, t_qep2, t_qep;
 
 int TRmain(int argc, char *argv[])
 {
-    int ret_code = 0;
+    /* volatile to prevent clobbing by setjmp/longjmp */
+    volatile int ret_code = 0;
+    volatile bool sedna_server_is_running = false;
     program_name_argv_0 = argv[0]; /* we use it to get full binary path */
     tr_globals::ppc = NULL; /* pping client */
     char buf[1024]; /* buffer enough to get environment variables */
     SSMMsg *sm_server = NULL; /* shared memory messenger to communicate with SM */
     int determine_vmm_region = -1;
-    bool sedna_server_is_running = false;
     int os_primitives_id_min_bound;
     SednaUserException e = USER_EXCEPTION(SE4400);
 

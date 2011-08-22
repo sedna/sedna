@@ -118,27 +118,26 @@ int info_table::get_database_info(const database_id& db_id, UPID& pid/*out*/, UP
 void info_table::wait_erase_session(const session_id& s_id)
 {
     UPHANDLE proc_handle;
-    UPID pid;
-    bool is_child;
-    int res;
+    UPID pid = 0;
+    bool is_child = false;
+    int res = 0;
 
-    this->get_session_info(s_id, pid, proc_handle, is_child);
+    if(this->get_session_info(s_id, pid, proc_handle, is_child) != -1) {
+        if (is_child)
+            res = uWaitForChildProcess(pid, proc_handle, NULL, __sys_call_error);
+        else
+            res = uWaitForProcess(pid, proc_handle, __sys_call_error);
 
-    if (is_child)
-        res = uWaitForChildProcess(pid, proc_handle, NULL, __sys_call_error);
-    else
-        res = uWaitForProcess(pid, proc_handle, __sys_call_error);
+        if (res != 0)
+            throw SYSTEM_EXCEPTION("Error, WaitForProcess failed");
 
-    if (res != 0)
-        throw SYSTEM_EXCEPTION("Error, WaitForProcess failed");
+        _session_table_.erase(s_id);
+        this->give_id(s_id);
+        uCloseProcessHandle(proc_handle, __sys_call_error);
 
-
-    _session_table_.erase(s_id);
-    this->give_id(s_id);
-    uCloseProcessHandle(proc_handle, __sys_call_error);
-
-    ((gov_config_struct*)gov_shared_mem)->sess_vars[s_id].stop = 0;
-    ((gov_config_struct*)gov_shared_mem)->sess_vars[s_id].idfree = 0;
+        ((gov_config_struct*)gov_shared_mem)->sess_vars[s_id].stop = 0;
+        ((gov_config_struct*)gov_shared_mem)->sess_vars[s_id].idfree = 0;
+    }
 }
 
 

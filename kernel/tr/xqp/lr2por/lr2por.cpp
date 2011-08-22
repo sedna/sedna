@@ -2073,6 +2073,9 @@ namespace sedna
             case ASTLit::STRING:
                 type = xs_string;
                 break;
+            default:
+                type = xs_string;
+                drv->error(SE4001, "unexpected literal node type");
         }
 
         // catch overflow exception
@@ -3671,11 +3674,9 @@ namespace sedna
             case ASTBop::AND:
                 op_tree = new BinaryOpAnd(lop, rop);
                 return;
-                break;
             case ASTBop::OR:
                 op_tree = new BinaryOpOr(lop, rop);
                 return;
-                break;
 
             case ASTBop::EQ_V:
                 op_type = xqbop_eq;
@@ -3715,6 +3716,7 @@ namespace sedna
                 break;
 
             default:
+                op_type = xqbop_eq;
                 drv->error(SE4001, "make_binary_op cannot process the operation");
         }
 

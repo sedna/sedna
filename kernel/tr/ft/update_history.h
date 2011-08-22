@@ -23,7 +23,7 @@ private:
 public:
 	update_history();
 
-	enum update_type {ut_insert, ut_update, ut_delete};
+	enum update_type {ut_insert, ut_update, ut_delete, ut_invalid};
 	//node must contain pointer to indirection
 	void add_node(const update_type ut, const xptr node);
 	void add_insert_node(const xptr node);

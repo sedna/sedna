@@ -50,8 +50,11 @@ void update_history::get_update_sequences(xptr_sequence **inserted, xptr_sequenc
 
 	tuple t(3);
 	xptr cur_node = XNULL;
-	update_type first_ut, last_ut;
-	while (true)
+
+    update_type first_ut = ut_invalid;
+    update_type last_ut  = ut_invalid;
+
+    while (true)
 	{
 		xptr node;
 		update_type ut;
@@ -83,7 +86,7 @@ void update_history::get_update_sequences(xptr_sequence **inserted, xptr_sequenc
 					case ut_delete:
 						break; //no need to index
 					default:
-						U_ASSERT(false);
+						throw SYSTEM_EXCEPTION("Invalid update type");
 					}
 				}
 				else
@@ -98,7 +101,7 @@ void update_history::get_update_sequences(xptr_sequence **inserted, xptr_sequenc
 						(*deleted)->add(cur_node);
 						break; //no need to index
 					default:
-						U_ASSERT(false);
+						throw SYSTEM_EXCEPTION("Invalid update type");
 					}
 				}
 			}

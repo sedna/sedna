@@ -283,7 +283,8 @@ xptr SortedSequence::mergeBlocks(xptr p1, int size1, xptr p2, int size2)
     data_ptr ptr1, ptr2;
     void *tuple_buf1 = buf1;
     void *tuple_buf2 = buf2;
-    size_t tuple_size1, tuple_size2;
+    //Initialize with invalid size to prevent GCC warnings
+    size_t tuple_size1 = INVALID_SIZE, tuple_size2 = INVALID_SIZE;
 
     //Reading pointers and values
     if (size1 > 0)

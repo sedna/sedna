@@ -93,6 +93,8 @@ static char getCharFromResource(resource_kind kind)
         case LM_DATABASE:
             c = 'b';
             break;
+        default:
+            throw SYSTEM_EXCEPTION("Unexpected lock type");
     }
 
     return c;

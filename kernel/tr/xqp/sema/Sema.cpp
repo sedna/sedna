@@ -181,7 +181,7 @@ namespace sedna
 
     void Sema::visit(ASTCase &n)
     {
-        bool param_ok;
+        bool param_ok = false;
 
         if (n.var)
         {

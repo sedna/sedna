@@ -42,7 +42,7 @@ static void print_smsd_usage()
 int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
-    UPID sm_pid;
+    UPID sm_pid = -1;
     char gov_address[U_MAX_HOSTNAME];
     int port_number;
     int command = STOP;

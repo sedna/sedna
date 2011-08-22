@@ -737,7 +737,7 @@ int llScanRecords(llRecInfo *RecordsInfo, unsigned int RecordsInfoLen, LSN start
 uint64_t llLogArchive()
 {
 	uint64_t num;
-	LSN hb_lsn;
+	LSN hb_lsn = LFS_INVALID_LSN;
 
 	llFileHead file_head;
 

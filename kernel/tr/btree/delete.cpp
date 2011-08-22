@@ -122,7 +122,7 @@ xptr bt_try_squeeze_cluster_tmpl(xptr leaf)
 	CHECKP(leaf);
 	char * pg = (char *) XADDR(leaf);
 	xptr mpg = XNULL;
-	bool rotation;
+	bool rotation = false;
 	char * tmp_pg = delete_buf;
 	xptr next_page;
 

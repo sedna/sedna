@@ -222,7 +222,7 @@ void widenBlockDescriptor(xptr block_ptr, shft new_dsc_size, int irecord_count)
     shift_node_structure_t shift_info = {source_block->count};
     size_t indirection_tail_size = irecord_count * sizeof(xptr);
     void * indirection_tail_point = XADDR(block_ptr + PAGE_SIZE - indirection_tail_size);
-    void * indirection_tail;
+    void * indirection_tail = NULL;
 
     if (irecord_count > 0) {
         indirection_tail = malloc(indirection_tail_size);
