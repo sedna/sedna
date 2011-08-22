@@ -56,7 +56,7 @@ void rename(PPOpIn arg, xsd::NCName name)
     argseq.sort();
     //changing to indirection
     xptr_sequence::iterator it=argseq.begin();
-    xptr res;
+    xptr res = XNULL;
     while (it!=argseq.end())
     {
         xptr node=*it;

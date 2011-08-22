@@ -192,6 +192,8 @@ PPIterator* PPPatMatch::do_copy(dynamic_context *_cxt_)
 		res->seq3.op = seq3.op->copy(_cxt_);
 		res->seq4.op = seq4.op->copy(_cxt_);
 		break;
+    default:
+        throw USER_EXCEPTION2(SE1003, "Unexpected number of children in pattern matching operation");
 	}
     return res;
 }

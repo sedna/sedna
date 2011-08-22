@@ -17,7 +17,7 @@
 
 bool ft_norm_char(int *ch)
 {
-	int c_cl, c_type, c_case;
+	int c_cl, c_type = 0, c_case = 0;
 	c_cl = ucp_findchar(*ch, &c_type, &c_case);
 
 	if (c_type == ucp_Mn)

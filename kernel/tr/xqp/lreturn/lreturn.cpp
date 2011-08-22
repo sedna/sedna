@@ -53,7 +53,7 @@ namespace sedna
                 occ = reverse ? OCC_GENERAL_GREATER : OCC_GENERAL_LESS;
                 break;
             default:
-                U_ASSERT(false);
+                throw SYSTEM_EXCEPTION("Unexpected compare condition");
         }
 
         return occ;

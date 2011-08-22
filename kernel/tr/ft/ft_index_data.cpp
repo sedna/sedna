@@ -214,9 +214,8 @@ ft_index_cell_xptr create_ft_index(
         }
     }
 
-    // only needed for ft_ind_native impl
-
-    ftc_index_t ftc_idx;
+    // only needed for ft_ind_native impl (initialized with NULL to avoid GCC warning on release build)
+    ftc_index_t ftc_idx = NULL;
     if (idc->impl == ft_ind_native)
     {
         fts_create(&idc->fts_data);
