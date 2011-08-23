@@ -35,7 +35,7 @@ bool whitespaceOnly(const text_source_t &x) {
     for (size_t i = 0; i < (size_t) x.size; i++) {
         int c = x.u.cstr[i];
 
-        if (!isspace(c)) {
+        if (!isspace(c & 0x7f)) {
             return false;
         }
     }
@@ -52,7 +52,7 @@ text_source_t clearLeftSpaces(const text_source_t &x) {
     for (size_t i = 0; i < (size_t) x.size; i++) {
         int c = x.u.cstr[i];
 
-        if (!isspace(c)) {
+        if (!isspace(c & 0x7f)) {
             result.u.cstr = x.u.cstr + i;
             result.size = x.size - i;
             return result;
@@ -72,7 +72,7 @@ text_source_t getRightSpaces(const text_source_t &x) {
     for (size_t i = (size_t) x.size; i > 0; i--) {
         int c = x.u.cstr[i-1];
 
-        if (!isspace(c)) {
+        if (!isspace(c & 0x7f)) {
             result.u.cstr = x.u.cstr + i;
             result.size = x.u.cstr + x.size - result.u.cstr;
             return result;
