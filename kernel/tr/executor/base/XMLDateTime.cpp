@@ -62,8 +62,8 @@ static const int YEAR_DEFAULT  = 1972;
 static const int MONTH_DEFAULT = 12;
 static const int DAY_DEFAULT   = 31;
 
-static const size_t DUR_MILISECOND_DIGITS = 3;
-static const size_t DT_MILISECOND_DIGITS = 5;
+static const unsigned short DUR_MILISECOND_DIGITS = 3;
+static const unsigned short DT_MILISECOND_DIGITS  = 5;
 static const int DUR_MILISECOND_MAX_VALUE = (int)pow((double)10, (double)DUR_MILISECOND_DIGITS);
 static const int DT_MILISECOND_MAX_VALUE = (int)pow((double)10, (double)DT_MILISECOND_DIGITS);
 
@@ -1349,7 +1349,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
                 setValue(Second, negate * parseInt(fBuffer, fStart, mlsec));
                 int rawMilis = parseInt(fBuffer, mlsec+1, end);
                 size_t miliSecondLen = end-mlsec-1;
-                setValue(MiliSecond, negate * adjustMiliseconds(rawMilis, miliSecondLen, DUR_MILISECOND_DIGITS));
+                setValue(MiliSecond, negate * adjustMiliseconds(rawMilis, miliSecondLen, (size_t)DUR_MILISECOND_DIGITS));
             }
             else
             {
@@ -1567,7 +1567,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
                 setValue(Second, negate * parseInt(fBuffer, fStart, mlsec));
                 int rawMilis = parseInt(fBuffer, mlsec+1, end);
                 size_t miliSecondLen = end-mlsec-1;
-                setValue(MiliSecond, negate * adjustMiliseconds(rawMilis, miliSecondLen, DUR_MILISECOND_DIGITS));
+                setValue(MiliSecond, negate * adjustMiliseconds(rawMilis, miliSecondLen, (size_t)DUR_MILISECOND_DIGITS));
             }
             else
             {
@@ -1683,7 +1683,7 @@ void XMLDateTime::getTime(const char* fBuffer, size_t& fStart, size_t& fEnd)
             miliSecondLen = sign-fStart;
         }
 
-        rawMilis = adjustMiliseconds(rawMilis, miliSecondLen, DT_MILISECOND_DIGITS);
+        rawMilis = adjustMiliseconds(rawMilis, miliSecondLen, (size_t)DT_MILISECOND_DIGITS);
         setValue(MiliSecond, rawMilis);
     }
     else if(res == NOT_FOUND || sign == 0 || sign != fStart)
@@ -2554,14 +2554,14 @@ void XMLDateTime::fillString(char*& ptr, int value, size_t expLen) const
 }
 
 
-void XMLDateTime::fillMilisString(char*& ptr, int value, size_t maxLen) const
+void XMLDateTime::fillMilisString(char*& ptr, int value, unsigned short maxLen) const
 {
     char strBuffer[128];
     char formatString[12];
-    sprintf(formatString, "%%0%dd", maxLen);
+    sprintf(formatString, "%%0%dd", (int)maxLen);
     sprintf(strBuffer, formatString, value);
 
-    for (size_t i = 0; i < maxLen; i++)
+    for (unsigned short i = 0; i < maxLen; i++)
     {
         if ( atoi(&strBuffer[i]) == 0 )
             break;

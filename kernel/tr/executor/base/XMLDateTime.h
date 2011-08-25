@@ -278,7 +278,7 @@ private:
 
 
     void     fillString(char*& ptr, int value, size_t expLen) const;
-    void     fillMilisString(char*& ptr, int value, size_t expLen) const;
+    void     fillMilisString(char*& ptr, int value, unsigned short expLen) const;
     void     fillYearString(char*& ptr, int value) const;
 };
 

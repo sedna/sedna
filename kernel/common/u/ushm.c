@@ -10,6 +10,11 @@
 #include "common/u/ugnames.h"
 
 #if (defined(SunOS))
+/*
+ * See https://bugzilla.mozilla.org/show_bug.cgi?id=263952
+ * It's not easy to fix shm_open & shm_unlink warnigns unfortunately.
+ * Anyway better to include this header.
+ */
 #include <sys/mman.h>
 #endif
 

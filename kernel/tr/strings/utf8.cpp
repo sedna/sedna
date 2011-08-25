@@ -270,7 +270,7 @@ static inline void utf8_toupper(const Iterator &start, const Iterator &end, stmt
 	while (it.base_iterator() < end)
 	{
 		const int c = *it;
-		int c_type, c_case;
+		int c_type = 0, c_case = 0;
 		++it;
 		ucp_findchar(c, &c_type, &c_case);
 		if (c_case != 0 && c_type == ucp_Ll)
