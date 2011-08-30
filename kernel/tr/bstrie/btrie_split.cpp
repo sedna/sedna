@@ -426,7 +426,7 @@ xptr_t st_write_split_state(struct st_tmp_trie * new_state)
         }
     }
 
-    c = select_candidate(candidates, n, buflen);
+    c = select_candidate(candidates, n, buflen + sizeof(sptr_t)); //it's important to search candidate basing on full size of changes not only on string length.
 
     free(candidates);
 
