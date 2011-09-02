@@ -13,6 +13,9 @@
 typedef int64_t str_off_t;
 typedef int64_t strsize_t;
 
+/* to convert strsize_t to system size_t */
+#define SZ(x) ((size_t) (x))
+
 struct text_source_t {
     enum type_t {
         text_mem,
