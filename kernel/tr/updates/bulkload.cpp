@@ -28,6 +28,8 @@
 #define TEXT_BUFFER_SIZE PAGE_SIZE
 #define SEPARATOR    '>'
 
+#define utfsafe_isspace(c) (isascii(c) && isspace(c))
+
 static
 bool whitespaceOnly(const text_source_t &x) {
     U_ASSERT(x.type == text_source_t::text_mem);
@@ -35,7 +37,7 @@ bool whitespaceOnly(const text_source_t &x) {
     for (size_t i = 0; i < (size_t) x.size; i++) {
         int c = x.u.cstr[i];
 
-        if (!isspace(c & 0x7f)) {
+        if (!utfsafe_isspace(c)) {
             return false;
         }
     }
@@ -52,7 +54,7 @@ text_source_t clearLeftSpaces(const text_source_t &x) {
     for (size_t i = 0; i < (size_t) x.size; i++) {
         int c = x.u.cstr[i];
 
-        if (!isspace(c & 0x7f)) {
+        if (!utfsafe_isspace(c)) {
             result.u.cstr = x.u.cstr + i;
             result.size = x.size - i;
             return result;
@@ -72,7 +74,7 @@ text_source_t getRightSpaces(const text_source_t &x) {
     for (size_t i = (size_t) x.size; i > 0; i--) {
         int c = x.u.cstr[i-1];
 
-        if (!isspace(c & 0x7f)) {
+        if (!utfsafe_isspace(c)) {
             result.u.cstr = x.u.cstr + i;
             result.size = x.u.cstr + x.size - result.u.cstr;
             return result;
@@ -607,7 +609,7 @@ class DataParser : public IElementProducer {
     virtual tuple_cell addText(const text_source_t value) {
         U_ASSERT(value.type == text_source_t::text_mem);
 
-        if (value.size > TEXT_BUFFER_SIZE) {
+        if (SZ(value.size) > TEXT_BUFFER_SIZE) {
             U_ASSERT(false); /* This cannot be true while parsebuffer is smaller then textbuffer */
             throw SYSTEM_EXCEPTION("Text buffer exceeds parse buffer. Normaly it should not have happend, so report it as a bug.");
             return NULL_TC;
@@ -615,7 +617,7 @@ class DataParser : public IElementProducer {
 
         const size_t rest = (TEXT_BUFFER_SIZE - parent->textBufferSize);
 
-        if (value.size > rest) {
+        if (SZ(value.size) > rest) {
             if (rest > 0) {
                 memcpy(parent->textBuffer + parent->textBufferSize, value.u.cstr, rest);
                 parent->textBufferSize += rest;
