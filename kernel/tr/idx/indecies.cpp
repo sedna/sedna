@@ -363,15 +363,21 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
                         tuple_cell tc;
 
                         try {
-                            //VIII. Evaluate key: (cast typed-value(node_key) as key_type)->bt_key
-                            tc = cast(dm_typed_value(node_key), index_dsc->keytype);
-                        } catch (SednaUserException) {
-                            //IX. Increment the counter, which shows the number of
-                            //    items that were not inserted because they have
-                            //    the type other than the index has
-                            idc->err_cntr++;
+                          //VIII. Evaluate key: (cast typed-value(node_key) as key_type)->bt_key
+                          tc = cast(dm_typed_value(node_key), index_dsc->keytype);
 
-                            break;
+                          if (!tc.is_fixed_size_atomic() && tc.get_strlen() > (PAGE_SIZE / 2)) {
+                            throw USER_EXCEPTION2(SE1008, "The size of the index key exceeds max key limit");
+                          };
+                        } catch (SednaUserException e) {
+                          if (e.get_code() != SE1003) { throw; }
+
+                          //IX. Increment the counter, which shows the number of
+                          //    items that were not inserted because they have
+                          //    the type other than the index has
+                          idc->err_cntr++;
+
+                          break;
                         }
 
                         //X. Find descriptor object that corresponds to sn_obj
@@ -475,6 +481,8 @@ size_t idx_serializer::serialize(const tuple &t, void *buf)
     shft sz = (shft) xmlscm_type_size(key_type);
     if (!sz)
     {
+        strsize_t len = t.cells[0].get_strlen();
+        U_ASSERT(len < (PAGE_SIZE / 2));
         sz = t.cells[0].get_strlen();
     }
 
