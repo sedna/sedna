@@ -191,7 +191,7 @@ const char check_sec_enabled_query[] = "doc(\"$db_security_data\")";
 
 
 
-const char load_docs_query[] = "declare namespace se='http://modis.ispras.ru/sedna'; \
+const char load_docs_query[] = "declare namespace se='http://www.modis.ispras.ru/sedna'; \
                                 declare option se:output \"indent=no\"; \
 								for $i at $j in doc(\"$documents\")//document[@name!= \"$db_security_data\"] \
 								let $col := $i/parent::collection \
@@ -200,16 +200,16 @@ const char load_docs_query[] = "declare namespace se='http://modis.ispras.ru/sed
 									 then fn:concat(\"declare boundary-space preserve; LOAD \"\"\",$j,\".xml\"\" \"\"\",$i/@name,\"\"\"\") \
 									 else fn:concat(\"declare boundary-space preserve; LOAD \"\"\",$j,\".xml\"\" \"\"\",$i/@name,\"\"\" \"\"\",$col/@name,\"\"\"\")";
 
-const char exp_docs_query[] =  "declare namespace se='http://modis.ispras.ru/sedna'; \
+const char exp_docs_query[] =  "declare namespace se='http://www.modis.ispras.ru/sedna'; \
                                 declare option se:output \"indent=no\"; \
 								for $i at $j in doc(\"$documents\")//document[@name!= \"$db_security_data\"] \
 								let $col := $i/parent::collection \
 								return \
 								  if (empty($col)) \
-									 then fn:concat(\"declare namespace se='http://modis.ispras.ru/sedna'; declare option se:output \"\"indent=no\"\"; doc(\"\"\",$i/@name,\"\"\")\") \
-									 else fn:concat(\"declare namespace se='http://modis.ispras.ru/sedna'; declare option se:output \"\"indent=no\"\"; doc(\"\"\",$i/@name,\"\"\",\"\"\",$col/@name,\"\"\")\")";
+									 then fn:concat(\"declare namespace se='http://www.modis.ispras.ru/sedna'; declare option se:output \"\"indent=no\"\"; doc(\"\"\",$i/@name,\"\"\")\") \
+									 else fn:concat(\"declare namespace se='http://www.modis.ispras.ru/sedna'; declare option se:output \"\"indent=no\"\"; doc(\"\"\",$i/@name,\"\"\",\"\"\",$col/@name,\"\"\")\")";
 
-const char create_colls_query[] = "declare namespace se='http://modis.ispras.ru/sedna'; \
+const char create_colls_query[] = "declare namespace se='http://www.modis.ispras.ru/sedna'; \
                                    declare option se:output \"indent=no\"; \
                                    for $i in doc(\"$collections\")/collections/collection[@name != \"$modules\"] \
 								   return fn:concat(\"CREATE COLLECTION \"\"\",$i/@name,\"\"\"\")";
