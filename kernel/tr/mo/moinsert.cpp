@@ -240,7 +240,8 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
 /* Update logical log */
 
     // TODO: CDATA flag is not stored in logical log
-    if (IS_DATA_BLOCK(parent))
+    U_ASSERT(node_info.parent != XNULL);
+    if (IS_DATA_BLOCK(node_info.parent))
     {
         if (insert_type == ti_new_node) {
             CHECKP(node_info.node_xptr);
