@@ -129,13 +129,14 @@ static inline int compare_doubles(double value1, double value2, orb_modifier::or
 {
     if (value2 == value1) return 0;
 
-    bool is_nan1 = (u_is_nan(value1) != 0);                     //Prefix size is selected to make serialized
-    //representation of the tuple with xs:string
-    //to be 8-byte aligned. It can improve performance.
+    bool is_nan1 = (u_is_nan(value1) != 0);
     bool is_nan2 = (u_is_nan(value2) != 0);
 
     if (is_nan1 && !is_nan2) return (o == orb_modifier::ORB_EMPTY_GREATEST ? -1 : 1);
     if (is_nan2 && !is_nan1) return (o == orb_modifier::ORB_EMPTY_GREATEST ? 1 : -1);
+
+    /* Still should check if both are NaN since comparisons involved NaN are always false */
+    if (is_nan1 && is_nan2) return 0;
 
     return (value2 > value1 ? 1 : -1);
 }
