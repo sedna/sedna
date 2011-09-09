@@ -218,6 +218,11 @@ get_modules(xptr node,const char* /* title */)
     }
 }
 
+inline
+xptr insert_attribute_value(xptr left, xptr parent, const char * name, const char * value) {
+    return insert_attribute_i(left, XNULL, parent, name, xs_untypedAtomic, value, strlen(value), NULL_XMLNS);
+};
+
 static void
 get_errors(xptr node,const char* /* title */)
 {
@@ -264,9 +269,11 @@ get_indexes (xptr node,const char* /* title */)
         else
             left=insert_element_i(left,XNULL,XNULL,"index",xs_untyped,NULL_XMLNS);
 
-        xptr node = insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic,dsc.index_title,strlen(dsc.index_title),NULL_XMLNS);
-//        node      = insert_attribute_i(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(ic->is_doc)?"document":"collection",(ic->is_doc)?8:10,NULL_XMLNS);
-//        node      = insert_attribute_i(node,XNULL,XNULL,"object_name",xs_untypedAtomic,ic->doc_name,strlen(ic->doc_name),NULL_XMLNS);
+        metadata_cell_cptr owner = dsc.owner;
+        xptr node = insert_attribute_value(XNULL, left, "name", dsc.index_title);
+        node = insert_attribute_value(XNULL, left, "object_type", (owner->is_document()) ? "document":"collection");
+        node = insert_attribute_value(XNULL, left, "object_name", owner->get_name());
+        node = insert_attribute_value(XNULL, left, "backend", dsc.backend_name);
 
         print_type_name(dsc.keytype, buf);
         node = insert_attribute_i(node,XNULL,XNULL,"as_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);

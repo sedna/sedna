@@ -26,6 +26,7 @@ struct index_descriptor_t {
     metadata_cell_xptr owner;
     xmlscm_type keytype;
     index_backend_t backend_type;
+    const char * backend_name;
 
     xpath::PathExpression *object; /* persistent special */  // absolute xPath expression for object nodes xPath
     xpath::PathExpression *key; /* persistent special */     // relative xPath expression for key value nodes

@@ -456,6 +456,12 @@ void index_cell_object::get_index_descriptor(index_descriptor_t * dsc) const
     dsc->keytype = keytype;
     dsc->object = object;
     dsc->owner = owner;
+
+    switch (backend_type) {
+      case index_btree: dsc->backend_name = "btree"; break;
+      case index_bstrie: dsc->backend_name = "bstrie"; break;
+      default: dsc->backend_name = "errornous";
+    };
 }
 
 void drop_index (const char *index_title)
