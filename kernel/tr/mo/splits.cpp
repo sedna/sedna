@@ -179,7 +179,7 @@ xptr splitBlock(xptr node_xptr)
         U_ASSERT(block.count > 3);
 
         xptr new_block = createBlock(XNULL, block_xptr(node_xptr));
-        int new_block_capacity = canAcceptNodes(new_block, block.dsc_size);
+        int new_block_capacity = canAcceptNodes(new_block, block.dsc_size) - 1;
         int to_move = MIN(block.count / 2, new_block_capacity);
 
         U_ASSERT(to_move > 0);
