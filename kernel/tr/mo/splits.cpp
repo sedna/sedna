@@ -162,30 +162,28 @@ xptr widenDescriptor(xptr node_xptr, int pos, xptr set_value)
     return node_xptr;
 }
 
-
 xptr splitBlock(xptr node_xptr)
 {
-    xptr nblk, pblk, node_indir;
-    node_blk_hdr * block;
-    int desc_size;
-    int desc_count;
+    xptr node_indir;
+    node_blk_hdr block;
 
     CHECKP(node_xptr);
     node_indir = getIndirectionSafeCP(node_xptr);
-    block = getBlockHeader(node_xptr);
-    desc_size = block->dsc_size;
-    desc_count = block->count;
-    nblk = block->nblk;
-    pblk = block->pblk;
+    memcpy(&block, getBlockHeader(node_xptr), getHeaderSize(node_xptr));
 
-    if (canAcceptNodes(pblk, desc_size) > 1) {
+    if (canAcceptNodes(block.pblk, block.dsc_size) > 1) {
         shiftOneNodeToPreviousBlock(block_xptr(node_xptr));
-    } else if (canAcceptNodes(nblk, desc_size) > 1) {
+    } else if (canAcceptNodes(block.nblk, block.dsc_size) > 1) {
         shiftOneNodeToNextBlock(block_xptr(node_xptr));
     } else {
-        U_ASSERT(desc_count > 3);
-        createBlock(XNULL, block_xptr(node_xptr));
-        shiftManyNodesToNextBlock(block_xptr(node_xptr), desc_count / 2);
+        U_ASSERT(block.count > 3);
+
+        xptr new_block = createBlock(XNULL, block_xptr(node_xptr));
+        int new_block_capacity = canAcceptNodes(new_block, block.dsc_size);
+        int to_move = MIN(block.count / 2, new_block_capacity);
+
+        U_ASSERT(to_move > 0);
+        shiftManyNodesToNextBlock(block_xptr(node_xptr), to_move);
     }
 
     return indirectionDereferenceCP(node_indir);
