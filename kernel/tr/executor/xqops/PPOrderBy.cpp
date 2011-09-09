@@ -70,7 +70,8 @@ PPOrderBy::PPOrderBy(dynamic_context *_cxt_,
         data_size(_data_size_),
         data_cells(NULL),
         sort_cells(NULL),
-        ss(NULL)
+        ss(NULL),
+        serializer(NULL)
 {
     if (modifiers.size() != child.ts - data_size)
         throw USER_EXCEPTION2(SE1003, "Number of modifiers must be equal to the expressions number.");
@@ -93,8 +94,8 @@ void PPOrderBy::do_open ()
     need_to_sort= false;
     pos = 0;
     
-    data_cells  = se_new sequence(data_size);
-    sort_cells  = se_new sequence(sort_size);
+    data_cells  = new sequence(data_size);
+    sort_cells  = new sequence(sort_size);
 
     udata.sort      = sort_cells;
     udata.pos       = 0;
