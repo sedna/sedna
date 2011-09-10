@@ -37,7 +37,7 @@ _segov()
     COMPREPLY=()
     cur=`_get_cword`
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help -help -version -background-mode -port-number -ping-port-number -el-level -alive-timeout -stack-depth"
+    opts="--help -help -version -background-mode -listen-address -port-number -ping-port-number -el-level -alive-timeout -stack-depth"
 
     if [[ ${prev} == -* ]] ; then
         COMPREPLY=()

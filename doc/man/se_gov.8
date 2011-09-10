@@ -52,8 +52,23 @@ display product version and exit
 \fB-background-mode\fR on|off
 start the server in the background mode (default on)
 .TP
+\fB-listen-address\fR <address>
+local address the server listens for client connections (default "localhost")
+.TP
 \fB-port-number\fR <int>
 socket listening port (default 5050)
+\fB-ping-port-number\fR <int>
+ping listening port (default 5151)
+.TP
+\fB-el-level\fR <int>
+event logging level (default 3): 0 - event logging is off, 1 - log only fatal errors, 2 - log all errors/warnings, 3 - system operational messages, 4 - log everything (+debug messages)
+.TP
+\fB-alive-timeout\fR <int>
+session keep alive timeout (default 0 - infinite timeout)
+.TP
+\fB-stack-depth\fR <int>
+maximum executor stack depth (default 4000)
+.TP
 
 .SH FILES
 .I /etc/sednaconf.xml
