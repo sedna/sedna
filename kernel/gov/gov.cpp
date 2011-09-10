@@ -170,7 +170,7 @@ int main(int argc, char** argv)
             string command_line = argv[0];
 
             command_line += " -background-mode off";
-            command_line += " -address-to-listen " + string(cfg.gov_vars.lstnr_addr);
+            command_line += " -listen-address " + string(cfg.gov_vars.lstnr_addr);
             command_line += " -port-number " + int2string(cfg.gov_vars.lstnr_port_number);
             command_line += " -ping-port-number " + int2string(cfg.gov_vars.ping_port_number);
             command_line += " -el-level " + int2string(cfg.gov_vars.el_level);

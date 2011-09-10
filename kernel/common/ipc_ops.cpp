@@ -171,7 +171,7 @@ static void endElement_gov_cfg(void *cfg, const char *name)
     {
         strcpy(((gov_header_struct*)cfg)->SEDNA_DATA, trim(elem_content).c_str());
     }
-    if (strcmp(name, "listener_address") == 0)
+    if (strcmp(name, "listen_address") == 0)
     {
         strcpy(((gov_header_struct*)cfg)->lstnr_addr, trim(elem_content).c_str());
     }

@@ -163,8 +163,8 @@ options:
   -version                   display product version and exit
   -background-mode on/off    start the server in the background mode
                              (default on)
-  -address-to-listen iface   socket listening address or interface name
-                             (default localhost)
+  -listen-address address    local address Sedna listens for client
+                             connections (default localhost)
   -port-number <int>         socket listening port
                              (default 5050)
   -el-level level            event logging level (default 3):
@@ -187,12 +187,13 @@ the \verb!se_gov! command.
 \verb!-background-mode! option allows Administrator to start \emph{Governor} in
 the background mode.
 
-\verb!-address-to-listen! option specifies an interface which Sedna listens for
+\verb!-listen-address! option specifies an address which Sedna listens for
 connections from clients. You may use numeric form (e.g. \verb!127.0.0.1!) or
-human-readable form (e.g. \verb!localhost!) that could be resolved using
-/etc/hosts as listening address. Note that address must be local. If address
-is not specified Governor tries to find the \verb!sednaconf.xml! file and uses
-the address specified as \verb!listener_port! parameter (see section
+symbolic form (e.g. \verb!localhost!). Note that address must be local. Also note
+that you need to ensure that your system is able to resolve that address. If it
+fails you could use your system hosts file\cite{link:hosts}.
+If address is not specified Governor tries to find the \verb!sednaconf.xml! file
+and uses the address specified as \verb!listen_address! parameter (see section
 \ref{sec:ConfigSedna}, Configuring Sedna). If it still cannot find address Sedna
 would listen to localhost.
 
@@ -292,7 +293,7 @@ The file is an XML document, which satisfies the following DTD:
                      session_stack_depth)>
 <!ELEMENT sedna_data (#PCDATA)>
 <!ELEMENT os_primitives_id_min_bound (#PCDATA)>
-<!ELEMENT listener_address (#PCDATA)>
+<!ELEMENT listen_address (#PCDATA)>
 <!ELEMENT listener_port (#PCDATA)>
 <!ELEMENT ping_port (#PCDATA)>
 <!ELEMENT event_log_level (#PCDATA)>
@@ -312,7 +313,7 @@ parameter in a such way that identifiers belonging to different Sedna instances
 does not intersect. In a standard configuration one Sedna instance acquires a
 range of identifiers which length is equal to 150.
 
-The \verb!listener_address! element defines the address Sedna tries to listen
+The \verb!listen_address! element defines the address Sedna tries to listen
 for client connections.
 
 The \verb!listener_port! element defines the port number for listening for
@@ -1722,6 +1723,17 @@ database, you first have to connect as this initial user.
 In the current version of Sedna all character data are stored internally in
 UTF-8. All input queries and XML documents must be encoded in UTF-8. All output
 is also encoded in UTF-8.
+
+
+%===============================================================================
+%                  Sedna Administation Guide: References
+%===============================================================================
+\begin{thebibliography}{9}
+\bibitem{link:hosts}
+``Hosts file on Wikipedia'',
+\url{http://en.wikipedia.org/wiki/Hosts_(file)}
+
+\end{thebibliography}
 
 \end{document}
 

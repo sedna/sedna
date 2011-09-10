@@ -24,13 +24,14 @@
   <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>
 
   <!-- 
-       Sedna server listening interface. May be any correct local
-       numeric address or local interface name that could be
-       resolved using /etc/hosts
+       The address you want Sedna to listen. May be any correct local
+       numeric address or local name. Please ensure that this name
+       could be resolved by your system. If it fails you could use
+       your hosts file (http://en.wikipedia.org/wiki/Hosts_(file))
        (examples: localhost, 127.0.0.1)
        Default: localhost
   -->
-  <listener_address>localhost</listener_address>
+  <listen_address>localhost</listen_address>
 
   <!--
        Sedna server listening port number. If you run multiple
