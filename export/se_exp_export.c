@@ -222,7 +222,8 @@ const char create_indexes_query[] = "for $i in doc(\"$indexes\")/indexes/index \
                                         fn:concat($i/@object_type,\"(\"\"\",$i/@object_name,\"\"\")\", \"/\", $i/@on_path), \
                                         \" BY \", \
 									    $i/@by_path, \
-									    \" AS \",  $i/@as_type)";
+									    \" AS \",  $i/@as_type, \
+										\" USING \"\"\", $i/@backend, \"\"\"\")";
 
 
 const char create_ftindexes_query[] = " for $i in doc(\"$ftindexes\")/ftindexes/ftindex \
@@ -236,4 +237,5 @@ const char create_ftindexes_query[] = " for $i in doc(\"$ftindexes\")/ftindexes/
 													\"\"\" ON \", \
 													$i/@object_type, \"(\"\"\", $i/@object_name, \"\"\")\", \"/\", $i/@on_path, \
 													\" TYPE \"\"\", $i/@ft_type, \"\"\"\", \
+													\" WITH OPTIONS \"\"\", $i/@options, \"\"\"\", \
 													if (empty($cust)) then \"\" else fn:concat(\" (\",$cust,\")\")) ";
