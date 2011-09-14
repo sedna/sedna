@@ -127,6 +127,7 @@ static size_t write_state(char * p, struct state_descriptor * d)
     CAST_AND_WRITE(s, meta);
 
     if (d->prefix_len > 0) {
+        U_ASSERT(d->prefix_len <= 0xff); //note to change it if type of ps changes
         uint8_t ps = (uint8_t) d->prefix_len;
         CAST_AND_WRITE(s, ps);
     }
