@@ -90,6 +90,19 @@ btrie_record_t btrie_find(const btrie_t tree, const char * key, size_t key_lengt
     return result;
 }
 
+inline bool check_key_len(st_key_object_pair * kop, size_t pbp) {
+    if (kop->key_length > pbp + 0xff) {
+        kop->key_length = pbp + 0xff;
+        kop->is_final = false;
+        kop->object_size = 0;
+        kop->object = NULL;
+
+        return true;
+    }
+
+    return false;
+}
+
 btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, const char * obj, size_t obj_length, bool replace)
 {
     struct st_key_object_pair key_object_pair = {(char *) key, key_length, (char *) obj, obj_length, true};
@@ -97,6 +110,7 @@ btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, c
     btrie_record_t result = XNULL;
     struct st_page_header pghdr;
     struct st_tmp_trie newstate = {};
+    bool one_more_try = false;
 
     btrie_last_error = ST_ERROR_NO_ERROR;
 
@@ -106,6 +120,9 @@ btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, c
 
         st_markup_page(&pghdr, 1, true);
         tree->root_page = pghdr.page;
+
+        one_more_try = check_key_len(&key_object_pair, 0);
+
         st_new_state_prepare(&newstate, NULL, 0, 0, &key_object_pair, false);
         pghdr.data_end = pghdr.trie_offset;
         newstate.state = 0;
@@ -127,12 +144,13 @@ btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, c
             read_state((char *) XADDR(states->last_state->p), &dsc);
             state_offset = dsc.p - (char *) XADDR(pg);
 
+            one_more_try = check_key_len(&key_object_pair, states->key_break_position);
+
             st_new_state_prepare(&newstate, dsc.p, states->prefix_break_position, states->key_break_position, &key_object_pair, (dsc.flags & STATE_SPLIT_POINT) > 0);
 
             if (newstate.len >= states->last_state->page->free_space) {
                 pg = st_split(*tree, states, states->page_count - 1);
-                st_sp_free(states);
-                return btrie_insert(tree, key, key_length, obj, obj_length, replace);
+                one_more_try = true;
             } else {
                 WRITE_PAGE(pg);
                 newstate.old_state = states->last_state->p;
@@ -148,7 +166,11 @@ btrie_record_t btrie_insert(btrie_t tree, const char * key, size_t key_length, c
         st_sp_free(states);
     }
 
-    return result;
+    if (one_more_try) {
+        return btrie_insert(tree, key, key_length, obj, obj_length, replace);
+    } else {
+        return result;
+    }
 }
 
 

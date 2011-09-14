@@ -139,13 +139,11 @@ btrie_enum_t bt_enum_create(st_path* path)
         }
     }
 
-    U_ASSERT(result->key_len > 0);
-
-    if ((state.flags & STATE_FINAL) == 0) {
-        btrie_enum_next(result);
-    }
-
     result->eot = (state.flags & STATE_FINAL) == 0;
+
+    if (result->eot) {
+        result->eot = !btrie_enum_next(result);
+    }
 
     return result;
 }

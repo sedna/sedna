@@ -159,7 +159,15 @@ BSTrieIterator::BSTrieIterator(bool always_empty) : items(NULL_ENUM),
 
 BSTrieIterator::BSTrieIterator(btrie_enum_t path) : items(path), tmp_valid(false), no_next_key(false), first_match_was_equal(false)
 {
-    deserializePair();
+    if (btrie_is_EOT(path)) {
+        no_next_key = true;
+        tmp_value = XNULL;
+        tmp_valid = true;
+        tmp_key = tuple_cell::eos();
+    } else {
+        deserializePair();
+    };
+
     collationHandler = charset_handler->get_unicode_codepoint_collation();
 }
 
