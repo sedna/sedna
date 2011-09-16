@@ -155,9 +155,9 @@ static int write_segments(struct trie_segment_t * segments, int n, sptr_t len, x
     }
 
     for (int i = 0; i < n; i++) {
-	if (i == break_point) {
-		m = 0;
-	}
+        if (i == break_point) {
+            m = 0;
+        }
 
         if (segments[i].long_jump_pointer == XNULL) {
             segments[i].valid_index = m;
@@ -166,17 +166,28 @@ static int write_segments(struct trie_segment_t * segments, int n, sptr_t len, x
         }
     }
 
-    U_ASSERT(cc > 1);
+    U_ASSERT(cc > 0);
 
-    new_page_header.page = *ltp;
-    st_copy_tries(source, segments, break_point, &new_page_header);
-    *ltp = new_page_header.page;
+    if (cc == 1) {
+        U_ASSERT(n > 0);
 
-    new_page_header.page = XNULL;
-    st_copy_tries(source, segments + break_point, n - break_point, &new_page_header);
-    *rtp = new_page_header.page;
+        new_page_header.page = *ltp;
+        st_copy_tries(source, segments, n, &new_page_header);
+        *ltp = new_page_header.page;
+        *rtp = XNULL;
 
-    return break_point;
+        return n;
+    } else {
+        new_page_header.page = *ltp;
+        st_copy_tries(source, segments, break_point, &new_page_header);
+        *ltp = new_page_header.page;
+
+        new_page_header.page = XNULL;
+        st_copy_tries(source, segments + break_point, n - break_point, &new_page_header);
+        *rtp = new_page_header.page;
+
+        return break_point;
+    }
 }
 
 static int build_segments(char * source, sptr_t * pointers, char * buffer, struct trie_segment_t * segments, int n)
@@ -273,8 +284,13 @@ static xptr_t st_split_promote_root(struct st_page_header * root_page_hdr, int p
     for (int i = 0; i < n; i++) {
         dsc.pointers[tries[i].id] = i * (sizeof(xptr_t) + sizeof(flags_t));
     }
+
     write_jump_list(&dsc, tries, ltp, 0, break_point);
-    write_jump_list(&dsc, tries, rtp, break_point, n);
+
+    if (rtp != XNULL) {
+        write_jump_list(&dsc, tries, rtp, break_point, n);
+    }
+
     st_write_page_header(root_page_hdr);
 
     return ltp;
@@ -326,7 +342,10 @@ static xptr_t st_split_tries(xptr_t parent_state, struct st_page_header * page_h
 
     WRITE_PAGE(parent_state);
     write_jump_list_2(base, tries, ltp, 0, break_point);
-    write_jump_list_2(base, tries, rtp, break_point, n);
+
+    if (rtp != XNULL) {
+        write_jump_list_2(base, tries, rtp, break_point, n);
+    }
 
     return ltp;
 }
