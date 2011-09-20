@@ -262,6 +262,13 @@ FtQuery* ft_parse_query_single(struct ft_parser_state *ps, char *in_tag, double 
 		return q;
 	}
 
+	//ignore close braces that close nothing
+	if (tok->type == ftq_token::BR_CLOSE)
+	{
+		ps->scanner.next();
+		return NULL;
+	}
+
 	throw USER_EXCEPTION2(SE3022, "unexpected token in query");
 }
 
