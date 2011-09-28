@@ -75,7 +75,7 @@ xptr insertVariableHelper(const char* name,
         var_map_id_name::const_iterator it = var_names.find(dsc);
         if(it != var_names.end() && it->second.first.length() != 0)
         {
-            insertAttributeHelper("name", attr_left, left, it->second.first);
+            insertAttributeHelper("name", attr_left, var, it->second.first);
         }
         else if(name != NULL)
         {
