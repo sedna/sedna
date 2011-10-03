@@ -166,10 +166,22 @@ int PPSXptr::get_size (tuple& t, const void * Udata)
     return sizeof(xptr);
 }
 
+/* Temporary bugfix */
+inline static
+xptr get_xptr(const tuple_cell & c) {
+    return isTmpBlock(c.get_xptr()) ? c.get_node_inderection() : c.get_node();
+};
+
+inline static
+void get_tuple(tuple & c, xptr x) {
+    c.copy(isTmpBlock(x) ? tuple_cell::node_indir(x) : tuple_cell::node(x));
+};
+
 void PPSXptr::serialize (tuple& t, xptr v1, const void *Udata)
 {
     CHECK_TIMER_FLAG;
-    xptr node = t.cells[0].get_node();
+    xptr node = get_xptr(t.cells[0]);
+
     CHECKP(v1);
     VMM_SIGNAL_MODIFICATION(v1);
 
@@ -182,7 +194,7 @@ void PPSXptr::serialize (tuple& t, xptr v1, const void *Udata)
 
 void PPSXptr::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void *Udata)
 {
-    xptr node = t.cells[0].get_node();
+    xptr node = get_xptr(t.cells[0]);
     CHECKP(v1);
     VMM_SIGNAL_MODIFICATION(v1);
     memcpy(XADDR(v1), &node, size1);
@@ -202,7 +214,7 @@ void PPSXptr::deserialize (tuple& t, xptr& v1, const void *Udata)
     xptr node = *((xptr*)XADDR(v1)); 
 #endif /* ALIGNMENT_REQUIRED */
 
-    t.copy(tuple_cell::node(node));
+    get_tuple(t, node);
 }
 
 void PPSXptr::deserialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void *Udata)
@@ -212,6 +224,7 @@ void PPSXptr::deserialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, cons
     memcpy( &node, XADDR(v1), size1);
     CHECKP(v2);
     memcpy( ((char*)&node) + size1, XADDR(v2), sizeof(xptr) - size1);
-    t.copy(tuple_cell::node(node));
+
+    get_tuple(t, node);
 }
 
