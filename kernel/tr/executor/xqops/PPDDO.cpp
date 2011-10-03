@@ -269,6 +269,7 @@ void PPDDO::serialize (tuple& t,xptr v1, const void * Udata)
     CHECK_TIMER_FLAG;
 
     xptr node=t.cells[0].get_node();
+    xptr node_to_save = isTmpBlock(node) ? t.cells[0].get_node_inderection() : t.cells[0].get_node();
     CHECKP(node);
 
     shft sz;
@@ -278,7 +279,7 @@ void PPDDO::serialize (tuple& t,xptr v1, const void * Udata)
 
     CHECKP(v1);
     VMM_SIGNAL_MODIFICATION(v1);
-    *((xptr*)XADDR(v1)) = node;
+    *((xptr*)XADDR(v1)) = node_to_save;
     *((shft*)((char*)XADDR(v1) + sizeof(xptr))) = sz;
 
     /*
@@ -300,6 +301,7 @@ void PPDDO::serialize (tuple& t,xptr v1, const void * Udata)
 void PPDDO::serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata)
 {
     xptr node=t.cells[0].get_node();
+    xptr node_to_save = isTmpBlock(node) ? t.cells[0].get_node_inderection() : t.cells[0].get_node();
     CHECKP(node);
 
     shft sz;
@@ -307,7 +309,7 @@ void PPDDO::serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void 
 
     nid_parse(nodeGetNIDPtr(node), &addr, &sz);
 
-    copy_to_buffer(&node,sizeof(xptr));
+    copy_to_buffer(&node_to_save,sizeof(xptr));
     copy_to_buffer(&sz,sizeof(xptr),sizeof(shft));
 
     /*
@@ -337,12 +339,16 @@ void PPDDO::deserialize (tuple& t,xptr& v1, const void * Udata)
         copy_to_buffer(v1,GET_FREE_SPACE(v1));
         xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk;
         copy_to_buffer(v2+sizeof(seq_blk_hdr),GET_FREE_SPACE(v1),sizeof(xptr)-GET_FREE_SPACE(v1));
-        t.copy(tuple_cell::node(*((xptr*)temp_buffer)));
+
+        xptr x = *((xptr*)temp_buffer);
+        t.copy(isTmpBlock(x) ? tuple_cell::node_indir(x) : tuple_cell::node(x));
     }
     else
     {
         CHECKP(v1);
-        t.copy(tuple_cell::node(*((xptr*)XADDR(v1))));
+
+        xptr x = *((xptr*)XADDR(v1));
+        t.copy(isTmpBlock(x) ? tuple_cell::node_indir(x) : tuple_cell::node(x));
     }
 }
 
