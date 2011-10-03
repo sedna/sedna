@@ -364,7 +364,7 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
             printNode(children->getNode());
         } while (children->next());
 
-        if (indented) { (*crmout) << "\n"; printIndent(crmout, indentLevel-1, indentCache, indentSequenceLength); }
+        if (indented && indentNext) { (*crmout) << "\n"; printIndent(crmout, indentLevel-1, indentCache, indentSequenceLength); }
 
         (*crmout) << openTagSeq << "/";
         printElementName(elementInterface);
