@@ -308,14 +308,13 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     bool indented = indentNext;
     int namespaceCount = 0;
 
-    if (indentNext) {
+    if (indented) {
         if (indentLevel > 0) {
             (*crmout) << "\n";
             printIndent(crmout, indentLevel, indentCache, indentSequenceLength);
         }
         ++indentLevel;
     }
-    indentNext = indentElements;
 
     (*crmout) << openTagSeq;
 
@@ -365,15 +364,15 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
             printNode(children->getNode());
         } while (children->next());
 
-        if (indented && indentNext) { (*crmout) << "\n"; printIndent(crmout, indentLevel-1, indentCache, indentSequenceLength); }
+        if (indented) { (*crmout) << "\n"; printIndent(crmout, indentLevel-1, indentCache, indentSequenceLength); }
 
         (*crmout) << openTagSeq << "/";
         printElementName(elementInterface);
         (*crmout) << closeTagSeq;
     }
 
-    indentNext = indentElements;
     if (indented) { indentLevel--; }
+    indentNext = indented;
 
     undeclareNamespaces(namespaceCount);
     elementContext = parentContext;
