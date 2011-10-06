@@ -316,6 +316,8 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
         ++indentLevel;
     }
 
+    indentNext = !elementInterface->hasText();
+
     (*crmout) << openTagSeq;
 
     printElementName(elementInterface);
@@ -373,7 +375,6 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
 
     if (indented) { indentLevel--; }
     indentNext = indented;
-
 
     undeclareNamespaces(namespaceCount);
     elementContext = parentContext;
