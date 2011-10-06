@@ -314,9 +314,9 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
             printIndent(crmout, indentLevel, indentCache, indentSequenceLength);
         }
         ++indentLevel;
-    }
 
-    indentNext = !elementInterface->hasText();
+        indentNext = !elementInterface->hasText();
+    }
 
     (*crmout) << openTagSeq;
 
