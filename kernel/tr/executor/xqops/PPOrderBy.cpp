@@ -71,7 +71,8 @@ PPOrderBy::PPOrderBy(dynamic_context *_cxt_,
         data_cells(NULL),
         sort_cells(NULL),
         ss(NULL),
-        serializer(NULL)
+        serializer(NULL),
+        index_tuple(1)
 {
     U_ASSERT(modifiers.size() == (size_t) (child.ts - data_size));
 
@@ -246,12 +247,15 @@ void PPOrderBy::do_next (tuple &t)
 
     if (need_to_sort)
     {
-        ss -> next(t);
-        if (t.cells[0].get_atomic_type() != xs_integer && !t.is_eos())
+        ss -> next(index_tuple);
+
+        if (index_tuple.cells[0].get_atomic_type() != xs_integer && !index_tuple.is_eos())
             throw USER_EXCEPTION2(SE1003, "Incorrect serialization/deserialization.");
-        if (!t.is_eos())
-        {
-            data_cells->get(t, t.cells[0].get_xs_integer());
+
+        if (!index_tuple.is_eos()) {
+            data_cells->get(t, index_tuple.cells[0].get_xs_integer());
+        } else {
+            t.set_eos();
         }
     }
     else
