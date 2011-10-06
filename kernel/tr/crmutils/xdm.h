@@ -33,6 +33,7 @@ struct xdm_node_t {
     virtual xsd::QName getQName() const = 0;
     virtual const text_source_t getValue() const = 0;
     virtual xmlns_ptr getNamespaceValue() const = 0;
+    virtual bool hasText() const = 0;
 
     /* Here "all children" means children and attributes  */
     virtual IXDMNodeList * getAllChildren() = 0;
@@ -54,6 +55,7 @@ class SednaNode : public IXDMNode {
 
     mutable schema_node_cptr snode;
     mutable SednaNodeList * childList;
+    mutable enum { a_unknown, a_false, a_true } m_hasText;
   public:
     xptr getXptr() const;
     void setNode(xptr node);
@@ -65,6 +67,7 @@ class SednaNode : public IXDMNode {
     virtual xsd::QName getQName() const;
     virtual const text_source_t getValue() const;
     virtual xmlns_ptr getNamespaceValue() const;
+    virtual bool hasText() const;
 
     virtual IXDMNodeList * getAllChildren();
 };

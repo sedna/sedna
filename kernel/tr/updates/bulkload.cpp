@@ -458,7 +458,7 @@ class DataParser : public IElementProducer {
         updateNode(left);
     }
 
-    void processText(bool saveTrailingWhitespaces) {
+    void processText(bool stripTrailingSpaces, bool saveTrailingWhitespaces) {
         U_ASSERT(self != XNULL);
 
         if (parent->textBufferSize > 0) {
@@ -480,8 +480,10 @@ class DataParser : public IElementProducer {
                     }
                 }
 
-                tailingWhitespace = getRightSpaces(value);
-                value.size -= tailingWhitespace.size;
+                if (stripTrailingSpaces) {
+                    tailingWhitespace = getRightSpaces(value);
+                    value.size -= tailingWhitespace.size;
+                }
             }
 
             if (value.size > 0) {
@@ -537,7 +539,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual IElementProducer* addElement(const xsd::QName& qname, xmlscm_type type) {
-        processText(false);
+        processText(false, false);
 
         ChildMap::const_iterator iterator = children.find(qname);
         U_ASSERT(iterator != children.end());
@@ -577,7 +579,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual tuple_cell addComment(const text_source_t value) {
-        processText(false);
+        processText(false, false);
 
         if (left != XNULL) {
             insert_comment(indirectionDereferenceCP(left), XNULL, XNULL, value);
@@ -592,7 +594,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual tuple_cell addPI(const xsd::NCName& name, const text_source_t value) {
-        processText(false);
+        processText(false, false);
 
         if (left != XNULL) {
             insert_pi(indirectionDereferenceCP(left), XNULL, XNULL, name, value);
@@ -623,7 +625,7 @@ class DataParser : public IElementProducer {
                 parent->textBufferSize += rest;
             }
 
-            processText(true);
+            processText(true, true);
 
             if (value.size > (TEXT_BUFFER_SIZE - parent->textBufferSize)) {
                 U_ASSERT(false);
@@ -646,7 +648,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual tuple_cell close() {
-        processText(false);
+        processText(true, false);
         tailingWhitespace = NULL_TEXT;
 
         if (parent->options.stripBoundarySpaces) {

@@ -7,9 +7,10 @@ xptr SednaNode::getXptr() const { return node; };
 void SednaNode::setNode(xptr a_node) {
     node = a_node;
     snode = XNULL;
+    m_hasText = a_unknown;
 }
 
-SednaNode::SednaNode(xptr a_node) : node(a_node), snode(XNULL), childList(NULL) { }
+SednaNode::SednaNode(xptr a_node) : node(a_node), snode(XNULL), childList(NULL), m_hasText(a_unknown) { }
 
 SednaNode::~SednaNode() {
     if (childList != NULL) { delete childList; }
@@ -43,6 +44,16 @@ xsd::QName SednaNode::getQName() const {
 
     return snode->get_qname();
 }
+
+bool SednaNode::hasText() const
+{
+    if (m_hasText == a_unknown) {
+        m_hasText = getAnyChildByTypeMask(node, text) == XNULL ? a_false : a_true;
+    }
+
+    return m_hasText == a_true;
+}
+
 
 const text_source_t SednaNode::getValue() const {
     if (getNodeKind() == xml_namespace) {

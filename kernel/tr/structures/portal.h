@@ -50,6 +50,7 @@ namespace portal {
         const text_source_t getValue() const { return text_source_mem(NULL, 0); };
         xsd::QName getQName() const { return xsd::QName::createUnchecked(snode->get_xmlns(), snode->get_name()); };
         xmlns_ptr getNamespaceValue() const { return NULL_XMLNS; };
+        bool hasText() const { return false; };
 
         IXDMNodeList * getAllChildren() { return this; };
 
