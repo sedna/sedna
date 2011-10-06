@@ -61,6 +61,7 @@ private:
     SortedSequence *ss;
     TupleSerializer *serializer;
     int64_t pos;
+    tuple index_tuple;
     
     arr_of_common_type types;
     orb_user_data udata;
