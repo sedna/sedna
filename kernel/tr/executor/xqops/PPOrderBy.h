@@ -71,9 +71,10 @@ private:
     virtual void do_close  ();
     virtual void do_next   (tuple &t);
     virtual void do_accept (PPVisitor &v);
-    
+
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
+    void release_ss();
 public:    
     PPOrderBy(dynamic_context *_cxt_,
               operation_info _info_,

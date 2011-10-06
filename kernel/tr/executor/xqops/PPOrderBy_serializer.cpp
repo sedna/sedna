@@ -117,7 +117,7 @@ void TupleSerializer::deserialize(tuple& t, void* buf, size_t size)
     int64_t pos;
     memcpy(&pos, buf, sizeof(int64_t));
 
-    t.cells[0] = tuple_cell::atomic((int64_t)pos);
+    t.copy(tuple_cell::atomic((int64_t)pos));
 }
 
 static inline void get_deserialized_value(void* value, const void* addr, xmlscm_type type)

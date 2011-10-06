@@ -73,9 +73,11 @@ PPOrderBy::PPOrderBy(dynamic_context *_cxt_,
         ss(NULL),
         serializer(NULL)
 {
-    if (modifiers.size() != child.ts - data_size)
+    U_ASSERT(modifiers.size() == (size_t) (child.ts - data_size));
+
+    if (modifiers.size() != (size_t) (child.ts - data_size))
         throw USER_EXCEPTION2(SE1003, "Number of modifiers must be equal to the expressions number.");
-    
+
     sort_size = child.ts - data_size;
     types.resize(sort_size);
 }
@@ -86,6 +88,16 @@ PPOrderBy::~PPOrderBy()
     child.op = NULL;
 }
 
+void PPOrderBy::release_ss() {
+    if (ss != NULL) {
+        delete ss;
+        delete serializer;
+
+        ss = NULL;
+        serializer = NULL;
+    }
+}
+
 void PPOrderBy::do_open ()
 {
     child.op -> open();
@@ -93,7 +105,7 @@ void PPOrderBy::do_open ()
     need_reinit = false;
     need_to_sort= false;
     pos = 0;
-    
+
     data_cells  = new sequence(data_size);
     sort_cells  = new sequence(sort_size);
 
@@ -108,6 +120,7 @@ void PPOrderBy::do_open ()
 void PPOrderBy::do_reopen()
 {
     child.op->reopen();
+
     first_time  = true;
     need_reinit = true;
 }
@@ -120,12 +133,8 @@ void PPOrderBy::do_close()
     delete sort_cells;
     sort_cells = NULL;
     udata.sort = NULL;
-    if (ss != NULL)
-    {
-        delete ss;
-        delete serializer;
-        ss = NULL, serializer = NULL;
-    }
+
+    release_ss();
 }
 
 void PPOrderBy::do_next (tuple &t)
@@ -137,12 +146,9 @@ void PPOrderBy::do_next (tuple &t)
         {
             data_cells -> clear();
             sort_cells -> clear();
-            if (serializer != NULL)
-            {
-                delete serializer;
-                delete ss;
-                ss = NULL, serializer = NULL;
-            }
+
+            release_ss();
+
             pos = 0;
             udata.pos   = 0;
             udata.size  = sizeof(int64_t);
@@ -164,27 +170,30 @@ void PPOrderBy::do_next (tuple &t)
 
             for (i = 0; i < source.cells_number; i++)
             {
-                if (i < data_size) data_tuple.cells[i] = source.cells[i];
+                if (i < data_size) {
+                    data_tuple.cells[i] = source.cells[i];
+                }
                 else
                 {
-                    if (source.cells[i].is_eos())
+                    if (source.cells[i].is_eos()) {
                         sort_tuple.cells[i - data_size].set_eos();
+                    }
                     else
                     {
                         tuple_cell tc = source.cells[i];
-                        
+
                         if (tc.is_atomic() && tc.get_atomic_type() == se_sequence)
                             throw XQUERY_EXCEPTION2(XPTY0004, "A sequence of more than one item is not allowed in order by specification.");
-                        
+
                         tc = atomize(tc);
                         sort_tuple.cells[i - data_size] = tc.get_atomic_type() == xs_untypedAtomic ?
                                                           cast_primitive_to_xs_string(tc) : tc ;
-                        
                         orb_common_type* ct = &types.at(i - data_size);
                         xmlscm_type t = sort_tuple.cells[i - data_size].get_atomic_type();
-                        
-                        if (ct->initialized)
+
+                        if (ct->initialized) {
                             ct->xtype = get_least_common_type_with_gt(ct->xtype, t);
+                        }
                         else
                         {
                             /// We need to check if 't' has a gt operator!
@@ -194,11 +203,11 @@ void PPOrderBy::do_next (tuple &t)
                     }
                 }
             }
-            
+
             data_cells -> add(data_tuple);
             sort_cells -> add(sort_tuple);
         }
-        
+
         for (i = 0; i < sort_size; i++)
         {
             orb_common_type* ct = &types.at(i);
@@ -219,6 +228,7 @@ void PPOrderBy::do_next (tuple &t)
 
             //Creating serializer and sorted sequence
 
+            U_ASSERT(serializer == NULL);
             serializer = new TupleSerializer(udata.bit_set_offset, udata.modifiers, udata.header, udata.stable, udata.sort, &(udata.pos));
             ss = new SortedSequence(serializer);
 
@@ -233,7 +243,7 @@ void PPOrderBy::do_next (tuple &t)
         }
         first_time = false;
     }
-    
+
     if (need_to_sort)
     {
         ss -> next(t);
@@ -241,28 +251,24 @@ void PPOrderBy::do_next (tuple &t)
             throw USER_EXCEPTION2(SE1003, "Incorrect serialization/deserialization.");
         if (!t.is_eos())
         {
-            data_cells -> get(t, t.cells[0].get_xs_integer());
+            data_cells->get(t, t.cells[0].get_xs_integer());
         }
     }
     else
     {
-        if (pos < data_cells -> size())
-        {
-            data_cells -> get(t, pos);
+        if (pos < data_cells->size()) {
+            data_cells->get(t, pos);
         }
         pos++;
     }
 
-    if (t.is_eos() || pos > data_cells -> size()) {
+    if (t.is_eos() || pos > data_cells->size()) {
         t.set_eos();
+
         first_time  = true;
         need_reinit = true;
-        if (ss != NULL)
-        {
-            delete ss;
-            delete serializer;
-            ss = NULL, serializer = NULL;
-        }
+
+        release_ss();
         data_cells -> clear();
         sort_cells -> clear();
     }
