@@ -81,12 +81,9 @@ text_source_t getRightSpaces(const text_source_t &x) {
         }
     }
 
-    if (result.size == 0) {
-        result = NULL_TEXT;
-    }
-
-    U_ASSERT(result.type == text_source_t::text_mem);
-    return result;
+    // If we came to an end, whole string contains only whitespaces
+    U_ASSERT(x.type == text_source_t::text_mem);
+    return x;
 }
 
 class SafeParser {
