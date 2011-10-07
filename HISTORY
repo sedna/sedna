@@ -6,7 +6,24 @@
 Release 3.5
 Release date:
 =============================================================================
-   - TODO: Fill before release
+   - Multiple bulkload whitespace handling fixes. However direct constructor
+     whitespace handling is left intact.
+
+     NOTE: Whitespace removal during bulkload is not longer works as it did
+     (very baggy in fact) before. If your application somehow dependends on
+     whitespace handling, use THE FORCE, LUKE.
+
+   - CDATA section formatting is now saved for text nodes in direct element
+     constructors and can be saved during bulk load using special option:
+     'declare option se:bulk-load "cdata-section-preserve=yes";'
+     (see Bulk Load operation description in Sedna Programming Guide)
+
+     For example the output of query '<a><![CDATA[<example data>]]></a>' is
+     now the same as query itself, CDATA section is preserved as is.
+
+   - Output option cdata-section-elements is now supported.
+     Please see documentation for details.
+
 
 =============================================================================
 Release 3.4

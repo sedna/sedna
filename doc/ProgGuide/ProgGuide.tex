@@ -1999,12 +1999,24 @@ Consider the following examples:
 \begin{verbatim}
 declare namespace se = "http://www.modis.ispras.ru/sedna";
 declare option se:output "indent=yes; cdata-section-elements=script";
+<x><script>K&amp;R C</script><b>element</b></x>
 \end{verbatim}
 
 As mentioned above, you may omit the Sedna namespace declaration:
 \begin{verbatim}
 declare option se:output "indent=yes; cdata-section-elements=script";
+<x><script>K&amp;R C</script><b>element</b></x>
 \end{verbatim}
+
+This query is evaluated as follows:
+\begin{verbatim}
+<x>
+  <script><![CDATA[K&R C]]></script>
+  <b>element</b>
+</x>
+\end{verbatim}
+
+
 
 
 
