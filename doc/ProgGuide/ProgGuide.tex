@@ -1979,7 +1979,11 @@ Currently, Sedna supports the following serialization parameters:
 Parameter name & Values & Description \\
 \hline
 \hline
-indent & "yes" or "no" (default yes) & Output indented \\
+indent & "yes" or "no" & Output indented \\
+  & (default yes) & \\
+\hline
+cdata-section-elements & Element list & Text within specified elements \\
+ & e.g. 'name;data' & appears within CDATA section \\
 \hline
 \end{tabular}
 
@@ -1994,13 +1998,14 @@ Consider the following examples:
 
 \begin{verbatim}
 declare namespace se = "http://www.modis.ispras.ru/sedna";
-declare option se:output "indent=yes";
+declare option se:output "indent=yes; cdata-section-elements=script";
 \end{verbatim}
 
 As mentioned above, you may omit the Sedna namespace declaration:
 \begin{verbatim}
-declare option se:output "indent=yes";
+declare option se:output "indent=yes; cdata-section-elements=script";
 \end{verbatim}
+
 
 
 %===============================================================================
@@ -2898,6 +2903,34 @@ Notice, that heavy bulk-loads might be greatly optimized by setting
 \verb!SEDNA_LOG_AMOUNT! connection attribute to \verb!SEDNA_LOG_LESS! (see
 Section \ref{session-option-capi} for more information).
 
+\subsubsection{CDATA section preserving}
+
+It is possible to save the formatting of continuous CDATA sections with
+\verb!cdata-section-preserve! option.
+
+\begin{verbatim}
+declare option se:bulk-load "cdata-section-preserve=yes";
+LOAD "auction.xml" "auction"
+\end{verbatim}
+
+The \verb/cdata-section-preserve=yes/ option makes text nodes within CDATA
+sections to be serialized within CDATA sections. CDATA section formatting is
+saved only for the whole text node and this property of text node is inherited
+when text node is appended. E.g. in the following document fragment CDATA
+section will be serialized as it appears in document:
+
+\begin{verbatim}
+<a><![CDATA[<example data>]]></a>
+\end{verbatim}
+
+But the next fragment will not be saved with mixed formatting.
+
+\begin{verbatim}
+<a><![CDATA[<example]]> data<![CDATA[>]]></a>
+\end{verbatim}
+
+Instead, it will be serialized in the same way as prevoius one, i.e. the whole
+text will be in CDATA section.
 
 %===============================================================================
 %                         Data Definition Language
