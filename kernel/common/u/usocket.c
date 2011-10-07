@@ -146,6 +146,16 @@ int uconnect_tcp(USOCKET s, unsigned short port, const char *hostname, sys_call_
     /* 8 is enough for c-str for any port (and yes, 5 is not enough :)) */
     char buf[8];
 
+    /*!TODO !FIXME  In new Sedna release there would be new mechanism of starting processes -- this
+    check should be there   */
+    const char * dest;
+    const char * localhost = "localhost";
+    if (strcmp (hostname, "0.0.0.0") == 0) {
+        dest = localhost;
+    } else {
+        dest = hostname;
+    }
+
     /* pay attention to getaddrinfo function. It creates addrinfo structure and it needs
      * to get port number as C-string (not as a number -- it leads to segfault) and it
      * also needs some additional options which are written in struct addrinfo hints.
@@ -156,11 +166,12 @@ int uconnect_tcp(USOCKET s, unsigned short port, const char *hostname, sys_call_
      * instead of trying to find error codes in sources: * const char *gai_strerror(int errcode);
      * You can find more info with "man getaddrinfo". */
 
+
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     
-    if (getaddrinfo(hostname, int2c_str((int) port, buf), &hints, &hp) != 0)
+    if (getaddrinfo(dest, int2c_str((int) port, buf), &hints, &hp) != 0)
     {
         sys_call_error("getaddrinfo");
         return U_SOCKET_ERROR;
