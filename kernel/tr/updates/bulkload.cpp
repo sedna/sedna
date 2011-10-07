@@ -130,7 +130,7 @@ class BulkLoader {
         XML_SetProcessingInstructionHandler(p, piHandler);
         XML_SetCharacterDataHandler(p, dataHandler);
 
-        if (!parseSchema && options.preserveCDataSection) {
+        if (!parseSchema && (options.preserveCDataSection || options.stripBoundarySpaces)) {
             XML_SetCdataSectionHandler(p, startCDataHandler, endCDataHandler);
         }
 
@@ -232,16 +232,10 @@ class BulkLoader {
     }
 
     static
-    void startCDataHandler(void * loader) {
-        cdataflag_hint = cdata_section | cdata_infect;
-        ((BulkLoader *) loader)->saveWSOption = ((BulkLoader *) loader)->options.stripBoundarySpaces;
-        ((BulkLoader *) loader)->options.stripBoundarySpaces = false;
-    }
+    void startCDataHandler(void * loader);
 
     static
-    void endCDataHandler(void * loader) {
-        ((BulkLoader *) loader)->options.stripBoundarySpaces = ((BulkLoader *) loader)->saveWSOption;
-    }
+    void endCDataHandler(void * loader);
 };
 
 static const tuple_cell NULL_TC = tuple_cell::eos();
@@ -392,6 +386,7 @@ class DataParser : public IElementProducer {
   private:
     BulkLoader * parent;
     unsigned int level;
+    bool hasText;
 
     typedef std::vector<xmlns_ptr> NamspaceList;
     NamspaceList nextChildNamespaces;
@@ -453,24 +448,36 @@ class DataParser : public IElementProducer {
 
         left = get_last_mo_inderection();
         updateNode(left);
+
+        hasText = true;
     }
 
-    void processText(bool stripTrailingSpaces, bool saveTrailingWhitespaces) {
+    void processText(bool stripTrailingSpaces, bool saveTrailingWhitespaces, bool breaksWhitespaces) {
         U_ASSERT(self != XNULL);
+
+        // TODO: Currently, only BUFFER_SIZE whitespaces are truncated. This should be conditional.
+        // No more clearing heading whitespaces in this text. We should strip
 
         if (parent->textBufferSize > 0) {
             text_source_t value = text_source_mem(parent->textBuffer, parent->textBufferSize);
 
             tailingWhitespace.size = 0;
             if (parent->options.stripBoundarySpaces) {
+                if (breaksWhitespaces && !stripLeftSpaces && !hasText) {
+                    if (whitespaceOnly(value)) {
+                        parent->textBufferSize = 0;
+                        return;
+                    }
+                }
+
                 // Clear heading whitespaces
                 if (stripLeftSpaces) {
                     value = clearLeftSpaces(value);
 
                     if (value.size > 0) {
-                        // No more clearing heading whitespaces in this text
                         stripLeftSpaces = false;
                     } else {
+                        stripLeftSpaces = !breaksWhitespaces;
                         parent->textBufferSize = 0;
                         cdataflag_hint = cdata_inherit;
                         return;
@@ -506,6 +513,10 @@ class DataParser : public IElementProducer {
                 tailingWhitespace = NULL_TEXT;
             }
         }
+
+        if (breaksWhitespaces) {
+            stripLeftSpaces = false;
+        }
     };
 
     virtual tuple_cell addNS(const xmlns_ptr ns) {
@@ -517,6 +528,7 @@ class DataParser : public IElementProducer {
         self = selfXptr;
         left = XNULL;
         stripLeftSpaces = true;
+        hasText = false;
 
         /* Numbering scheme hint */
         sizehnt = &(parent->numbSchemeHints.at(level));
@@ -536,7 +548,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual IElementProducer* addElement(const xsd::QName& qname, xmlscm_type type) {
-        processText(false, false);
+        processText(false, false, true);
 
         ChildMap::const_iterator iterator = children.find(qname);
         U_ASSERT(iterator != children.end());
@@ -576,7 +588,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual tuple_cell addComment(const text_source_t value) {
-        processText(false, false);
+        processText(false, false, true);
 
         if (left != XNULL) {
             insert_comment(indirectionDereferenceCP(left), XNULL, XNULL, value);
@@ -591,7 +603,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual tuple_cell addPI(const xsd::NCName& name, const text_source_t value) {
-        processText(false, false);
+        processText(false, false, true);
 
         if (left != XNULL) {
             insert_pi(indirectionDereferenceCP(left), XNULL, XNULL, name, value);
@@ -622,7 +634,7 @@ class DataParser : public IElementProducer {
                 parent->textBufferSize += rest;
             }
 
-            processText(true, true);
+            processText(true, true, false);
 
             if (value.size > (TEXT_BUFFER_SIZE - parent->textBufferSize)) {
                 U_ASSERT(false);
@@ -645,7 +657,7 @@ class DataParser : public IElementProducer {
     }
 
     virtual tuple_cell close() {
-        processText(true, false);
+        processText(true, false, true);
         tailingWhitespace = NULL_TEXT;
 
         if (parent->options.stripBoundarySpaces) {
@@ -749,4 +761,32 @@ Node BulkLoadFrontend::loadCollectionDocument(const char* collectionName, const 
 #endif
 
     return docNode;
+}
+
+void BulkLoader::startCDataHandler(void* loader)
+{
+    DataParser * parser = dynamic_cast<DataParser *>(((BulkLoader *) loader)->producer);
+    if (parser != NULL) {
+        parser->processText(false, false, true);
+    }
+
+    if (((BulkLoader *) loader)->options.preserveCDataSection) {
+        cdataflag_hint = cdata_section | cdata_infect;
+    }
+
+    ((BulkLoader *) loader)->saveWSOption = ((BulkLoader *) loader)->options.stripBoundarySpaces;
+    ((BulkLoader *) loader)->options.stripBoundarySpaces = false;
+}
+
+
+void BulkLoader::endCDataHandler(void* loader)
+{
+    DataParser * parser = dynamic_cast<DataParser *>(((BulkLoader *) loader)->producer);
+    if (parser != NULL) {
+        parser->processText(false, false, true);
+    }
+
+    ((BulkLoader *) loader)->options.stripBoundarySpaces = ((BulkLoader *) loader)->saveWSOption;
+
+    cdataflag_hint = cdata_inherit;
 }
