@@ -15,6 +15,8 @@ the second one is the file with .xquery extension, which contains the user
 query. Besides, there are several options, which semantics will be explained
 below. About supported QUERY/UPDATE language see in the Sedna Programmer's
 Guide. The result of the query is directed to standard output stream (stdout).
+Note that if you have Sedna compiled in release version you can not start trn
+process manually; it's only supported if Sedna is compiled in debug version.
 
 
 .SH OPTIONS
@@ -44,7 +46,7 @@ user password (default MANAGER)
 \fBfilename\fR is the file with an XQuery query
 
 .SH NOTES
-Before running any transactions be sure that Sedna storage manager is strarted
+Before running any transactions be sure that Sedna storage manager is started
 for the corresponding database (see \fBse_gov\fR (8) for further details)
 
 .SH FILES
