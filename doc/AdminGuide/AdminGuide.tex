@@ -195,7 +195,12 @@ fails you could use your system hosts file\cite{link:hosts}.
 If address is not specified Governor tries to find the \verb!sednaconf.xml! file
 and uses the address specified as \verb!listen_address! parameter (see section
 \ref{sec:ConfigSedna}, Configuring Sedna). If it still cannot find address Sedna
-would listen to localhost.
+would listen to localhost. Note that in Sedna versions less than 3.5 Governor
+operated in the other way: it listen to every interface in the system; since version
+3.5 it doesn't due to security reasons. If you want to make Governor work in the
+old-fashioned way you should set \verb!-listen-address! option to \verb!0.0.0.0! ---
+that would force Sedna to listen every interface in your system as it worked in
+older versions.
 
 \verb!-port-number! option specifies the port number on which Sedna listens for
 connections from clients. If port number is not specified Governor tries to find

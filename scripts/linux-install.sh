@@ -186,7 +186,9 @@ cat > $TARGET/etc/sednaconf.xml <<EOF
        numeric address or local name. Please ensure that this name
        could be resolved by your system. If it fails you could use
        your hosts file (http://en.wikipedia.org/wiki/Hosts_(file))
-       (examples: localhost, 127.0.0.1)
+       If you want Governor to listen all the interfaces in your system
+       you should set this option to 0.0.0.0
+       (examples: localhost, 127.0.0.1, 0.0.0.0)
        Default: localhost
   -->
   <listen_address>localhost</listen_address>
