@@ -2866,6 +2866,13 @@ LOAD "path_to_file" "document_name"
 The first parameter is a path to the file which contains a document to be
 loaded. The second parameter is the name for this document in the database.
 
+For example,
+\begin{verbatim}
+LOAD "/opt/test.xml" "test"
+\end{verbatim}
+loads file \verb!/opt/test.xml! into database as a stand-alone document with
+name \verb!test!.
+
 To load document into a collection, use the following statement:
 \begin{verbatim}
 LOAD "path_to_file" "document_name" "collection_name"
@@ -2873,6 +2880,12 @@ LOAD "path_to_file" "document_name" "collection_name"
 The first parameter is a path to the file which contains a document to be
 loaded. The second parameter is the name for this document in the database. The
 third parameter is the collection name to load the document into.
+
+For example,
+\begin{verbatim}
+LOAD "/opt/mail-01.xml" "mail-01" "mails"
+\end{verbatim}
+loads file \verb!/opt/mail-01.xml! into collection \verb!mails!.
 
 For performing bulk load not from the source file but from an input stream,
 use the following statements (first for loading stand alone document, second -
@@ -3035,6 +3048,9 @@ doc($doc as xs:string,
 \end{verbatim}
 The function returns the document with the \verb!$doc! name that belongs to the
 collection named \verb!$col!.
+
+For example, \verb!doc('mail-01', 'mails')! query returns documents with name
+\verb!mail-01! from collection \verb!mails!.
 
 \begin{verbatim}
 fn:collection($col as xs:string?) as document-node()*

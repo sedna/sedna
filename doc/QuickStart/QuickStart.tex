@@ -84,6 +84,12 @@ se_gov
 If Sedna is started successfully it prints "\verb!GOVERNOR has been!
 \verb!started in! \verb!the background mode!".
 
+\textbf{Important note:} since version 3.5 Sedna server by default listens
+on 'localhost' and allows only local clients. If you want to work with Sedna
+remotely make sure that \verb!-listen-address! parameter value is
+adjusted properly. See Sedna Administration Guide for the details on how to set
+this option.
+
 \item Create a new database \verb!auction! by running the following command:
 \begin{verbatim}
 se_cdb auction
@@ -175,26 +181,24 @@ below for your convenience:
 \section{Troubleshooting}
 \label{sec:troubleshooting}
 
-We understand that you can face some difficulties using our product. Sedna DBMS is
-not very simple software and it requires you to have some basic knowledge about XML,
-Xquery and it needs you to be an intermediate computer user at least. If you face any
-problems in using our product we would be glad to answer your questions and we would
-be pleased to get your bug-reports. But we will very appreciate if you read FAQ\cite{link:FAQ}
-and Sedna documentation\cite{link:Documentation} firstly. You can also find the documentation
-on your Sedna version in your Sedna install directory (or your build directory if you
-have compiled it yourself).
+If you face any problems in using our product we would be glad to answer your
+questions and we would be pleased to get your bug-reports. But we will very
+appreciate if you read FAQ\cite{link:FAQ} and Sedna
+documentation\cite{link:Documentation} firstly. You can also find the
+documentation on your Sedna version in your Sedna install directory (or your
+build directory if you have compiled it yourself).
 
-
-You can contact us via mailing list\cite{link:mailing-list} with your questions. If you
-think that you have found a bug you can also use our bug tracker\cite{link:bug-tracker}
-but if you are not sure you still may contact us via mailing list. In both cases we expect
-you to tell us the following:
+You can contact us via mailing list\cite{link:mailing-list} with your questions.
+If you think that you have found a bug you can also use our bug
+tracker\cite{link:bug-tracker} but if you are not sure you still may contact us
+via mailing list. In both cases we expect you to tell us the following:
 
 \begin{enumerate}
 \item What version of Sedna do you use.
 \item What operating system is used to run Sedna.
-\item Most likely we will need to see your event.log (it's located in your data directory) to
-answer your question so it would be better if you attach it to your question.
+\item Most likely we will need to see your event.log (it's located in your data
+directory) to answer your question so it would be better if you attach it to
+your question.
 \end{enumerate}
 
 
