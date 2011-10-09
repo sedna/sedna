@@ -151,6 +151,11 @@ To start the Sedna server one should start \emph{Governor} by executing the
 \verb!se_gov! command. This starts the main server component. After that
 Administrator can run databases (as discussed in Section \ref{RunDB}).
 
+\textbf{Important note:} since version 3.5 Sedna server by default listens on
+'localhost' and allows only local clients. If you want to work with Sedna
+remotely make sure that \verb!-listen-address! parameter value is adjusted
+properly.
+
 The usage of the \verb!se_gov! command is as follows:
 
 \small{
@@ -187,19 +192,20 @@ the \verb!se_gov! command.
 \verb!-background-mode! option allows Administrator to start \emph{Governor} in
 the background mode.
 
-\verb!-listen-address! option specifies an address which Sedna listens for
-connections from clients. You may use numeric form (e.g. \verb!127.0.0.1!) or
-symbolic form (e.g. \verb!localhost!). Note that address must be local. Also note
-that you need to ensure that your system is able to resolve that address. If it
-fails you could use your system hosts file\cite{link:hosts}.
-If address is not specified Governor tries to find the \verb!sednaconf.xml! file
-and uses the address specified as \verb!listen_address! parameter (see section
-\ref{sec:ConfigSedna}, Configuring Sedna). If it still cannot find address Sedna
-would listen to localhost. Note that in Sedna versions less than 3.5 Governor
-operated in the other way: it listen to every interface in the system; since version
-3.5 it doesn't due to security reasons. If you want to make Governor work in the
-old-fashioned way you should set \verb!-listen-address! option to \verb!0.0.0.0! ---
-that would force Sedna to listen every interface in your system as it worked in
+\verb!-listen-address! specifies the address on which the server is to listen
+for connections from client applications. The value takes the form of a numeric
+IP address or host name (it must be resolvable by your system, check your host
+file). The value \verb!0.0.0.0! corresponds to all available IP interfaces. The
+default value is \verb!localhost!, which allows only local "loopback"
+connections to be made. If value is not specified Sedna server tries to find the
+\verb!sednaconf.xml! configuration file file and uses the address specified as
+\verb!listen_address! parameter (see section \ref{sec:ConfigSedna}, Configuring
+Sedna). If there is no configuration file or \verb!listen_address! parameter is
+not specified Sedna would listen on \verb!localhost!.
+
+Note, if you want to make Sedna work in the old-fashioned (prior version 3.5)
+way you should set \verb!-listen-address! option to \verb!0.0.0.0! --- that
+would force Sedna to listen on every interface in your system as it worked in
 older versions.
 
 \verb!-port-number! option specifies the port number on which Sedna listens for
@@ -318,8 +324,11 @@ parameter in a such way that identifiers belonging to different Sedna instances
 does not intersect. In a standard configuration one Sedna instance acquires a
 range of identifiers which length is equal to 150.
 
-The \verb!listen_address! element defines the address Sedna tries to listen
-for client connections.
+The \verb!listen_address! element specifies the address on which the server is
+to listen for connections from client applications. The value takes the form of
+a host name or numeric IP address. The value \verb!0.0.0.0! corresponds to all
+available IP interfaces. The default value is \verb!localhost!, which allows
+only local "loopback" connections to be made.
 
 The \verb!listener_port! element defines the port number for listening for
 connection requests from a client.
@@ -1729,16 +1738,6 @@ In the current version of Sedna all character data are stored internally in
 UTF-8. All input queries and XML documents must be encoded in UTF-8. All output
 is also encoded in UTF-8.
 
-
-%===============================================================================
-%                  Sedna Administation Guide: References
-%===============================================================================
-\begin{thebibliography}{9}
-\bibitem{link:hosts}
-``Hosts file on Wikipedia'',
-\url{http://en.wikipedia.org/wiki/Hosts_(file)}
-
-\end{thebibliography}
 
 \end{document}
 

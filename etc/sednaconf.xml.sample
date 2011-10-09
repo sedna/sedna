@@ -24,13 +24,11 @@
   <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>
 
   <!-- 
-       The address you want Sedna to listen. May be any correct local
-       numeric address or local name. Please ensure that this name
-       could be resolved by your system. If it fails you could use
-       your hosts file (http://en.wikipedia.org/wiki/Hosts_(file)).
-       If you want Governor to listen all the interfaces in your system
-       you should set this option to 0.0.0.0
-       (examples: localhost, 127.0.0.1, 0.0.0.0)
+       The address on which the server is to listen for connections from
+	   client applications. The value takes the form of a host name or numeric
+	   IP address. The value 0.0.0.0 corresponds to all available IP
+	   interfaces. The default value is 'localhost', which allows only local
+	   "loopback" connections to be made.
        Default: localhost
   -->
   <listen_address>localhost</listen_address>
