@@ -248,11 +248,13 @@ void XMLSerializer::printDocument(const text_source_t docname, IXDMNode * conten
         }
 
         (*crmout) << docPISeqClose;
+        (*crmout) << "\n";
     }
 
     while (!children->end()) {
         printNode(children->getNode());
         children->next();
+        if (indentElements && !children->end()) { (*crmout) << "\n"; }
     }
 }
 
