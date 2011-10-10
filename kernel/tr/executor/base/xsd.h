@@ -215,7 +215,7 @@ class QName {
           their pointers are somehow duplicate-safe ordered, it is valid for namespaces too */
 
         bool operator()(const QName &qname1, const QName &qname2) const {
-            if (qname1.ns == NULL_XMLNS && qname2.ns == NULL_XMLNS) {
+            if (qname1.ns == qname2.ns) {
                 return (qname1.localName - qname2.localName) > 0;
             } else {
                 return (qname1.ns - qname2.ns) > 0;
