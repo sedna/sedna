@@ -422,7 +422,7 @@ void ft_index_cell_object::parse_options(const char * options)
 				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
 			impl = ft_ind_dtsearch;
 		}
-		else if (!strcmp(op.opt_name(), "type"))
+		else if (!strcmp(op.opt_name(), "backend"))
 		{
 			if (impl != ft_ind_undefined)
 				throw USER_EXCEPTION2(SE3022, "bad options for full-text index");
@@ -455,7 +455,7 @@ void ft_index_cell_object::parse_options(const char * options)
 
 void ft_index_cell_object::write_options_str(op_str_buf *buf)
 {
-	buf->append("type=");
+	buf->append("backend=");
 	buf->append(impl_str());
 	if (stemming != NULL && stemming[0] != '\x0')
 		OptionsParser::append_option(buf, "stemming", stemming);

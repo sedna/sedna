@@ -87,10 +87,16 @@ struct ft_index_cell_object : public catalog_object
     {
         index_title = cat_strcpy(this, _index_title);
         doc_name = cat_strcpy(this, _doc_name);
-		if (options)
-			parse_options(options);
-		else
-			impl = ft_ind_dtsearch;
+	if (options)
+		parse_options(options);
+	if (impl == ft_ind_undefined)
+	{
+#ifdef SE_ENABLE_DTSEARCH
+		impl = ft_ind_dtsearch;
+#else
+		impl = ft_ind_native;
+#endif
+	}
     };
 
     ~ft_index_cell_object() {
