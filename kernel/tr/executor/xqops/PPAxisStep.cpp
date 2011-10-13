@@ -36,6 +36,7 @@ struct AxisHints {
     t_item childTypeMask;
     ISchemaTest * schemaTest;
     Node baseNode;
+    u_timeb tx;
 
     DescendantMap descendantPathIndex;
 
@@ -179,6 +180,14 @@ Node nextNode_RightDescendantMerge(Node node, AxisHints * hint) {
     return hint->nodeHeapPop();
 }
 
+#define TIME_START(t) if (executor_globals::profiler_mode) { u_ftime(&(t)); };
+#define TIME_END(t) if (executor_globals::profiler_mode) { \
+    u_timeb x = (t); \
+    u_ftime(&(t)); \
+    (t) = (t) - x; \
+}
+
+
 /*
   TODO: Descendant axis is evaluated as follows: HOOOWWWWW!
 */
@@ -194,8 +203,10 @@ Node resolveAxis_Descendant(Node node, AxisHints * hint) {
         t_scmnodes schemaNodes;
         SchemaPathList pathList;
 
+        TIME_START(hint->tx);
         /* Build path list for every resolved node */
         executeNodeTest(scn, hint->nt, &schemaNodes, NULL, NULL);
+        TIME_END(hint->tx);
 
         /* Just copy cached result array to our array */
         for (std::vector<schema_node_xptr>::iterator i = schemaNodes.begin(); i != schemaNodes.end(); ++i) {
@@ -483,6 +494,11 @@ PPAxisStep::PPAxisStep(dynamic_context* _cxt_, operation_info _info_, PPOpIn _ch
             nextNodeProc = (nt.axis == axis_following_sibling) ? nextNode_RightSiblingSame : nextNode_LeftSiblingSame;
         };
     }
+
+    u_timeb_init(timer+0);
+    u_timeb_init(timer+1);
+    u_timeb_init(timer+2);
+    u_timeb_init(timer+3);
 }
 
 PPAxisStep::~PPAxisStep()
@@ -531,7 +547,9 @@ void PPAxisStep::do_next(tuple& t)
 
     while (true) {
         if (!currentNode.isNull()) {
+            TIME_START(timer[2]);
             currentNode = nextNodeProc(currentNode, hint);
+            TIME_END(timer[2]);
         }
 
         while (currentNode.isNull()) {
@@ -547,7 +565,12 @@ void PPAxisStep::do_next(tuple& t)
             }
 
             hint->baseNode = child.get(t).get_node();
+
+            TIME_START(timer[1]);
+            u_timeb_init(&hint->tx);
             currentNode = evaluateAxisProc(hint->baseNode, hint);
+            if (executor_globals::profiler_mode) { timer[0] = timer[0] + hint->tx; }
+            TIME_END(timer[1]);
         }
 
         U_ASSERT(!currentNode.isNull());
