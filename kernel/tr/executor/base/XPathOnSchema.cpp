@@ -215,18 +215,20 @@ void executeNodeTestPath(schema_node_cptr node, const xpath::NodeTest& nt, t_scm
     scoped_ptr<ISchemaTest> schemaTest(createSchemaTest(nt));
     scoped_ptr<ISchemaTest> selfSchemaTest;
 
-    schemaTest->setResultCollector(result);
-    schemaTest->setPathCollector(pathList);
-
     if (nt.axis == axis_descendant_or_self || nt.axis == axis_self) {
         NodeTest selfnt = nt;
         selfnt.axis = axis_self;
         selfSchemaTest = createSchemaTest(selfnt);
-        selfSchemaTest->setResultCollector(result);
+        // No need in result collector, only used for test
     }
 
     if (schemaTest.isnull() && selfSchemaTest.isnull()) {
         return;
+    }
+
+    if (!schemaTest.isnull()) {
+        schemaTest->setResultCollector(result);
+        schemaTest->setPathCollector(pathList);
     }
 
     if (nt.axis == axis_descendant_or_self || nt.axis == axis_self) {
@@ -252,17 +254,19 @@ void executeNodeTest(schema_node_cptr node, const NodeTest& nt, t_scmnodes* resu
     scoped_ptr<ISchemaTest> schemaTest(createSchemaTest(nt));
     scoped_ptr<ISchemaTest> selfSchemaTest;
 
-    schemaTest->setResultCollector(result);
-
     if (nt.axis == axis_descendant_or_self || nt.axis == axis_self) {
         NodeTest selfnt = nt;
         selfnt.axis = axis_self;
         selfSchemaTest = createSchemaTest(selfnt);
-        selfSchemaTest->setResultCollector(result);
+        // No need in result collector, only used for test
     }
 
     if (schemaTest.isnull() && selfSchemaTest.isnull()) {
         return;
+    }
+
+    if (!schemaTest.isnull()) {
+        schemaTest->setResultCollector(result);
     }
 
     if (nt.axis == axis_descendant_or_self || nt.axis == axis_self) {

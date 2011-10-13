@@ -229,11 +229,42 @@ Node resolveAxis_ChildAny(Node node, AxisHints * hint) {
     return getFirstChild(node.getPtr());
 }
 
+Node resolveAxis_ChildFirst(Node node, AxisHints * hint) {
+    return getFirstChild(node.getPtr());
+}
+
 Node resolveAxis_Self(Node node, AxisHints * hint) {
     return node;
 }
 
 Node resolveAxis_NULL(Node node, AxisHints * hint) {
+    return XNULL;
+}
+
+Node nextNode_traverseAll(Node node, AxisHints * hint) {
+    node.checkp();
+
+    // Try to go to child level
+    if ((node.getNodeType() & (element | document)) > 0) {
+        Node nextNode = getFirstChildByTypeMask(node.getPtr(), hint->childTypeMask);
+
+        if (!nextNode.isNull()) {
+            hint->nodeStackPush(node);
+            return nextNode;
+        }
+    };
+
+    // Next or up
+    while (!node.isNull() && node.getPtr() != hint->baseNode.getPtr()) {
+        node = node.getRight();
+
+        if (!node.isNull()) {
+            return node;
+        }
+
+        node = hint->nodeStackPop();
+    }
+
     return XNULL;
 }
 
@@ -485,6 +516,14 @@ PPAxisStep::PPAxisStep(dynamic_context* _cxt_, operation_info _info_, PPOpIn _ch
             evaluateAxisProc = (nt.axis == axis_following_sibling) ? resolveNode_RightSiblingQName : resolveNode_LeftSiblingQName;
             nextNodeProc = (nt.axis == axis_following_sibling) ? nextNode_RightSiblingSame : nextNode_LeftSiblingSame;
         };
+    }
+
+    if ((nt.axis == axis_descendant || nt.axis == axis_descendant_or_self) &&
+          (((hint->childTypeMask & element) > 0) && hint->nt.isAnyQName())) {
+        // In this case it is in most cases faster to traverse all descendants
+        evaluateAxisProc = (nt.axis == axis_descendant_or_self) ? resolveAxis_Self : resolveAxis_ChildFirst;
+        nextNodeProc = nextNode_traverseAll;
+        testNodeProc = schemaTest;
     }
 
     u_timeb_init(timer+0);
