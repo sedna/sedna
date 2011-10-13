@@ -250,11 +250,13 @@ void PPExplainVisitor::visit(PPAxisStep* op)
 {
     insertOperationElement("PPAxisStep", left, parent, op);
     string node_test = op->getNodeTest().toXPathString();
-    xptr lefta = insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
+    insert_attribute_i(XNULL,XNULL,left,"step",xs_untypedAtomic, node_test.c_str(), node_test.length(), NULL_XMLNS);
 
+/*     May be helpful for debugging
     lefta = insertAttributeHelper("timer1", lefta, left, to_string(op->timer[0]));
     lefta = insertAttributeHelper("timer2", lefta, left, to_string(op->timer[1]));
     lefta = insertAttributeHelper("timer3", lefta, left, to_string(op->timer[2]));
+*/
 }
 
 void PPExplainVisitor::visit(PPPred1* op)
