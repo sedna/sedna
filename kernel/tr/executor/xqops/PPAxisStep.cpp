@@ -113,7 +113,7 @@ static
 xptr getFirstNodeByPath(Node node, const SchemaPath & path, Node commonAncestor) {
     xptr nodeI = node.getPtr();
 
-    for (std::vector<int>::const_reverse_iterator i = path.rbegin(); i != path.rend(); ++i) {
+    for (std::vector<int>::const_iterator i = path.begin(); i != path.end(); ++i) {
         xptr nodeJ = getChildAt(nodeI, *i);
 
   /* If we found the first child node on the step of path traversing,
