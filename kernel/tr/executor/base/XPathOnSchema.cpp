@@ -52,8 +52,12 @@ template<typename TestOp>
 class SchemaTest : public ISchemaTest {
   private:
     SchemaNodeData data;
+    mutable SchemaPath currentPath;
   public:
-    SchemaTest(t_item _type, const char * _uri, const char * _local) : data(_type, _uri, _local) {};
+    SchemaTest(t_item _type, const char * _uri, const char * _local) : data(_type, _uri, _local) {
+        pathCollection = NULL;
+        result = NULL;
+    };
 
     virtual bool empty() const { return data.m_type == 0; };
 
@@ -63,27 +67,40 @@ class SchemaTest : public ISchemaTest {
 
     virtual t_item getTypeMask() const { return data.m_type; };
 
-    virtual void getOffsprings(schema_node_cptr node, t_scmnodes* result) const {
+    virtual void getOffsprings(schema_node_cptr node) const {
+        int childIndex = 0;
+
         CAT_FOR_EACH(sc_ref, i, (node->children)) {
             if (TestOp::testref(i->object, &data)) {
                 result->push_back(i->object.snode);
+                if (pathCollection != NULL) { pathCollection->push_back(SchemaPath(1, childIndex)); };
             };
+            childIndex++;
         }
     }
 
-    virtual void getDescendants(schema_node_cptr node, t_scmnodes* result) const {
+    virtual void getDescendants(schema_node_cptr node) const {
+        int childIndex = 0;
+
         CAT_FOR_EACH(sc_ref, i, (node->children)) {
+            if (pathCollection != NULL) { currentPath.push_back(childIndex); }
+
             if (TestOp::testref(i->object, &data)) {
                 result->push_back(i->object.snode);
+
+                if (pathCollection != NULL) { pathCollection->push_back(currentPath); };
             };
 
             if ((i->object.type & (element | document)) > 0) {
-                getDescendants(i->object.snode, result);
+                getDescendants(i->object.snode);
             }
+
+            if (pathCollection != NULL) { currentPath.pop_back(); }
+            childIndex++;
         }
     }
 
-    virtual void getOffsprings(const t_scmnodes_set& list, t_scmnodes* result) const {
+    virtual void getOffsprings(const t_scmnodes_set& list) const {
         for (t_scmnodes_set::const_iterator i = list.begin(); i != list.end(); i++) {
             if (TestOp::test(*i, &data)) {
                 result->push_back(*i);
@@ -91,14 +108,14 @@ class SchemaTest : public ISchemaTest {
         }
     }
 
-    virtual void getDescendants(const t_scmnodes_set& list, t_scmnodes* result) const {
+    virtual void getDescendants(const t_scmnodes_set& list) const {
         for (t_scmnodes_set::const_iterator i = list.begin(); i != list.end(); i++) {
             if (TestOp::test(*i, &data)) {
                 result->push_back(*i);
             }
 
             if (((*i)->type & (element | document)) > 0) {
-                getDescendants((*i), result);
+                getDescendants((*i));
             }
         }
     }
@@ -183,15 +200,49 @@ ISchemaTest* createSchemaTest(const xpath::NodeTest& nt)
 }
 
 static
-void traverseDescendants(ISchemaTest* schema_test, const schema_node_cptr &node, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes, t_scmnodes* result) {
+void traverseDescendants(ISchemaTest* schema_test, const schema_node_cptr &node, t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes) {
     if (extended_nodes && extender_nodes && extended_nodes->find(node.ptr()) != extended_nodes->end()) {
         for (t_scmnodes_set::iterator i = extender_nodes->begin(); i != extender_nodes->end(); i++) {
-            schema_test->getDescendants(*extender_nodes, result);
+            schema_test->getDescendants(*extender_nodes);
 
-            traverseDescendants(schema_test, *i, extended_nodes, extender_nodes, result);
+            traverseDescendants(schema_test, *i, extended_nodes, extender_nodes);
         }
     }
 }
+
+void executeNodeTestPath(schema_node_cptr node, const xpath::NodeTest& nt, t_scmnodes* result, SchemaPathList* pathList)
+{
+    scoped_ptr<ISchemaTest> schemaTest(createSchemaTest(nt));
+    scoped_ptr<ISchemaTest> selfSchemaTest;
+
+    schemaTest->setResultCollector(result);
+    schemaTest->setPathCollector(pathList);
+
+    if (nt.axis == axis_descendant_or_self || nt.axis == axis_self) {
+        NodeTest selfnt = nt;
+        selfnt.axis = axis_self;
+        selfSchemaTest = createSchemaTest(selfnt);
+        selfSchemaTest->setResultCollector(result);
+    }
+
+    if (schemaTest.isnull() && selfSchemaTest.isnull()) {
+        return;
+    }
+
+    if (nt.axis == axis_descendant_or_self || nt.axis == axis_self) {
+        if (selfSchemaTest->test(node)) {
+            result->push_back(node.ptr());
+            pathList->push_back(SchemaPath());
+        }
+    }
+
+    if (nt.axis == axis_descendant_or_self || nt.axis == axis_descendant || nt.axis == axis_descendant_attr) {
+        schemaTest->getDescendants(node);
+    } else if (nt.axis == axis_child || nt.axis == axis_attribute) {
+        schemaTest->getOffsprings(node);
+    }
+}
+
 
 void executeNodeTest(schema_node_cptr node, const NodeTest& nt, t_scmnodes* result,
     t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes)
@@ -201,10 +252,13 @@ void executeNodeTest(schema_node_cptr node, const NodeTest& nt, t_scmnodes* resu
     scoped_ptr<ISchemaTest> schemaTest(createSchemaTest(nt));
     scoped_ptr<ISchemaTest> selfSchemaTest;
 
+    schemaTest->setResultCollector(result);
+
     if (nt.axis == axis_descendant_or_self || nt.axis == axis_self) {
         NodeTest selfnt = nt;
         selfnt.axis = axis_self;
         selfSchemaTest = createSchemaTest(selfnt);
+        selfSchemaTest->setResultCollector(result);
     }
 
     if (schemaTest.isnull() && selfSchemaTest.isnull()) {
@@ -218,16 +272,16 @@ void executeNodeTest(schema_node_cptr node, const NodeTest& nt, t_scmnodes* resu
     }
 
     if (nt.axis == axis_descendant_or_self || nt.axis == axis_descendant || nt.axis == axis_descendant_attr) {
-        schemaTest->getDescendants(node, result);
+        schemaTest->getDescendants(node);
 
         if (extend) {
-            traverseDescendants(schemaTest.get(), node, extended_nodes, extender_nodes, result);
+            traverseDescendants(schemaTest.get(), node, extended_nodes, extender_nodes);
         }
     } else if (nt.axis == axis_child || nt.axis == axis_attribute) {
-        schemaTest->getOffsprings(node, result);
+        schemaTest->getOffsprings(node);
 
         if (extend) {
-            schemaTest->getOffsprings(*extender_nodes, result);
+            schemaTest->getOffsprings(*extender_nodes);
         }
     }
 }
