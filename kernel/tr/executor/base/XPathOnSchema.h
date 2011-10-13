@@ -18,7 +18,13 @@
 typedef std::vector<schema_node_xptr> t_scmnodes;
 typedef std::set<schema_node_xptr> t_scmnodes_set;
 
+typedef std::vector<int> SchemaPath;
+typedef std::vector<SchemaPath> SchemaPathList;
+
 class ISchemaTest {
+  protected:
+    t_scmnodes* result;
+    SchemaPathList * pathCollection;
   public:
     virtual bool empty() const = 0;
     virtual bool test(schema_node_cptr) const = 0;
@@ -26,11 +32,14 @@ class ISchemaTest {
     virtual t_item getTypeMask() const = 0;
 
     /* Here we call it offsprings, not to mess it with xquery "children" */
-    virtual void getOffsprings(schema_node_cptr, t_scmnodes* result) const = 0;
-    virtual void getOffsprings(const t_scmnodes_set& , t_scmnodes* result) const = 0;
+    virtual void getOffsprings(schema_node_cptr) const = 0;
+    virtual void getOffsprings(const t_scmnodes_set&) const = 0;
 
-    virtual void getDescendants(schema_node_cptr, t_scmnodes* result) const = 0;
-    virtual void getDescendants(const t_scmnodes_set&, t_scmnodes* result) const = 0;
+    virtual void getDescendants(schema_node_cptr) const = 0;
+    virtual void getDescendants(const t_scmnodes_set&) const = 0;
+
+    void setResultCollector(t_scmnodes* _result) { result = _result; };
+    void setPathCollector(SchemaPathList * _pathCollector) { pathCollection = _pathCollector; };
 };
 
 ISchemaTest * createSchemaTest(const xpath::NodeTest &nt);
@@ -38,6 +47,9 @@ ISchemaTest * createSchemaTest(const xpath::NodeTest &nt);
 /** Evaluates a NodeTest step for a given node by descriptive schema  */
 void executeNodeTest(schema_node_cptr node, const xpath::NodeTest& nt, t_scmnodes* result,
     t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);
+
+void executeNodeTestPath(schema_node_cptr node, const xpath::NodeTest& nt, t_scmnodes* result,
+     SchemaPathList * pathList);
 
 t_scmnodes * executePathExpression(const t_scmnodes& nodes, const xpath::PathExpression &pe, t_scmnodes * result,
     t_scmnodes_set* extended_nodes, t_scmnodes_set* extender_nodes);

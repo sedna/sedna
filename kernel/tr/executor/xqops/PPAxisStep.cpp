@@ -24,8 +24,6 @@ struct NodeDocumentOrderCmp {
 
 // NodeDocumentOrderCmp nodeDocumentOrderCmp;
 
-typedef std::vector<int> SchemaPath;
-typedef std::vector<SchemaPath> SchemaPathList;
 typedef std::map<schema_node_xptr, SchemaPathList> DescendantMap;
 
 /**
@@ -203,14 +201,10 @@ Node resolveAxis_Descendant(Node node, AxisHints * hint) {
         t_scmnodes schemaNodes;
         SchemaPathList pathList;
 
+        TIME_START(hint->tx);
         /* Build path list for every resolved node */
-        executeNodeTest(scn, hint->nt, &schemaNodes, NULL, NULL);
-
-        /* Just copy cached result array to our array */
-        for (std::vector<schema_node_xptr>::iterator i = schemaNodes.begin(); i != schemaNodes.end(); ++i) {
-            pathList.push_back(SchemaPath());
-            getNodePath(scn, *i, pathList.at(pathList.size() - 1));
-        };
+        executeNodeTestPath(scn, hint->nt, &schemaNodes, &pathList);
+        TIME_END(hint->tx);
 
         descMap = hint->descendantPathIndex.insert(DescendantMap::value_type(scn.ptr(), pathList)).first;
     }
@@ -221,9 +215,7 @@ Node resolveAxis_Descendant(Node node, AxisHints * hint) {
        We need all nodes to maintain document order.
        MAYBE if document order is not required, we can find just the very first one. */
 
-    TIME_START(hint->tx);
     traverseSchemaPathList(node, &(descMap->second), hint);
-    TIME_END(hint->tx);
 
     /* Get the first node from heap */
     return hint->nodeHeapPop();
