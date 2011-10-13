@@ -331,8 +331,13 @@ xptr getFirstChildByTypeMask(const xptr node, typemask_t tmask)
 {
     /* If there can be only one schema child of given type, just return it.
       Valid only until getAnyChildByTypeMask returns first child by document order */
+
     if ((tmask & (ti_singleton_element)) == tmask) {
         return getAnyChildByTypeMask(node, tmask);
+    }
+
+    if ((tmask | document) == ti_all_valid) {
+        return getFirstChild(node);
     }
 
     CHECKP(node);
