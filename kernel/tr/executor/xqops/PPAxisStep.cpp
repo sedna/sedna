@@ -203,10 +203,8 @@ Node resolveAxis_Descendant(Node node, AxisHints * hint) {
         t_scmnodes schemaNodes;
         SchemaPathList pathList;
 
-        TIME_START(hint->tx);
         /* Build path list for every resolved node */
         executeNodeTest(scn, hint->nt, &schemaNodes, NULL, NULL);
-        TIME_END(hint->tx);
 
         /* Just copy cached result array to our array */
         for (std::vector<schema_node_xptr>::iterator i = schemaNodes.begin(); i != schemaNodes.end(); ++i) {
@@ -223,7 +221,9 @@ Node resolveAxis_Descendant(Node node, AxisHints * hint) {
        We need all nodes to maintain document order.
        MAYBE if document order is not required, we can find just the very first one. */
 
+    TIME_START(hint->tx);
     traverseSchemaPathList(node, &(descMap->second), hint);
+    TIME_END(hint->tx);
 
     /* Get the first node from heap */
     return hint->nodeHeapPop();
