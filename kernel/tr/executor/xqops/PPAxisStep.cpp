@@ -201,10 +201,8 @@ Node resolveAxis_Descendant(Node node, AxisHints * hint) {
         t_scmnodes schemaNodes;
         SchemaPathList pathList;
 
-        TIME_START(hint->tx);
         /* Build path list for every resolved node */
         executeNodeTestPath(scn, hint->nt, &schemaNodes, &pathList);
-        TIME_END(hint->tx);
 
         descMap = hint->descendantPathIndex.insert(DescendantMap::value_type(scn.ptr(), pathList)).first;
     }
@@ -525,11 +523,6 @@ PPAxisStep::PPAxisStep(dynamic_context* _cxt_, operation_info _info_, PPOpIn _ch
         nextNodeProc = nextNode_traverseAll;
         testNodeProc = schemaTest;
     }
-
-    u_timeb_init(timer+0);
-    u_timeb_init(timer+1);
-    u_timeb_init(timer+2);
-    u_timeb_init(timer+3);
 }
 
 PPAxisStep::~PPAxisStep()
@@ -578,11 +571,7 @@ void PPAxisStep::do_next(tuple& t)
 
     while (true) {
         if (!currentNode.isNull()) {
-            u_timeb z;
-            TIME_START(z);
             currentNode = nextNodeProc(currentNode, hint);
-            TIME_END(z);
-            if (executor_globals::profiler_mode) { timer[2] = timer[2] + z; }
         }
 
         while (currentNode.isNull()) {
@@ -598,14 +587,7 @@ void PPAxisStep::do_next(tuple& t)
             }
 
             hint->baseNode = child.get(t).get_node();
-
-            u_timeb z;
-            TIME_START(z);
-            u_timeb_init(&hint->tx);
             currentNode = evaluateAxisProc(hint->baseNode, hint);
-            TIME_END(z);
-            if (executor_globals::profiler_mode) { timer[0] = timer[0] + hint->tx; }
-            if (executor_globals::profiler_mode) { timer[1] = timer[1] + z; }
         }
 
         U_ASSERT(!currentNode.isNull());
