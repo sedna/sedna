@@ -44,6 +44,8 @@ public:
 
     virtual ~PPAxisStep();
 
+    u_timeb timer[4];
+
     inline const xpath::NodeTest& getNodeTest() { return nt; }
 };
 
