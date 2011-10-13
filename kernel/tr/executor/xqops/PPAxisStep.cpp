@@ -182,9 +182,9 @@ Node nextNode_RightDescendantMerge(Node node, AxisHints * hint) {
 
 #define TIME_START(t) if (executor_globals::profiler_mode) { u_ftime(&(t)); };
 #define TIME_END(t) if (executor_globals::profiler_mode) { \
-    u_timeb x = (t); \
-    u_ftime(&(t)); \
-    (t) = (t) - x; \
+    u_timeb x; \
+    u_ftime(&x); \
+    (t) = x - (t); \
 }
 
 
@@ -547,9 +547,11 @@ void PPAxisStep::do_next(tuple& t)
 
     while (true) {
         if (!currentNode.isNull()) {
-            TIME_START(timer[2]);
+            u_timeb z;
+            TIME_START(z);
             currentNode = nextNodeProc(currentNode, hint);
-            TIME_END(timer[2]);
+            TIME_END(z);
+            if (executor_globals::profiler_mode) { timer[2] = timer[2] + z; }
         }
 
         while (currentNode.isNull()) {
@@ -566,11 +568,13 @@ void PPAxisStep::do_next(tuple& t)
 
             hint->baseNode = child.get(t).get_node();
 
-            TIME_START(timer[1]);
+            u_timeb z;
+            TIME_START(z);
             u_timeb_init(&hint->tx);
             currentNode = evaluateAxisProc(hint->baseNode, hint);
+            TIME_END(z);
             if (executor_globals::profiler_mode) { timer[0] = timer[0] + hint->tx; }
-            TIME_END(timer[1]);
+            if (executor_globals::profiler_mode) { timer[1] = timer[1] + z; }
         }
 
         U_ASSERT(!currentNode.isNull());
