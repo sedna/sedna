@@ -6,6 +6,11 @@
 Release 3.5
 Release date:
 =============================================================================
+
+   - Native implementation of fulltext indicies. Now dtsearch is not
+     necessary for performing of full text queries.
+     See documentation for details.
+
    - Multiple bulkload whitespace handling fixes. However direct constructor
      whitespace handling is left intact.
 
@@ -31,7 +36,6 @@ Release date:
      operate NOT in the same way it did before. Check Administration Guide/
      section "2.2.1 Running Sedna"/-listen-address option description for
      more details.
-
 
 =============================================================================
 Release 3.4
