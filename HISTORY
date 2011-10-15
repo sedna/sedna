@@ -37,6 +37,12 @@ Release date:
      section "2.2.1 Running Sedna"/-listen-address option description for
      more details.
 
+   - New trie-based data "BST" structure for indices is now supported.
+     (Check Programmer Guide/Managing Value Indices for details).
+
+     IMPORTANT NOTE: do not use BST-based indices in any critical applications,
+     it has known bugs leading to index corruption.
+
 =============================================================================
 Release 3.4
 Release date: 2010-09-24

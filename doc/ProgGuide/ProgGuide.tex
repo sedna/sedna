@@ -3181,8 +3181,7 @@ that BST supports \verb!xs:string! only.
 This argument is optional. Index is stored using B+ tree structure by default
 and it's a good choice in the general case. But there is one more implemented
 structure that could show great disk-space economy in certain situations. BST is
-based on prefix tree (or \emph{trie}) conception. Main distinguishing features
-are:
+based on prefix tree (or \emph{trie}) conception. Main distinguishing features are:
 \begin{enumerate}
 \item {BST can handle strings with any length.}
 \item {If you want  to index data by fields that contain strings with repeating
@@ -3193,6 +3192,10 @@ compressed with the same search speed in comparison with B+ tree.
 The following \verb!tree-type! are supported: \verb!"btree"! for B+ tree (default),
 \verb!"bstrie"! for BST.
 
+\begin{note} BST  is very experimental at this moment; \textbf{do not use it
+in production} or any critical applications now because BST has known bugs leading
+to index corruption!
+\end{note}
 
 In the following example, people are indexed by the names of their cities. To
 generate the index keys, city names are cast to the \verb!xs:string! type. B+
