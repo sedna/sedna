@@ -1634,8 +1634,8 @@ To end your running transaction, you are provided with the following function:
 \end{verbatim}
 
 If \texttt{action} is \texttt{'COMMIT} the transaction in the given connection
-will be committed, if \texttt{'ROLLBACK} is given, the transaction will be rolled
-back.
+will be committed, if \texttt{'ROLLBACK} is given, the transaction will be
+rolled back.
 
 
 %===============================================================================
@@ -2092,8 +2092,9 @@ ftindex-scan($title as xs:string,
 The \verb!ftindex-scan! function scans the full-text index with the
 \verb!$title! name and returns the sequence of items which satisfy the
 \verb!$query!. If dtSearch \cite{link:dtsearch-engine} is used as full-text
-search backend, use dtSearch request language \cite{doc:dtsearch} to specify the query. DtSearch options dtsSearchAnyWords or
-dtsSearchAllWords may be specified in \verb!$options!.
+search backend, use dtSearch request language \cite{doc:dtsearch} to specify the
+query. DtSearch options \verb!dtsSearchAnyWords! or \verb!dtsSearchAllWords! may
+be specified in \verb!$options!.
 
 For example, you can employ the "articles" index defined in section
 \ref{sec:managing-ft-indices} to select the titles of articles that contain word
@@ -2103,11 +2104,12 @@ For example, you can employ the "articles" index defined in section
 ftindex-scan("articles", "apple and not pear")/title
 \end{verbatim}
 
-If native full-text indexes are used, the following constructs can be used as
+If native full-text indices are used, the following constructs can be used as
 parts of query:
-\begin{itemize}
 
-\item phrases: several words in single or double quotes will be searched as a phrase
+\begin{itemize}
+\item phrases: several words in single or double quotes will be searched as a
+      phrase
 
 \item binary operators: parts of the query separated by whitepace are treated
       as conjunction, disjunction is specified by \verb!'OR'!. For example:
@@ -2122,12 +2124,9 @@ parts of query:
 \item contains: to search for words inside some tag, use CONTAINS; the query
       \verb!'title CONTAINS word'! will return nodes in which word 'word'
       occurs as part of tag 'title'.
-
-
 \end{itemize}
 
 All keywords (like CONTAINS and OR) must be upper-cased.
-
 
 The \verb!ftscan! function returns those items of the input sequence \verb!$seq!
 which satisfy the query \verb!$query!. The function does not use indices and can
@@ -3141,8 +3140,8 @@ section.
 
 Sedna supports value indices to index XML element content and attribute values.
 Index could be based on two different structure types: B+ tree and BST
-(\emph{B}lock \emph{S}tring \emph{T}rie). Below is the description of
-statements to manage indices.
+(experimental) (\emph{B}lock \emph{S}tring \emph{T}rie). Below is the
+description of statements to manage indices.
 
 \begin{verbatim}
 CREATE INDEX title-expr
@@ -3174,14 +3173,15 @@ each index in the database.
 \verb!type! is an atomic type which the value of the keys should be cast to. The
 following types are supported for B-tree: \verb!xs:string!, \verb!xs:integer!,
 \verb!xs:float!, \verb!xs:double!, \verb!xs:date!, \verb!xs:time!,
-\verb!xs:dateTime!, \verb!xs_yearMonthDuration!, \verb!xs_dateTimeDuration!. Note
-that BST supports \verb!xs:string! only.
+\verb!xs:dateTime!, \verb!xs_yearMonthDuration!, \verb!xs_dateTimeDuration!.
+Note that BST supports \verb!xs:string! only.
 
 \verb!tree-type! defines the structure that would be used for index storage.
 This argument is optional. Index is stored using B+ tree structure by default
 and it's a good choice in the general case. But there is one more implemented
 structure that could show great disk-space economy in certain situations. BST is
-based on prefix tree (or \emph{trie}) conception. Main distinguishing features are:
+based on prefix tree (or \emph{trie}) conception. Main distinguishing features
+are:
 \begin{enumerate}
 \item {BST can handle strings with any length.}
 \item {If you want  to index data by fields that contain strings with repeating
@@ -3189,12 +3189,12 @@ prefixes (e.g: URLs, URIs) BST would be a good choice for you.}
 \end{enumerate}
 In the case of appropriate usage BST can store indexes up to 4 times more
 compressed with the same search speed in comparison with B+ tree.
-The following \verb!tree-type! are supported: \verb!"btree"! for B+ tree (default),
-\verb!"bstrie"! for BST.
 
-\begin{note} BST  is very experimental at this moment; \textbf{do not use it
-in production} or any critical applications now because BST has known bugs leading
-to index corruption!
+The following \verb!tree-type! are supported: \verb!"btree"! for B+ tree
+(default), \verb!"bstrie"! for BST.
+
+\begin{note} BST feature is experimental at this moment; \textbf{do not use it
+in production} or any critical applications.
 \end{note}
 
 In the following example, people are indexed by the names of their cities. To
@@ -3234,19 +3234,20 @@ the XQuery index-scan functions specified in section
 
 
 %===============================================================================
-%             Data Definition Language: Managing Value Indices
+%            Data Definition Language: Managing Full-Text Indices
 %===============================================================================
 \subsubsection{Managing Full-Text Indices}
 \label{sec:managing-ft-indices}
-Sedna allows to build full-text indexes in order to combine XQuery with full-text search facilities. Resulting indexes need to be used explicitly via full-text search functions (see \ref{sec:ft-fun}), XQuery full text extensions are not supported.
+Sedna allows to build full-text indices in order to combine XQuery with
+full-text search facilities. Resulting indices need to be used explicitly via
+full-text search functions (see \ref{sec:ft-fun}), XQuery full text extensions
+are not supported.
 
-Sedna can be integrated with dtSearch \cite{link:dtsearch-engine}, a commercial text
-retrieval engine, which provides full-text indices. As dtSearch is a third party
-commercial product, Sedna does not include dtSearch. If you are interested in
-using Sedna with dtSearch, please contact us.
-
-Below is the description of statements to manage full-text indices in
-Sedna.
+Sedna can be integrated with dtSearch \cite{link:dtsearch-engine}, a commercial
+text retrieval engine, which provides full-text indices. As dtSearch is a third
+party commercial product, Sedna does not include dtSearch. If you are interested
+in using Sedna with dtSearch, please contact us. Below is the description of
+statements to manage full-text indices in Sedna.
 
 \begin{verbatim}
 CREATE FULL-TEXT INDEX title-expr
@@ -3288,14 +3289,24 @@ particular element nodes. Here \verb!element-qname! is a QName of an element,
 not specified in the list, the \verb!"xml"! type is used by default.
 \end{itemize}
 
-\verb!options! is a sting of the following form: \verb!"option=value{,option=value}"!. It denotes options used for index constuction. The following options are available:
+\verb!options! is a sting of the following form:
+\verb!"option=value{,option=value}"!. It denotes options used for index
+constuction. The following options are available:
+
 \begin{itemize}
-\item \verb!backend! -- specifies which implementation of full-text indexes to use. Allowed values are \verb!native! and \verb!dtsearch!, the latter in only available in dtSearch-enabled builds. For dtSearch-enabled builds, default backend is \verb!dtsearch!, for other builds - \verb!native!.
+\item \verb!backend! -- specifies which implementation of full-text indexes to
+use. Allowed values are \verb!native! and \verb!dtsearch!, the latter in only
+available in dtSearch-enabled builds. For dtSearch-enabled builds, default
+backend is \verb!dtsearch!, for other builds - \verb!native!.
 \end{itemize}
+
 Options for \verb!native! backend:
+
 \begin{itemize}
 \item \verb!stemming! -- specifies stemming language to use.
-\item \verb!stemtype! -- in order to be able to search both stemmed and original words - add \verb!stemtype=both! option, otherwise stemming will be used always if enabled.
+\item \verb!stemtype! -- in order to be able to search both stemmed and original
+words - add \verb!stemtype=both! option, otherwise stemming will be used always
+if enabled.
 \end{itemize}
 
 
