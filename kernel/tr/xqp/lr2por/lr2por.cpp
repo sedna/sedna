@@ -1475,7 +1475,7 @@ namespace sedna
 
         // make for-let tree with 'fl_close' rightmost leaf
         PPOpIn flop = fl_close;
-        size_t let_num = 0; // number of let-vars in un_vars
+        std::map<var_dsc, var_dsc> let_slet_vars; // maps let->slet variables in case of order-by
 
         for (size_t i = 0; i < n.fls->size(); i++)
         {
@@ -1513,7 +1513,7 @@ namespace sedna
                     un_vars.back().second = getVarNum(); // get unique binding (see above)
 
                     if (dynamic_cast<ASTLet *>((*n.fls)[ind])) // for let-clause remember the position
-                        let_num++;
+                        let_slet_vars[un_vars.back().second] = INVALID_VAR_DSC;
                 }
             }
             bound_vars.pop_back();
@@ -1556,8 +1556,8 @@ namespace sedna
             // since we introduce PPSLets here, return-statement must work with the same for-bindings and SLET-bindings (not un_vars let ones)
             PPOpIn ob, ret;
             arr_of_var_dsc vars(un_vars.size());
-            std::vector<var_dsc> new_slet_bindings;
             bool isStable = dynamic_cast<const ASTOrderBy *>(n.order_by)->isStable();
+            std::map<var_dsc, var_dsc>::iterator let_var;
 
             ob.op = new PPOrderBy(dyn_cxt, createOperationInfo(*n.order_by), isStable, flop, off_ob.orbs, un_vars.size());
             ob.ts = un_vars.size();
@@ -1567,11 +1567,12 @@ namespace sedna
             {
                 bound_vars.push_back(un_vars[i]);
 
-                // for let introduce new binding
-                if (i < let_num)
+                // check if we are dealing with a 'let' variable
+                let_var = let_slet_vars.find(un_vars[i].second);
+                if (let_var != let_slet_vars.end())
                 {
                     var_dsc new_slet = getVarNum();
-                    new_slet_bindings.push_back(new_slet);
+                    let_var->second = new_slet;
                     bound_vars.back().second = new_slet;
                 }
             }
@@ -1584,16 +1585,19 @@ namespace sedna
 
             ret = off_this.opin;
 
-            // create slets
+            // create slets and fill in order-by var descriptors
             for (size_t i = 0; i < un_vars.size(); i++)
             {
-                if (i < let_num)
+                // check if we are dealing with a 'let' variable
+                let_var = let_slet_vars.find(un_vars[i].second);
+                if (let_var != let_slet_vars.end())
                 {
                     arr_of_var_dsc slet_vars;
-                    slet_vars.push_back(new_slet_bindings[i]); // new binding for PPSLet
+                    U_ASSERT(let_var->second != INVALID_VAR_DSC);
+                    slet_vars.push_back(let_var->second); // new binding for PPSLet
 
                     ret.op = new PPSLet(dyn_cxt, createOperationInfo(*n.ret), slet_vars,
-                                    PPOpIn(new PPVariable(dyn_cxt, createOperationInfo(*n.ret), un_vars[i].second), 1), ret);
+                                    PPOpIn(new PPVariable(dyn_cxt, createOperationInfo(*n.ret), let_var->first), 1), ret);
                 }
 
                 vars[un_vars.size() - i - 1] = un_vars[i].second;
