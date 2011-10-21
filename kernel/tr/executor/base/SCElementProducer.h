@@ -11,6 +11,8 @@
 
 class sequence;
 
+text_source_t concatTextSequence(sequence * textSequence);
+
 class SCElementProducer : public IElementProducer
 {
   private:

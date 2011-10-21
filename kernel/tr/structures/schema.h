@@ -202,13 +202,10 @@ public:
     );
 
     /* Find first child of given type of this node by name */
-    schema_node_xptr get_first_child(
-        const xmlns_ptr xmlns,
-        const char *    name,
-        t_item          type
-    ) const;
-
-    schema_node_xptr get_first_child(const xsd::QName & qname, t_item type);
+    schema_node_xptr get_first_child(const xmlns_ptr xmlns, const char * name, t_item type) const;
+    schema_node_xptr get_first_child(const xsd::QName & qname, t_item type) const;
+    inline
+    schema_node_xptr get_first_child(t_item t) const { return get_first_child(NULL_XMLNS, NULL, t); };
 
     /* Returns info about the child */
     const sc_ref * get_first_child_ref(

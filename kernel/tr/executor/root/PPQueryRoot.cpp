@@ -145,10 +145,6 @@ bool PPQueryRoot::do_next()
     tr_globals::serializer->prepare(tr_globals::client->get_se_ostream(), options);
     tr_globals::serializer->serialize(data);
 
-//    data.cells[0].set_eos();
-    while (!cxt->tmp_sequence.empty()) { delete cxt->tmp_sequence.top(); cxt->tmp_sequence.pop(); }
-    // data tuple is unusable after this kind of serialization
-
     if (first) {
         first = false;
     }

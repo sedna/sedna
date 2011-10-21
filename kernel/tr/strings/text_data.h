@@ -30,6 +30,9 @@ struct text_source_t {
 static const text_source_t NULL_TEXT = {text_source_t::text_mem};
 
 static inline
+bool text_is_null(const text_source_t &t) { return t.type == NULL_TEXT.type && t._text_size == NULL_TEXT._text_size; }
+
+static inline
 struct text_source_t text_source_pstr(const xptr text, strsize_t size) {
     struct text_source_t result = {text_source_t::text_pstr};
     result._text_size = size;
