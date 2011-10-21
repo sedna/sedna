@@ -150,6 +150,8 @@ void sequence::get(tuple &t, int pos)
     t.eos = false;
     bool cleared = false;
 
+    U_ASSERT(pos < seq_size);
+
     if (t.cells_number != tuple_size)
     {
         cleared = true;

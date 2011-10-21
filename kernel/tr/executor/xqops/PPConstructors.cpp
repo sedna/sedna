@@ -106,24 +106,11 @@ void getAtomicSequence(const char * direct_content, PPOpIn content, sequence * a
     }
 }
 
-void concatSequence(sequence * a) {
-    executor_globals::tmp_op_str_buf.clear();
-
-    sequence::iterator it = a->begin();
-    while (it != a->end()) {
-        executor_globals::tmp_op_str_buf.append(tuple_cell::make_sure_light_atomic((*it).cells[0]));
-        it++;
-    };
-}
-
 text_source_t getTextContent(const char * cstr, PPOpIn op) {
     if (cstr == NULL) {
         sequence atvals(1);
-
         getAtomicSequence(cstr, op, &atvals);
-        concatSequence(&atvals);
-
-        return text_source_strbuf(&(executor_globals::tmp_op_str_buf));
+        return concatTextSequence(&atvals);
     } else {
         return text_source_mem(cstr, strlen(cstr));
     }
@@ -222,13 +209,25 @@ xsd::QName resolveQName(const char* nameString, PPOpIn qname, INamespaceMap * sk
 
 struct constructor_context_t {
     IElementProducer * producer;
+
     IElementProducer * virtualRoot;
+    IElementProducer * virtualElementRoot;
 
     IElementProducer * getParent(bool deep_copy) {
         if (producer == NULL || deep_copy) {
             return virtualRoot;
         } else {
             return producer;
+        }
+    }
+
+    IElementProducer * getParentEx(bool deep_copy, bool virt) {
+        if (!deep_copy && producer != NULL) {
+            return producer;
+        } else if (virt) {
+            return virtualElementRoot;
+        } else {
+            return virtualRoot;
         }
     }
 };
@@ -238,17 +237,22 @@ static constructor_context_t constructorContext = { NULL, NULL };
 void PPConstructor::checkInitial()
 {
     if (constructorContext.virtualRoot == NULL) {
-        constructorContext.virtualRoot = SCElementProducer::getVirtualRoot(XNULL);
+        SCElementProducer * vr = SCElementProducer::getVirtualRoot(XNULL);
+        constructorContext.virtualRoot = vr;
+        constructorContext.virtualElementRoot = new portal::VirtualElementGenerator(vr->getNode().getSchemaNode());
     }
 }
 
 /*
  * Clears global state of constructors.
- * It's called in kernel statement end in trn.
+ * It is called in kernel statement end in trn.
  */
 void PPConstructor::clear_virtual_root()
 {
     if (constructorContext.virtualRoot != NULL) {
+        delete constructorContext.virtualElementRoot;
+        constructorContext.virtualElementRoot = NULL;
+
         SCElementProducer::deleteVirtualRoot();
         constructorContext.virtualRoot = NULL;
     }
@@ -419,8 +423,8 @@ void PPElementConstructor::do_next (tuple &t)
 
         bool preserveType = cxt->get_static_context()->get_construction_mode();
 
-        scoped_ptr<IElementProducer> producer
-            (constructorContext.getParent(deep_copy)->
+        scoped_ptr<IElementProducer> producer =
+            (constructorContext.getParentEx(deep_copy, virtualElement)->
                 addElement(name, preserveType ? xs_anyType : xs_untyped));
 
         /* Save context */
@@ -1116,11 +1120,12 @@ void PPTextConstructor::do_next (tuple &t)
             sequence atomized_content(1);
             getAtomicSequence(NULL, content, &atomized_content);
 
-            if (atomized_content.size() == 0) {
+            text_source_t ts = concatTextSequence(&atomized_content);
+
+            if (text_is_null(ts)) {
                 result = tuple_cell::eos();
             } else {
-                concatSequence(&atomized_content);
-                result = constructorContext.getParent(deep_copy)->addText(text_source_strbuf(&executor_globals::tmp_op_str_buf));
+                result = constructorContext.getParent(deep_copy)->addText(ts);
             }
         }
 

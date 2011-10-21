@@ -226,9 +226,6 @@ public:
     dynamic_context(static_context *_st_cxt_);
     ~dynamic_context();
 
-    // Sequence for virtual elements
-    std::stack<sequence *> tmp_sequence;
-
     /*
      * This function creates new variable context for local vars
      * See var_cxts comment on when we need them

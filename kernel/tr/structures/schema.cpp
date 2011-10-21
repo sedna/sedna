@@ -302,7 +302,7 @@ schema_node_xptr schema_node_object::add_child(const xsd::QName& qname, t_item t
     return add_child(qname.getXmlNs(), qname.getLocalName(), type);
 }
 
-schema_node_xptr schema_node_object::get_first_child(const xsd::QName& qname, t_item type)
+schema_node_xptr schema_node_object::get_first_child(const xsd::QName& qname, t_item type) const
 {
     return get_first_child(qname.getXmlNs(), qname.getLocalName(), type);
 }

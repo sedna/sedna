@@ -212,7 +212,7 @@ void XDMSerializer::serialize(tuple & t) {
         const tuple_cell tc = t.cells[i];
 
         if (tc.is_portal()) {
-            portal::VirtualNode element(tc);
+            portal::VirtualNodeIterator element(tc);
             printElement(&element);
         } else if (tc.is_node()) {
             printNode(tc.get_node());

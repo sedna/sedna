@@ -415,6 +415,14 @@ public:
         data.x = data.y = (int64_t)0;
         *(str_counted_ptr*)(&data) = str_counted_ptr(tmp);
     }
+
+    explicit tuple_cell(xmlscm_type _xtype_, const str_counted_ptr & x)
+    {
+        t = tc_light_atomic_var_size | _xtype_;
+        data.x = data.y = (int64_t)0;
+        *(str_counted_ptr*)(&data) = x;
+    }
+
     // for heavy atomics
     explicit tuple_cell(uint32_t _t_, xmlscm_type _xtype_, const xptr &_p_, int64_t _size_)
     {
@@ -467,6 +475,15 @@ public:
     static tuple_cell atomic(int64_t _data_)
     {
         return tuple_cell(_data_);
+    }
+
+    static tuple_cell atomic_deep(xmlscm_type _xtype_, const char *_str_, size_t size)
+    {
+        char *tmp = se_new char[size + 1];
+        strncpy(tmp, _str_, size);
+        tmp[size] = '\0';
+
+        return tuple_cell(tc_light_atomic_var_size | _xtype_, str_counted_ptr(tmp));
     }
 
     static tuple_cell atomic_portal(xptr _data_)
@@ -550,6 +567,24 @@ public:
     static tuple_cell atomic_estr(xmlscm_type _xtype_, int64_t _size_, const xptr &_p_)
     {
         return tuple_cell(tc_heavy_atomic_estr, _xtype_, _p_, _size_);
+    }
+
+    static tuple_cell atomic_any_text(xmlscm_type _xtype_, text_source_t text)
+    {
+        if (text_is_null(text)) {
+            return EMPTY_STRING_TC;
+        };
+
+        switch (text.type) {
+            case text_source_t::text_mem :
+                return atomic_deep(_xtype_, text.u.cstr, text._text_size);
+            case text_source_t::text_estr :
+                return atomic_estr(_xtype_, text._text_size, text.u.data);
+            case text_source_t::text_pstr :
+                return atomic_pstr(_xtype_, text._text_size, text.u.data);
+            case text_source_t::text_pstrlong :
+                return atomic_pstr(_xtype_, pstr_long_bytelength2(text.u.data), text.u.data);
+        };
     }
 
     static tuple_cell atomic_text(CommonTextNode node)
