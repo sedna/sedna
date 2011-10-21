@@ -1088,7 +1088,7 @@ namespace sedna
                            *n.local :
                            *n.pref + ":" + *n.local;
 
-        off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, skn->mark(), virtualizableConstructors);
+        off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), content, n.deep_copy, skn->mark(), hintState.virtualizableConstructors);
         off_this.opin.ts = 1;
 
         setOffer(off_this);
@@ -1118,7 +1118,7 @@ namespace sedna
 
         if (n.name)
         {
-            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, skn->mark(), virtualizableConstructors);
+            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), off_name.opin, off_cont.opin, n.deep_copy, skn->mark(), hintState.virtualizableConstructors);
         }
         else
         {
@@ -1126,7 +1126,7 @@ namespace sedna
                                *n.local :
                                *n.pref + ":" + *n.local;
 
-            off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, skn->mark(), virtualizableConstructors);
+                               off_this.opin.op = new PPElementConstructor(dyn_cxt, createOperationInfo(n), name.c_str(), off_cont.opin, n.deep_copy, skn->mark(), hintState.virtualizableConstructors);
         }
 
         off_this.opin.ts = 1;
@@ -1194,6 +1194,18 @@ namespace sedna
 
     void lr2por::visit(ASTExtExpr &n)
     {
+        HintState saveHintState = hintState;
+
+        for (ASTNodesVector::const_iterator i = n.pragmas->begin(); i != n.pragmas->end(); ++i) {
+            ASTPragma * iP = dynamic_cast<ASTPragma *>(*i);
+            if (iP->local != NULL) {
+                if (*iP->local == "light-constructors") {
+                    hintState.virtualizableConstructors = true;
+                } else if (*iP->local == "no-light-constructors") {
+                    hintState.virtualizableConstructors = false;
+                }
+            }
+        }
         // ignore pragmas
         childOffer off_this;
 
@@ -1201,6 +1213,8 @@ namespace sedna
         off_this = getOffer();
 
         setOffer(off_this);
+
+        hintState = saveHintState;
     }
 
     void lr2por::visit(ASTFilterStep &n)
@@ -2781,7 +2795,7 @@ namespace sedna
         // local variable context for the body
         dyn_cxt->reset_local_vars();
 
-        virtualizableConstructors = true;
+        hintState.virtualizableConstructors = false;
 
         // if we deserealize trigger statement then bind special vars
         if (n.is_trigger)
@@ -3103,7 +3117,7 @@ namespace sedna
     {
         childOffer off_where, off_what;
 
-        virtualizableConstructors = false;
+        hintState.virtualizableConstructors = false;
 
         n.what->accept(*this);
         off_what = getOffer();
@@ -3161,7 +3175,7 @@ namespace sedna
 
         bool got_type = !(off_var.st.type.type == st_atomic_type && off_var.st.type.info.single_type == xs_anyType);
 
-        virtualizableConstructors = false;
+        hintState.virtualizableConstructors = false;
 
         n.what->accept(*this);
         off_what = getOffer();
