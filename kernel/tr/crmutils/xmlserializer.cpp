@@ -30,7 +30,7 @@ void filterText(StrMatcher &stm, se_ostream * crmout, int sclass, TextBufferRead
 }
 
 static const char * XML_docTagStart = "<?xml version=\"1.0\" standalone=\"yes\"";
-static const char * XML_docTagEnd = "?>\n";
+static const char * XML_docTagEnd = "?>";
 static const char * XML_openTag = "<";
 static const char * XML_closeTag = ">";
 
