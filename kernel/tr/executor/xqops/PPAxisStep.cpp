@@ -254,7 +254,7 @@ Node nextNode_traverseAll(Node node, AxisHints * hint) {
 
     // Next or up
     while (!node.isNull() && node.getPtr() != hint->baseNode.getPtr()) {
-        node = node.getRight();
+        node = node.checkp().getRight();
 
         if (!node.isNull()) {
             return node;
