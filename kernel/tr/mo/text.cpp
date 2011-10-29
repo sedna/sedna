@@ -59,7 +59,7 @@ char * copyTextToBuffer(char * buffer, const text_source_t &src)
       case text_source_t::text_estr : {
         estr_copy_to_buffer(buffer, src.u.data, src.size);
       } break;
-      default : throw USER_EXCEPTION2(SE2037, "Failed to copy text (this is a Sedna bug)");
+      default : throw USER_EXCEPTION2(SE1003, "Failed to copy too long text to in-memory buffer");
     }
 
     return buffer;
@@ -98,7 +98,7 @@ void insertTextValue(xptr node_xptr, const text_source_t source)
     const strsize_t size = tsGetActualSize(source);
 
     if (size > STRMAXSIZE) {
-            throw USER_EXCEPTION(SE2037);
+            throw USER_EXCEPTION2(SE2037, "Too long text value to insert");
     } else if (size == 0) {
         WRITEP(node_xptr);
         text_node->size = emptyText;
@@ -136,7 +136,7 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const text
     const strsize_t new_size = curr_size + add_size;
 
     if (new_size > STRMAXSIZE) {
-        throw USER_EXCEPTION(SE2037);
+        throw USER_EXCEPTION2(SE2037, "Too long text value to insert");
     } else if (new_size == 0) {
         return ;
     } else if (nodeobject.isPstrLong()) {

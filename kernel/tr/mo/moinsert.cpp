@@ -285,9 +285,9 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const char* na
     check_ns_constraints_on_insert(ns);
     find_relatives(node_info);
 
-/* Special attribute user-error-level constraints */
+    /* Special attribute user-error-level constraints */
     parent_snode = getBlockHeader(checkp(node_info.parent))->snode;
-    if (data_size > PSTRMAXSIZE) { throw USER_EXCEPTION(SE2037); }
+    if (data_size > PSTRMAXSIZE) { throw USER_EXCEPTION(SE2043); }
     if (parent_snode->type == document) { throw XQUERY_EXCEPTION(XPTY0004); }
     if (parent_snode->type != virtual_root && findAttribute(node_info.parent, name, ns) != XNULL) {
         throw USER_EXCEPTION(XQDY0025);

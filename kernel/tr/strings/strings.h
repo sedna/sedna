@@ -508,7 +508,7 @@ struct text_membuf_t {
         strsize_t sz = tsGetActualSize(ts);
 
         if (sz > PAGE_SIZE) {
-            throw USER_EXCEPTION2(SE2037, "Too long string to be copied");
+            throw USER_EXCEPTION2(SE1003, "Too long string to be copied to in-memory buffer");
         }
 
         size = (size_t) sz;
@@ -526,7 +526,7 @@ struct text_membuf_t {
           case text_source_t::text_estr : {
             estr_copy_to_buffer(cstr, ts.u.data, ts.size);
           } break;
-          default : throw USER_EXCEPTION2(SE2037, "Failed to copy text (this is a Sedna bug)");
+          default : throw USER_EXCEPTION2(SE1003, "Too long string to be copied to in-memory buffer");
         }
     };
     ~text_membuf_t() { if (cstr != NULL) { free(cstr); } };

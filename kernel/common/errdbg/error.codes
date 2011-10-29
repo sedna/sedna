@@ -672,7 +672,7 @@ sedna-err:SE2036
     Document node deletion is prohibited by this function, use DROP DOCUMENT in metadata API.
 sedna-err:SE2037
 
-    The size of string is limited to 4 GB.
+    The size of string is limited (4GB approximately).
 sedna-err:SE2038
 
    An attempt to insert attribute node after element.
@@ -1747,16 +1747,19 @@ sedna-err:SE3082
     Prolog is prohibited in CREATE TRIGGER statements
 sedna-err:SE2301
 
-  Unsupported serialization method
+  Unsupported serialization method.
 sedna-err:SE2302
 
-  Serialization internal error: unknown node type passed
+  Serialization internal error: unknown node type passed.
 sedna-err:SE2901
 
-  The feature is no longer supported
+  The feature is no longer supported.
 sedna-err:SE4084
 
-  Unsupported index type
+  Unsupported index type.
 sedna-err:SE2042
 
    Invalid index type, only xs:string is supported in BST based index.
+sedna-err:SE2043
+
+   Too long attribute value.
