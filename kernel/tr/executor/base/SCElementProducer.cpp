@@ -243,7 +243,7 @@ tuple_cell SCElementProducer::processAtomics()
         text_source_t ts = concatTextSequence(textAccum);
         textAccum->clear();
 
-        if (text_is_null(ts) != 0) {
+        if (!text_is_null(ts)) {
             if (left != XNULL) {
                 insert_text(indirectionDereferenceCP(left), XNULL, XNULL, ts);
             } else {
