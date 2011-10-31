@@ -391,8 +391,9 @@ void PPExplainVisitor::visit(PPElementConstructor* op)
     {
         attr_left = insert_attribute_i(XNULL,XNULL,left,"element-name",xs_untypedAtomic, name, strlen(name), NULL_XMLNS);
     }
-    const char* deep_copy = op->is_deep_copy() ? "true" : "false";
-    attr_left = insert_attribute_i(attr_left,XNULL,left,"deep-copy",xs_untypedAtomic, deep_copy, strlen(deep_copy), NULL_XMLNS);
+
+    insertAttributeHelper("deep-copy", XNULL, left, std::string(op->is_deep_copy() ? "true" : "false"));
+    insertAttributeHelper("virtual", XNULL, left, std::string(op->is_virtual() ? "true" : "false"));
 }
 
 void PPExplainVisitor::visit(PPAttributeConstructor* op)
