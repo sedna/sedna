@@ -75,7 +75,7 @@ bool InscopeNamespaceIterator::next()
     }
 
     while (!node.isNull()) {
-        schema_node_cptr scm = node.getSchemaNode();
+        schema_node_cptr scm = node.checkp().getSchemaNode();
 
         if (state == ii_self) {
             state = ii_namespaces;
@@ -138,7 +138,7 @@ bool InscopeNamespaceIterator::next()
 
         if (state == ii_parent) {
             state = ii_self;
-            node = node.getActualParent();
+            node = node.checkp().getActualParent();
         }
     }
 
