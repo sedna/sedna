@@ -128,7 +128,7 @@ UCreateGlobalName(const char *basename,
 	if (ordinal >= item->rangeEnd || ordinal < item->rangeBegin)
 		ThrowSystemException("CreateGlobalName: generated ordinal out of range");
 
-	stored = snprintf(buf, bufSize, "Global\\SEDNA%d.%s%s@%d", registry->rangeBegin, prefix, basename, ordinal);
+	stored = snprintf(buf, bufSize, "SEDNA%d.%s%s@%d", registry->rangeBegin, prefix, basename, ordinal);
 	if (stored<0 || (size_t)stored>=bufSize)
 		ThrowSystemException("CreateGlobalName: buffer too small");
 
