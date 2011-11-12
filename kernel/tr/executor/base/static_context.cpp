@@ -59,6 +59,7 @@ void static_context::set_base_uri(const char * _base_uri_)
 {
     /* Check constraints on URILiteral. */
     bool valid;
+    bool free_memory = false;
     const char * _base_uri = _base_uri_;
     Uri::Information nfo;
     Uri::check_constraints(_base_uri, &valid, &nfo);
@@ -71,28 +72,37 @@ void static_context::set_base_uri(const char * _base_uri_)
         base_uri = NULL;
     }
 
-    /* If provided URI is relative considering this property as undefined */
-    if (nfo.type == Uri::UT_RELATIVE) {
-        stmt_str_buf resolved_uri(1);
-        Uri::resolve(_base_uri, "sedna://", resolved_uri);
-        _base_uri = resolved_uri.get_str();
-    }
-
     /* Normalize URI if needed and create new value. */
     if(!nfo.normalized)
     {
-        stmt_str_buf result;
+        stmt_str_buf result(1);
         collapse_string_normalization(_base_uri, result);
-        tuple_cell tc = result.get_tuple_cell();
-        tc = tuple_cell::make_sure_light_atomic(tc);
-        base_uri = new char[tc.get_strlen_mem() + 1];
-        strcpy(base_uri, tc.get_str_mem());
+        _base_uri = result.get_str();
+        free_memory = true;
     }
-    else
+
+    /* If provided URI is relative resolve it with implementation defined schema */
+    if (nfo.type == Uri::UT_RELATIVE) {
+        stmt_str_buf resolved_uri(1);
+        Uri::resolve(_base_uri, "sedna://", resolved_uri);
+        if(free_memory)
+        {
+            delete [] _base_uri;
+        }
+        _base_uri = resolved_uri.get_str();
+        free_memory = true;
+    }
+
+    if(!free_memory)
     {
         base_uri = new char[strlen(_base_uri) + 1];
         strcpy(base_uri, _base_uri);
     }
+    else
+    {
+        base_uri = (char*)_base_uri;
+    }
+
     set_field_flag(SC_BASE_URI);
 }
 
