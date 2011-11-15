@@ -26,6 +26,8 @@ class ISchemaTest {
     t_scmnodes* result;
     SchemaPathList * pathCollection;
   public:
+    virtual ~ISchemaTest() {};
+
     virtual bool empty() const = 0;
     virtual bool test(schema_node_cptr) const = 0;
 
