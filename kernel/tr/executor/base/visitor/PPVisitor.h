@@ -15,6 +15,8 @@ class PPVisitor {
 
 public:
 
+    virtual ~PPVisitor() {};
+
     virtual void push(PPIterator* op)                    = 0;
     virtual void push(CalcOp* op)                        = 0;
     virtual void push(PPQueryEssence* op)                = 0;
