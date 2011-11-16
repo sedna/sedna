@@ -34,12 +34,21 @@ static const char * XML_docTagEnd = "?>";
 static const char * XML_openTag = "<";
 static const char * XML_closeTag = ">";
 
-void XMLPrintQName(xsd::QName qname, se_ostream* crmout)
+void XDMSerializer::printColonizedQName(const xsd::QName& qname)
 {
     U_ASSERT(qname.valid());
 
     if (qname.getXmlNs() != NULL_XMLNS && qname.getXmlNs()->has_prefix()) {
-        *crmout << qname.getXmlNs()->get_prefix() << ":";
+        xmlns_ptr ns = qname.getXmlNs();
+
+        if (!nsSwizzlingMap.empty()) {
+            NSSwizzlingMap::const_iterator it = nsSwizzlingMap.find(ns);
+            if (it != nsSwizzlingMap.end()) {
+                ns = it->second;
+            }
+        }
+
+        *crmout << ns->get_prefix() << ":";
     }
 
     *crmout << qname.getLocalName();
@@ -296,9 +305,10 @@ void XMLSerializer::initialize()
 
 void XMLSerializer::printElementName(IXDMNode* element)
 {
-    XMLPrintQName(element->getQName(), crmout);
+    printColonizedQName(element->getQName());
 }
 
+static char swizzeledNSBuffer[128];
 
 void XMLSerializer::printElement(IXDMNode * elementInterface)
 {
@@ -309,6 +319,7 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     elementContext = &context;
     bool indented = indentNext;
     int namespaceCount = 0;
+    NSPrefixMap localPrefixMap;
 
     if (indented) {
         if (indentLevel > 0) {
@@ -334,6 +345,11 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
         if (declareNamespace(ns)) {
             (*crmout) << " ";
             printNamespace(ns);
+
+            if (ns->has_prefix()) {
+                localPrefixMap.insert(NSPrefixMap::value_type(ns->get_prefix(), ns));
+            }
+
             ++namespaceCount;
         }
     }
@@ -343,12 +359,27 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
     while (isAttributeAt(children)) {
         IXDMNode * node = children->getNode();
         t_item kind = node->getNodeKind();
-        const xmlns_ptr ns = kind == attribute ? node->getQName().getXmlNs() : node->getNamespaceValue();
+        xmlns_ptr ns = kind == attribute ? node->getQName().getXmlNs() : node->getNamespaceValue();
 
-        if (ns != NULL_XMLNS && declareNamespace(ns)) {
-            (*crmout) << " ";
-            printNamespace(ns);
-            ++namespaceCount;
+        if (ns != NULL_XMLNS) {
+            NSPrefixMap::const_iterator it = localPrefixMap.find(ns->get_prefix());
+            if (it != localPrefixMap.end() && it->second != ns) {
+                sprintf(swizzeledNSBuffer, "ns-%x", (unsigned int) ((intptr_t) ns->get_uri()));
+
+                NSSwizzlingMap::value_type
+                    nspair(ns, xmlns_touch(swizzeledNSBuffer, ns->get_uri()));
+
+                nsSwizzlingMap.insert(nspair);
+
+                ns = nspair.second;
+            }
+
+            if (declareNamespace(ns)) {
+                (*crmout) << " ";
+                printNamespace(ns);
+                localPrefixMap.insert(NSPrefixMap::value_type(ns->get_prefix(), ns));
+                ++namespaceCount;
+            }
         }
 
         if (kind == attribute) {
@@ -358,6 +389,8 @@ void XMLSerializer::printElement(IXDMNode * elementInterface)
 
         children->next();
     }
+
+    nsSwizzlingMap.clear();
 
     if (children->end()) {
         (*crmout) << "/" << closeTagSeq;
@@ -394,7 +427,7 @@ void XMLSerializer::printNamespace(xmlns_ptr ns)
 
 void XMLSerializer::printAttribute(IXDMNode * attribute)
 {
-    XMLPrintQName(attribute->getQName(), crmout);
+    printColonizedQName(attribute->getQName());
     (*crmout) << "=\"";
     TextBufferReader reader(attribute->getValue());
     filterText(stringFilter, crmout, pat_attribute | useCharmapFlag, reader);
@@ -492,7 +525,7 @@ void SXMLSerializer::printAttribute(IXDMNode * attribute)
 {
     TextBufferReader reader(attribute->getValue());
     (*crmout) << " (";
-    XMLPrintQName(attribute->getQName(), crmout);
+    printColonizedQName(attribute->getQName());
     (*crmout) << " \"";
     filterText(stringFilter, crmout, pat_text, reader);
     (*crmout) << "\")";
@@ -507,7 +540,7 @@ void SXMLSerializer::printElement(IXDMNode * elementInterface)
     elementContext = &context;
 
     (*crmout) << " (";
-    XMLPrintQName(elementInterface->getQName(), crmout);
+    printColonizedQName(elementInterface->getQName());
 
     IXDMNodeList * children = elementInterface->getAllChildren();
 
