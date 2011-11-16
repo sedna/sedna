@@ -29,20 +29,18 @@ enum pat_class
     pat_charmap = 64
 };
 
-
-void XMLPrintQName(xsd::QName qname, se_ostream * crmout);
-
 class XDMSerializer : public Serializer {
-  private:
+  public:
     typedef std::map<std::string, xmlns_ptr> NSPrefixMap;
     typedef std::pair<xmlns_ptr, xmlns_ptr> NSSubsitutionPair;
     typedef std::stack< std::pair<xmlns_ptr, xmlns_ptr> > NSNamespaceStack;
     typedef std::map<xmlns_ptr, xmlns_ptr> NSSwizzlingMap;
-
+  private:
     NSPrefixMap nsPrefixMap;
     NSNamespaceStack nsNamespaceStack;
-    NSSwizzlingMap nsSwizzlingMap;
   protected:
+    NSSwizzlingMap nsSwizzlingMap;
+
     bool separatorNeeded;
     bool savedCData;
 
@@ -56,7 +54,9 @@ class XDMSerializer : public Serializer {
 
     /* undeclareNamespaces undeclares "count" namespaces from stack */
     void undeclareNamespaces(int count);
-  public:
+
+    void printColonizedQName(const xsd::QName & qname);
+public:
     void printNode(const Node node);
     void printNode(IXDMNode * node);
 
