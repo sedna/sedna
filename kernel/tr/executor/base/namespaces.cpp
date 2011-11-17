@@ -65,7 +65,9 @@ void StaticallyKnownNamespaces::clear()
 }
 
 
-void StaticallyKnownNamespaces::gotoMark(int mark) {
+int StaticallyKnownNamespaces::gotoMark(int mark) {
+    int result = position;
+
     if (mark > position) {
         while (mark != position) {
             next();
@@ -75,6 +77,8 @@ void StaticallyKnownNamespaces::gotoMark(int mark) {
             prev();
         }
     }
+
+    return result;
 }
 
 void StaticallyKnownNamespaces::rollbackToMark(int mark)
@@ -172,6 +176,7 @@ xmlns_ptr generateUniquePrefix(const char * prefix, const char * uri, INamespace
 
     xmlns_ptr ns = namespaces->resolvePrefix(prefix);
     xmlns_ptr result = xmlns_touch(prefix, uri);
+    result = generate_prefix(prefix, uri);
 
     while (ns != NULL_XMLNS && !ns->same_uri(uri)) {
         result = generate_prefix(result->get_prefix(), uri);

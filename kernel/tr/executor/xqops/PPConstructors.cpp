@@ -400,7 +400,10 @@ void PPElementConstructor::do_next (tuple &t)
     if (first_time) {
         first_time = false;
 
-        cxt->get_static_context()->getStaticallyKnownNamespaces()->gotoMark(sknMarker);
+        // TODO: optimize SKN swizzling in the following name:
+        // create a cache of namespace maps for each position in StaticallyKnownNamespaces
+        // and
+        int save_skn_mark = cxt->get_static_context()->getStaticallyKnownNamespaces()->gotoMark(sknMarker);
 
         /* Resolve name */
         xsd::QName name = resolveQName(el_name, qname, cxt->get_static_context()->getStaticallyKnownNamespaces());
@@ -452,6 +455,8 @@ void PPElementConstructor::do_next (tuple &t)
         /* Result */
         tuple_cell result = producer->close();
         t.copy(result);
+
+        cxt->get_static_context()->getStaticallyKnownNamespaces()->gotoMark(save_skn_mark);
     } else {
         first_time = true;
         t.set_eos();

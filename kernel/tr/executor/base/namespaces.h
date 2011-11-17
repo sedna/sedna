@@ -91,7 +91,8 @@ class StaticallyKnownNamespaces : public INamespaceMap {
     void rollbackToMark(int mark);
 
     int mark() { return (int) namespaceStack.size(); }
-    void gotoMark(int mark);
+    int gotoMark(int mark);
+    int getPosition() const { return position; };
 
     int getPredefinedMark() const { return predefinedMark; }
 
