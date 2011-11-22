@@ -41,6 +41,8 @@ struct AxisHints {
     std::vector<Node> nodeHeapStorage; // It turns out, that priority_queue sucks: it have no clear() method.
     std::list<Node> nodeStackStorage; // Same thing with stack
 
+    ISchemaTest * selfSchemaTest;
+
     AxisHints() : nt(), childTypeMask(element), schemaTest(NULL), nodeHeapStorage() {};
 
     Node nodeHeapPop() {
@@ -422,7 +424,9 @@ bool testNode_PIName(Node node, AxisHints * hint) {
 bool schemaTest(Node node, AxisHints * hint) {
     U_ASSERT(hint->schemaTest != NULL);
 
-    if (hint->schemaTest == NULL || !hint->schemaTest->test(node.checkp().getSchemaNode())) {
+    if (node == hint->baseNode && hint->selfSchemaTest != NULL) {
+        return hint->selfSchemaTest->test(node.checkp().getSchemaNode());
+    } else if (hint->schemaTest == NULL || !hint->schemaTest->test(node.checkp().getSchemaNode())) {
         return false;
     } else {
         if (node.getNodeType() == pr_ins && hint->nt.getLocal().valid()) {
@@ -472,6 +476,7 @@ PPAxisStep::PPAxisStep(dynamic_context* _cxt_, operation_info _info_, PPOpIn _ch
 
     hint->nt = nt;
     hint->schemaTest = createSchemaTest(nt);
+    hint->selfSchemaTest = NULL;
 
     if (hint->schemaTest == NULL) {
         evaluateAxisProc = resolveAxis_NULL;
@@ -522,12 +527,19 @@ PPAxisStep::PPAxisStep(dynamic_context* _cxt_, operation_info _info_, PPOpIn _ch
         evaluateAxisProc = (nt.axis == axis_descendant_or_self) ? resolveAxis_Self : resolveAxis_ChildFirst;
         nextNodeProc = nextNode_traverseAll;
         testNodeProc = schemaTest;
+
+        if (nt.axis == axis_descendant_or_self) {
+            NodeTest selfnt = nt;
+            selfnt.axis = axis_self;
+            hint->selfSchemaTest = createSchemaTest(selfnt);
+        };
     }
 }
 
 PPAxisStep::~PPAxisStep()
 {
     delete hint->schemaTest;
+    delete hint->selfSchemaTest;
     delete hint;
     delete child.op;
     child.op = NULL;
