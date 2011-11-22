@@ -83,6 +83,11 @@ public:
     bool isTextBasedNode() const { return internal::isTextType(internal::getBlockHeader(node)->node_type); };
 
     inline
+    bool operator==(const Node & other) const {
+        return node == other.node;
+    }
+
+    inline
     bool operator<(const Node & other) const {
         // The idea is all XNULL nodes are greater then non-null
 
