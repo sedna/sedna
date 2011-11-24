@@ -107,7 +107,6 @@ protected:
     CollationHandler *handler;
     tuple_cell ret_val;
     bool has_NaN;
-    bool first_element;
 
 private:
     void make_heavy_atomic(tuple &t);
