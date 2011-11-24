@@ -460,21 +460,15 @@ void PPFnDistinctValues::do_next(tuple &t)
             }
             child.op->next(t);
         }
+
         s->sort();
-        first_element = true;
+
+        ret_val.set_eos();
     }
 
-    s->next(t);
-    if (first_element)
-    {
-        ret_val = t.cells[0];
-        first_element = false;
-        return;
-    }
-    while (!t.is_eos() && compare_tc(t.cells[0], ret_val) == 0)
-    {
+    do {
         s->next(t);
-    }
+    } while (!t.is_eos() && compare_tc(t.cells[0], ret_val) == 0);
 
     if (t.is_eos())
     {
