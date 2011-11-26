@@ -4,11 +4,11 @@
 
 =============================================================================
 Release 3.5
-Release date: 2011-11-15
+Release date: 2011-11-28
 =============================================================================
 
-   - Native implementation of full-text indicies. Now dtSearch is not
-     necessary to create and query full-text indicies. For details refer to
+   - Native implementation of full-text indices. Now dtSearch is not
+     necessary to create and query full-text indices. For details refer to
 	 the Sedna Programmer's Guide, Managing Full-Text Indices section.
    - CDATA section formatting is now saved for text nodes in direct element
      constructors and can be saved during bulk load using special option:
