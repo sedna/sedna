@@ -1458,8 +1458,8 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
         {
             strcpy(query_str, "declare option se:bulk-load 'cdata-section-preserve=yes';\n");
         }
-        strcpy(query_str, "LOAD STDIN \"");
 
+        strcpy(query_str, "LOAD STDIN '");
         strcat(query_str, doc_name);
         strcat(query_str, "'");
         if (col_name != NULL)
