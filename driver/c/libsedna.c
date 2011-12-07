@@ -1453,18 +1453,20 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
         if(conn->boundary_space_preserve)
         {
             strcpy(query_str, "declare boundary-space preserve;\n");
-            strcat(query_str, "LOAD STDIN \"");
         }
-        else
-            strcpy(query_str, "LOAD STDIN \"");
+        if(conn->cdata_preserve)
+        {
+            strcpy(query_str, "declare option se:bulk-load 'cdata-section-preserve=yes';\n");
+        }
+        strcpy(query_str, "LOAD STDIN \"");
 
         strcat(query_str, doc_name);
-        strcat(query_str, "\"");
+        strcat(query_str, "'");
         if (col_name != NULL)
         {
-            strcat(query_str, " \"");
+            strcat(query_str, " '");
             strcat(query_str, col_name);
-            strcat(query_str, "\"");
+            strcat(query_str, "'");
         }
         query_size = strlen(query_str);
 
@@ -1763,7 +1765,17 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
                 setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
                 return SEDNA_ERROR;
             }
-            conn->boundary_space_preserve = (*value == SEDNA_BOUNDARY_SPACE_PRESERVE_ON) ? 1: 0;
+            conn->boundary_space_preserve = (*value == SEDNA_BOUNDARY_SPACE_PRESERVE_ON) ? 1 : 0;
+            return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
+
+        case SEDNA_ATTR_CDATA_PRESERVE_WHILE_LOAD:
+            value = (int*) attrValue;
+            if ((*value != SEDNA_CDATA_PRESERVE_OFF) && (*value != SEDNA_CDATA_PRESERVE_ON))
+            {
+                setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
+                return SEDNA_ERROR;
+            }
+            conn->cdata_preserve = (*value == SEDNA_CDATA_PRESERVE_ON) ? 1 : 0;
             return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
 
         case SEDNA_ATTR_CONCURRENCY_TYPE:
