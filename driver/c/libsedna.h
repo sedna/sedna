@@ -143,9 +143,9 @@ extern "C"
     };
 
 #ifdef _WIN32
-#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", "", INVALID_SOCKET, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}, NULL, 0, 0, 0}
+#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", "", INVALID_SOCKET, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}, NULL, 0, 0, 0, 0}
 #else
-#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", "", -1, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}, NULL, 0, 0, 0}
+#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", "", -1, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}, NULL, 0, 0, 0, 0}
 #endif
 
     int SEconnect(struct SednaConnection *conn, const char *host, const char *db_name, const char *login, const char *password);
