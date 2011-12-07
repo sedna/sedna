@@ -78,6 +78,8 @@ extern "C"
 #define SEDNA_BOUNDARY_SPACE_PRESERVE_OFF          35
 #define SEDNA_BOUNDARY_SPACE_PRESERVE_ON           36
 
+#define SEDNA_CDATA_PRESERVE_OFF                   37
+#define SEDNA_CDATA_PRESERVE_ON                    38
 
     
     enum SEattr {SEDNA_ATTR_AUTOCOMMIT, 
@@ -87,7 +89,8 @@ extern "C"
                  SEDNA_ATTR_CONCURRENCY_TYPE, 
                  SEDNA_ATTR_QUERY_EXEC_TIMEOUT,
                  SEDNA_ATTR_LOG_AMOUNT,
-                 SEDNA_ATTR_MAX_RESULT_SIZE};
+                 SEDNA_ATTR_MAX_RESULT_SIZE,
+                 SEDNA_ATTR_CDATA_PRESERVE_WHILE_LOAD};
     
     typedef void (*debug_handler_t)(enum se_debug_info_type, const char *msg_body);
     
@@ -134,6 +137,7 @@ extern "C"
         debug_handler_t debug_handler;
         
         char boundary_space_preserve;
+        char cdata_preserve;
         int query_timeout;
         int max_result_size;
     };
