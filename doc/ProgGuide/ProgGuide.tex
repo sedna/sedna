@@ -841,9 +841,37 @@ will be forcefully committed. The default value for this attribute is
 \verb!SEDNA_LOG_FULL! & sizeof(int) \\
 \hline
 \end{tabular}
+
+\item\verb!SEDNA_ATTR_BOUNDARY_SPACE_PRESERVE_WHILE_LOAD! controls whether
+boundary whitespace is preserved in document during bulk load. By default Sedna
+discards boundary whitespace (\verb!SEDNA_BOUNDARY_SPACE_PRESERVE_OFF!).
+Value of this option influences \verb!SEloadData! function behaviour only.
+
+\begin{tabular}{|l|l|}
+\hline
+\emph{Atrribute values} & \emph{Value size} \\
+\hline
+\verb!SEDNA_BOUNDARY_SPACE_PRESERVE_ON!, & \\
+\verb!SEDNA_BOUNDARY_SPACE_PRESERVE_OFF! & sizeof(int) \\
+\hline
+\end{tabular}
+
+\item\verb!SEDNA_ATTR_CDATA_PRESERVE_WHILE_LOAD! controls whether CDATA is
+preserved in document during bulk load. By default Sedna discards CDATA
+(\verb!SEDNA_CDATA_PRESERVE_OFF!). Value of this option influences
+\verb!SEloadData! function behaviour only.
+
+\begin{tabular}{|l|l|}
+\hline
+\emph{Atrribute values} & \emph{Value size} \\
+\hline
+\verb!SEDNA_CDATA_PRESERVE_ON!, & \\
+\verb!SEDNA_CDATA_PRESERVE_OFF! & sizeof(int) \\
+\hline
+\end{tabular}
 \end{itemize}
 
-An application can retrieve current value of hte connection attributes using
+An application can retrieve current value of the connection attributes using
 \verb!SEgetConnectionAttr!:
 
 \begin{verbatim}
