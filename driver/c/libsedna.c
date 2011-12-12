@@ -1406,7 +1406,17 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
 
 int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load, const char *doc_name, const char *col_name)
 {
+    const char* message = NULL;
+
+    const char* preserveSpaceDecl = "declare boundary-space preserve;\n";
+    const size_t preserveSpaceDeclLen = 50;
+    const char* preserveCdataDecl = "declare option se:bulk-load 'cdata-section-preserve=yes';\n";
+    const size_t preserveCdataDeclLen = 100;
+    const char* loadStdInStmt = "LOAD STDIN '";
+    const size_t loadStdInStmtLen = 10;
+
     int bl_portion_size = 0, i = 0;
+    size_t col_name_length = 0, doc_name_length = 0;
 
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
@@ -1418,11 +1428,25 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
 
     clearLastError(conn);
 
-    if ((bytes_to_load <= 0) || (buf == NULL) || (doc_name == NULL) || (strlen(doc_name) == 0) || ((col_name != NULL) && (strlen(col_name) == 0)))
+    /* Validate input parameters */
+    col_name_length = col_name == NULL ? 0 : strlen(col_name);
+    doc_name_length = doc_name == NULL ? 0 : strlen(doc_name);
+
+    if (bytes_to_load <= 0 || buf == NULL)          message = "content of the document is empty";
+    else if (col_name != NULL && !col_name_length)  message = "empty collection name";
+    else if (!doc_name_length)                      message = "empty document name";
+    /* Check that we have enough space in buffer.
+     * 20 bytes for control information and quotes in statement. */
+    else if (col_name_length + doc_name_length >
+        (size_t)SE_SOCKET_MSG_BUF_SIZE - preserveSpaceDeclLen - preserveCdataDeclLen - loadStdInStmtLen - 20) {
+      message = "too long document and/or collection name(s)";
+    }
+
+    if (message != NULL)
     {
-        setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
-        conn->result_end = 1;                   /* tell result is finished*/
-        conn->socket_keeps_data = 0;    /* tell there is no data in socket*/
+        setDriverErrorMsg(conn, SE3022, message);        /* SE3022: invalid argument */
+        conn->result_end = 1;                            /* tell result is finished*/
+        conn->socket_keeps_data = 0;                     /* tell there is no data in socket*/
         setBulkLoadFinished(conn);
         return SEDNA_ERROR;
     }
@@ -1444,22 +1468,21 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
         char *query_str = NULL;
         size_t query_size = 0;
 
-        /*send 300 - ExecuteQuery*/
+        /* 300 - ExecuteQuery */
         conn->msg.instruction = 300;
         conn->msg.body[0] = 0;  /* result format code*/
         conn->msg.body[1] = 0;  /* string format*/
 
         query_str = conn->msg.body + 6;
-        if(conn->boundary_space_preserve)
-        {
-            strcpy(query_str, "declare boundary-space preserve;\n");
+        *query_str = '\0'; // for strcat to work properly
+        if(conn->boundary_space_preserve) {
+            strcat(query_str, preserveSpaceDecl);
         }
-        if(conn->cdata_preserve)
-        {
-            strcpy(query_str, "declare option se:bulk-load 'cdata-section-preserve=yes';\n");
+        if(conn->cdata_preserve) {
+            strcat(query_str, preserveCdataDecl);
         }
 
-        strcpy(query_str, "LOAD STDIN '");
+        strcat(query_str, loadStdInStmt);
         strcat(query_str, doc_name);
         strcat(query_str, "'");
         if (col_name != NULL)
@@ -1970,7 +1993,12 @@ int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* at
             *attrValueLength = (int)strlen(conn->session_directory);
             return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
         case SEDNA_ATTR_BOUNDARY_SPACE_PRESERVE_WHILE_LOAD:
-            value = (conn->boundary_space_preserve) ? SEDNA_BOUNDARY_SPACE_PRESERVE_ON: SEDNA_BOUNDARY_SPACE_PRESERVE_OFF;
+            value = (conn->boundary_space_preserve) ? SEDNA_BOUNDARY_SPACE_PRESERVE_ON : SEDNA_BOUNDARY_SPACE_PRESERVE_OFF;
+            memcpy(attrValue, &value, 4);
+            *attrValueLength = 4;
+            return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
+        case SEDNA_ATTR_CDATA_PRESERVE_WHILE_LOAD:
+            value = (conn->cdata_preserve) ? SEDNA_CDATA_PRESERVE_ON : SEDNA_CDATA_PRESERVE_OFF;
             memcpy(attrValue, &value, 4);
             *attrValueLength = 4;
             return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
