@@ -131,24 +131,27 @@ inline static void vmm_swap_unmap_conditional(const xptr p) {
     if (p == XNULL) return;
 
 #ifdef VMM_LINUX_DEBUG_CHECKP
-    /* Block at the vmm_cur_offs must be readable at least.
-     * Actually it's not true when call is made by vmm_thread,
-     * but in that case we have guarantee that vmm_cur_offs !=
-     * p.getOffs().
+    /*
+     * Block at the vmm_cur_offs must be readable at least. Actually,
+     * it's not true when call is made by vmm_thread, but in that case
+     * it's guaranteed that vmm_cur_offs != p.getOffs().
+     * Since p.getOffs() == ALIGN_OFFS(vmm_cur_offs) can be true only
+     * when call is made from the main thread it's guaranteed also that
+     * vmm_cur_xptr == XNULL check is consistent.
      */
-    if(p.getOffs() != ALIGN_OFFS(vmm_cur_offs)) {
+    if (p.getOffs() != ALIGN_OFFS(vmm_cur_offs) || vmm_cur_xptr == XNULL) {
         mprotect(XADDR(p), PAGE_SIZE, PROT_READ);
     }
 #endif /* VMM_LINUX_DEBUG_CHECKP */
 
     if ((*(xptr *) XADDR(p)) == p) {
         vmm_unmap(XADDR(p));
-    };
+    }
 
 #ifdef VMM_LINUX_DEBUG_CHECKP
     /* Revert protection level if it was changed.
-     * Any block at except current must be non set as PROT_NONE */
-    if(p.getOffs() != ALIGN_OFFS(vmm_cur_offs)) {
+     * Any block except current must be set as PROT_NONE */
+    if (p.getOffs() != ALIGN_OFFS(vmm_cur_offs) || vmm_cur_xptr == XNULL) {
         mprotect(XADDR(p), PAGE_SIZE, PROT_NONE);
     }
 #endif /* VMM_LINUX_DEBUG_CHECKP */
