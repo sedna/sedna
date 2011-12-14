@@ -197,8 +197,8 @@ const char load_docs_query[] = "declare namespace se='http://www.modis.ispras.ru
 								let $col := $i/parent::collection \
 								return \
 								   if (empty($col)) \
-									 then fn:concat(\"declare boundary-space preserve; LOAD \"\"\",$j,\".xml\"\" \"\"\",$i/@name,\"\"\"\") \
-									 else fn:concat(\"declare boundary-space preserve; LOAD \"\"\",$j,\".xml\"\" \"\"\",$i/@name,\"\"\" \"\"\",$col/@name,\"\"\"\")";
+									 then fn:concat(\"declare boundary-space preserve; declare option se:bulk-load 'cdata-section-preserve=yes'; LOAD \"\"\",$j,\".xml\"\" \"\"\",$i/@name,\"\"\"\") \
+									 else fn:concat(\"declare boundary-space preserve; declare option se:bulk-load 'cdata-section-preserve=yes'; LOAD \"\"\",$j,\".xml\"\" \"\"\",$i/@name,\"\"\" \"\"\",$col/@name,\"\"\"\")";
 
 const char exp_docs_query[] =  "declare namespace se='http://www.modis.ispras.ru/sedna'; \
                                 declare option se:output \"indent=no\"; \
