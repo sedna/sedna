@@ -388,7 +388,7 @@ xptr put_block_to_buffer(session_id sid,
     return swapped;
 }
 
-void flush_buffer(ramoffs offs, bool sync)
+bool flush_buffer(ramoffs offs, bool sync)
 {
 	vmm_sm_blk_hdr *blk = NULL;
 	size_t ind = offs / PAGE_SIZE;
@@ -418,7 +418,10 @@ void flush_buffer(ramoffs offs, bool sync)
 		blk->is_changed = false;
 		/*	TODO: it will introduce bugs if flushed a buffer which a transaction is modifying now,
 			anyway it will lead to unpredictable results even w/o is_changed issue */ 
+        return true;
 	}
+
+    return false;
 }
 
 void flush_buffers()
@@ -426,15 +429,10 @@ void flush_buffers()
 	vmm_sm_blk_hdr *blk = NULL;
     t_buffer_table::iterator it;
 
-    //d_printf1("Flush buffers: starting...\n");
-
     for (it = buffer_table.begin(); it != buffer_table.end(); ++it)
     {
         blk = (vmm_sm_blk_hdr*)OFFS2ADDR((ramoffs)(*it));
-
-        //d_printf2("record 		(offs = %d) xptr = ", (ramoffs)(*it));
         blk->p.print();
-
 		flush_buffer((ramoffs)(*it), false);
     }
 
@@ -448,8 +446,9 @@ void flush_data_buffers()
 {
     t_buffer_table::iterator it;
     vmm_sm_blk_hdr *blk = NULL;
+    int flushed = 0;
 
-    d_printf1("Flush data buffers: starting...\n");
+    elog(EL_DBG, ("Flushing buffers on checkpoint started"));
 
     for (it = buffer_table.begin(); it != buffer_table.end(); ++it)
     {
@@ -458,15 +457,17 @@ void flush_data_buffers()
         if (IS_DATA_BLOCK(blk->p))
         {
 		// here we flush them without sync, but look below
-			flush_buffer((ramoffs)(*it), false);
+            if (flush_buffer((ramoffs)(*it), false)) flushed++;
         }
     }
+
+    elog(EL_DBG, ("Wrote back %d dirty buffers, going to sync", flushed));
 
     // sync barrier
     if (uFlushBuffers(data_file_handler, __sys_call_error) == 0)
         throw SYSTEM_EXCEPTION("Cannot sync-flush buffers (checkpoint)");
 
-    d_printf1("Flush data buffers: complete\n");
+    elog(EL_DBG, ("Flushing buffers on checkpoint complete"));
 }
 
 
