@@ -191,8 +191,9 @@ bool find_block_in_buffers(const xptr &p,
  * this function flushes block with a given offset from the buffer
  * if 'sync' is true there will be a sync barrier, which guarantees (hopefully)
  * that the block is flushed on disk right now, without reordering.
+ * Returns true if block was actually flushed (was dirty).
  */
-void flush_buffer(ramoffs offs, bool sync);
+bool flush_buffer(ramoffs offs, bool sync);
 void flush_buffers();
 void flush_data_buffers();
 
