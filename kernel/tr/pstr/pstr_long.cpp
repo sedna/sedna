@@ -956,7 +956,7 @@ static xptr pstr_long_append_tail2(xptr str_ptr, const text_source_t src)
 	case text_source_t::text_pstrlong:
 		{
 	        const xptr ptr= src.u.data;
-			return pstr_long_append_tail2(str_ptr, ptr, src.size);
+			return pstr_long_append_tail2(str_ptr, ptr, pstr_long_bytelength2(ptr));
 		}
 	case text_source_t::text_estr:
 		return pstr_long_append_tail_estr2(str_ptr, src.u.data, src.size);
