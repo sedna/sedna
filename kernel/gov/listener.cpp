@@ -47,6 +47,7 @@ static void clDiscardClient(int i)
 {
     U_ASSERT(i >= 0 && i <= maxi);
 
+    ushutdown_close_socket(clClients[i].sock, __sys_call_error);
     U_SSET_CLR(clClients[i].sock, &allset);
     clClients[i].sock = U_INVALID_SOCKET;
     clClients[i].clProcess = NULL;	
@@ -229,12 +230,12 @@ int client_listener(gov_config_struct* cfg, bool background_off_from_background_
 
                 ////////////////////////////////////
 
-          		default:
-                    {
-                        d_printf1("unknown message from client\n");
-                        ushutdown_close_socket(socknew, __sys_call_error);
-                        break;
-                    }
+             default:
+                 {
+                     elog(EL_ERROR, ("Uknown message from client: %d", msg.instruction));
+                     ushutdown_close_socket(socknew, __sys_call_error);
+                     break;
+                 }
             }
 
             if (--nres <= 0) continue;
