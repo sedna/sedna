@@ -770,7 +770,7 @@ XMLDateTime subtractDateTimes(const XMLDateTime& d1, const XMLDateTime& d2)
 
     if (lTemp.getValue(XMLDateTime::CentYear) == rTemp.getValue(XMLDateTime::CentYear))
     {
-        for (int month=lTemp.getValue(XMLDateTime::Month); month < rTemp.getValue(XMLDateTime::Month); month++)
+        for (int month=rTemp.getValue(XMLDateTime::Month); month < lTemp.getValue(XMLDateTime::Month); month++)
             days += maxDayInMonthFor( lTemp.getValue(XMLDateTime::CentYear), month );
     }
     else
