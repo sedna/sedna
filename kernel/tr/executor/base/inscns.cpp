@@ -82,7 +82,7 @@ bool InscopeNamespaceIterator::next()
             if (scm->get_xmlns() != NULL_XMLNS) {
                 if (setCurrent(scm->get_xmlns())) {
                     return true;
-                };
+                }
             } else {
                 map.insert(NamespaceMap::value_type("", NULL_XMLNS));
             }
@@ -101,8 +101,8 @@ bool InscopeNamespaceIterator::next()
                 } else {
                     if (setCurrent(NSNode(stateNode.checkp()).getNamespaceLocal())) {
                         return true;
-                    };
-                };
+                    }
+                }
             } while (!stateNode.isNull());
         }
 
@@ -118,21 +118,22 @@ bool InscopeNamespaceIterator::next()
                     state = ii_parent;
                 } else {
                     xmlns_ptr ns = stateNode.checkp().getSchemaNode()->get_xmlns();
+                    if (ns != NULL_XMLNS) {
+                        do {
+                            if (setCurrent(ns)) {
+                                return true;
+                            }
 
-                    do {
-                        if (setCurrent(ns)) {
-                            return true;
-                        }
+                            U_ASSERT(map.find(ns->get_prefix()) != map.end());
 
-                        U_ASSERT(map.find(ns->get_prefix()) != map.end());
-
-                        if (map[ns->get_prefix()] == ns) {
-                            break;
-                        } else {
-                            ns = generateUniquePrefix(ns->get_prefix(), ns->get_uri(), skn);
-                        }
-                    } while (true);
-                };
+                            if (map[ns->get_prefix()] == ns) {
+                                break;
+                            } else {
+                                ns = generateUniquePrefix(ns->get_prefix(), ns->get_uri(), skn);
+                            }
+                        } while (true);
+                    }
+                }
             } while (!stateNode.isNull());
         }
 
