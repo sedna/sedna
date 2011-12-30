@@ -10,6 +10,7 @@
 #include <sstream>
 #include "common/sm_vmm_data.h"
 #include "tr/strings/strings_base.h"
+#include "tr/strings/text_data.h"
 
 /* functions with '2' in the end take pointers to strings instead of pointers to string descriptors
  */

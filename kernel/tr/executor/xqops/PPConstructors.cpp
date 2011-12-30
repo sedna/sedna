@@ -973,21 +973,6 @@ void PPPIConstructor::do_close()
     if (at_value==NULL) content.op->close();
 }
 
-
-inline static
-text_source_t skipWS(text_source_t ts) {
-    int wp_k = 0;
-    int wp_s = ts.size;
-
-    while (wp_k < wp_s) {
-        char s = ts.u.cstr[0];
-        if (s != 32 && s != 9 && s != 10 && s != 13) break;
-        ++ts.u.cstr; --ts.size;
-    }
-
-    return ts;
-}
-
 void PPPIConstructor::do_next (tuple &t)
 {
     if (first_time)
@@ -1028,7 +1013,7 @@ void PPPIConstructor::do_next (tuple &t)
         }
 
         /* Skip heading whitespaces */
-        tuple_cell result = constructorContext.getParent(deep_copy)->addPI(name.getValue(), skipWS(textbuf.getTextSource()));
+        tuple_cell result = constructorContext.getParent(deep_copy)->addPI(name.getValue(), trimLeft(textbuf.getTextSource()));
 
         t.copy(result);
     } else {

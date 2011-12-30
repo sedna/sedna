@@ -351,15 +351,15 @@ xptr pstr_long_create_str2(bool persistent, const text_source_t src)
 	switch (src.type)
 	{
 	case text_source_t::text_mem:
-		str_ptr = pstr_long_create_str2(persistent, src.u.cstr, src.size);
+		str_ptr = pstr_long_create_str2(persistent, src.u.cstr, get_text_size(src));
 		return str_ptr;
 	case text_source_t::text_pstr:
 		{
-			char *tmp = (char*) malloc((size_t) src.size); //FIXME? sb
+			char *tmp = (char*) malloc((size_t) get_text_size(src)); //FIXME? sb
 			const xptr ptr= src.u.data;
 			CHECKP(ptr);
-			memcpy(tmp, (char*) XADDR(ptr), (size_t)src.size);
-			const xptr res = pstr_long_create_str2(persistent, tmp, src.size);
+			memcpy(tmp, (char*) XADDR(ptr), get_text_size(src));
+			const xptr res = pstr_long_create_str2(persistent, tmp, get_text_size(src));
 			free(tmp);
 			return res;
 		}
@@ -368,7 +368,7 @@ xptr pstr_long_create_str2(bool persistent, const text_source_t src)
 		return pstr_long_append_tail2(str_ptr, src);
 	case text_source_t::text_estr:
 		str_ptr = pstr_long_create_str2(persistent, "", 0);
-		str_ptr = pstr_long_append_tail_estr2(str_ptr, src.u.data, src.size);
+		str_ptr = pstr_long_append_tail_estr2(str_ptr, src.u.data, get_text_size(src));
 
 		return str_ptr;
 	}
@@ -939,30 +939,29 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src_desc)
 //FIXME: make pre cond - size <= actual stirng size for pstr_long strings
 static xptr pstr_long_append_tail2(xptr str_ptr, const text_source_t src)
 {
-	switch (src.type)
-	{
-	case text_source_t::text_mem:
-		return pstr_long_append_tail_mem2(str_ptr, src.u.cstr, src.size);
-	case text_source_t::text_pstr:
-		{
-	        const xptr ptr= src.u.data;
-			char *tmp = (char*)malloc((size_t)src.size); //FIXME? sb
-			CHECKP(ptr);
-			memcpy(tmp, (char*)XADDR(ptr), (size_t)src.size);
-			str_ptr = pstr_long_append_tail_mem2(str_ptr, tmp, src.size);
-			free(tmp);
-			return str_ptr;
-		}
-	case text_source_t::text_pstrlong:
-		{
-	        const xptr ptr= src.u.data;
-			return pstr_long_append_tail2(str_ptr, ptr, pstr_long_bytelength2(ptr));
-		}
-	case text_source_t::text_estr:
-		return pstr_long_append_tail_estr2(str_ptr, src.u.data, src.size);
-	}
-	U_ASSERT(false);
-	return XNULL;
+    switch (src.type)
+    {
+    case text_source_t::text_mem:
+        return pstr_long_append_tail_mem2(str_ptr, src.u.cstr, get_text_size(src));
+    case text_source_t::text_pstr:
+        {
+        const xptr ptr= src.u.data;
+                char *tmp = (char*)malloc((size_t) get_text_size(src)); //FIXME? sb
+                CHECKP(ptr);
+                memcpy(tmp, (char*)XADDR(ptr), (size_t) get_text_size(src));
+                str_ptr = pstr_long_append_tail_mem2(str_ptr, tmp, get_text_size(src));
+                free(tmp);
+                return str_ptr;
+        }
+    case text_source_t::text_pstrlong:
+        {
+                return pstr_long_append_tail2(str_ptr, src.u.data, get_text_size(src));
+        }
+    case text_source_t::text_estr:
+            return pstr_long_append_tail_estr2(str_ptr, src.u.data, get_text_size(src));
+    }
+    U_ASSERT(false);
+    return XNULL;
 }
 
 void pstr_long_append_tail(const xptr desc, const text_source_t src)
@@ -1584,24 +1583,24 @@ void pstr_long_append_head(xptr desc, const text_source_t src)
 	switch (src.type)
 	{
 	case text_source_t::text_mem:
-		pstr_long_append_head(desc, src.u.cstr, src.size);
+		pstr_long_append_head(desc, src.u.cstr, get_text_size(src));
 		return;
 	case text_source_t::text_estr:
 		{
 			//FIXME!!!!!
-			char *tmp = (char*)malloc(src.size); //FIXME? sb
-			estr_copy_to_buffer(tmp, src.u.data, src.size);
-			pstr_long_append_head(desc, tmp, src.size);
+			char *tmp = (char*)malloc((size_t) get_text_size(src)); //FIXME? sb
+			estr_copy_to_buffer(tmp, src.u.data, get_text_size(src));
+			pstr_long_append_head(desc, tmp, get_text_size(src));
 			free(tmp);
 			return;
 		}
 	case text_source_t::text_pstr:
 		{
-			char *tmp = (char*)malloc((size_t)src.size); //FIXME? sb
+			char *tmp = (char*)malloc((size_t) get_text_size(src)); //FIXME? sb
 			const xptr ptr = src.u.data;
 			CHECKP(ptr);
-			memcpy(tmp, (char*)XADDR(ptr), (size_t) src.size);
-			pstr_long_append_head(desc, tmp, src.size);
+			memcpy(tmp, (char*)XADDR(ptr), (size_t) get_text_size(src));
+			pstr_long_append_head(desc, tmp, get_text_size(src));
 			free(tmp);
 			return;
 		}

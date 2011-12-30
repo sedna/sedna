@@ -149,7 +149,7 @@ tuple_cell SCElementProducer::addText(const text_source_t value)
 {
     processAtomics();
 
-    strsize_t size = tsGetActualSize(value);
+    strsize_t size = get_text_size(value);
 
     /* from  http://www.w3.org/TR/xquery/#id-textConstructors:
 

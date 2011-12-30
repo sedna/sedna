@@ -1175,13 +1175,13 @@ void SednaConvertJob::convert_node(xptr &node,long* _ht_,long _ht_cnt_)
 	if (ts.type == text_source_t::text_mem)
 	{
 		const char *str_it = ts.u.cstr;
-		const char *str_it_end = str_it + ts.size;
+		const char *str_it_end = str_it + get_text_size(ts);
 		SednaStringHighlighter<const char *> hl(str_it, str_it_end, _ht_, _ht_cnt_, hl_fragment, &result);
 		hl.run();
 	}
 	else
 	{
-		estr_iterator estr_it(ts.size, ts.u.data);
+		estr_iterator estr_it(get_text_size(ts), ts.u.data);
 		estr_iterator estr_it_end(0, ts.u.data);
 		SednaStringHighlighter<estr_iterator> hl(estr_it, estr_it_end, _ht_, _ht_cnt_, hl_fragment, &result);
 		hl.run();

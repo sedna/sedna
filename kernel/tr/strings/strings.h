@@ -105,6 +105,8 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 #include "tr/strings/e_string_iterator.h"
 #include "tr/strings/char_iterator.h"
 
+#include "text_data.h"
+
 //FIXME: int conversions in char_iterator constructors
 #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, tcell_ptr, params) \
 	switch (tcell_ptr->get_type()) \
@@ -261,7 +263,7 @@ public:
 	void fill_text_source(text_source_t *ts) const
 	{
 		ts->type = get_type();
-		ts->size = m_len;
+		ts->_text_size = m_len; // WARNING: check carefully!
 
 		if (ts->type == text_source_t::text_mem)
 		{
@@ -463,24 +465,6 @@ inline void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
     feed_tuple_cell(writextext_cb, &crmout, tc);
 }
 
-inline static
-struct text_source_t text_source_mem(const char * mem, size_t size) {
-    struct text_source_t result = {text_source_t::text_mem};
-    result.size = size;
-    result.u.cstr = mem;
-
-    return result;
-}
-
-inline static
-struct text_source_t text_source_cstr(const char * str) {
-    struct text_source_t result = {text_source_t::text_mem};
-    result.size = strlen(str);
-    result.u.cstr = str;
-
-    return result;
-}
-
 struct text_source_t text_source_tuple_cell(const tuple_cell& tc);
 
 static inline
@@ -489,13 +473,18 @@ struct text_source_t text_source_node(const xptr node) {
 };
 
 static inline
-strsize_t tsGetActualSize(struct text_source_t t) {
+strsize_t get_text_size(struct text_source_t t) {
     if (t.type == text_source_t::text_pstrlong) {
         return pstr_long_bytelength2(t.u.data);
     } else {
-        return t.size;
+        return t._text_size;
     }
 }
+
+static inline
+bool empty_text(struct text_source_t t) {
+    return (t.type != text_source_t::text_pstrlong) && (t._text_size == 0);
+};
 
 struct text_membuf_t {
   private:
@@ -505,7 +494,7 @@ struct text_membuf_t {
   public:
     text_membuf_t() : size(0), cstr(NULL) {};
     text_membuf_t(struct text_source_t ts) : size(0), cstr(NULL) {
-        strsize_t sz = tsGetActualSize(ts);
+        strsize_t sz = get_text_size(ts);
 
         if (sz > PAGE_SIZE) {
             throw USER_EXCEPTION2(SE1003, "Too long string to be copied to in-memory buffer");
@@ -524,7 +513,7 @@ struct text_membuf_t {
             memcpy(cstr, (char*) XADDR(ptr), (size_t) size);
           } break;
           case text_source_t::text_estr : {
-            estr_copy_to_buffer(cstr, ts.u.data, ts.size);
+            estr_copy_to_buffer(cstr, ts.u.data, get_text_size(ts));
           } break;
           default : throw USER_EXCEPTION2(SE1003, "Too long string to be copied to in-memory buffer");
         }
@@ -535,32 +524,6 @@ struct text_membuf_t {
     const char * getCstr() const { return cstr; }
     size_t getSize() const { return size; }
 };
-
-static inline
-struct text_source_t text_source_pstr(const xptr text, strsize_t size) {
-    struct text_source_t result = {text_source_t::text_pstr};
-    result.size = size;
-    result.u.data = text;
-
-    return result;
-}
-
-static inline
-struct text_source_t text_source_estr(const xptr text, strsize_t size) {
-    struct text_source_t result = {text_source_t::text_estr};
-    result.size = size;
-    result.u.data = text;
-
-    return result;
-}
-
-static inline
-struct text_source_t text_source_pstrlong(const xptr text) {
-    struct text_source_t result = {text_source_t::text_pstrlong};
-    result.u.data = text;
-
-    return result;
-}
 
 inline static
 struct text_source_t text_source_strbuf(str_buf_base * buf) {
@@ -575,13 +538,13 @@ str_cursor * get_text_cursor(const text_source_t text) {
     str_cursor * result = NULL;
     switch (text.type) {
     case text_source_t::text_mem: {
-        result = new memstr_cursor((char *) text.u.cstr, (size_t) text.size);
+        result = new memstr_cursor((char *) text.u.cstr, (size_t) text._text_size);
     } break;
     case text_source_t::text_pstr: {
-        result = new pstr_cursor(text.u.data, text.size);
+        result = new pstr_cursor(text.u.data, text._text_size);
     } break;
     case text_source_t::text_estr: {
-        result = new estr_cursor(text.u.data, text.size);
+        result = new estr_cursor(text.u.data, text._text_size);
     } break;
     case text_source_t::text_pstrlong: {
         result = new pstr_long_cursor(text.u.data);

@@ -33,8 +33,10 @@
 static
 bool whitespaceOnly(const text_source_t &x) {
     U_ASSERT(x.type == text_source_t::text_mem);
+    size_t len = (size_t) get_text_size(x);
 
-    for (size_t i = 0; i < (size_t) x.size; i++) {
+    // FIXME : create standart functions with size
+    for (size_t i = 0; i < len; i++) {
         int c = x.u.cstr[i];
 
         if (!utfsafe_isspace(c)) {
@@ -48,15 +50,18 @@ bool whitespaceOnly(const text_source_t &x) {
 static
 text_source_t clearLeftSpaces(const text_source_t &x) {
     U_ASSERT(x.type == text_source_t::text_mem);
+    size_t len = (size_t) get_text_size(x);
+
+    // FIXME : create standart functions with size
 
     text_source_t result = NULL_TEXT; /* NULL_TEXT is text_mem ! */
 
-    for (size_t i = 0; i < (size_t) x.size; i++) {
+    for (size_t i = 0; i < len; i++) {
         int c = x.u.cstr[i];
 
         if (!utfsafe_isspace(c)) {
             result.u.cstr = x.u.cstr + i;
-            result.size = x.size - i;
+            result._text_size = x._text_size - i;
             return result;
         }
     }
@@ -68,15 +73,16 @@ text_source_t clearLeftSpaces(const text_source_t &x) {
 static
 text_source_t getRightSpaces(const text_source_t &x) {
     U_ASSERT(x.type == text_source_t::text_mem);
+    size_t len = (size_t) get_text_size(x);
 
     text_source_t result = NULL_TEXT; /* NULL_TEXT is text_mem ! */
 
-    for (size_t i = (size_t) x.size; i > 0; i--) {
+    for (size_t i = len; i > 0; i--) {
         int c = x.u.cstr[i-1];
 
         if (!utfsafe_isspace(c)) {
             result.u.cstr = x.u.cstr + i;
-            result.size = x.u.cstr + x.size - result.u.cstr;
+            result._text_size = x.u.cstr + x._text_size - result.u.cstr;
             return result;
         }
     }
@@ -461,7 +467,7 @@ class DataParser : public IElementProducer {
         if (parent->textBufferSize > 0) {
             text_source_t value = text_source_mem(parent->textBuffer, parent->textBufferSize);
 
-            tailingWhitespace.size = 0;
+            tailingWhitespace._text_size = 0;
             if (parent->options.stripBoundarySpaces) {
                 if (breaksWhitespaces && !stripLeftSpaces && !hasText) {
                     if (whitespaceOnly(value)) {
@@ -474,7 +480,7 @@ class DataParser : public IElementProducer {
                 if (stripLeftSpaces) {
                     value = clearLeftSpaces(value);
 
-                    if (value.size > 0) {
+                    if (value._text_size > 0) {
                         stripLeftSpaces = false;
                     } else {
                         stripLeftSpaces = !breaksWhitespaces;
@@ -486,11 +492,11 @@ class DataParser : public IElementProducer {
 
                 if (stripTrailingSpaces) {
                     tailingWhitespace = getRightSpaces(value);
-                    value.size -= tailingWhitespace.size;
+                    value._text_size -= tailingWhitespace._text_size;
                 }
             }
 
-            if (value.size > 0) {
+            if (value._text_size > 0) {
                 if (parent->options.stripBoundarySpaces) {
                     if (!parent->tailingWhitespaceBuffer.str().empty()) {
                         parent->tailingWhitespaceBuffer.flush();
@@ -507,9 +513,9 @@ class DataParser : public IElementProducer {
 
             parent->textBufferSize = 0;
 
-            if (saveTrailingWhitespaces && tailingWhitespace.size > 0) {
-                memmove(parent->textBuffer, tailingWhitespace.u.cstr, (size_t) tailingWhitespace.size);
-                parent->textBufferSize = tailingWhitespace.size;
+            if (saveTrailingWhitespaces && tailingWhitespace._text_size > 0) {
+                memmove(parent->textBuffer, tailingWhitespace.u.cstr, (size_t) tailingWhitespace._text_size);
+                parent->textBufferSize = tailingWhitespace._text_size;
                 tailingWhitespace = NULL_TEXT;
             }
         }
@@ -620,7 +626,7 @@ class DataParser : public IElementProducer {
     virtual tuple_cell addText(const text_source_t value) {
         U_ASSERT(value.type == text_source_t::text_mem);
 
-        if (SZ(value.size) > TEXT_BUFFER_SIZE) {
+        if (SZ(value._text_size) > TEXT_BUFFER_SIZE) {
             U_ASSERT(false); /* This cannot be true while parsebuffer is smaller then textbuffer */
             throw SYSTEM_EXCEPTION("Text buffer exceeds parse buffer. Normaly it should not have happend, so report it as a bug.");
             return NULL_TC;
@@ -628,7 +634,7 @@ class DataParser : public IElementProducer {
 
         const size_t rest = (TEXT_BUFFER_SIZE - parent->textBufferSize);
 
-        if (SZ(value.size) > rest) {
+        if (SZ(value._text_size) > rest) {
             if (rest > 0) {
                 memcpy(parent->textBuffer + parent->textBufferSize, value.u.cstr, rest);
                 parent->textBufferSize += rest;
@@ -636,7 +642,7 @@ class DataParser : public IElementProducer {
 
             processText(true, true, false);
 
-            if (value.size > (TEXT_BUFFER_SIZE - parent->textBufferSize)) {
+            if (value._text_size > (TEXT_BUFFER_SIZE - parent->textBufferSize)) {
                 U_ASSERT(false);
                 parent->tailingWhitespaceBuffer.write(parent->textBuffer, parent->textBufferSize);
                 parent->textBufferSize = 0;
@@ -644,13 +650,13 @@ class DataParser : public IElementProducer {
 //                processText(false);
             };
 
-            U_ASSERT(value.size <= (TEXT_BUFFER_SIZE - parent->textBufferSize));
+            U_ASSERT(value._text_size <= (TEXT_BUFFER_SIZE - parent->textBufferSize));
 
-            memcpy(parent->textBuffer + parent->textBufferSize, value.u.cstr + rest, value.size - rest);
-            parent->textBufferSize += (value.size - rest);
+            memcpy(parent->textBuffer + parent->textBufferSize, value.u.cstr + rest, value._text_size - rest);
+            parent->textBufferSize += (value._text_size - rest);
         } else {
-            memcpy(parent->textBuffer + parent->textBufferSize, value.u.cstr, value.size);
-            parent->textBufferSize += value.size;
+            memcpy(parent->textBuffer + parent->textBufferSize, value.u.cstr, value._text_size);
+            parent->textBufferSize += value._text_size;
         }
 
         return NULL_TC;
