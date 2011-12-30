@@ -35,9 +35,9 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent, const xsd::QNa
     if (source.type != text_source_t::text_mem) {
         text_membuf_t buf(source);
         text_source_t ts = buf.getTextSource();
-        return insert_attribute(left_sib, right_sib, parent, qname.getLocalName(), type, ts.u.cstr, ts.size, qname.getXmlNs());
+        return insert_attribute(left_sib, right_sib, parent, qname.getLocalName(), type, ts.u.cstr, get_text_size(ts), qname.getXmlNs());
     } else {
-        return insert_attribute(left_sib, right_sib, parent, qname.getLocalName(), type, source.u.cstr, source.size, qname.getXmlNs());
+        return insert_attribute(left_sib, right_sib, parent, qname.getLocalName(), type, source.u.cstr, get_text_size(source), qname.getXmlNs());
     }
 }
 
@@ -47,9 +47,9 @@ xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent, const text_sourc
     if (source.type != text_source_t::text_mem) {
         text_membuf_t buf(source);
         text_source_t ts = buf.getTextSource();
-        return insert_comment(left_sib, right_sib, parent, ts.u.cstr, ts.size);
+        return insert_comment(left_sib, right_sib, parent, ts.u.cstr, get_text_size(ts));
     } else {
-        return insert_comment(left_sib, right_sib, parent, source.u.cstr, source.size);
+        return insert_comment(left_sib, right_sib, parent, source.u.cstr, get_text_size(source));
     }
 }
 
@@ -61,9 +61,9 @@ xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent, const xsd::NCName& na
     if (source.type != text_source_t::text_mem) {
         text_membuf_t buf(source);
         text_source_t ts = buf.getTextSource();
-        return insert_pi(left_sib, right_sib, parent, cname, strlen(cname), ts.u.cstr, (size_t) ts.size);
+        return insert_pi(left_sib, right_sib, parent, cname, strlen(cname), ts.u.cstr, (size_t) get_text_size(ts));
     } else {
-        return insert_pi(left_sib, right_sib, parent, cname, strlen(cname), source.u.cstr, (size_t) source.size);
+        return insert_pi(left_sib, right_sib, parent, cname, strlen(cname), source.u.cstr, (size_t) get_text_size(source));
     }
 }
 

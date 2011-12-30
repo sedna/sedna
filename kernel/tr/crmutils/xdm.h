@@ -10,6 +10,7 @@
 #include "tr/strings/strings_base.h"
 #include "tr/crmutils/exec_output.h"
 #include "tr/executor/base/xsd.h"
+#include "tr/strings/text_data.h"
 
 /* This is serialization wrapper for xml nodes.
  * One can implement any node represenation, but for it to be serialized well to any output,

@@ -16,22 +16,6 @@ typedef int64_t strsize_t;
 /* to convert strsize_t to system size_t */
 #define SZ(x) ((size_t) (x))
 
-struct text_source_t {
-    enum type_t {
-        text_mem,
-        text_pstr,
-        text_pstrlong,
-        text_estr
-    } type;
-    union {
-        xptr data;
-        const char * cstr;
-    } u;
-    strsize_t size; // May be not defined for pstr_long
-};
-
-static const text_source_t NULL_TEXT = {text_source_t::text_mem};
-
 typedef void (*string_consumer_fn)(const char *str, int len, void *p);
 extern void writextext_cb(const char *str, int len, void *p);
 

@@ -181,13 +181,13 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
     schema_node_cptr parent_snode;
     enum text_insert_t insert_type = ti_new_node;
 
-    if (source.size > STRMAXSIZE) throw USER_EXCEPTION(SE2037);
+    if (get_text_size(source) > STRMAXSIZE) throw USER_EXCEPTION(SE2037);
 
     check_common_constraints(left_sib, right_sib, parent);
     find_relatives(node_info);
     parent_snode = getSchemaNode(node_info.parent);
 
-    if (source.size < 1 && (IS_DATA_BLOCK(node_info.parent))) throw USER_EXCEPTION(SE2009);
+    if (get_text_size(source) < 1 && (IS_DATA_BLOCK(node_info.parent))) throw USER_EXCEPTION(SE2009);
 
     node_info.cdataflag = cdataflag_hint;
 
@@ -202,7 +202,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
             insertNodeWithLeftBrother(node_info.left_sibling, &node_info);
         } else {
             node_info.node_xptr = node_info.left_sibling;
-            if (source.size > 0) {
+            if (!empty_text(source)) {
                 insertTextValue(ip_tail, node_info.node_xptr, source);
             }
             insert_type = ti_addtext_after;
@@ -212,7 +212,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
             insertNodeWithRightBrother(node_info.right_sibling, &node_info);
         } else {
             node_info.node_xptr = node_info.right_sibling;
-            if (source.size > 0) {
+            if (!empty_text(source)) {
                 insertTextValue(ip_head, node_info.node_xptr, source);
             }
             insert_type = ti_addtext_before;
@@ -235,7 +235,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
     node_info.snode = getSchemaNode(node_info.node_xptr);
     node_info.snode.modify();
     if (insert_type == ti_new_node) { node_info.snode->nodecnt++; }
-    node_info.snode->textcnt += source.size;
+    node_info.snode->textcnt += get_text_size(source);
 
 /* Update logical log */
 
@@ -260,9 +260,9 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
             }
         } else {
             if (source.type == text_source_t::text_mem) {
-                hl_logical_log_text_edit(node_info.indirection, source.u.cstr, (size_t) source.size, (insert_type == ti_addtext_before), true);
+                hl_logical_log_text_edit(node_info.indirection, source.u.cstr, (size_t) get_text_size(source), (insert_type == ti_addtext_before), true);
             } else {
-                hl_logical_log_text_edit(node_info.indirection, tsGetActualSize(source), (insert_type == ti_addtext_before), true);
+                hl_logical_log_text_edit(node_info.indirection, get_text_size(source), (insert_type == ti_addtext_before), true);
             }
         }
     } else {

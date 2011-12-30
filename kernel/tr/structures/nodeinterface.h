@@ -13,6 +13,7 @@
 #include "tr/structures/nodeutils.h"
 
 #include "tr/strings/strings_base.h"
+#include "tr/strings/text_data.h"
 
 class Node {
 protected:
@@ -185,17 +186,11 @@ public:
 
     inline
     struct text_source_t getTextSource() {
-        struct text_source_t result = {text_source_t::text_pstr};
-
         if (isPstrLong()) {
-            result.type = text_source_t::text_pstrlong;
-            result.size = 0;
+	    return text_source_pstrlong(getTextPointerCP());
         } else {
-            result.size = getTextSize();
+	    return text_source_pstr(getTextPointerCP(), getTextSize());
         }
-
-        result.u.data = getTextPointerCP();
-        return result;
     };
 
     inline

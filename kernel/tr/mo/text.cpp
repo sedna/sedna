@@ -47,17 +47,19 @@ inline xptr findNearestTextContainerCP(xptr anode)
 static
 char * copyTextToBuffer(char * buffer, const text_source_t &src)
 {
+    // FIXME : UNSAFE size usage!
+
     switch (src.type) {
       case text_source_t::text_mem : {
-        memcpy(buffer, src.u.cstr, (size_t) src.size);
+        memcpy(buffer, src.u.cstr, (size_t) src._text_size);
       } break;
       case text_source_t::text_pstr : {
         xptr ptr = src.u.data;
         CHECKP(ptr);
-        memcpy(buffer, (char*) XADDR(ptr), (size_t) src.size);
+        memcpy(buffer, (char*) XADDR(ptr), (size_t) src._text_size);
       } break;
       case text_source_t::text_estr : {
-        estr_copy_to_buffer(buffer, src.u.data, src.size);
+        estr_copy_to_buffer(buffer, src.u.data, src._text_size);
       } break;
       default : throw USER_EXCEPTION2(SE1003, "Failed to copy too long text to in-memory buffer");
     }
@@ -69,13 +71,15 @@ char * copyTextToBuffer(char * buffer, const text_source_t &src)
 inline static
 xptr pstr_allocate_u(xptr text_block, xptr node, const text_source_t &src)
 {
+    // FIXME : UNSAFE size usage!
+
     xptr result;
 
     if (src.type == text_source_t::text_mem) {
-        result = pstr_allocate(text_block, node, src.u.cstr, (size_t) src.size);
+        result = pstr_allocate(text_block, node, src.u.cstr, (size_t) src._text_size);
     } else {
         copyTextToBuffer(tmp_text_buffer, src);
-        result = pstr_allocate(text_block, node, tmp_text_buffer, (size_t) src.size);
+        result = pstr_allocate(text_block, node, tmp_text_buffer, (size_t) src._text_size);
     }
 
     return result;
@@ -95,7 +99,7 @@ xptr pstr_allocate_u(xptr text_block, xptr node, const text_source_t &src)
 void insertTextValue(xptr node_xptr, const text_source_t source)
 {
     node_text_t * text_node = getTextFromAnyNode(node_xptr);
-    const strsize_t size = tsGetActualSize(source);
+    const strsize_t size = get_text_size(source);
 
     if (size > STRMAXSIZE) {
             throw USER_EXCEPTION2(SE2037, "Too long text value to insert");
@@ -114,8 +118,8 @@ void insertTextValue(xptr node_xptr, const text_source_t source)
         }
 
         WRITEP(node_xptr);
-        memcpy(text_node->data, buffer, (size_t) source.size);
-        text_node->size = (uint16_t) source.size;
+        memcpy(text_node->data, buffer, (size_t) size);
+        text_node->size = (uint16_t) size;
     } else if (size <= PSTRMAXSIZE) {
         /* PSTR text case */
         pstr_allocate_u(findNearestTextContainerCP(node_xptr), node_xptr, source);
@@ -132,7 +136,7 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const text
     node_text_t * text_node = getTextFromAnyNode(node_xptr);
     CommonTextNode nodeobject = node_xptr;
     const strsize_t curr_size = nodeobject.getTextSize();
-    const strsize_t add_size = tsGetActualSize(source);
+    const strsize_t add_size = get_text_size(source);
     const strsize_t new_size = curr_size + add_size;
 
     if (new_size > STRMAXSIZE) {
