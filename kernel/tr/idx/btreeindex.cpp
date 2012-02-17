@@ -6,6 +6,22 @@
 
 #include "tr/idx/btreeindex.h"
 
+#ifdef DEBUG_BTREE_INDEX
+
+#include "common/errdbg/event_log.h"
+#include "tr/strings/strings.h"
+#include <sstream>
+#include <string>
+#include "common/base.h"
+#include "common/sedna.h"
+#include "tr/executor/base/xs_helper.h"
+#include "tr/executor/base/xsd.h"
+#include "tr/executor/base/PPBase.h"
+
+#define indlog(message) elog(EL_DBG, message)
+
+#endif
+
 using namespace idx;
 
 bt_key& tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key)
@@ -47,11 +63,40 @@ tuple_cell bt_key2tuple_cell(const bt_key& key)
     return tuple_cell::eos();
 }
 
+#ifdef DEBUG_BTREE_INDEX
+inline static
+struct text_source_t getTupleText(const tuple_cell &t) {
+    if (is_fixed_size_type(t.get_atomic_type())) {
+        return text_source_cstr(get_lexical_representation_for_fixed_size_atomic(executor_globals::mem_str_buf2, t));
+    } else {
+        return text_source_tuple_cell(t);
+    }
+}
+#endif
 
 bool BTreeMultimap::insertPair(tuple_cell key, tuple_cell value)
 {
     bt_key btkey;
 //    bt_insert(this->btree_root, tuple_cell2bt_key(key, btkey), value.get_node_inderection(), !sortedInsertionHint);
+
+#ifdef DEBUG_BTREE_INDEX
+    if (key.is_atomic_type(xs_string)) {
+        std::ostringstream dbg;
+
+        dbg << "INS: ";
+
+        TextBufferReader reader(getTupleText(key));
+        if (reader.read()) {
+            dbg.write(reader.buffer, reader.size) << " ";
+        }
+
+        dbg << value.get_node_inderection().to_uint64();
+        dbg << std::endl;
+
+        indlog((dbg.str().data()));
+    }
+#endif
+
     bt_insert(this->btree_root, tuple_cell2bt_key(key, btkey), value.get_node_inderection(), true);
     return true;
 }
@@ -59,6 +104,25 @@ bool BTreeMultimap::insertPair(tuple_cell key, tuple_cell value)
 bool BTreeMultimap::deletePair(tuple_cell key, tuple_cell value)
 {
     bt_key btkey;
+
+#ifdef DEBUG_BTREE_INDEX
+    if (key.is_atomic_type(xs_string)) {
+        std::ostringstream dbg;
+
+        dbg << "INS: ";
+
+        TextBufferReader reader(getTupleText(key));
+        if (reader.read()) {
+            dbg.write(reader.buffer, reader.size) << " ";
+        }
+
+        dbg << value.get_node_inderection().to_uint64();
+        dbg << std::endl;
+
+        indlog((dbg.str().data()));
+    }
+#endif
+
     bt_delete(this->btree_root, tuple_cell2bt_key(key, btkey), value.get_node_inderection());
     return true;
 }

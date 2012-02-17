@@ -100,6 +100,10 @@ void moSetUserException(int a_mo_exception);
 
 extern int mo_exception;
 
+// If exception thrown while microoperation is executing,
+// we can't start rollback because data is in inconsistent state.
+// Exception can be handled only after microoperation execution.
+
 inline void microoperation_begin(xptr block) {
     mo_exception = 0;
 };

@@ -171,7 +171,7 @@ void index_cell_object::on_schema_node_created(schema_node_cptr snode) const
     t_scmnodes objs;
     executePathExpression(snode->root, *object, &objs, NULL, NULL);
 
-    const xpath::NodeTest node_test_nodes_deep(xpath::axis_descendant, xpath::node_test_wildcard_star);
+    const xpath::NodeTest node_test_nodes_deep(xpath::axis_descendant, xpath::node_test_text);
 
     FOR_EACH(i, objs, t_scmnodes) {
         if ((*i)->is_ancestor_or_self(snode)) {
@@ -179,14 +179,14 @@ void index_cell_object::on_schema_node_created(schema_node_cptr snode) const
             executePathExpression(*i, *key, &keys, NULL, NULL);
             FOR_EACH(j, keys, t_scmnodes) {
                 if (snode.ptr() == *j) {
-                    snode->index_list->add(index_ref(this->p_object, *i, *j));
+                    snode.modify()->index_list->add(index_ref(this->p_object, *i, *j));
                     break;
                 }
                 t_scmnodes keydeps;
-                executeNodeTest(*i, node_test_nodes_deep, &keydeps, NULL, NULL);
+                executeNodeTest(*j, node_test_nodes_deep, &keydeps, NULL, NULL);
                 FOR_EACH(k, keydeps, t_scmnodes) {
-                    if (snode.ptr() == *j) {
-                        snode->index_list->add(index_ref(this->p_object, *i, *j));
+                    if (snode.ptr() == *k) {
+                        snode.modify()->index_list->add(index_ref(this->p_object, *i, *j));
                         break;
                     }
                 }
@@ -299,7 +299,7 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
     int64_t counter1 = 0;
     int64_t counter2 = 0;
 
-    const xpath::NodeTest node_test_nodes_deep(xpath::axis_descendant, xpath::node_test_wildcard_star);
+    const xpath::NodeTest node_test_nodes_deep(xpath::axis_descendant, xpath::node_test_text);
 
     // 0. Check index type
     check_index_key_type(index_dsc->keytype, index_dsc->backend_type);
@@ -345,7 +345,7 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
             t_scmnodes skeydep;
             executeNodeTest(skey[j], node_test_nodes_deep, &skeydep, NULL, NULL);
             for (t_scmnodes::iterator k = skeydep.begin(); k != skeydep.end(); k++) {
-                (*k)->index_list->add(index_ref(idc.ptr(), sobj[i], skey[j]));
+                (*k).modify()->index_list->add(index_ref(idc.ptr(), sobj[i], skey[j]));
             }
 
             RECOVERY_CRASH;

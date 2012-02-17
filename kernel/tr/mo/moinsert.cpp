@@ -195,13 +195,17 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
 
     microoperation_begin(node_info.parent);
 
-    indexDeleteNode(parent_snode, node_info.parent);
+    schema_node_cptr snode = parent_snode->get_first_child(node_info.ns, node_info.name, node_info.node_type);
+    if (!snode.found()) {
+        snode = parent_snode->add_child(node_info.ns, node_info.name, node_info.node_type);
+    }
 
     if (node_info.left_sibling != XNULL && getNodeType(checkp(node_info.left_sibling)) == text) {
         if (parent_snode->type == virtual_root) {
             insertNodeWithLeftBrother(node_info.left_sibling, &node_info);
         } else {
             node_info.node_xptr = node_info.left_sibling;
+            indexDeleteNode(snode, node_info.node_xptr);
             if (!empty_text(source)) {
                 insertTextValue(ip_tail, node_info.node_xptr, source);
             }
@@ -212,12 +216,14 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
             insertNodeWithRightBrother(node_info.right_sibling, &node_info);
         } else {
             node_info.node_xptr = node_info.right_sibling;
+            indexDeleteNode(snode, node_info.node_xptr);
             if (!empty_text(source)) {
                 insertTextValue(ip_head, node_info.node_xptr, source);
             }
             insert_type = ti_addtext_before;
         }
     } else {
+        indexDeleteNode(snode, node_info.parent);
         insertNodeGeneral(&node_info);
     }
 
@@ -270,7 +276,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
 //        node_info.snode->lastnode_ind = node_info.indirection;
     }
 
-    indexAddNode(parent_snode, node_info.parent);
+    indexAddNode(node_info.snode, node_info.node_xptr);
     microoperation_end(node_info.parent);
     last_inserted_node_indirection = node_info.indirection;
     return node_info.node_xptr;
