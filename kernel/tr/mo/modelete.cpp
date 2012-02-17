@@ -133,7 +133,7 @@ void logicalLogDelete(node_info_t * node_info, const delete_context_t * doc_info
 }
 
 
-static const delete_context_t delete_on_text_merge = {NULL, NULL, false, true, true};
+static const delete_context_t delete_on_text_merge = {NULL, NULL, false, false, true};
 
 void mergeSiblingTextNodes(xptr left, xptr right)
 {
@@ -143,6 +143,7 @@ void mergeSiblingTextNodes(xptr left, xptr right)
 
     left = indirectionDereferenceCP(left);
     right = indirectionDereferenceCP(right);
+    schema_node_cptr snode = getBlockHeaderCP(left)->snode;
 
     if (getNodeType(checkp(left)) == text && getNodeType(checkp(right)) == text) {
         text_node left_dsc, right_dsc;
@@ -155,37 +156,56 @@ void mergeSiblingTextNodes(xptr left, xptr right)
             U_ASSERT(right_dsc.text.size > 0);
             microoperation_begin(left);
 
+            indexDeleteNode(snode, left);
             insertTextValue(ip_tail, left, text_source_mem(right_dsc.text.data, right_dsc.text.size));
             hl_logical_log_text_edit(left_dsc.base.indir, right_dsc.text.size, false, true);
+            indexAddNode(snode, left);
+
             microoperation_end(left);
 
             delete_node(right, &delete_on_text_merge);
         } else if (right_dsc.text.size <= PSTRMAXSIZE) {
             microoperation_begin(left);
+
+            indexDeleteNode(snode, left);
             insertTextValue(ip_tail, left, text_source_node(right));
             hl_logical_log_text_edit(left_dsc.base.indir, right_dsc.text.size, false, true);
+            indexAddNode(snode, left);
+
             microoperation_end(left);
 
             delete_node(right, &delete_on_text_merge);
         } else if (left_dsc.text.size <= maxDescriptorTextSize) {
             U_ASSERT(left_dsc.text.size > 0);
             microoperation_begin(right);
+
+            indexDeleteNode(snode, right);
             insertTextValue(ip_head, right, text_source_mem(left_dsc.text.data, left_dsc.text.size));
             hl_logical_log_text_edit(right_dsc.base.indir, left_dsc.text.size, true, true);
+            indexAddNode(snode, right);
+
             microoperation_end(right);
 
             delete_node(left, &delete_on_text_merge);
         } else if (left_dsc.text.size <= PSTRMAXSIZE) {
             microoperation_begin(right);
+
+            indexDeleteNode(snode, right);
             insertTextValue(ip_head, right, text_source_node(left));
             hl_logical_log_text_edit(right_dsc.base.indir, left_dsc.text.size, true, true);
+            indexAddNode(snode, right);
+
             microoperation_end(right);
 
             delete_node(left, &delete_on_text_merge);
         } else {
             microoperation_begin(left);
+
+            indexDeleteNode(snode, left);
             pstr_long_append_tail(left, right);
             hl_logical_log_text_edit(left_dsc.base.indir, CommonTextNode(right).getTextSize(), false, true);
+            indexAddNode(snode, left);
+
             microoperation_end(left);
 
             delete_node(right, &delete_on_text_merge);
@@ -250,12 +270,7 @@ bool delete_node(xptr node_xptr, const delete_context_t * context)
     microoperation_begin(node_xptr);
 
     if (!context->no_index_update) {
-        if (node_info.node_type == text) {
-            node_info.parent = indirectionDereferenceCP(node_info.parent_indir);
-            indexDeleteNode(getBlockHeaderCP(node_info.parent)->snode, node_info.parent);
-        } else {
-            indexDeleteNode(node_info.snode, node_info.node_xptr);
-        }
+        indexDeleteNode(node_info.snode, node_info.node_xptr);
     }
 
     logicalLogDelete(&node_info, context);
@@ -274,6 +289,7 @@ bool delete_node(xptr node_xptr, const delete_context_t * context)
     updateBlockChains(node_info.node_xptr, node_info.indirection, up_delete);
 
     if (!context->no_index_update && node_info.node_type == text) {
+        node_info.parent = indirectionDereferenceCP(node_info.parent_indir);
         indexAddNode(node_info.snode, node_info.parent);
     }
 
