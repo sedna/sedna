@@ -173,7 +173,7 @@ public:
 	~FtPartitionScanner();
 };
 
-FtWordsScanner *ftp_init_words_scanner(const ft_partition_data *partition);
+FtWordsScanner *ftp_init_words_scanner(const ft_partition_data *partition, const char* from);
 
 
 void ft_delete_partition(const ft_partition_data *partition);

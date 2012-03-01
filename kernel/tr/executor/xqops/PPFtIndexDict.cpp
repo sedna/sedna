@@ -132,7 +132,7 @@ void PPFtIndexDict::do_next(tuple &t)
 		switch (ft_idx->impl)
 		{
 		case ft_ind_native:
-			ftc_res = new ftc_scan_words_result(ftc_idx);
+			ftc_res = new ftc_scan_words_result(ftc_idx, NULL);
 			break;
 		default:
 			throw USER_EXCEPTION2(SE1002, "unknow full-text index implementation");

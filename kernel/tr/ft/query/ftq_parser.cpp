@@ -96,6 +96,10 @@ struct ft_parser_state
 
 	ftc_index_t ftc_idx;
 	FtStemmer *stemmer;
+
+	bool wildcards_enabled() {
+		return true;
+	}
 };
 
 FtQueryTermBase *create_term(ftc_index_t idx, const char *in_tag, bool stem)
@@ -131,13 +135,28 @@ static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector
 	int len = tok->leng, word_len = 0;
 	bool overfl = false;
 	int ch;
+	bool prefix = false;
 	while (true)
 	{
 		ch = utf8_getch(&p, &len);
 		if (ch != UTF8_EOF && ft_norm_char(&ch))
 		{
+			if (prefix)
+			{
+				//FIXME
+				throw USER_EXCEPTION2(SE3022, "* can only be used as last letter in the word");
+			}
 			if (!overfl)
 				overfl = !CharsetHandler_utf8::utf8_putch(ch, q->term_buf, &word_len, FT_MAX_WORD_LENGTH);
+		}
+		else if (ps->wildcards_enabled() && ch == '*')
+		{
+			if (word_len == 0)
+			{
+				//FIXME
+				throw USER_EXCEPTION2(SE3022, "* can only be used as last letter in the word");
+			}
+			prefix = true;
 		}
 		else
 		{
@@ -145,6 +164,7 @@ static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector
 			{
 				U_ASSERT(word_len <= FT_MAX_WORD_LENGTH);
 				q->term_buf[word_len] = 0;
+
 				//FIXME: move this to FtQueryTerm*
 				if (ps->stemmer != NULL && (stem || ftc_get_fts_data(q->get_ftc_idx())->stem_type != ftst_both))
 				{
@@ -152,6 +172,7 @@ static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector
 					strncpy(q->term_buf, stemmed_term, FT_MAX_WORD_LENGTH);
 					q->term_buf[FT_MAX_WORD_LENGTH] = '\x0';
 				}
+				q->prefix = prefix;
 				vec->push_back(q);
 				if (ch == UTF8_EOF)
 					q = NULL;

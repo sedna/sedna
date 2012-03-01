@@ -534,15 +534,24 @@ private:
 	bt_cursor bt_cur;
 	bool eos;
 public:
-	FtPartitionWordsScanner(const ft_partition_data *partition);
+	FtPartitionWordsScanner(const ft_partition_data *partition, const char* from);
 	virtual const char *cur_word();
 	virtual void next_word();
 	virtual ~FtPartitionWordsScanner() {}
 };
 
-FtPartitionWordsScanner::FtPartitionWordsScanner(const ft_partition_data *partition)
+FtPartitionWordsScanner::FtPartitionWordsScanner(const ft_partition_data *partition, const char* from)
 {
-	bt_cur = bt_lm(partition->voc_btree_root);
+	if (from == NULL)
+	{
+		bt_cur = bt_lm(partition->voc_btree_root);
+	}
+	else
+	{
+		bt_key bkey;
+		bkey.setnew(from);
+		bt_cur = bt_find_ge(partition->voc_btree_root, bkey);
+	}
 	eos = bt_cur.is_null();
 }
 const char *FtPartitionWordsScanner::cur_word()
@@ -557,7 +566,7 @@ void FtPartitionWordsScanner::next_word()
 	eos = !bt_cur.bt_next_key();
 }
 
-FtWordsScanner *ftp_init_words_scanner(const ft_partition_data *partition)
+FtWordsScanner *ftp_init_words_scanner(const ft_partition_data *partition, const char* from)
 {
-	return new FtPartitionWordsScanner(partition);
+	return new FtPartitionWordsScanner(partition, from);
 }
