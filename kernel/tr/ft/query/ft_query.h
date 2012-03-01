@@ -92,10 +92,14 @@ class FtQueryTermBase : public FtQuery
 {
 public:
 	char term_buf[FT_MAX_WORD_LENGTH+1];
+	bool prefix;
+
+	FtQueryTermBase() : prefix(false) {}
 
 	virtual ftc_index_t get_ftc_idx() = 0; //XXX: dirty hack for FtQueryPhrase
 	virtual uint64_t get_doc_len(ft_acc_uint_t acc_i) = 0;
 
+	//FIXME: this interface should be replaced with get_current, move_next, skip_to
 	//get next word occur, if initial *acc != FT_ACC_UINT_NULL, resulting *acc >= initial *acc
 	//if resulting *acc == initial *acc, resulting *word_ind >= *initial word_ind
 	//if no more acceptable results - resulting *acc is set to FT_ACC_UINT_NULL
@@ -119,7 +123,7 @@ public:
 	virtual ftc_index_t get_ftc_idx() {return this->ftc_idx; }
 	virtual uint64_t get_doc_len(ft_acc_uint_t acc_i) { return ftc_scan.get_doc_len(acc_i); }
 
-	FtQueryTerm(ftc_index_t idx, bool _stem) : ftc_idx(idx), ftc_scan(idx), stem(_stem) {}
+	FtQueryTerm(ftc_index_t idx, bool _stem) : FtQueryTermBase(), ftc_idx(idx), ftc_scan(idx), stem(_stem) {}
 	virtual ~FtQueryTerm();
 
 	virtual ft_acc_uint_t get_next_result();
@@ -150,7 +154,7 @@ public:
 	virtual ftc_index_t get_ftc_idx() {return this->ftc_idx; }
 	virtual uint64_t get_doc_len(ft_acc_uint_t acc_i) { return ftc_scan.get_doc_len(acc_i); }
 
-	FtQueryTermInElement(ftc_index_t idx, bool _stem) : ftc_idx(idx), ftc_scan(idx), ftc_scan_opentag(idx), ftc_scan_closetag(idx), stem(_stem) {}
+	FtQueryTermInElement(ftc_index_t idx, bool _stem) : FtQueryTermBase(), ftc_idx(idx), ftc_scan(idx), ftc_scan_opentag(idx), ftc_scan_closetag(idx), stem(_stem) {}
 	virtual ~FtQueryTermInElement();
 
 	virtual ft_acc_uint_t get_next_result();

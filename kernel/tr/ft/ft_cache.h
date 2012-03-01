@@ -104,6 +104,7 @@ public:
 };
 
 //TODO: remove this class
+class ftc_scan_result_prefix;
 class ftc_scan_result
 {
 private:
@@ -112,11 +113,15 @@ private:
 	struct FtsScanData fts_sd;
 	FtCacheScanner ftc_s;
 
+	//FIXME: dirty hack, remove along with scan_word param
+	ftc_scan_result_prefix *prefix_scan;
+
 	inline bool get_next_occur_step(ft_acc_uint_t *acc, int *word_ind);
 public:
-	ftc_scan_result(ftc_index_t idx) : ftc_idx(idx), ftc_s(idx) {}
+	ftc_scan_result(ftc_index_t idx) : ftc_idx(idx), ftc_s(idx), prefix_scan(NULL) {}
+	~ftc_scan_result();
 	ftc_index_t get_ftc_idx() { return this->ftc_idx; }
-	void scan_word(const char *word);
+	void scan_word(const char *word, bool prefix);
 
 	//see FtQueryTerm::get_next_occur description
 	void get_next_occur(ft_acc_uint_t *acc_i, ft_word_ind_t *word_ind);
@@ -134,7 +139,7 @@ private:
 	int nscanners;
 	FtWordsScanner** scanners;
 public:
-	ftc_scan_words_result(ftc_index_t idx);
+	ftc_scan_words_result(ftc_index_t idx, const char* from);
 	void get_next_result(tuple &t);
 	~ftc_scan_words_result();
 };

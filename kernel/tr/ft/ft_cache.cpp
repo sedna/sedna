@@ -634,12 +634,133 @@ uint64_t FtCacheScanner::get_doc_len(ft_acc_uint_t acc_i)
 	return 0;
 }
 
-void ftc_scan_result::scan_word(const char *word)
+//FIXME: redesign & remove this
+struct ftc_scan_result_buf
 {
-	ftc_index_data *id = ftc_index_data::get(ftc_idx);
+	ftc_scan_result sr;
+	ft_acc_uint_t next_acc;
+	ft_word_ind_t next_ind;
+	ftc_scan_result_buf(ftc_index_t ftc_idx) : sr(ftc_idx) {}
 
-	ftc_s.init_word(word);
-	fts_sd.init(&id->ft_data, word);
+	void skip_to(const ft_acc_uint_t acc_i, const ft_word_ind_t word_ind) {
+		if (next_acc != FT_ACC_UINT_NULL && (
+			next_acc < acc_i ||
+			(next_acc == acc_i && next_ind < word_ind)
+			))
+		{
+			next_acc = acc_i;
+			next_ind = word_ind;
+			sr.get_next_occur(&next_acc, &next_ind);
+		}
+	}
+
+	void next() {
+		sr.get_next_occur(&next_acc, &next_ind);
+	}
+};
+class ftc_scan_result_prefix
+{
+private:
+	std::vector<ftc_scan_result_buf *> srs;
+public:
+	ftc_scan_result_prefix() {}
+	void scan_prefix(ftc_index_t ftc_idx, const char *prefix) {
+		ftc_index_data *id = ftc_index_data::get(ftc_idx);
+		ftc_scan_words_result swr(ftc_idx, prefix);
+		tuple t(1); //FIXME: copying to typle may be avoided
+		int prefix_len = strlen(prefix);
+		while (true)
+		{
+			swr.get_next_result(t);
+			if (t.is_eos())
+				break;
+			//FIXME: specify that ftc_scan_words_result returns light atomic strings or use other interface
+			if (strncmp(prefix, t.cells[0].get_str_mem(), prefix_len) != 0)
+				break;
+			ftc_scan_result_buf *srb = new ftc_scan_result_buf(ftc_idx);
+			srb->sr.scan_word(t.cells[0].get_str_mem(), false);
+			srb->next_acc = FT_ACC_UINT_NULL;
+			srb->next_ind = 0;
+			srb->sr.get_next_occur(&srb->next_acc, &srb->next_ind);
+			if (srb->next_acc == FT_ACC_UINT_NULL)
+			{
+				delete srb;
+			}
+			else
+			{
+				srs.push_back(srb);
+				//FIXME: should be configurable + option not to throw exception
+				if (srs.size() > 10000)
+				{
+					throw USER_EXCEPTION2(SE1003, "too many words in wildcard");
+				}
+			}
+		}
+	}
+	~ftc_scan_result_prefix() {
+		for (int i = 0; i < srs.size(); i++)
+		{
+			delete srs[i];
+		}
+	}
+	void get_next_occur(ft_acc_uint_t *acc_i, ft_word_ind_t *word_ind) {
+		if (*acc_i != FT_ACC_UINT_NULL)
+		{
+			for (int i = 0; i < srs.size(); i++)
+				srs[i]->skip_to(*acc_i, *word_ind);
+		}
+		if (srs.size() < 1)
+		{
+			*acc_i = FT_ACC_UINT_NULL;
+			*word_ind = 0;
+			return;
+		}
+		int min_ind = 0;
+		for (int i = 1; i < srs.size(); i++)
+		{
+			if (srs[i]->next_acc != FT_ACC_UINT_NULL)
+			{
+				if (srs[min_ind]->next_acc == FT_ACC_UINT_NULL
+					|| srs[min_ind]->next_acc > srs[i]->next_acc
+					|| (srs[min_ind]->next_acc == srs[i]->next_acc && srs[min_ind]->next_ind > srs[i]->next_ind)
+				)
+				{
+					min_ind = i;
+				}
+			}
+		}
+		*acc_i = srs[min_ind]->next_acc;
+		*word_ind = srs[min_ind]->next_ind;
+		srs[min_ind]->next();
+	}
+	uint64_t get_doc_len(ft_acc_uint_t acc_i) {
+		if (srs.size() < 1)
+			throw USER_EXCEPTION2(SE1003, "get_doc_len called from empty ftc_scan_result_prefix");
+
+		return srs[0]->sr.get_doc_len(acc_i);
+	}
+};
+
+ftc_scan_result::~ftc_scan_result()
+{
+	if (prefix_scan != NULL)
+		delete prefix_scan;
+}
+
+void ftc_scan_result::scan_word(const char *word, bool prefix)
+{
+	//TODO: redesign this
+	ftc_index_data *id = ftc_index_data::get(ftc_idx);
+	if (!prefix)
+	{
+		ftc_s.init_word(word);
+		fts_sd.init(&id->ft_data, word);
+	}
+	else
+	{
+		this->prefix_scan = new ftc_scan_result_prefix();
+		this->prefix_scan->scan_prefix(ftc_idx, word);
+	}
 }
 
 bool ftc_scan_result::get_next_occur_step(ft_acc_uint_t *acc_i, int *word_ind)
@@ -735,6 +856,11 @@ bool ftc_scan_result::get_next_occur_step(ft_acc_uint_t *acc_i, int *word_ind)
 }
 void ftc_scan_result::get_next_occur(ft_acc_uint_t *acc_i, ft_word_ind_t *word_ind)
 {
+	if (this->prefix_scan != NULL)
+	{
+		this->prefix_scan->get_next_occur(acc_i, word_ind);
+		return;
+	}
 	if (*acc_i != FT_ACC_UINT_NULL)
 	{
 		//skip acc-s so that cur_acc >= *acc
@@ -753,6 +879,8 @@ void ftc_scan_result::get_next_occur(ft_acc_uint_t *acc_i, ft_word_ind_t *word_i
 
 uint64_t ftc_scan_result::get_doc_len(ft_acc_uint_t acc_i)
 {
+	if (this->prefix_scan != NULL)
+		return this->prefix_scan->get_doc_len(acc_i);
 	uint64_t r = ftc_s.get_doc_len(acc_i);
 	if (r > 0)
 		return r;
@@ -771,15 +899,18 @@ private:
 	FTC_WORDMAP *wm;
 	FTC_WORDMAP::pers_sset_entry *wme;
 public:
-	FtcWordsScanner(ftc_index_data *id);
+	FtcWordsScanner(ftc_index_data *id, const char *from);
 	virtual const char *cur_word();
 	virtual void next_word();
 	virtual ~FtcWordsScanner() {}
 };
-FtcWordsScanner::FtcWordsScanner(ftc_index_data *id)
+FtcWordsScanner::FtcWordsScanner(ftc_index_data *id, const char *from)
 {
 	wm = FTC_WORDMAP::get_map(id->words, id->ind_alloc);
-	wme = wm->rb_minimum(FTC_WORDMAP::get_entry(wm->root, id->ind_alloc));
+	if (from == NULL)
+		wme = wm->rb_minimum(FTC_WORDMAP::get_entry(wm->root, id->ind_alloc));
+	else
+		wme = wm->find_ge(from);
 }
 const char *FtcWordsScanner::cur_word()
 {
@@ -792,7 +923,7 @@ void FtcWordsScanner::next_word()
 	wme = wm->rb_successor(wme);
 }
 
-ftc_scan_words_result::ftc_scan_words_result(ftc_index_t idx) : ftc_idx(idx)
+ftc_scan_words_result::ftc_scan_words_result(ftc_index_t idx, const char* from) : ftc_idx(idx)
 {
 	ftc_index_data *id = ftc_index_data::get(ftc_idx);
 
@@ -800,8 +931,8 @@ ftc_scan_words_result::ftc_scan_words_result(ftc_index_t idx) : ftc_idx(idx)
 	scanners = new FtWordsScanner*[nscanners];
 
 	for (int i = 0; i < id->ft_data.npartitions; i++)
-		scanners[i] = ftp_init_words_scanner(&id->ft_data.partitions[i]);
-	scanners[id->ft_data.npartitions] = new FtcWordsScanner(id);
+		scanners[i] = ftp_init_words_scanner(&id->ft_data.partitions[i], from);
+	scanners[id->ft_data.npartitions] = new FtcWordsScanner(id, from);
 
 }
 

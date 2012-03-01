@@ -125,6 +125,7 @@ public:
 		return (string_map*)alloc.deref(ptr);
 	}
 	T *find (const char *str);
+	pers_sset_entry* find_ge (const char *str);
 
 	pers_sset_entry* get (const char *str);
 
@@ -195,6 +196,21 @@ template<typename T, typename AllocatorT> T *string_map<T,AllocatorT>::find (con
 				x=x->left(*allocator);
 	}
 	return NULL;
+}
+template<typename T, typename AllocatorT> typename string_map<T,AllocatorT>::pers_sset_entry* string_map<T,AllocatorT>::find_ge (const char *str)
+{
+	pers_sset_entry* x=(pers_sset_entry*)allocator->deref(root);
+	pers_sset_entry* res = NULL;
+	while (true)
+	{
+		while (x!=NULL && strcmp(allocator->deref(x->str), str)<0)
+			x=x->right(*allocator);
+		if (x == NULL)
+			break;
+		res = x;
+		x = x->left(*allocator);
+	}
+	return res;
 }
 template<class T, class AllocatorT> typename string_map<T,AllocatorT>::pers_sset_entry* string_map<T,AllocatorT>::put (const char *str, T obj)
 {
