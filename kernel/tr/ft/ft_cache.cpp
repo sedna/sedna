@@ -277,6 +277,22 @@ ftc_index_t ftc_get_index(const char *name, struct FtsData *fts_data)
 	return *e;
 }
 
+void ftc_drop_index(const char *name)
+{
+	if (ftc_indexes == FTC_NULL)
+		return;
+	FTC_VMAP *m = FTC_VMAP::get_map(ftc_indexes, m_alloc);
+	void **e = m->find(name);
+	if (e == NULL)
+		return;
+
+	//can't delete it from ftc_indexes, so we just clear all data
+	ftc_index_t idx = *e;
+	ftc_index_data *id = ftc_index_data::get(idx);
+	id->ind_alloc.release();
+	id->reset();
+}
+
 ftc_index_t ftc_create_temp_index(ft_stem_type ftst)
 {
 	void *data = ftc_index_data::create_tmp(ftst);

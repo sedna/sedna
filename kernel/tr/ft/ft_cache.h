@@ -18,8 +18,10 @@
 typedef FTC_ALLOCATOR::ptr_t ftc_doc_t;
 typedef void* ftc_index_t;
 
-//ft_index_sem must be accuired!
+//ft_index_sem must be accuired! FIXME: not sure if it even exists now
 ftc_index_t ftc_get_index(const char *name, struct FtsData *fts_data);
+
+void ftc_drop_index(const char *name);
 
 ftc_index_t ftc_create_temp_index(ft_stem_type ftst);
 void ftc_delete_temp_index(ftc_index_t idx);
