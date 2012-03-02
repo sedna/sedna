@@ -714,7 +714,7 @@ public:
 		}
 	}
 	~ftc_scan_result_prefix() {
-		for (int i = 0; i < srs.size(); i++)
+		for (size_t i = 0; i < srs.size(); i++)
 		{
 			delete srs[i];
 		}
@@ -722,7 +722,7 @@ public:
 	void get_next_occur(ft_acc_uint_t *acc_i, ft_word_ind_t *word_ind) {
 		if (*acc_i != FT_ACC_UINT_NULL)
 		{
-			for (int i = 0; i < srs.size(); i++)
+			for (size_t i = 0; i < srs.size(); i++)
 				srs[i]->skip_to(*acc_i, *word_ind);
 		}
 		if (srs.size() < 1)
@@ -732,7 +732,7 @@ public:
 			return;
 		}
 		int min_ind = 0;
-		for (int i = 1; i < srs.size(); i++)
+		for (size_t i = 1; i < srs.size(); i++)
 		{
 			if (srs[i]->next_acc != FT_ACC_UINT_NULL)
 			{
