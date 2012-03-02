@@ -4,6 +4,7 @@
  */
 
 #include "tr/ft/ft_cache.h"
+#include "tr/ft/ft_types.h"
 #include "tr/ft/string_map.h"
 #include "tr/ft/ft_index_data.h"
 #include <inttypes.h>
@@ -685,16 +686,27 @@ public:
 		ftc_scan_words_result swr(ftc_idx, prefix);
 		tuple t(1); //FIXME: copying to typle may be avoided
 		int prefix_len = strlen(prefix);
+		bool require_nostem_mark = false;
+		if (ftc_get_fts_data(ftc_idx)->stem_type == ftst_both)
+			require_nostem_mark = true;
 		while (true)
 		{
 			swr.get_next_result(t);
 			if (t.is_eos())
 				break;
 			//FIXME: specify that ftc_scan_words_result returns light atomic strings or use other interface
-			if (strncmp(prefix, t.cells[0].get_str_mem(), prefix_len) != 0)
+			const char *word = t.cells[0].get_str_mem();
+			if (strncmp(prefix, word, prefix_len) != 0)
 				break;
 			ftc_scan_result_buf *srb = new ftc_scan_result_buf(ftc_idx);
-			srb->sr.scan_word(t.cells[0].get_str_mem(), false);
+			int word_len = strlen(word);
+			if (word_len < 1)
+				continue; //should be impossible
+			if (word[word_len-1] == FT_TAG_OPEN_MARKER || word[word_len-1] == FT_TAG_CLOSE_MARKER)
+				continue;
+			if (require_nostem_mark && word[word_len-1] != FT_NOSTEM_MARKER)
+				continue;
+			srb->sr.scan_word(word, false);
 			srb->next_acc = FT_ACC_UINT_NULL;
 			srb->next_ind = 0;
 			srb->sr.get_next_occur(&srb->next_acc, &srb->next_ind);

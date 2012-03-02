@@ -270,6 +270,8 @@ ft_index_cell_xptr create_ft_index(
 		case ft_ind_native:
 		{
 			//idc->init_serial_tree();
+			//TODO: if stemmer==NULL and stemtype==both, all words are indexed w/o stemming and exact versions of words
+			//      can't be searched without '~'; need to throw exception here or change stem_type to none.
 
 			op_str_buf in_buf;
 
