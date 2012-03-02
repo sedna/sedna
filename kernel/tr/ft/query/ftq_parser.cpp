@@ -149,7 +149,7 @@ static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector
 			if (!overfl)
 				overfl = !CharsetHandler_utf8::utf8_putch(ch, q->term_buf, &word_len, FT_MAX_WORD_LENGTH);
 		}
-		else if (ps->wildcards_enabled() && ch == '*')
+		else if (ps->wildcards_enabled() && ch == '*') //FIXME
 		{
 			if (word_len == 0)
 			{
@@ -166,7 +166,7 @@ static void ft_parse_term(struct ft_parser_state *ps, token_ptr tok, std::vector
 				q->term_buf[word_len] = 0;
 
 				//FIXME: move this to FtQueryTerm*
-				if (ps->stemmer != NULL && (stem || ftc_get_fts_data(q->get_ftc_idx())->stem_type != ftst_both))
+				if (!prefix && ps->stemmer != NULL && (stem || ftc_get_fts_data(q->get_ftc_idx())->stem_type != ftst_both))
 				{
 					const char *stemmed_term = ps->stemmer->stem_word(q->term_buf, word_len);
 					strncpy(q->term_buf, stemmed_term, FT_MAX_WORD_LENGTH);

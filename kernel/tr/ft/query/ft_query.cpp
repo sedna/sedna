@@ -112,7 +112,7 @@ void FtQueryTerm::do_init()
 }
 void FtQueryTerm::do_open()
 {
-	if (!stem && ftc_get_fts_data(ftc_idx)->stem_type == ftst_both)
+	if (!stem && ftc_get_fts_data(ftc_idx)->stem_type == ftst_both && !prefix)
 	{
 		int l = strlen(term_buf);
 		if (l >= FT_MAX_WORD_LENGTH)
@@ -186,7 +186,7 @@ void FtQueryTermInElement::do_init()
 }
 void FtQueryTermInElement::do_open()
 {
-	if (!stem && ftc_get_fts_data(ftc_idx)->stem_type == ftst_both)
+	if (!stem && ftc_get_fts_data(ftc_idx)->stem_type == ftst_both && !prefix)
 	{
 		int l = strlen(term_buf);
 		if (l >= FT_MAX_WORD_LENGTH)
