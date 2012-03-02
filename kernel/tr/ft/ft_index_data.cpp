@@ -299,7 +299,7 @@ ft_index_cell_xptr create_ft_index(
 
     return idc.ptr();
 }
-
+//TODO: usage of these just_heap options should be described somewhere
 void delete_ft_index (const char *index_title, bool just_heap)
 {
     ft_index_cell_cptr idc(index_title, true);
@@ -332,6 +332,8 @@ void delete_ft_index (const char *index_title, bool just_heap)
                 throw SYSTEM_EXCEPTION("unknow full-text index implementation");
             }
         }
+        if (idc->impl == ft_ind_native)
+			ftc_drop_index(idc->index_title);
 
         idc->drop();
         up_concurrent_micro_ops_number();
