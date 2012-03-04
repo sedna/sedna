@@ -41,9 +41,15 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 
     # first, add "-ggdb -g3" flag to generate more debug info
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -ggdb")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -fno-tree-vectorize")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_DEBUG} -fno-tree-vectorize")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g3 -ggdb")
+
+    # turn off tree-vectorize O3 optimization; it breaks Sedna
+    # gcc versions 3.x.x lack this option thus we need this condition
+    # gcc version is 4.6.1 at this moment
+    if (_GCC_COMPILER_VERSION STRGREATER "40")
+      set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -fno-tree-vectorize")
+      set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_DEBUG} -fno-tree-vectorize")
+    endif (_GCC_COMPILER_VERSION STRGREATER "40")
 
     # add some -f declarations
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing -fno-omit-frame-pointer")
