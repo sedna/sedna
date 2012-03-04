@@ -47,8 +47,8 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     # gcc versions 3.x.x lack this option thus we need this condition
     # gcc version is 4.6.1 at this moment
     if (_GCC_COMPILER_VERSION STRGREATER "40")
-      set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -fno-tree-vectorize")
-      set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_DEBUG} -fno-tree-vectorize")
+      set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-tree-vectorize")
+      set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fno-tree-vectorize")
     endif (_GCC_COMPILER_VERSION STRGREATER "40")
 
     # add some -f declarations
