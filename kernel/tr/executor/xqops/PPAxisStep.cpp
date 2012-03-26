@@ -195,27 +195,36 @@ Node nextNode_RightDescendantMerge(Node node, AxisHints * hint) {
 Node resolveAxis_Descendant(Node node, AxisHints * hint) {
     schema_node_cptr scn = getSchemaNode(node.getPtr());
 
-    /* Find ready (cached) node extraction strategy for given schema node */
-    DescendantMap::iterator descMap = hint->descendantPathIndex.find(scn.ptr());
-
-    /* If nothing found, evaluate all available paths from given node, to axis-evaluatable */
-    if (descMap == hint->descendantPathIndex.end()) {
+    if (!scn->persistent) {
+        /* Do not cache nodes for unpersistent schema node */
         t_scmnodes schemaNodes;
         SchemaPathList pathList;
 
-        /* Build path list for every resolved node */
         executeNodeTestPath(scn, hint->nt, &schemaNodes, &pathList);
+        traverseSchemaPathList(node, &pathList, hint);
+    } else {
+        /* Find ready (cached) node extraction strategy for given schema node */
+        DescendantMap::iterator descMap = hint->descendantPathIndex.find(scn.ptr());
 
-        descMap = hint->descendantPathIndex.insert(DescendantMap::value_type(scn.ptr(), pathList)).first;
+        /* If nothing found, evaluate all available paths from given node, to axis-evaluatable */
+        if (descMap == hint->descendantPathIndex.end()) {
+            t_scmnodes schemaNodes;
+            SchemaPathList pathList;
+
+            /* Build path list for every resolved node */
+            executeNodeTestPath(scn, hint->nt, &schemaNodes, &pathList);
+
+            descMap = hint->descendantPathIndex.insert(DescendantMap::value_type(scn.ptr(), pathList)).first;
+        }
+
+        U_ASSERT(descMap != hint->descendantPathIndex.end());
+
+        /* Find all nodes for all found pathes for given node.
+          We need all nodes to maintain document order.
+          MAYBE if document order is not required, we can find just the very first one. */
+
+        traverseSchemaPathList(node, &(descMap->second), hint);
     }
-
-    U_ASSERT(descMap != hint->descendantPathIndex.end());
-
-    /* Find all nodes for all found pathes for given node.
-       We need all nodes to maintain document order.
-       MAYBE if document order is not required, we can find just the very first one. */
-
-    traverseSchemaPathList(node, &(descMap->second), hint);
 
     /* Get the first node from heap */
     return hint->nodeHeapPop();
