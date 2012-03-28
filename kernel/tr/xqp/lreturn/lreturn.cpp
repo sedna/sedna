@@ -428,22 +428,32 @@ namespace sedna
 
         if (n.op >= ASTBop::UNION && n.op <= ASTBop::EXCEPT)
         {
+            bool leftSorted = lof.exi.isMax1 || lof.exi.isDistincted;
+            bool rightSorted = rof.exi.isMax1 || rof.exi.isDistincted;
+
             bool left_ddo = lof.exi.isOrdered && lof.exi.isDistincted;
             bool right_ddo = rof.exi.isOrdered && rof.exi.isDistincted;
+
+            /* In case the result of the operation contains more nodes than
+             * children, order them at child level */
+            bool moveDDOtoChildren = false;
 
             bopof.exi.useConstructors = lof.exi.useConstructors || rof.exi.useConstructors;
 
             switch (n.op)
             {
                 case ASTBop::INTERSECT:
+                    moveDDOtoChildren = false;
                     bopof.exi.isMax1 = lof.exi.isMax1 || rof.exi.isMax1;
                     break;
 
                 case ASTBop::EXCEPT:
+                    moveDDOtoChildren = false;
                     bopof.exi.isMax1 = lof.exi.isMax1;
                     break;
 
                 case ASTBop::UNION:
+                    moveDDOtoChildren = true;
                     bopof.exi.isMax1 = false;
                     break;
 
@@ -451,32 +461,39 @@ namespace sedna
                     bopof.exi.isMax1 = true;
             }
 
-            bopof.exi.isOrdered = bopof.exi.isMax1;
             bopof.exi.isSingleLevel = (lof.exi.isSingleLevel && rof.exi.isSingleLevel) || bopof.exi.isMax1;
 
-            if (!left_ddo || !right_ddo || !isModeOrdered || getParentRequest().distinctOnly)
-            {
-                if (!lof.exi.isMax1 && !lof.exi.isDistincted)
-                    n.lop = new ASTDDO(n.lop->getLocation(), n.lop, false);
+            /* We assume that both operations return distinctOnly result by their nature,
+              because they actually want AT LEAST distincted result */
 
-                if (!rof.exi.isMax1 && !rof.exi.isDistincted)
-                    n.rop = new ASTDDO(n.rop->getLocation(), n.rop, false);
+            bopof.exi.isDistincted = true;
 
-                if (lof.exi.isMax1 && rof.exi.isMax1 && isModeOrdered && !getParentRequest().distinctOnly)
-                {
-                    n.doc_order = true;
-                    bopof.exi.isOrdered = true;
-                }
-                else if (isModeOrdered && !getParentRequest().distinctOnly && !bopof.exi.isMax1)
-                {
-                    ddo = new ASTDDO(n.getLocation(), &n);
-                    modifyParent(ddo, false, false);
-                    bopof.exi.isOrdered = true;
-                }
+            /* Both children should be eather in DDO or not together,
+             * so if one child is in DDO, propagade another to DDO too
+             * (instead of loosing sort order) */
+
+            n.doc_order = left_ddo || right_ddo ||
+                (isModeOrdered && moveDDOtoChildren);
+
+            leftSorted = (!n.doc_order && leftSorted) ||
+              left_ddo || lof.exi.isMax1;
+
+            rightSorted = (!n.doc_order && rightSorted) ||
+              right_ddo || rof.exi.isMax1;
+
+            if (!leftSorted) {
+                n.lop = new ASTDDO(n.lop->getLocation(), n.lop, n.doc_order);
             }
-            else
-            {
-                n.doc_order = true;
+
+            if (!rightSorted) {
+                n.rop = new ASTDDO(n.rop->getLocation(), n.rop, n.doc_order);
+            }
+
+            bopof.exi.isOrdered = bopof.exi.isMax1 || n.doc_order;
+
+            if (!bopof.exi.isOrdered && isModeOrdered && !getParentRequest().distinctOnly) {
+                ddo = new ASTDDO(n.getLocation(), &n);
+                modifyParent(ddo, false, false);
                 bopof.exi.isOrdered = true;
             }
         }
