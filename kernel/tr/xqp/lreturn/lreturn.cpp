@@ -468,12 +468,14 @@ namespace sedna
 
             bopof.exi.isDistincted = true;
 
+            bool docOrderNeeded = isModeOrdered && !getParentRequest().distinctOnly;
+
             /* Both children should be eather in DDO or not together,
              * so if one child is in DDO, propagade another to DDO too
              * (instead of loosing sort order) */
 
             n.doc_order = left_ddo || right_ddo ||
-                (isModeOrdered && moveDDOtoChildren);
+                (docOrderNeeded && moveDDOtoChildren);
 
             leftSorted = (!n.doc_order && leftSorted) ||
               left_ddo || lof.exi.isMax1;
@@ -491,7 +493,7 @@ namespace sedna
 
             bopof.exi.isOrdered = bopof.exi.isMax1 || n.doc_order;
 
-            if (!bopof.exi.isOrdered && isModeOrdered && !getParentRequest().distinctOnly) {
+            if (!bopof.exi.isOrdered && docOrderNeeded) {
                 ddo = new ASTDDO(n.getLocation(), &n);
                 modifyParent(ddo, false, false);
                 bopof.exi.isOrdered = true;
