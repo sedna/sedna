@@ -10,7 +10,8 @@
 
 #include "common/sedna.h"
 #include "common/base.h"
-#include "common/pping.h"
+#include "common/u/usem.h"
+// #include "common/pping.h"
 
 #include "tr/client_core.h"
 #include "tr/tr_base.h"
@@ -37,6 +38,11 @@ namespace tr_globals
     extern int authorization;
     extern int query_timeout;
     extern int max_stack_depth;
+    
+    extern int db_id;
+    extern int os_primitives_min_bound;
+    extern char sedna_data[];
+    extern int ka_timeout;
 
     /* Special transactions */
     extern bool run_recovery;
@@ -57,7 +63,7 @@ namespace tr_globals
     extern bool is_ro_mode;       // may change during transaction execution!
     extern bool is_log_less_mode; // true, if we write only one record on every bulkload
 
-    extern pping_client* ppc;
+//     extern pping_client* ppc;
     extern client_core*  client;
 
     extern int internal_auth_switch;

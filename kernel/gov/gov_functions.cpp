@@ -23,7 +23,7 @@
 #include "common/u/uutils.h"
 #include "common/u/usystem.h"
 #include "common/ugc.h"
-#include "common/pping.h"
+// #include "common/pping.h"
 
 using namespace std;
 
@@ -54,18 +54,18 @@ void clean_resources(gov_config_struct& cfg, bool background_off_from_background
 
 bool is_first_start_of_gov(int ping_port)
 {
-  try
-  {
-    pping_client ppc(ping_port, EL_GOV);
-
-    SednaUserException e = USER_EXCEPTION(SE4400);
-    ppc.startup(e);
-    ppc.shutdown();
-    return false;
-
-  } catch (ANY_SE_EXCEPTION) {
-    return true;//cannot connect to pping server
-  }
+//   try
+//   {
+//     pping_client ppc(ping_port, EL_GOV);
+// 
+//     SednaUserException e = USER_EXCEPTION(SE4400);
+//     ppc.startup(e);
+//     ppc.shutdown();
+//     return false;
+// 
+//   } catch (ANY_SE_EXCEPTION) {
+//     return true;//cannot connect to pping server
+//   }
     return true;
 }
 

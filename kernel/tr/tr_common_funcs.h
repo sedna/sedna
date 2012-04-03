@@ -7,13 +7,13 @@
 #define _TR_COMMON_FUNCTIONS
 
 #include "common/sedna.h"
-#include "common/pping.h"
+// #include "common/pping.h"
 #include "common/SSMMsg.h"
 
 void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active= false);
 void on_session_end(SSMMsg* &sm_server);
-void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active = false);
-void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, bool rcv_active = false);
+void on_transaction_begin(SSMMsg* &sm_server, /*pping_client* ppc,*/ bool rcv_active = false);
+void on_transaction_end(SSMMsg* &sm_server, bool is_commit, /*pping_client* ppc,*/ bool rcv_active = false);
 
 void on_kernel_recovery_statement_begin();
 void on_kernel_recovery_statement_end();

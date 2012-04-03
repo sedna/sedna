@@ -139,7 +139,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
             // we advance snapshots only if SnapshotAdvanceCriterion() says so
             if (shutdown_event_call || llGetCheckpointActiveFlag()) // checkpoint is needed
             {
-                for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
+                for (int i=0; i<SEDNA_MAX_TRNS_NUMBER; i++)
                 {
                     if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
                         throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
@@ -189,7 +189,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
                 }
                 ReleaseGiantLock(); isGiantLockObtained = false;
         
-                for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
+                for (int i=0; i<SEDNA_MAX_TRNS_NUMBER; i++)
                     if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
                      throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
                 
@@ -201,7 +201,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
             {
                 if (!is_recovery_mode && SnapshotAdvanceCriterion())
                 {
-                    for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
+                    for (int i=0; i<SEDNA_MAX_TRNS_NUMBER; i++)
                     {
                         if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
                          throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
@@ -217,7 +217,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
                     RECOVERY_CRASH;
 
-                    for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
+                    for (int i=0; i<SEDNA_MAX_TRNS_NUMBER; i++)
                         if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
                          throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
 
@@ -269,8 +269,8 @@ void init_checkpoint_sems()
     if (uReleaseSA(sa, __sys_call_error) != 0)
         throw USER_EXCEPTION(SE3063);
 
-    if (USemaphoreCreate(&concurrent_trns_sem, CHARISMA_MAX_TRNS_NUMBER,
-                         CHARISMA_MAX_TRNS_NUMBER, SEDNA_TRNS_FINISHED, NULL,
+    if (USemaphoreCreate(&concurrent_trns_sem, SEDNA_MAX_TRNS_NUMBER,
+                         SEDNA_MAX_TRNS_NUMBER, SEDNA_TRNS_FINISHED, NULL,
                          __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "SEDNA_TRNS_FINISHED");
 }
@@ -312,18 +312,26 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
 
     try
     {
-        if (USemaphoreCreate(&wait_for_recovery, 0, 1, CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG, NULL, __sys_call_error) != 0)
-            throw USER_EXCEPTION2(SE4010, "CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG");
+        if (USemaphoreCreate(&wait_for_recovery, 0, 1, SEDNA_DB_RECOVERED_BY_LOGICAL_LOG, NULL, __sys_call_error) != 0)
+            throw USER_EXCEPTION2(SE4010, "SEDNA_DB_RECOVERED_BY_LOGICAL_LOG");
 
-        string command_line = uGetImageProcPath(buf, __sys_call_error) +
-                              string("/se_trn ") + string(sm_globals::db_name) + string(" dummy");
+        string command_line = uGetImageProcPath(buf, __sys_call_error) 
+                            + string("/") + SESSION_EXE
+                            + string(" -db-id ") + int2string(sm_globals::db_id) 
+                            + string(" -min-bound ")+ int2string(sm_globals::os_primitives_min_bound) 
+                            + string(" -max-stack-depth ") + int2string(sm_globals::max_stack_depth) 
+                            + string(" -sedna-data ") + string(sm_globals::sedna_data) 
+                            + string(" ") 
+                            + string(sm_globals::db_name) 
+                            + string(" dummy");
+        elog(EL_LOG, (command_line.c_str()));
 
         strcpy(buf, command_line.c_str());
 
-        uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND,
-                                u_itoa(GOV_HEADER_GLOBAL_PTR -> os_primitives_id_min_bound, buf2, 10),
-                                NULL,
-                                __sys_call_error);
+//         uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND,
+//                                 u_itoa(sm_globals::os_primitives_min_bound, buf2, 10),
+//                                 NULL,
+//                                 __sys_call_error);
 
         // to make se_trn run recovery logic
         uSetEnvironmentVariable(SEDNA_RUN_RECOVERY_TRANSACTION,
@@ -335,7 +343,7 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
                       buf,
                       false,
                       NULL,
-                      U_DETACHED_PROCESS/*0*/,
+                      0, //U_DETACHED_PROCESS/*0*/,
                       &h,
                       NULL,
                       &pid,
@@ -363,20 +371,20 @@ void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
             }
             else /* error */
             {
-                throw USER_EXCEPTION2(SE4015, "CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG");
+                throw USER_EXCEPTION2(SE4015, "SEDNA_DB_RECOVERED_BY_LOGICAL_LOG");
             }
         }
     }
     catch(SednaException &e)
     {
         if (USemaphoreRelease(wait_for_recovery, __sys_call_error) != 0)
-            throw USER_EXCEPTION2(SE4011, "CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG");
+            throw USER_EXCEPTION2(SE4011, "SEDNA_DB_RECOVERED_BY_LOGICAL_LOG");
 
         sedna_soft_fault(e, EL_SM);
     }
 
     if (USemaphoreRelease(wait_for_recovery, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4011, "CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG");
+        throw USER_EXCEPTION2(SE4011, "SEDNA_DB_RECOVERED_BY_LOGICAL_LOG");
 }
 
 /*****************************************************************************
@@ -389,7 +397,7 @@ void init_transaction_ids_table()
     if (uMutexInit(&trid_tbl_sync, __sys_call_error) != 0)
         throw SYSTEM_EXCEPTION("cannot initialize trid table sync mutex");
 
-    for (transaction_id i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
+    for (transaction_id i=0; i< SEDNA_MAX_TRNS_NUMBER; i++)
         _ids_table_.push_back(i);
 }
 
@@ -408,7 +416,7 @@ size_t get_active_transaction_num(bool updaters_only)
     if (uMutexLock(&trid_tbl_sync, __sys_call_error) != 0)
         throw SYSTEM_EXCEPTION("cannot obtain trid table sync mutex");
 
-    res = CHARISMA_MAX_TRNS_NUMBER - _ids_table_.size();
+    res = SEDNA_MAX_TRNS_NUMBER - _ids_table_.size();
 
     if (updaters_only) res -= ro_tr_count;
 
@@ -451,7 +459,7 @@ void give_transaction_id(transaction_id& trid, bool is_read_only)
     if (uMutexLock(&trid_tbl_sync, __sys_call_error) != 0)
         throw SYSTEM_EXCEPTION("cannot obtain trid table sync mutex");
 
-    if (!(trid < 0 || trid >= CHARISMA_MAX_TRNS_NUMBER))
+    if (!(trid < 0 || trid >= SEDNA_MAX_TRNS_NUMBER))
     {//check that there is no the same identifier
         for (size_t i=0; i< _ids_table_.size(); i++)
         {

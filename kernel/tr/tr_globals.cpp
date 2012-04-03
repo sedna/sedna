@@ -35,6 +35,10 @@ namespace tr_globals
     int query_timeout     = 0;
     int max_stack_depth   = 0;
     
+    int db_id             = -1;
+    int os_primitives_min_bound = -1;
+    char sedna_data[U_MAX_PATH+1]  = "???";
+    int ka_timeout        = 0;
     /* Special transactions */
     bool run_recovery      = false;
     bool first_transaction = false;
@@ -55,7 +59,7 @@ namespace tr_globals
     bool is_log_less_mode = false;
 
     client_core*  client  = NULL;
-    pping_client* ppc     = NULL;
+//     pping_client* ppc     = NULL;
 
     int internal_auth_switch = DEPLOY_AUTH_CHECK;
 
@@ -82,7 +86,7 @@ namespace tr_globals
     }
 }
 
-static const size_t narg = 13;
+static const size_t narg = 20;
 
 static int tr_s_help  = 0;
 static int tr_l_help  = 0;
@@ -103,6 +107,13 @@ static arg_rec tr_argtable[] =
     {"-debug",          " on/off",   arg_bool,  &debug_mode,                "off",     "\t\t  execute statements in debug mode (default off)\t"},
     {"-timeout",        " value",    arg_int,   &query_timeout,             "0",       "\t\t  set timeout for execution of a query in seconds (no timeout by default)\t"},
     {"-name",           " name",     arg_str,   tr_globals::login,          "SYSTEM",  "\t\t  user name (default SYSTEM)"},
+    {"-db-id",          " N",        arg_int,  &tr_globals::db_id,          "-1",      "\t\t  db id"},
+    {"-min-bound",      " N",        arg_int,  &tr_globals::os_primitives_min_bound, "-1", " os primitives min bound"},
+    {"-gov-address",    " address",  arg_str,   gov_address,                "localhost", " governor address"},
+    {"-port",           " N",        arg_int,  &tr_globals::socket_port,    "5050", " governor port"},
+    {"-max-stack-depth"," N",        arg_int,  &tr_globals::max_stack_depth,"4000", " max stack depth"},
+    {"-sedna-data",     " path",     arg_str,   tr_globals::sedna_data,     "???",  " path to sedna"},
+    {"-ka-timeout",     " N",        arg_int,  &tr_globals::ka_timeout,     "0",   " keep alive timeout"},
     {"-pswd",           " password", arg_str,   password,                   "MANAGER", "\t  user password (default MANAGER)"},
     {NULL,              " db-name",  arg_str,   db_name,                    "???",     "\t\t  database name"},
     {NULL,              " filename", arg_str,   filename,                   "???",     "\t\t  file with an XQuery query\n\t\t\t  "}
@@ -151,7 +162,15 @@ parse_trn_command_line(int argc, char** argv)
 
     if (0 == res)
         throw USER_EXCEPTION2(SE4601, errmsg);
-
+    
+    if (-1 == tr_globals::db_id)
+        throw USER_EXCEPTION2(SE4601, errmsg);
+    
+    if (-1 == tr_globals::os_primitives_min_bound)
+        throw USER_EXCEPTION2(SE4601, errmsg);
+    if (strcmp(tr_globals::sedna_data, "???") == 0)
+        throw USER_EXCEPTION2(SE4601, errmsg);
+    
     /* Convert query type */
     if (strcmp(q_type, "XQuery") == 0)   query_type = TL_XQuery;
     else if (strcmp(q_type, "ASTI") == 0) query_type = TL_ASTInitial;

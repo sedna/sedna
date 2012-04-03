@@ -42,6 +42,9 @@ public:
     virtual ~command_line_client() {} 
 
     virtual void init();
+    virtual void register_session_on_gov();
+    virtual void unregister_session_on_gov();
+    
     virtual void release();
     virtual void read_msg(msg_struct *msg);
     virtual char* get_query_string(msg_struct *msg);

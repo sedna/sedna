@@ -12,6 +12,8 @@
 #include "tr/crmutils/crmbase.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/xqp/XQuerytoLR.h"
+#include "tr/socket_client.h"
+
 
 void on_user_statement_begin(QueryType queryType,
                              const char* query_str,
@@ -25,7 +27,6 @@ qepNextAnswer execute (PPQueryEssence* qep_tree);
 qepNextAnswer next    (PPQueryEssence* qep_tree);
 
 void do_authentication();
-void register_session_on_gov();
 
 /* Sets handlers for keyboard events like Ctrl+C */
 void set_trn_ctrl_handler();

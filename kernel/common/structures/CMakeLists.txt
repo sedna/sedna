@@ -1,0 +1,1 @@
+set(structures_SRC config_data.cpp xml_config.cpp)

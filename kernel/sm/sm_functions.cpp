@@ -72,13 +72,13 @@ void characterData_sm_cfg(void *cnt, const XML_Char *s, int len)
 void
 send_stop_sm_msg()
 {
-    int port_number = GOV_HEADER_GLOBAL_PTR->lstnr_port_number;
-    char gov_address[U_MAX_HOSTNAME];
-    strcpy(gov_address, GOV_HEADER_GLOBAL_PTR -> lstnr_addr);
-    int database_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, sm_globals::db_name);
+//     int port_number = GOV_HEADER_GLOBAL_PTR->lstnr_port_number;
+//     char gov_address[U_MAX_HOSTNAME];
+//     strcpy(gov_address, GOV_HEADER_GLOBAL_PTR -> lstnr_addr);
+//     int database_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, sm_globals::db_name);
 
-    GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].mode = OM_SM_SHUTDOWN;
-    send_command_to_gov(port_number, gov_address, STOP);
+//     GOV_CONFIG_GLOBAL_PTR -> db_vars[database_id].mode = OM_SM_SHUTDOWN;
+    send_command_to_gov(sm_globals::port_number, sm_globals::gov_address, se_Stop);
 }
 
 

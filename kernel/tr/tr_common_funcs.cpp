@@ -111,7 +111,7 @@ release_transaction_id(SSMMsg* sm_server)
 {
     if ( is_trid_obtained == true )
     {
-        if (trid < 0 || trid >= CHARISMA_MAX_TRNS_NUMBER) return;
+        if (trid < 0 || trid >= SEDNA_MAX_TRNS_NUMBER) return;
 
         d_printf2("return trid=%d\n", trid);
         sm_msg_struct msg;
@@ -141,7 +141,7 @@ void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active)
 
     sm_server = se_new SSMMsg(SSMMsg::Client,
                               sizeof (sm_msg_struct),
-                              CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
+                              SEDNA_SSMMSG_SM_ID(db_id, buf, 1024),
                               SM_NUMBER_OF_SERVER_THREADS,
                               U_INFINITE);
 
@@ -245,7 +245,7 @@ void on_session_end(SSMMsg* &sm_server)
     d_printf1("OK\n");
 }
 
-void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active)
+void on_transaction_begin(SSMMsg* &sm_server, /*pping_client* ppc, */bool rcv_active)
 {
     TIMESTAMP ts;
 
@@ -287,7 +287,7 @@ void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active
 #endif
 
     d_printf2("Reset transaction timeout (%d secs.)...", query_timeout);
-    ppc->start_timer(query_timeout);
+//     ppc->start_timer(query_timeout);
     d_printf1("OK\n");
 }
 
@@ -355,7 +355,7 @@ void reportToWu(bool rcv_active, bool is_commit)
 // is_commit defines mode:
 //  true - transaction commit
 //  false - transaction rollback
-void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, bool rcv_active)
+void on_transaction_end(SSMMsg*& sm_server, bool is_commit, /*pping_client* ppc,*/ bool rcv_active)
 {
     sm_server_wu = sm_server;
 #ifdef SE_ENABLE_FTSEARCH
@@ -364,7 +364,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
     d_printf1("OK\n");
 #endif
 
-    ppc->stop_timer();
+//     ppc->stop_timer();
     clear_authmap();
 
 #ifdef SE_ENABLE_TRIGGERS

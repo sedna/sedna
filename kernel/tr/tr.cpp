@@ -10,7 +10,7 @@
 #include "common/utils.h"
 #include "common/SSMMsg.h"
 #include "common/errdbg/d_printf.h"
-#include "common/pping.h"
+// #include "common/pping.h"
 #include "common/ipc_ops.h"
 
 #include "tr/tr_globals.h"
@@ -37,21 +37,25 @@ int TRmain(int argc, char *argv[])
     volatile int ret_code = 0;
     volatile bool sedna_server_is_running = false;
     program_name_argv_0 = argv[0]; /* we use it to get full binary path */
-    tr_globals::ppc = NULL; /* pping client */
+//     tr_globals::ppc = NULL; /* pping client */
     char buf[1024]; /* buffer enough to get environment variables */
     SSMMsg *sm_server = NULL; /* shared memory messenger to communicate with SM */
     int determine_vmm_region = -1;
-    int os_primitives_id_min_bound;
+//     int os_primitives_id_min_bound;
     SednaUserException e = USER_EXCEPTION(SE4400);
 
     try
     {
-        if (uGetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, buf, 1024, NULL) != 0)
-            /* Default value for command line only */
-            os_primitives_id_min_bound = 1500;
-        else
-            os_primitives_id_min_bound = atoi(buf);
-
+//         if (uGetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, buf, 1024, NULL) != 0)
+//             /* Default value for command line only */
+//             os_primitives_id_min_bound = 1500;
+//         else
+//             os_primitives_id_min_bound = atoi(buf);
+        
+//         uSleep(10, __sys_call_error);
+        
+        parse_trn_command_line(argc, argv);
+        
         INIT_TOTAL_TIME_VARS u_ftime(&t_total1);
 
         /*
@@ -71,7 +75,7 @@ int TRmain(int argc, char *argv[])
          * of unrelated installations; we may even fail if the shmem is created by the
          * installation running as a different user). */
 
-        InitGlobalNames(os_primitives_id_min_bound, INT_MAX);
+        InitGlobalNames(tr_globals::os_primitives_min_bound, INT_MAX);
         SetGlobalNames();
 
         if (determine_vmm_region != -1)
@@ -83,6 +87,7 @@ int TRmain(int argc, char *argv[])
         }
         else
         {
+//             uSleep(10, __sys_call_error);
             try {
                 open_global_memory_mapping(SE4400);
                 close_global_memory_mapping();
@@ -105,17 +110,16 @@ int TRmain(int argc, char *argv[])
         if (uGetEnvironmentVariable(SEDNA_SERVER_MODE, buf, 1024, __sys_call_error) == 0)
             server_mode = (atoi(buf) == 1);
 
-        if (server_mode) {
-            client = new socket_client();
-        }
-        else
-        {
-            /* We got load metadata transaction started by CDB*/
-            first_transaction = (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) == 0);
+        /* We got load metadata transaction started by CDB*/
+        first_transaction = (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) == 0);
 
-            /* We got recovery transaction started ny SM */
-            run_recovery = (uGetEnvironmentVariable(SEDNA_RUN_RECOVERY_TRANSACTION, buf, 1024, __sys_call_error) == 0);
-
+        /* We got recovery transaction started ny SM */
+        run_recovery = (uGetEnvironmentVariable(SEDNA_RUN_RECOVERY_TRANSACTION, buf, 1024, __sys_call_error) == 0);
+        
+        if (uSocketInit(__sys_call_error) != 0) throw USER_EXCEPTION(SE3001);
+        
+        if (first_transaction || run_recovery || !server_mode) {
+            
             /* We don't allow running se_trn directly */
             if (strcmp(ACTIVE_CONFIGURATION, "Release") == 0 && !first_transaction && !run_recovery)
                 throw USER_EXCEPTION(SE4613);
@@ -123,35 +127,27 @@ int TRmain(int argc, char *argv[])
             client = new command_line_client(argc, argv);
             if (!sedna_server_is_running) throw USER_EXCEPTION(SE4400);
         }
-
-        if (uSocketInit(__sys_call_error) != 0) throw USER_EXCEPTION(SE3001);
+        else
+        {
+            client = new socket_client();
+        }
 
         client->init();
-        client->get_session_parameters();
-
+        
         /* init global names */
         InitGlobalNames(client->get_os_primitives_id_min_bound(), INT_MAX);
         SetGlobalNames();
 
+        fflush(stdout);
+        
         open_gov_shm();
 
-        /* get global configuration */
-        socket_port     = GOV_HEADER_GLOBAL_PTR -> lstnr_port_number;
-        strcpy(gov_address, GOV_HEADER_GLOBAL_PTR -> lstnr_addr);
-        SEDNA_DATA      = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
-        max_stack_depth = GOV_HEADER_GLOBAL_PTR -> pp_stack_depth;
-
-        /* check if database exists */
-        int db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
-
-        /* there is no such database in governor */
-        if (db_id == -1) throw USER_EXCEPTION2(SE4200, db_name);
-
+        SEDNA_DATA = tr_globals::sedna_data;
         SetGlobalNamesDB(db_id);
 
         if (!run_recovery) {
             /* register session on governor */
-            register_session_on_gov();
+            client->register_session_on_gov();
         }
         else {
             /* cannot register for recovery since the
@@ -159,10 +155,12 @@ int TRmain(int argc, char *argv[])
             sid = 0;
         }
 
-        tr_globals::ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number,
-                                           run_recovery ? EL_RCV : EL_TRN,
-                                           run_recovery ? NULL : &tr_globals::is_timer_fired);
-        tr_globals::ppc->startup(e);
+        client->get_session_parameters();
+        
+//         tr_globals::ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number,
+//                                            run_recovery ? EL_RCV : EL_TRN,
+//                                            run_recovery ? NULL : &tr_globals::is_timer_fired);
+//         tr_globals::ppc->startup(e);
 
         event_logger_init((run_recovery) ? EL_RCV : EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         event_logger_set_sid(sid);
@@ -172,7 +170,8 @@ int TRmain(int argc, char *argv[])
             /* doing somehing only for command line client */
             client->write_user_query_to_log();
             /* doing something only for command line client */
-            client->set_keep_alive_timeout(GOV_HEADER_GLOBAL_PTR -> ka_timeout);
+//             client->set_keep_alive_timeout(GOV_HEADER_GLOBAL_PTR -> ka_timeout);
+            client->set_keep_alive_timeout(tr_globals::ka_timeout);
             /* set keyboard handlers */
             set_trn_ctrl_handler();
         }
@@ -195,13 +194,13 @@ int TRmain(int argc, char *argv[])
         /* recovery routine is run instead of transaction mix */
         if (run_recovery)
         {
-            on_transaction_begin(sm_server, tr_globals::ppc, true); // true means recovery is active
+            on_transaction_begin(sm_server, /*tr_globals::ppc, */true); // true means recovery is active
             on_kernel_recovery_statement_begin();
 
             recover_db_by_logical_log();
 
             on_kernel_recovery_statement_end();
-            on_transaction_end(sm_server, true, tr_globals::ppc, true);
+            on_transaction_end(sm_server, true, /*tr_globals::ppc,*/ true);
         }
 
         /////////////////////////////////////////////////////////////////////////////////
@@ -211,10 +210,11 @@ int TRmain(int argc, char *argv[])
         {
             client->read_msg(&client_msg);
             if (client_msg.instruction == se_BeginTransaction)  //BeginTransaction
+            
             {
                 try
                 {
-                    on_transaction_begin(sm_server, tr_globals::ppc);
+                    on_transaction_begin(sm_server/*, tr_globals::ppc*/);
                     client->respond_to_client(se_BeginTransactionOk);
 
                     qep_tree = NULL; //qep of current stmnt
@@ -334,7 +334,7 @@ int TRmain(int argc, char *argv[])
                         case se_CommitTransaction:     //commit command
                             {
                                 on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, true /*COMMIT*/, tr_globals::ppc);
+                                on_transaction_end(sm_server, true /*COMMIT*//*, tr_globals::ppc*/);
                                 ret_code = 0;
 
                                 client->respond_to_client(se_CommitTransactionOk);
@@ -345,7 +345,7 @@ int TRmain(int argc, char *argv[])
                         case se_RollbackTransaction:   //rollback command
                             {
                                 on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, false /*ROLLBACK*/, tr_globals::ppc);
+                                on_transaction_end(sm_server, false /*ROLLBACK*//*, tr_globals::ppc*/);
                                 ret_code = 0;
 
                                 client->respond_to_client(se_RollbackTransactionOk);
@@ -360,7 +360,7 @@ int TRmain(int argc, char *argv[])
                         case se_CloseConnection:       //close connection
                             {
                                 on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, false /*ROLLBACK*/, tr_globals::ppc);
+                                on_transaction_end(sm_server, false /*ROLLBACK*//*, tr_globals::ppc*/);
                                 ret_code = 1;
 
                                 client->respond_to_client(se_TransactionRollbackBeforeClose);
@@ -394,7 +394,7 @@ int TRmain(int argc, char *argv[])
                 catch(SednaUserException & e)
                 {
                     on_user_statement_end(qep_tree, st);
-                    on_transaction_end(sm_server, false /*ROLLBACK*/, tr_globals::ppc);
+                    on_transaction_end(sm_server, false /*ROLLBACK*//*, tr_globals::ppc*/);
                     ret_code = 1;
 
                     d_printf1("\nTr is rolled back successfully\n");
@@ -422,6 +422,10 @@ int TRmain(int argc, char *argv[])
             else if (client_msg.instruction == se_CloseConnection)      // CloseConnection
             {
                 client->respond_to_client(se_CloseConnectionOk);
+                if (!run_recovery)
+                {   
+                  client->unregister_session_on_gov();
+                }
                 client->release();
                 delete client;
                 expect_another_transaction = false;
@@ -477,12 +481,14 @@ int TRmain(int argc, char *argv[])
             PRINT_DEBUG_TIME_RESULTS}
 
         event_logger_release();
-        tr_globals::ppc->shutdown();
-        delete tr_globals::ppc;
-        tr_globals::ppc = NULL;
+//         tr_globals::ppc->shutdown();
+//         delete tr_globals::ppc;
+//         tr_globals::ppc = NULL;
 
         if (!run_recovery)
+        {   
             set_session_finished();
+        }
 
         event_logger_set_sid(-1);
 
@@ -498,14 +504,14 @@ int TRmain(int argc, char *argv[])
             USemaphore rcv_signal_end;
 
             /* signal to SM that we are finished */
-            if (0 != USemaphoreOpen(&rcv_signal_end, CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG, __sys_call_error))
-                throw SYSTEM_EXCEPTION("Cannot open CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG!");
+            if (0 != USemaphoreOpen(&rcv_signal_end, SEDNA_DB_RECOVERED_BY_LOGICAL_LOG, __sys_call_error))
+                throw SYSTEM_EXCEPTION("Cannot open SEDNA_DB_RECOVERED_BY_LOGICAL_LOG!");
 
             if (0 != USemaphoreUp(rcv_signal_end, __sys_call_error))
-                throw SYSTEM_EXCEPTION("Cannot up CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG!");
+                throw SYSTEM_EXCEPTION("Cannot up SEDNA_DB_RECOVERED_BY_LOGICAL_LOG!");
 
             if (0 != USemaphoreClose(rcv_signal_end, __sys_call_error))
-                throw SYSTEM_EXCEPTION("Cannot close CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG!");
+                throw SYSTEM_EXCEPTION("Cannot close SEDNA_DB_RECOVERED_BY_LOGICAL_LOG!");
         }
     }
     catch(SednaUserException & e)
@@ -532,12 +538,12 @@ int TRmain(int argc, char *argv[])
             d_printf1("Connection with client has been broken\n");
         }
         event_logger_release();
-        if (tr_globals::ppc)
-        {
-            tr_globals::ppc->shutdown();
-            delete tr_globals::ppc;
-            tr_globals::ppc = NULL;
-        }
+//         if (tr_globals::ppc)
+//         {
+//             tr_globals::ppc->shutdown();
+//             delete tr_globals::ppc;
+//             tr_globals::ppc = NULL;
+//         }
         set_session_finished();
         close_gov_shm();
         uSocketCleanup(__sys_call_error);

@@ -220,6 +220,10 @@ if (MSVC)
     include_directories(${CMAKE_SOURCE_DIR}/libs/compat/stdint)
 endif (MSVC)
 
+if (UNIX)
+    include_directories(${CMAKE_SOURCE_DIR}/libs/libancillary-0.9.1)
+endif (UNIX)
+
 # perform some platform specific definitions setup
 include(CMakeDefinitions.cmake)
 

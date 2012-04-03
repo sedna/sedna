@@ -14,7 +14,7 @@
 #include "common/SSMMsg.h"
 #include "common/base.h"
 #include "common/errdbg/d_printf.h"
-#include "common/pping.h"
+// #include "common/pping.h"
 #include "common/version.h"
 #include "common/ugc.h"
 #include "common/gmm.h"
@@ -24,8 +24,20 @@
 #include "gov/gov_globals.h"
 #include "gov/gov_functions.h"
 #include "gov/gov_table.h"
-#include "gov/listener.h"
+// #include "gov/listener.h"
 #include "gov/config_utils.h"
+
+
+
+/*new listener part
+ * 
+ */
+#include "gov/cpool.h"
+
+
+
+
+
 
 #define GOV_BACKGROUND_MODE_TIMEOUT                                     15000
 #define GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON           "SEDNA_GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON"
@@ -53,7 +65,7 @@ BOOL GOVCtrlHandler(DWORD fdwCtrlType)
              // Beep(1000, 1000);
              open_gov_shm();
              GOV_HEADER_GLOBAL_PTR -> is_server_stop = SE_STOP_SOFT;
-             send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, GOV_HEADER_GLOBAL_PTR -> lstnr_addr, STOP);
+             send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, GOV_HEADER_GLOBAL_PTR -> lstnr_addr, se_Stop);
              close_gov_shm();
 
              return TRUE;
@@ -73,7 +85,7 @@ void GOVCtrlHandler(int signo)
          // beep();
          open_gov_shm();
          GOV_HEADER_GLOBAL_PTR -> is_server_stop = SE_STOP_SOFT;
-         send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, GOV_HEADER_GLOBAL_PTR -> lstnr_addr, STOP);
+         send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, GOV_HEADER_GLOBAL_PTR -> lstnr_addr, se_Stop);
          close_gov_shm();
      }
 }
@@ -83,7 +95,7 @@ void GOVCtrlHandler(int signo)
 int main(int argc, char** argv)
 {
     program_name_argv_0 = argv[0];
-    pping_server *pps = NULL;
+//     pping_server *pps = NULL;
     gov_config_struct cfg;
     bool is_pps_close = true;
     int arg_scan_ret_val = 0;
@@ -124,7 +136,7 @@ int main(int argc, char** argv)
 
         RenameLastSoftFaultDir();
 
-        pps = new pping_server(cfg.gov_vars.ping_port_number, EL_GOV);
+//         pps = new pping_server(cfg.gov_vars.ping_port_number, EL_GOV);
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR)
             throw SYSTEM_EXCEPTION("Failed to initialize socket library");
@@ -185,7 +197,7 @@ int main(int argc, char** argv)
 
             USemaphore started_sem;
 
-            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_GOVERNOR_IS_READY, NULL, __sys_call_error))
+            if (0 != USemaphoreCreate(&started_sem, 0, 1, SEDNA_GOVERNOR_IS_READY, NULL, __sys_call_error))
                 throw USER_EXCEPTION(SE4401);
 
 #ifdef _WIN32
@@ -232,8 +244,8 @@ int main(int argc, char** argv)
 
       create_global_memory_mapping(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound);
 
-      pps->startup();
-      is_pps_close = false;
+//       pps->startup();
+//       is_pps_close = false;
 
       d_printf1("Process ping server has been started\n");
       elog(EL_LOG, ("Process ping server is ready"));
@@ -254,16 +266,20 @@ int main(int argc, char** argv)
            throw USER_EXCEPTION(SE4403);
 #endif
 
-      set_session_common_environment();
 
-      client_listener(gov_table->get_config_struct(), background_off_from_background_on);
+
+//       client_listener(gov_table->get_config_struct(), background_off_from_background_on);
+      
+      Worker * govWorker = new Worker(&cfg);
+      govWorker->createListener();
+      govWorker->run();
 
       gov_table->wait_all_notregistered_sess();
 
-      pps->shutdown();
-      delete pps;
-      pps = NULL;
-      is_pps_close = true;
+//       pps->shutdown();
+//       delete pps;
+//       pps = NULL;
+//       is_pps_close = true;
 
       if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
 
@@ -283,7 +299,7 @@ int main(int argc, char** argv)
     } catch (SednaUserException &e) {
         fprintf(stderr, "%s\n", e.what());
         event_logger_release();
-        if (!is_pps_close) { if (pps) pps->shutdown();}
+//         if (!is_pps_close) { if (pps) pps->shutdown();}
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_GOV);

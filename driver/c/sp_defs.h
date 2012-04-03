@@ -19,7 +19,7 @@
 #define SE_SOCKET_MSG_BUF_SIZE                             10240
 #define SE_MAX_QUERY_SIZE                                  2097152 // Maximum query size 2 Mb
 
-#define SE_CURRENT_SOCKET_PROTOCOL_VERSION_MAJOR           3
+#define SE_CURRENT_SOCKET_PROTOCOL_VERSION_MAJOR           5
 #define SE_CURRENT_SOCKET_PROTOCOL_VERSION_MINOR           0
 
 #define SEDNA_DEBUG_OFF                                    0
@@ -37,6 +37,13 @@
 
 
 typedef int sp_int32;
+
+enum se_db_security_type
+{
+    se_security_off               = 0,
+    se_security_authentication    = 1,
+    se_security_authorization     = 2
+};
 
 enum se_debug_info_type 
 {
@@ -120,54 +127,81 @@ enum se_item_type
 
 enum se_sp_instructions
 {   
-    se_ErrorResponse = 100,
-    se_StartUp = 110,
-    se_SessionParameters = 120,
-    se_AuthenticationParameters = 130,
-    se_SendSessionParameters = 140,
-    se_SendAuthParameters = 150,
-    se_AuthenticationOK = 160,
-    se_AuthenticationFailed = 170,
-    se_BeginTransaction = 210,
-    se_CommitTransaction = 220,
-    se_RollbackTransaction = 225,
-    se_BeginTransactionOk = 230,
-    se_BeginTransactionFailed = 240,
-    se_CommitTransactionOk = 250,
-    se_CommitTransactionFailed = 260,
-    se_RollbackTransactionOk = 255,
-    se_RollbackTransactionFailed = 265,
-    se_Execute = 300,
-    se_ExecuteLong = 301,
-    se_LongQueryEnd = 302,
-    se_GetNextItem = 310,
-    se_QuerySucceeded = 320,
-    se_DebugInfo = 325,
-    se_QueryFailed = 330,
-    se_UpdateSucceeded = 340,
-    se_UpdateFailed = 350,
-    se_ItemStart = 355,
-    se_ItemPart = 360,
-    se_ItemEnd = 370,
-    se_ResultEnd = 375,
-    se_BulkLoadError = 400,
-    se_BulkLoadPortion = 410,
-    se_BulkLoadEnd = 420,
-    se_BulkLoadFileName = 430,
-    se_BulkLoadFromStream = 431,
-    se_BulkLoadSucceeded = 440,
-    se_BulkLoadFailed = 450,
-    se_ShowTime = 451,
-    se_LastQueryTime = 452,
-    se_CloseConnection = 500,
-    se_CloseConnectionOk = 510,
-    se_TransactionRollbackBeforeClose = 520,
-    se_Authenticate = 90,
-    se_ExecuteSchemeProgram = 95,
-    se_SetSessionOptions = 530,
-    se_SetSessionOptionsOk = 540,
-    se_ResetSessionOptions = 550,
-    se_ResetSessionOptionsOk = 560
+    se_ErrorResponse                               = 100,
+    se_StartUp                                     = 110,
+    se_SessionParameters                           = 120,
+    se_RegisterNewSession                          = 121,
+    se_UnRegisterSession                           = 122,
+    se_RegisterDB                                  = 123,
+    se_RegisterCDB                                 = 124,
+    se_UnRegisterDB                                = 125,
+    se_AuthenticationParameters                    = 130,
+    se_SendSessionParameters                       = 140,
+    se_SendAuthParameters                          = 150,
+    se_AuthenticationOK                            = 160,
+    se_TrnRegisterOK                               = 161,
+    se_TrnRegisterOKFirstTransaction               = 162,
+    se_UnixSocketReady                             = 163,
+    se_ReceiveSocket                               = 164,
+    se_SocketReceivedOK                            = 165,
+    se_AuthenticationFailed                        = 170,
+    se_TrnRegisterFailedNotRunningOrSpecialMode    = 171,
+    se_TrnRegisterFailedMaxSessLimit               = 172,
+    se_SMRegisteringOK                             = 181,
+    se_SMRegisteringFailed                         = 182,
+    se_CdbRegisteringOK                            = 183,
+    se_CdbRegisteringFailed                        = 184,
+    se_CreateDbRequest                             = 185,
+    se_CreateDbParams                              = 186,
+    se_CreateDbOK                                  = 187,
+    se_CreateDbFailed                              = 188,
+    se_CreateDbFailedExists                        = 189,
+    
+    se_BeginTransaction                            = 210,
+    se_CommitTransaction                           = 220,
+    se_RollbackTransaction                         = 225,
+    se_BeginTransactionOk                          = 230,
+    se_BeginTransactionFailed                      = 240,
+    se_CommitTransactionOk                         = 250,
+    se_CommitTransactionFailed                     = 260,
+    se_RollbackTransactionOk                       = 255,
+    se_RollbackTransactionFailed                   = 265,
+    se_Execute                                     = 300,
+    se_ExecuteLong                                 = 301,
+    se_LongQueryEnd                                = 302,
+    se_GetNextItem                                 = 310,
+    se_QuerySucceeded                              = 320,
+    se_DebugInfo                                   = 325,
+    se_QueryFailed                                 = 330,
+    se_UpdateSucceeded                             = 340,
+    se_UpdateFailed                                = 350,
+    se_ItemStart                                   = 355,
+    se_ItemPart                                    = 360,
+    se_ItemEnd                                     = 370,
+    se_ResultEnd                                   = 375,
+    se_BulkLoadError                               = 400,
+    se_BulkLoadPortion                             = 410,
+    se_BulkLoadEnd                                 = 420,
+    se_BulkLoadFileName                            = 430,
+    se_BulkLoadFromStream                          = 431,
+    se_BulkLoadSucceeded                           = 440,
+    se_BulkLoadFailed                              = 450,
+    se_ShowTime                                    = 451,
+    se_LastQueryTime                               = 452,
+    se_CloseConnection                             = 500,
+    se_Stop                                        = 501,
+    se_StopSM                                      = 502,
+    se_CloseConnectionOk                           = 510,
+    se_TransactionRollbackBeforeClose              = 520,
+    se_Authenticate                                = 90,
+    se_ExecuteSchemeProgram                        = 95,
+    se_SetSessionOptions                           = 530,
+    se_SetSessionOptionsOk                         = 540,
+    se_ResetSessionOptions                         = 550,
+    se_ResetSessionOptionsOk                       = 560,
+    se_RuntimeConfig                               = 600,
+    se_StartHotBackup                              = 666,
+    se_CheckIfSMisRunning                          = 888
 };
 
 struct msg_struct

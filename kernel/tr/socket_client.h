@@ -13,6 +13,7 @@
 #include "tr/client_core.h"
 #include "tr/crmutils/exec_output.h"
 #include "tr/tr_utils.h"
+#include "common/socketutils/socketutils.h"
 
 enum client_states 
 {
@@ -33,8 +34,11 @@ EXTERN_DECLARE_TIME_VARS
 class socket_client : public client_core
 {
 private:
-    USOCKET Sock;
-
+    USOCKET client_sock;           //it's the socket for communication with client
+    
+    MessageExchanger  *  clientCommunicator;
+    
+/* TODO make separate gov && client socks */
     protocol_version p_ver;
 
     read_msg_states read_msg_count;
@@ -61,6 +65,9 @@ public:
 
     virtual void process_unknown_instruction(int instruction, bool in_transaction);
     virtual void init();
+    virtual void register_session_on_gov();
+    virtual void unregister_session_on_gov();
+    
     virtual void release();
     virtual void read_msg(msg_struct *msg);
     virtual char* get_query_string(msg_struct *msg);
@@ -97,6 +104,8 @@ public:
      * to make indentation, space delimiting, etc ...
      */
     virtual bool supports_serialization() { return p_ver.major_version >= 4; }
+    
+    friend void register_session_on_gov(socket_client * client);
 };
 
 

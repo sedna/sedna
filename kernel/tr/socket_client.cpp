@@ -28,11 +28,11 @@ static msg_struct sp_msg;
 using namespace std;
 
 
-#define THROW_SOCKET_EXCEPTION(code)  {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2((code), usocket_error_translator());}
+#define THROW_SOCKET_EXCEPTION(code)  {client_sock = U_INVALID_SOCKET; throw USER_EXCEPTION2((code), usocket_error_translator());}
 
 socket_client::socket_client()
 {
-    p_ver.major_version = 1;
+    p_ver.major_version = 5;
     p_ver.minor_version = 0;	
 
     read_msg_count = se_BeginAuthenticatingTransaction;
@@ -42,7 +42,7 @@ socket_client::socket_client()
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
 
-    Sock = U_INVALID_SOCKET;
+    client_sock = U_INVALID_SOCKET;
     stream = NULL;
     out_s = NULL;
     dbg_s = NULL;
@@ -51,25 +51,32 @@ socket_client::socket_client()
     long_query_stream = NULL;
     recreate_debug_stream = true;
     output_method = se_output_method_xml;
+    
+    gov_sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
+    if(U_SOCKET_ERROR == gov_sock) throw USER_EXCEPTION (SE3001);
+
+    while(0 != uconnect_tcp(gov_sock, tr_globals::socket_port, tr_globals::gov_address, __sys_call_error))
+    {
+        if(!utry_connect_again())
+        {
+            ushutdown_close_socket(gov_sock, __sys_call_error);
+            throw USER_EXCEPTION (SE3003);
+        }
+#ifdef _WIN32
+#else
+        if(ushutdown_close_socket(gov_sock, __sys_call_error)!=0) throw USER_EXCEPTION (SE3011);
+        gov_sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
+        if(gov_sock == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3001);
+#endif
+    }
+    govCommunicator = new MessageExchanger(gov_sock);
+    
 }
 
 void socket_client::init()
 {
-    //  Takes Socket handle from Environment Variable 
+//   !TODO: delete this when trn will be stable
     char buffer[ENV_BUF_SIZE + 1];
-    memset(buffer, 0, ENV_BUF_SIZE + 1);
-    uGetEnvironmentVariable(CONNECTION_SOCKET_HANDLE, buffer, ENV_BUF_SIZE, __sys_call_error);
-
-    Sock = atoi(buffer);   // use Sock
-    if (Sock == U_INVALID_SOCKET)
-    {
-#ifdef _WIN32
-        d_printf2("accept failed %d\n",GetLastError());
-#else
-        d_printf1("accept failed \n");
-#endif
-        throw USER_EXCEPTION(SE3001); 
-    }
 
     if (uGetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, buffer, ENV_BUF_SIZE, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4073, SEDNA_OS_PRIMITIVES_ID_MIN_BOUND);
@@ -77,10 +84,95 @@ void socket_client::init()
     os_primitives_id_min_bound = atoi(buffer);
 }
 
+void socket_client::register_session_on_gov()
+{
+    UPID s_pid  = uGetCurrentProcessId(__sys_call_error);
+   
+    govCommunicator->beginSend(se_RegisterNewSession);
+    govCommunicator->writeString(tr_globals::db_name);
+    govCommunicator->writeInt32(s_pid);
+    govCommunicator->writeChar(tr_globals::first_transaction ? 1 : 0);
+    govCommunicator->endSend();
+    
+    while(!govCommunicator->receive());
+
+    if(govCommunicator->getInstruction() == se_TrnRegisterOK)
+    {
+        /* Trn registered on gov successfully, get  
+         * sid (session identificator) is a global parameter */
+
+        tr_globals::sid = govCommunicator->readInt32();
+#ifndef _WIN32        
+        USOCKET unix_socket = usocket(AF_UNIX, SOCK_STREAM, 0, __sys_call_error);
+        client_sock = U_INVALID_SOCKET;
+        
+        char socket_unix_address[14];
+        memset (socket_unix_address, 0, 14);
+        memcpy (socket_unix_address, "sdn", strlen("sdn"));
+        
+        u_itoa(tr_globals::sid, socket_unix_address + strlen("sdn"), 10);
+       
+        if(uconnect_unix(unix_socket, socket_unix_address, __sys_call_error) != 0)
+        {
+           ushutdown_close_socket(unix_socket, __sys_call_error);
+           throw USER_EXCEPTION2 (SE3003, usocket_error_translator());
+        }
+
+        MessageExchanger * socket_communicator = new MessageExchanger(unix_socket);
+        
+        socket_communicator->beginSend(se_ReceiveSocket);
+        socket_communicator->writeInt32(tr_globals::sid);
+        socket_communicator->endSend();
+        
+        if (0 != socket_communicator->receiveSocket(&client_sock)) throw USER_EXCEPTION2(SE3007, usocket_error_translator());
+        d_printf2("Client socket received. It is %d \n", client_sock);
+#else
+        if (0 != govCommunicator->receiveSocket(&client_sock)) throw USER_EXCEPTION2(SE3007, usocket_error_translator());
+        d_printf2("Client socket received. It is %d \n", client_sock);
+#endif
+        clientCommunicator = new MessageExchanger(client_sock);
+    }
+    
+    if(govCommunicator->getInstruction() == se_TrnRegisterFailedNotRunningOrSpecialMode)
+    {
+        /* Database is not started or running in special mode*/
+        ushutdown_close_socket(gov_sock, __sys_call_error);
+        throw USER_EXCEPTION2(SE4409,tr_globals::db_name);
+    }
+    
+    if(govCommunicator->getInstruction() == se_TrnRegisterOKFirstTransaction)
+    {
+        /* we cannot reach this point in socket_client; I've left it to be able to catch errors */
+        throw USER_EXCEPTION2(SE4409,tr_globals::db_name);
+    }
+    
+    if(govCommunicator->getInstruction() == se_TrnRegisterFailedMaxSessLimit)
+    {
+        /* Currently there are maximum number of session in the system */
+        ushutdown_close_socket(gov_sock, __sys_call_error);
+        throw USER_EXCEPTION(SE3046);
+    }
+}
+
+
+void socket_client::unregister_session_on_gov()
+{
+    UPID s_pid  = uGetCurrentProcessId(__sys_call_error);
+
+    govCommunicator->beginSend(se_UnRegisterSession);
+    govCommunicator->writeString(tr_globals::db_name);
+    govCommunicator->writeInt32(tr_globals::sid);
+    
+    govCommunicator->endSend();
+    
+    while(!govCommunicator->receive());
+}
+
+
 void socket_client::release()
 {
-    if(Sock != U_INVALID_SOCKET)
-        if(ushutdown_close_socket(Sock, __sys_call_error)!=0) Sock = U_INVALID_SOCKET;
+    if(client_sock != U_INVALID_SOCKET)
+        if(ushutdown_close_socket(client_sock, __sys_call_error)!=0) client_sock = U_INVALID_SOCKET;
    if (out_s != NULL) {
         delete out_s;
         out_s = NULL;
@@ -140,12 +232,12 @@ void socket_client::read_msg(msg_struct *msg)
 
             timeout.tv_sec  = 1;
             timeout.tv_usec = 0;
-            res = uselect_read(Sock, &timeout, __sys_call_error);
+            res = uselect_read(client_sock, &timeout, __sys_call_error);
 
             if(0 != this->ka_timeout)
            	{
                 timeout_counter++;
-                if(timeout_counter >= this->ka_timeout) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE4624);}
+                if(timeout_counter >= this->ka_timeout) {client_sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE4624);}
            	}
 
             if(res == 1) //ready to recv data
@@ -156,7 +248,7 @@ void socket_client::read_msg(msg_struct *msg)
             else if(res == U_SOCKET_ERROR) THROW_SOCKET_EXCEPTION(SE3007);
         }
 
-        res = sp_recv_msg(Sock, msg);
+        res = sp_recv_msg(client_sock, msg);
         
         if(res == U_SOCKET_ERROR) 
             THROW_SOCKET_EXCEPTION(SE3007);
@@ -201,7 +293,7 @@ char* socket_client::get_query_string(msg_struct *msg)
 
                     if(query_size > SE_MAX_QUERY_SIZE) query_too_large = true;
                 }
-                res = sp_recv_msg(Sock, msg);
+                res = sp_recv_msg(client_sock, msg);
                 if (res == U_SOCKET_ERROR) THROW_SOCKET_EXCEPTION(SE3007);
                 if (res == 1) throw USER_EXCEPTION(SE3012);
             }
@@ -259,7 +351,7 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
             {
                 sp_msg.instruction = 431;// BulkLoadFromStream
                 sp_msg.length = 0;
-                if(sp_send_msg(Sock, &sp_msg) != 0) THROW_SOCKET_EXCEPTION(SE3006);
+                if(sp_send_msg(client_sock, &sp_msg) != 0) THROW_SOCKET_EXCEPTION(SE3006);
             }
             else
             {
@@ -270,7 +362,7 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
                 int2net_int(filename_len, sp_msg.body+1);
                 sp_msg.body[0] = 0;
                 memcpy(sp_msg.body+5, client_filename, filename_len);
-                if(sp_send_msg(Sock, &sp_msg) != 0) THROW_SOCKET_EXCEPTION(SE3006);
+                if(sp_send_msg(client_sock, &sp_msg) != 0) THROW_SOCKET_EXCEPTION(SE3006);
             }
 
             /* Create tmpfile for bulkload */
@@ -279,7 +371,7 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
             if(res == 0)
                 throw USER_EXCEPTION(SE4052);
 
-            res = sp_recv_msg(Sock, &sp_msg);
+            res = sp_recv_msg(client_sock, &sp_msg);
             if(res == U_SOCKET_ERROR) THROW_SOCKET_EXCEPTION(SE3007);
             if(res == 1) throw USER_EXCEPTION(SE3012);
 
@@ -301,7 +393,7 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
                         throw USER_EXCEPTION(SE3009);
                     }
 
-                    res = sp_recv_msg(Sock, &sp_msg);
+                    res = sp_recv_msg(client_sock, &sp_msg);
                     if (res == U_SOCKET_ERROR) THROW_SOCKET_EXCEPTION(SE3007);
 
                     if (res == 1) 
@@ -375,7 +467,7 @@ void socket_client::respond_to_client(int instruction)
     case se_CommitTransactionOk:
         if (read_msg_count == se_CommitAuthenticatingTransaction) {read_msg_count = se_GetNextMessageFromClient; return;}
     }
-    if( sp_send_msg(Sock, &sp_msg)!=0 ) THROW_SOCKET_EXCEPTION(SE3006);
+    if( sp_send_msg(client_sock, &sp_msg)!=0 ) THROW_SOCKET_EXCEPTION(SE3006);
 }
 
 void 
@@ -394,110 +486,52 @@ socket_client::begin_item(bool is_atomic, xmlscm_type st, t_item nt, const char*
     }
 }
 
+/* Important! In this version trn get session parameters from gov, not from the client because gov has already got it from client*/
 void socket_client::get_session_parameters()
 {
-    sp_msg.instruction = se_SendSessionParameters;
-    sp_msg.length = 0;
-    if (sp_send_msg(Sock, &sp_msg)!=0) THROW_SOCKET_EXCEPTION(SE3006);
-
     timeout.tv_sec = 50;
     timeout.tv_usec = 0;
-    int select_res = uselect_read(Sock, &timeout, __sys_call_error);
+    int select_res = uselect_read(gov_sock, &timeout, __sys_call_error);
     if (select_res == 0) throw USER_EXCEPTION(SE3047);
     if (select_res == U_SOCKET_ERROR) THROW_SOCKET_EXCEPTION(SE3007);
-    int res = sp_recv_msg(Sock, &sp_msg);
-    if (res == U_SOCKET_ERROR) THROW_SOCKET_EXCEPTION(SE3007);
-    if (res == 1) throw USER_EXCEPTION(SE3012);
-
-    if (sp_msg.instruction != se_SessionParameters)
-    {
+    
+    while(!govCommunicator->receive());
+     
+    if (se_SessionParameters != govCommunicator->getInstruction()) {
         error(SE3009, string("Unknown Instruction from client. Authentication failed."));
         throw USER_EXCEPTION(SE3009);
     }
-
-    /* Get version of the protocol */
-    int buf_position = 0;
-    p_ver.major_version = sp_msg.body[buf_position];
-    p_ver.minor_version = sp_msg.body[buf_position+1];
-
-    /* Check version of the protocol */
-    if (p_ver.major_version < 1 || 
-        p_ver.major_version > 4 || 
-        p_ver.minor_version !=0 ) {
+    
+    p_ver.major_version = govCommunicator->readChar();
+    p_ver.minor_version = govCommunicator->readChar();
+    
+    if (p_ver.major_version < 5) {
             error(SE3014, string("major version: ")+int2string(p_ver.major_version)+string(" minor version: ")+int2string(p_ver.minor_version)); 
             throw USER_EXCEPTION(SE3014);
     }
-
-    buf_position += 3;
-    uint32_t length;
-    net_int2int(&length, sp_msg.body+buf_position);
-
-    buf_position += sizeof(int32_t);
-
-    if(length > SE_MAX_LOGIN_LENGTH)
-    {
-        error(SE3015, string("Error: Too long login")); 
-        throw USER_EXCEPTION(SE3015);
-    }
-
-    memcpy(tr_globals::login, sp_msg.body+buf_position, length);   
-
-    tr_globals::login[length] = '\0';   
-    buf_position += length;
-
-    d_printf3("In authorization length = %d login = %s\n", length, tr_globals::login);
-
-    net_int2int(&length, sp_msg.body+buf_position+1);
-    buf_position += 1 + sizeof(int32_t);
-
-    d_printf2("length =%d\n", length);
-    if(length > SE_MAX_DB_NAME_LENGTH)
-    {
-        error(SE3015, string("Error: Too long db_name")); 
-        throw USER_EXCEPTION(SE3015);
-    }
-
-    memcpy(tr_globals::db_name, sp_msg.body+buf_position, length);	  
-    tr_globals::db_name[length] = '\0';
-
+    
+    govCommunicator->readString(tr_globals::login, SE_MAX_LOGIN_LENGTH);
+    govCommunicator->readString(tr_globals::db_name, SE_MAX_DB_NAME_LENGTH);
+    
+    d_printf2("In authorization login = %s\n", tr_globals::login);
     d_printf2("In authorization db_name = %s\n", tr_globals::db_name);
-
-    sp_msg.instruction = se_SendAuthParameters;// SendAuthenticationParameters message
-    sp_msg.length = 0;
-    if (sp_send_msg(Sock, &sp_msg)!=0) THROW_SOCKET_EXCEPTION(SE3006);
-
-    timeout.tv_sec = 50;
-    timeout.tv_usec = 0;
-    select_res = uselect_read(Sock, &timeout, __sys_call_error);
-    if (select_res == 0) throw USER_EXCEPTION(SE3047);
-    if (select_res == U_SOCKET_ERROR) THROW_SOCKET_EXCEPTION(SE3007);
-    res = sp_recv_msg(Sock, &sp_msg);
-    if (res == U_SOCKET_ERROR) THROW_SOCKET_EXCEPTION(SE3007);
-    if (res == 1) throw USER_EXCEPTION(SE3012);
-
-    if (sp_msg.instruction != se_AuthenticationParameters) //AuthenticationParameters
-    {
-        error(SE3009, string("Error: Unknown Instruction from client. Authentication failed.")); 
-        throw USER_EXCEPTION(SE3009);
+    
+    while(!govCommunicator->receive());
+    if (se_AuthenticationParameters != govCommunicator->getInstruction()) {
+            error(SE3009, string("Error: Unknown Instruction from client. Authentication failed.")); 
+            throw USER_EXCEPTION(SE3009);
     }
-
-    buf_position = 1;
-    net_int2int(&length, sp_msg.body+buf_position);
-    buf_position += sizeof(int32_t);
-
-    if(length > SE_MAX_PASSWORD_LENGTH)
-    {
-        error(SE3015, string("Error: Too long password")); 
-        throw USER_EXCEPTION(SE3015);
-    }
-    memcpy(tr_globals::password, sp_msg.body+buf_position, length); 	   
-    tr_globals::password[length] = '\0';
-
+    govCommunicator->readString(tr_globals::password, SE_MAX_PASSWORD_LENGTH);
     d_printf2("In authorization password = %s\n", tr_globals::password);
-
+    
+    /*!FIXME Trn responses the client always ok there, it shouldn't be done in this way*/
+    
+    clientCommunicator->beginSend(se_AuthenticationOK);
+    clientCommunicator->endSend();
+    
     tr_globals::query_type = TL_XQuery;
 
-    out_s = se_new se_socketostream(Sock, p_ver);
+    out_s = se_new se_socketostream(client_sock, p_ver);
     nul_s = se_new se_nullostream();
     stream = out_s;
 }
@@ -568,7 +602,7 @@ void socket_client::set_session_options(msg_struct *msg)
     /* Send reply that option has been set succcessfully */
     sp_msg.instruction = se_SetSessionOptionsOk;
     sp_msg.length = 0; 
-    if(sp_send_msg(Sock, &sp_msg)!=0) THROW_SOCKET_EXCEPTION(SE3006);
+    if(sp_send_msg(client_sock, &sp_msg)!=0) THROW_SOCKET_EXCEPTION(SE3006);
 }
 
 void socket_client::reset_session_options()
@@ -584,7 +618,7 @@ void socket_client::reset_session_options()
     /* Send reply that options have been reset succcessfully */
     sp_msg.instruction = se_ResetSessionOptionsOk;
     sp_msg.length = 0;
-    if(sp_send_msg(Sock, &sp_msg)!=0) THROW_SOCKET_EXCEPTION(SE3006);
+    if(sp_send_msg(client_sock, &sp_msg)!=0) THROW_SOCKET_EXCEPTION(SE3006);
 }
 
 
@@ -594,12 +628,12 @@ void socket_client::authentication_result(bool res, const string& body)
     {
         sp_msg.instruction = se_AuthenticationOK;// AuthenticationOk message
         sp_msg.length = 0; 
-        if(sp_send_msg(Sock, &sp_msg)!=0) THROW_SOCKET_EXCEPTION(SE3006);
+        if(sp_send_msg(gov_sock, &sp_msg)!=0) THROW_SOCKET_EXCEPTION(SE3006);
         read_msg_count = se_CommitAuthenticatingTransaction;		
     }
     else
     {
-        if(sp_error_message_handler(Sock, se_AuthenticationFailed, SE3006, body.c_str())!=0) 
+        if(sp_error_message_handler(client_sock, se_AuthenticationFailed, SE3006, body.c_str())!=0) 
             THROW_SOCKET_EXCEPTION(SE3006);
     }
 }
@@ -659,18 +693,18 @@ void socket_client::process_unknown_instruction(int instruction, bool in_transac
 
 void socket_client::error(int code, const string& body)
 {
-    if(Sock != U_INVALID_SOCKET)
+    if(client_sock != U_INVALID_SOCKET)
     {
-        if(sp_error_message_handler(Sock, se_ErrorResponse, code, body.c_str())!=0) 
+        if(sp_error_message_handler(client_sock, se_ErrorResponse, code, body.c_str())!=0) 
             THROW_SOCKET_EXCEPTION(SE3006);
     }
 }
 
 void socket_client::error()
 {
-    if(Sock != U_INVALID_SOCKET)
+    if(client_sock != U_INVALID_SOCKET)
     {
-        if(sp_error_message_handler(Sock, se_ErrorResponse, 0, "Unknown error")!=0) 
+        if(sp_error_message_handler(client_sock, se_ErrorResponse, 0, "Unknown error")!=0) 
             THROW_SOCKET_EXCEPTION(SE3006);
     }
 }
@@ -687,7 +721,7 @@ void socket_client::show_time(u_timeb qep_time)
     int2net_int(ex_time.length(), sp_msg.body + 1);
     strcpy(sp_msg.body + 1 + sizeof(int), ex_time.c_str());
 
-    if(sp_send_msg(Sock, &sp_msg) != 0) THROW_SOCKET_EXCEPTION(SE3006);
+    if(sp_send_msg(client_sock, &sp_msg) != 0) THROW_SOCKET_EXCEPTION(SE3006);
 }
 
 void socket_client::set_keep_alive_timeout(int sec)
@@ -712,8 +746,8 @@ void socket_client::set_keep_alive_timeout(int sec)
         timeout.tv_sec = sec;        /// Use *struct timeval* under POSIX systems.
         timeout.tv_usec = 0;
 #endif
-        if (usetsockopt(this->Sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout), __sys_call_error) == U_SOCKET_ERROR ||
-            usetsockopt(this->Sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout), __sys_call_error) == U_SOCKET_ERROR)
+        if (usetsockopt(this->client_sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout), __sys_call_error) == U_SOCKET_ERROR ||
+            usetsockopt(this->client_sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout), __sys_call_error) == U_SOCKET_ERROR)
         {
             throw USER_EXCEPTION2(SE4623, (string("timeout value was: ") + int2string(sec)).c_str());
         }

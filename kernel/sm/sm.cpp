@@ -11,7 +11,7 @@
 #include "common/SSMMsg.h"
 #include "common/errdbg/d_printf.h"
 #include "common/rcv_test.h"
-#include "common/pping.h"
+// #include "common/pping.h"
 #include "common/lm_base.h"
 #include "common/gmm.h"
 #include "common/mmgr/memutils.h"
@@ -29,6 +29,10 @@
 #include "sm/wu/wu.h"
 #include "sm/llsm/physrcv.h"
 #include "sm/hb_utils.h"
+
+#include "common/u/usocket.h"
+#include "common/structures/cdb_structures.h"
+#include "cdb_utils.h"
 
 using namespace std;
 using namespace sm_globals;
@@ -59,6 +63,7 @@ BOOL SMCtrlHandler(DWORD fdwCtrlType)
 }
 #else  /* !_WIN32 */
 #include <signal.h>
+
 void SMCtrlHandler(int signo)
 {
     if (   signo == SIGINT
@@ -259,7 +264,7 @@ int sm_server_handler(void *arg)
                      }
             case 27: {
                          //d_printf1("query 27: bm_enter_exclusive_mode\n");
-                         bm_enter_exclusive_mode(msg->sid, &(msg->data.reg.num));
+                         bm_enter_exclusive_mode(msg->sid, &(msg->data.reg.num), sm_globals::bufs_num);
                          msg->cmd = 0;
                          break;
                      }
@@ -271,7 +276,7 @@ int sm_server_handler(void *arg)
                      }
             case 29: {
                          //d_printf1("query 29: bm_memlock_block\n");
-                         bm_memlock_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
+                         bm_memlock_block(msg->sid, *(xptr*)(&(msg->data.ptr)), sm_globals::bufs_num);
                          msg->cmd = 0;
                          break;
                      }
@@ -446,7 +451,7 @@ int sm_server_handler(void *arg)
 int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
-    pping_client *ppc = NULL;
+//     pping_client *ppc = NULL;
     char buf[1024];
     SednaUserException ppc_ex = USER_EXCEPTION(SE4400); /* used below in ppc->startup() */
     int sedna_db_version = 0;
@@ -465,26 +470,14 @@ int main(int argc, char **argv)
 
         parse_sm_command_line(argc, argv);
 
+        //!TODO: it seems that this place may be a cause of some problems in future. I need to think about this more carefully, not in the train :)
         gov_header_struct cfg;
         get_sednaconf_values(&cfg);
 
+                
         InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
         SetGlobalNames();
-
-        open_gov_shm();
-
-        int db_id = get_db_id_by_name(GOV_CONFIG_GLOBAL_PTR, db_name);
-
-        /* There is no such database? */
-        if (db_id == -1)
-            throw USER_EXCEPTION2(SE4200, db_name);
-
-        /* Check if database is already running */
-        if(is_database_running(GOV_CONFIG_GLOBAL_PTR, db_id))
-            throw USER_EXCEPTION2(SE4204, db_name);
-
-        SEDNA_DATA = GOV_HEADER_GLOBAL_PTR -> SEDNA_DATA;
-
+        
         SetGlobalNamesDB(db_id);
 
         /* event_logger_init must be after set_global_names */
@@ -497,84 +490,56 @@ int main(int argc, char **argv)
 #endif
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
+        
+        USOCKET s;
+        s = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
+        if(s == U_SOCKET_ERROR)
+            throw USER_EXCEPTION (SE3001);
+
+        if(uconnect_tcp(s, sm_globals::port_number, sm_globals::gov_address, __sys_call_error)!=0)
+        {
+            ushutdown_close_socket(s, __sys_call_error);
+            throw USER_EXCEPTION (SE3003);
+        }
+        
+        MessageExchanger * communicator = new MessageExchanger(s);
+        
+        elog(EL_LOG, ("SM has connected to GOV successfully"));
+        
+        CdbParameters * cdb_params = new CdbParameters();        
+        /* Database creation section */
+        if (sm_globals::cdb_mode == 1) {
+          register_cdb_on_gov(communicator);
+          elog(EL_LOG, ("CDB has registered on GOV successfully"));
+          cdb_params->readCdbParams(communicator);
+          cdb_params->setPaths(sm_globals::sedna_data);
+          elog(EL_LOG, ("CDB has received parameters"));
+          createDb(cdb_params, &cfg);
+          elog(EL_LOG, ("CDB almost finished"));
+          
+        }
+        
+        
+        
+
 
         InitGiantLock(); atexit(DestroyGiantLock);
 
-        ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_SM);
-        ppc->startup(ppc_ex);
+//         ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_SM);
+//         ppc->startup(ppc_ex);
 
         elog(EL_LOG, ("Ping client has been started"));
 
-        if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024, __sys_call_error) == 0)
-        {
-            /* We were started by command "se_sm -background-mode off"
-             * from "se_sm -background-mode on". Perform standard routines
-             * to run the process in the background mode. */
-#ifdef _WIN32
-#else
-            setsid();
-            umask(0);
-#endif
-        }
 
         /* Setup default values from config file */
-        setup_sm_globals(GOV_CONFIG_GLOBAL_PTR, db_id);
+        
+//         !TODO do not to forget that these globals should be passed through command line
+//         !TODO transmit it using cdbconfig in cdb_mode
+        setup_sm_globals();
 
         recover_database_by_physical_and_logical_log(db_id);
 
-        ////////////////////////////// BACKGROUND MODE ////////////////////////////////////////
-        if (background_mode == 1) {
-            try {
-                char *command_line_str = NULL;
-                string command_line = construct_sm_command_line(argv);
-                command_line_str = new char[command_line.length() + 1];
-                strcpy(command_line_str, command_line.c_str());
-
-                if (uSetEnvironmentVariable(SM_BACKGROUND_MODE, "1", NULL, __sys_call_error) != 0)
-                    throw USER_EXCEPTION2(SE4072, "SM_BACKGROUND_MODE");
-
-                USemaphore started_sem;
-                if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_SM_IS_READY, NULL, __sys_call_error))
-                    throw USER_EXCEPTION(SE4205);
-
-                if (uCreateProcess(command_line_str, false, NULL, U_DETACHED_PROCESS, NULL, NULL, NULL, NULL, NULL, __sys_call_error) != 0)
-                    throw USER_EXCEPTION(SE4205);
-
-                int res = USemaphoreDownTimeout(started_sem, SM_BACKGROUND_MODE_TIMEOUT, __sys_call_error);
-
-                USemaphoreRelease(started_sem, __sys_call_error);
-                delete [] command_line_str;
-
-                if (res != 0)
-                    throw USER_EXCEPTION(SE4205);
-
-                ppc->shutdown();
-                delete ppc;
-                ppc = NULL;
-
-                if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR)
-                    throw USER_EXCEPTION(SE3000);
-
-                close_gov_shm();
-
-                fprintf(res_os, "SM has been started in the background mode\n");
-                fflush(res_os);
-                return 0;
-
-            } catch (SednaUserException &e) {
-                fprintf(stderr, "%s\n", e.getMsg().c_str());
-                if (ppc) { ppc->shutdown(); delete ppc; ppc = NULL; }
-                return 1;
-            } catch (SednaException &e) {
-                sedna_soft_fault(e, EL_SM);
-            } catch (ANY_SE_EXCEPTION) {
-                sedna_soft_fault(EL_SM);
-            }
-        }
-        /////////////////////////////// BACKGROUND MODE ////////////////////////////////////////
-
-
-        if (USemaphoreCreate(&wait_for_shutdown, 0, 1, CHARISMA_SM_WAIT_FOR_SHUTDOWN, NULL, __sys_call_error) != 0)
+        if (USemaphoreCreate(&wait_for_shutdown, 0, 1, SEDNA_SM_WAIT_FOR_SHUTDOWN, NULL, __sys_call_error) != 0)
             throw USER_EXCEPTION(SE4206);
 
         //init transacion ids table
@@ -592,8 +557,7 @@ int main(int argc, char **argv)
         //start up logical log
         bool is_stopped_correctly;
         llInit(db_files_path, db_name, max_log_files, &sedna_db_version, &is_stopped_correctly, false);
-        if (is_stopped_correctly != true)
-            throw SYSTEM_EXCEPTION("Inconsistent database state");
+
         elog(EL_LOG, ("Logical log has been started"));
 
         //enable checkpoints
@@ -609,7 +573,7 @@ int main(int argc, char **argv)
         elog(EL_DBG, ("init_lock_table done"));
 
         //start buffer manager
-        bm_startup();
+        bm_startup(sm_globals::bufs_num, string(sm_globals::db_files_path), string(sm_globals::db_name));
         elog(EL_LOG, ("Buffer manager started"));
 
 #ifdef _WIN32
@@ -631,7 +595,7 @@ int main(int argc, char **argv)
 
             ssmmsg = new SSMMsg(SSMMsg::Server,
                 sizeof (sm_msg_struct),
-                CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
+                SEDNA_SSMMSG_SM_ID(sm_globals::db_id, buf, 1024),
                 SM_NUMBER_OF_SERVER_THREADS,
                 U_INFINITE);
             if (ssmmsg->init() != 0)
@@ -656,24 +620,23 @@ int main(int argc, char **argv)
             d_printf2("used_data_blocks_num = %d\n", stat.used_data_blocks_num);
             d_printf2("used_tmp_blocks_num  = %d\n", stat.used_tmp_blocks_num);
 
-
-            ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
-            USemaphore started_sem;
-            if (0 == USemaphoreOpen(&started_sem, CHARISMA_SM_IS_READY, __sys_call_error))
-            {
-                USemaphoreUp(started_sem, __sys_call_error);
-                USemaphoreClose(started_sem, __sys_call_error);
+            if (sm_globals::cdb_mode == 1) {
+              load_metadata(cdb_params, &cfg);
             }
-            ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
-
-            register_sm_on_gov();
+            
+            delete cdb_params;
+            
+            
+            register_sm_on_gov(communicator);
 
             elog(EL_LOG, ("SM has been started"));
             fprintf(res_os, "\nSM has been started\n");
             fflush(res_os);
 
+            
             USemaphoreDown(wait_for_shutdown, __sys_call_error);
-
+            
+            unregister_sm_on_gov(communicator);
             //to this point all sessions are closed by governor
             if (ssmmsg->stop_serve_clients() != 0)
                 throw USER_EXCEPTION(SE3032);
@@ -699,7 +662,7 @@ int main(int argc, char **argv)
         elog(EL_LOG, ("Wu is released"));
 
         // shutdown bm
-        bm_shutdown();
+        bm_shutdown(sm_globals::bufs_num);
 
         //shutdown logical log
         llRelease();
@@ -713,18 +676,22 @@ int main(int argc, char **argv)
 
         event_logger_release();
 
-        ppc->shutdown();
-        delete ppc;
-        ppc = NULL;
+//         ppc->shutdown();
+//         delete ppc;
+//         ppc = NULL;
 
         close_gov_shm();
-
+        
+        delete [] communicator;
+        ushutdown_close_socket(s, __sys_call_error);
+        
         return 0;
 
     } catch (SednaUserException &e) {
         fprintf(stderr, "%s\n", e.getMsg().c_str());
         event_logger_release();
-        if (ppc) { ppc->shutdown(); delete ppc; ppc = NULL; }
+        
+//         if (ppc) { ppc->shutdown(); delete ppc; ppc = NULL; }
         close_gov_shm();
         return 1;
     } catch (SednaException &e) {
@@ -799,7 +766,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
             }
 
             //start buffer manager
-            bm_startup();
+            bm_startup(sm_globals::bufs_num, sm_globals::db_files_path, sm_globals::db_name);
             elog(EL_LOG, ("Buffer manager is started"));
 
             //recover data base by physical log
@@ -829,7 +796,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
             ssmmsg = new SSMMsg(SSMMsg::Server,
                 sizeof (sm_msg_struct),
-                CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
+                SEDNA_SSMMSG_SM_ID(db_id, buf, 1024),
                 SM_NUMBER_OF_SERVER_THREADS,
                 U_INFINITE);
             if (ssmmsg->init() != 0)
@@ -869,7 +836,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
             elog(EL_LOG, ("Wu is released"));
 
             // shutdown bm
-            bm_shutdown();
+            bm_shutdown(sm_globals::bufs_num);
             elog(EL_LOG, ("Buffer manager is stopped"));
 
             //shutdown logical log

@@ -11,7 +11,8 @@
 
 #include "common/sedna.h"
 #include "common/u/uhdd.h"
-
+#include "common/u/usocket.h"
+#include "common/socketutils/socketutils.h"
 #include "tr/crmutils/crmbase.h"
 #include "tr/crmutils/global_options.h"
 #include "tr/tr_base.h"
@@ -27,12 +28,18 @@ class Serializer;
 class client_core
 {
 protected:
+    USOCKET gov_sock;    //it's the socket for communication with gov
+    MessageExchanger  *  govCommunicator;
+    
     enum se_output_method output_method;
 
 public:
     //virtual ~client_core() {}
 
     virtual void init() = 0;
+    virtual void register_session_on_gov() = 0;
+    virtual void unregister_session_on_gov() = 0;
+    
     virtual void release() = 0;
     virtual void read_msg(msg_struct *msg) = 0;
     virtual char* get_query_string(msg_struct *msg) = 0;
@@ -51,7 +58,7 @@ public:
     virtual void show_time(u_timeb qep_time) = 0;
     virtual void write_user_query_to_log() = 0;
     virtual void set_keep_alive_timeout(int sec) = 0;
-
+    
     /* Returns current output stream. If output is disabled 
      * returns null stream.
      */

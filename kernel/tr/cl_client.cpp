@@ -35,23 +35,75 @@ command_line_client::command_line_client(int argc, char** argv)
     recreate_debug_stream = true;
     statements_ready = false;
     output_method = se_output_method_xml;
-
+    
     /* Load metadata transaction */
     if (tr_globals::first_transaction)
     {
-        if (argc != 2)
-            throw SYSTEM_EXCEPTION("Bad number of input parameters to load metadata");
-
-        strcpy(tr_globals::db_name,  argv[1]);
         strcpy(tr_globals::filename, "dummy");
-    }
-    /* General transaction from the command line */
-    else
+    
+    gov_sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
+
+    if(U_SOCKET_ERROR == gov_sock) throw USER_EXCEPTION (SE3001);
+
+    while(0 != uconnect_tcp(gov_sock, tr_globals::socket_port, tr_globals::gov_address, __sys_call_error))
     {
-        /* Parse command line */
-        parse_trn_command_line(argc, argv);
+        if(!utry_connect_again())
+        {
+            ushutdown_close_socket(gov_sock, __sys_call_error);
+            throw USER_EXCEPTION (SE3003);
+        }
+#ifdef _WIN32
+#else
+        if(ushutdown_close_socket(gov_sock, __sys_call_error)!=0) throw USER_EXCEPTION (SE3011);
+        gov_sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
+        if(gov_sock == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3001);
+#endif
+    }
+    govCommunicator = new MessageExchanger(gov_sock);
+      
     }
 }
+
+
+void command_line_client::register_session_on_gov()
+{
+    UPID s_pid  = uGetCurrentProcessId(__sys_call_error);
+   
+    govCommunicator->beginSend(se_RegisterNewSession);
+    govCommunicator->writeString(tr_globals::db_name);
+    govCommunicator->writeInt32(s_pid);
+    govCommunicator->writeChar(tr_globals::first_transaction ? 1 : 0);
+    govCommunicator->endSend();
+    
+    while(!govCommunicator->receive());
+    
+    if(govCommunicator->getInstruction() == se_TrnRegisterOKFirstTransaction)
+    {
+        tr_globals::sid = govCommunicator->readInt32();
+    }
+    
+    if(govCommunicator->getInstruction() == se_TrnRegisterFailedMaxSessLimit)
+    {
+        /* Currently there are maximum number of session in the system */
+        ushutdown_close_socket(gov_sock, __sys_call_error);
+        throw USER_EXCEPTION(SE3046);
+    }
+    
+}
+
+void command_line_client::unregister_session_on_gov()
+{
+    UPID s_pid  = uGetCurrentProcessId(__sys_call_error);
+
+    govCommunicator->beginSend(se_UnRegisterSession);
+    govCommunicator->writeString(tr_globals::db_name);
+    govCommunicator->writeInt32(tr_globals::sid);
+    
+    govCommunicator->endSend();
+    
+    while(!govCommunicator->receive());
+}
+    
 
 
 void command_line_client::init()
@@ -60,6 +112,7 @@ void command_line_client::init()
     if (string(tr_globals::filename) == "???" || string(tr_globals::db_name) == "???")
         throw USER_EXCEPTION(SE4601);
 
+    //!TODO: delete it when trn will be stable.
     gov_header_struct cfg;
     get_sednaconf_values(&cfg);
 

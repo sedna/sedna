@@ -27,6 +27,7 @@
 #include "tr/nid/numb_scheme.h"
 #include "tr/crmutils/debug_utils.h"
 #include "tr/crmutils/serialization.h"
+#include <common/socketutils/socketutils.h>
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
@@ -228,101 +229,6 @@ void do_authentication()
 
     delete xqd;
     xqd = NULL;
-}
-
-void register_session_on_gov()
-{
-    UPID s_pid  = uGetCurrentProcessId(__sys_call_error);
-    USOCKET s   = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
-
-    /* If this is the case when TRN is started for some special purpose? */
-    bool special_mode = tr_globals::first_transaction;
-
-    if(U_SOCKET_ERROR == s) throw USER_EXCEPTION (SE3001);
-
-    while(0 != uconnect_tcp(s, socket_port, gov_address, __sys_call_error))
-    {
-        if(!utry_connect_again())
-        {
-            ushutdown_close_socket(s, __sys_call_error);
-            throw USER_EXCEPTION (SE3003);
-        }
-#ifdef _WIN32
-#else
-        if(ushutdown_close_socket(s, __sys_call_error)!=0) throw USER_EXCEPTION (SE3011);
-        s = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
-        if(s == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3001);
-#endif
-    }
-
-    size_t db_name_len = strlen(db_name);
-    sp_msg.instruction  = REGISTER_NEW_SESSION;
-    /* Special mode flag, database name as a string and TRN
-     * process id and string length as sizeof(int) bytes. */
-    sp_msg.length = sizeof(char) + db_name_len + 2 * sizeof(int32_t);
-    size_t off = 0;
-
-    /* First write db_name length */
-    int2net_int((int32_t)db_name_len, sp_msg.body + off);
-    off += sizeof(int32_t);
-
-    /* Then write name itself */
-    memmove(sp_msg.body + off, db_name, db_name_len);
-    off += db_name_len;
-    
-    /* Write process id (PID) */
-    int32_t tmp = htonl(s_pid);
-    memmove(sp_msg.body + off, (void*) &tmp, sizeof(int32_t));
-    off += sizeof(int32_t);
-
-    /* Write special mode flag */
-    sp_msg.body[off] = special_mode ? 1 : 0;
-    off += sizeof(char);
-
-    if(sp_send_msg(s, &sp_msg) != 0) 
-        throw USER_EXCEPTION2(SE3006,usocket_error_translator());
-
-    if(sp_recv_msg(s, &sp_msg) != 0) 
-        throw USER_EXCEPTION2(SE3007,usocket_error_translator());
-
-    if(sp_msg.instruction == 161)
-    {
-        /* Trn registered on gov successfully, get  
-         * sid (session identificator) is a global parameter */
-        int32_t tmp;
-        memcpy(&tmp, sp_msg.body, sizeof(int32_t));
-        sid = (session_id)tmp;
-        
-        if (sid >= MAX_SESSIONS_NUMBER) 
-            throw SYSTEM_EXCEPTION("Got incorrect session id from GOV");
-
-        if (sid == -1)
-        {
-            ushutdown_close_socket(s, __sys_call_error);
-            throw USER_EXCEPTION(SE4607);
-        }
-    }
-    if(sp_msg.instruction == 171)
-    {
-        /* Database is not started */
-        ushutdown_close_socket(s, __sys_call_error);
-        throw USER_EXCEPTION2(SE4409,db_name);
-    }
-    if(sp_msg.instruction == 172)
-    {
-        /* Currently there are maximum number of session in the system */
-        ushutdown_close_socket(s, __sys_call_error);
-        throw USER_EXCEPTION(SE3046);
-    }
-    if(sp_msg.instruction == 173)
-    {
-        /* failed to register */
-        ushutdown_close_socket(s, __sys_call_error);
-        throw USER_EXCEPTION(SE3043);
-    }
-
-    if(ushutdown_close_socket(s, __sys_call_error)!=0) 
-        throw USER_EXCEPTION (SE3011);
 }
 
 
