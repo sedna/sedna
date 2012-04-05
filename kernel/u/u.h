@@ -488,6 +488,8 @@ SE_EXTERN_C bool u_is_pos_inf(double d);
 extern "C" {
 #endif
 
+typedef const char *global_name;
+
 #define SYS_CALL_ERROR(FN, SYSCALL_STR) \
     (((FN)?(FN):__sys_call_error_nop) \
     (__FILE__,__LINE__,__SE_FUNCTION__, (SYSCALL_STR), NULL))

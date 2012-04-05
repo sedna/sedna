@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include "common/errdbg/exceptions.h"
+
 #include "ugnames.h"
 
 /* {% globals */
@@ -41,7 +41,8 @@ SearchGlobalNamesRegistry(const UGlobalNamesRegistryItem *registry,
 
 static void ThrowSystemException(const char *msg)
 {
-	throw SYSTEM_EXCEPTION(msg);
+// !FIXME -- turn this on some time
+//	throw SYSTEM_EXCEPTION(msg);
 }
 
 static int ValidateBaseName(const char *baseName)

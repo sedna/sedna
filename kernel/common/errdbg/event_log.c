@@ -545,7 +545,10 @@ int event_log_short_msg_macro(int elevel,
         el_msg->content[SE_EVENT_LOG_CONTENT_LEN - 1] = '\0';
     }
 
-    USemaphoreArrUp(el_sems, 1, __sys_call_error);
+    /* temporary solution for infinite recursion on event_log failure*/
+    if (1 == USemaphoreArrUp(el_sems, 1, __sys_call_error)) {
+      event_log_initialized = false;
+    }
 
     return 0;
 }
@@ -608,7 +611,11 @@ int event_log_long_msg(int elevel,
     size_t short_str_len = 0, long_str_len = 0;
     bool copy = true;
 
-    USemaphoreArrDown(el_sems, 0, __sys_call_error);
+    /* temporary solution for infinite loop on event_log failure */
+    if (1 == USemaphoreArrDown(el_sems, 0, __sys_call_error)) {
+      event_log_initialized = false;
+      return -1;
+    }
 
     __event_log_set_msg_attrs(elevel, filename, lineno, funcname);
 
@@ -645,12 +652,21 @@ int event_log_long_msg(int elevel,
             el_msg->content[SE_EVENT_LOG_CONTENT_LEN - 1] = '\0';
         }
     }
-
-    USemaphoreArrUp(el_sems, 1, __sys_call_error);
+    
+    /* temporary solution for infinite loop on event_log failure */
+    if (1 == USemaphoreArrUp(el_sems, 1, __sys_call_error)) {
+      event_log_initialized = false;
+      return -1;
+    }
 
     while (copy)
     {
-        USemaphoreArrDown(el_sems, 2, __sys_call_error);
+        /* temporary solution for infinite loop on event_log failure */
+        if (1 == USemaphoreArrDown(el_sems, 2, __sys_call_error)) {
+          event_log_initialized = false;
+          return -1;
+        }
+
 
         portion_size = s_min(SE_EVENT_LOG_CONTENT_LEN - 1, long_str_len - pos);
         memcpy(el_msg->content, long_str + pos, portion_size);
@@ -664,8 +680,12 @@ int event_log_long_msg(int elevel,
             el_msg->type = SE_EVENT_LOG_LONG_MSG_END;
             copy = false;
         }
-
-        USemaphoreArrUp(el_sems, 3, __sys_call_error);
+        
+        /* temporary solution for infinite loop on event_log failure */
+        if (1 == USemaphoreArrUp(el_sems, 3, __sys_call_error)) {
+          event_log_initialized = false;
+          return -1;
+        }
     }
 
     return 0;
