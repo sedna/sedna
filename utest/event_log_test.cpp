@@ -40,6 +40,7 @@ int main () {
           throw std::string("Failed to initialize event log");
       
       elog(log_level, ("Hi, I'm log!"));
+      elog_long(log_level, "Hi, I'm long message in log!", " Not really very long but I'm needed just for test"); 
       
       event_logger_shutdown_daemon(SE_EVENT_LOG_SHARED_MEMORY_NAME);
     }
@@ -56,7 +57,12 @@ int main () {
        * falls with stack overflow, it's an error.
        */
       elog(log_level, ("If you are in debug mode and you see this line as active, then I'm in infinite loop!"));
+      elog_long(log_level, "Hi, I'm long message in log!", "And you shouldn't see me too");
     }
+    
+    
+    
+    
     
   } catch (std::string a) { std::cout << a; }
   
