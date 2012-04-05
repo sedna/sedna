@@ -33,6 +33,8 @@ int uCreateShMem(UShMem *id, global_name name, size_t size, USECURITY_ATTRIBUTES
     const char *uName = NULL;
     uName = UPosixIPCNameFromGlobalName(name, buf, sizeof buf);
 
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(name, "SHM", id, 0, 0); };
+
     USECURITY_ATTRIBUTES mmap_access_mode = U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK;
     if (sa) mmap_access_mode = *sa;
 
@@ -54,6 +56,8 @@ int uCreateShMem(UShMem *id, global_name name, size_t size, USECURITY_ATTRIBUTES
         return 1;
     }
 #endif
+
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(name, "SHM", id, 0, 0); };
 
     return 0;
 }
@@ -121,6 +125,8 @@ int uReleaseShMem(UShMem *id, global_name name, sys_call_error_fun fun)
         sys_call_error("shm_unlink");
         return 1;
     }
+
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(name, "SHM", id, 0, 0); };
 
     return 0;
 #endif

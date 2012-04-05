@@ -4,6 +4,9 @@
 #include "u/u.h"
 #include "u/ugnames.h"
 
+#include <string>
+#include <iosfwd>
+
 #define GLOBAL_NAME(NAME) #NAME
 
 #define __GLOBAL_NAME_REGISTRY_ENTRY(NAME, PREFIX, MAX_ITEMS, TAG) \
@@ -11,31 +14,36 @@
 
 #define MAX_GLOBAL_NAME_LEN 128
 
-struct GlobalObjectsCollectorImplementation;
-
 class GlobalObjectDescriptor {
 protected:
     global_name name;
+    std::string id;
 public:
     GlobalObjectDescriptor(global_name _name) : name(_name) {};
 
     virtual ~GlobalObjectDescriptor() {};
-    virtual void cleanup() = 0;
+    virtual void cleanup() const = 0;
+    virtual void saveTo(std::ostream * stream) const = 0;
+
+    std::string getId() const { return id; };
 };
 
-class GlobalObjectsCollector {
-private:
-    GlobalObjectsCollectorImplementation * impl;
+typedef GlobalObjectDescriptor * (*GlobalObjectDescriptorFactory) (const std::string &);
+
+// Singleton class,
+
+class GlobalObjectsCollector { 
 public:
+    static void registerFactory(const char * objType, GlobalObjectDescriptorFactory factory);
+    static void cleanupObjects(std::istream * stream);
+
+    static void add(global_name gname, GlobalObjectDescriptor * );
+    static void clear(global_name gname);
+
     GlobalObjectsCollector();
     ~GlobalObjectsCollector();
 
-    void globalCleanup();
-
     void cleanup();
-
-    void add(global_name gname, GlobalObjectDescriptor * );
-    void clear(global_name gname);
 };
 
 #endif /* _GLOBAL_NAMES_H */

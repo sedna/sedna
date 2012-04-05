@@ -47,12 +47,40 @@ DATABASE_GLOBAL_NAME(SM_TALK_SEM, go_sem),
 static char globalNameBuffer[GLOBAL_NAME_BUFFER_LEN];
 static char * globalNameBufferPtr = globalNameBuffer;
 
-global_name createSednaGlobalName(const char* globalNameBase, int objectId)
+static int databaseId = 0;
+static int sessionId = 0;
+
+global_name createSednaGlobalName(const char* globalNameBase)
 {
+    UGlobalNamesRegistryItem * regItem = globalNameRegistry;
+    int objectId = 0;
+
+    do {
+        if (strcmp(regItem->basename, globalNameBase) == 0) {
+            break;
+        };
+    } while (regItem->basename != NULL);
+
+    if (regItem->basename == NULL) {
+        U_ASSERT(false);
+        throw SYSTEM_EXCEPTION("Internal error (not registered global object was about to be created)");
+    };
+
+    if (regItem->prefix == NULL) {
+        objectId = 0;
+    } else if (regItem->prefix[0] == 'D') {
+        objectId = databaseId;
+    } else if (regItem->prefix[0] == 'S') {
+        objectId = sessionId;
+    } else {
+        U_ASSERT(false);
+        throw SYSTEM_EXCEPTION("Internal error (not registered global object was about to be created)");
+    };
+
     const char * result = UCreateGlobalName(globalNameBase, objectId,
         globalNameBufferPtr, GLOBAL_NAME_BUFFER_LEN - (globalNameBufferPtr - globalNameBuffer));
 
-    globalNameBufferPtr += strlen(result + 1);
+    globalNameBufferPtr += strlen(result) + 1;
 
     return result;
 };
@@ -62,11 +90,13 @@ void sednaException(const char * message) {
     throw SYSTEM_EXCEPTION(message);
 };
 
-void initSednaGlobalNameRegistry(int osObjectsMinBound)
+void initSednaGlobalNameRegistry(int osObjectsMinBound, int databaseId, int sessionId)
 {
     UInitGlobalNamesRegistry(
       globalNameRegistry, NULL, &sednaException,
       osObjectsMinBound, osObjectsMinBound + (GLOBAL_NAME_COUNT * UPPER_SESSIONS_NUM_BOUND * MAX_DBS_NUMBER));
+
+
 };
 
 void releaseSednaGlobalNameRegistry()

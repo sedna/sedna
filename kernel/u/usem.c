@@ -34,6 +34,8 @@ int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name
         }	
     }
 
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(name, "SEM", sem, *sem, 0); };
+
     return 0;
 }
 #else
@@ -46,6 +48,8 @@ int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name
 	key_t key = IPC_PRIVATE;
 
 	key = USys5IPCKeyFromGlobalName(name);
+
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(name, "SEM", sem, *sem, 0); };
 
     USECURITY_ATTRIBUTES sem_access_mode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
     if (sa) sem_access_mode = *sa;
@@ -64,6 +68,8 @@ int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name
         sys_call_error("semctl");
 		return 1;
 	}
+
+	if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(name, "SEM", sem, *sem, 0); };
 
     return 0;
 }
@@ -113,6 +119,8 @@ int USemaphoreRelease(USemaphore sem, sys_call_error_fun fun)
         return 1;
     }
 
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, "SEM", &sem, sem, 0); };
+
     return 0;
 }
 #else
@@ -135,6 +143,9 @@ int USemaphoreRelease(USemaphore sem, sys_call_error_fun fun)
 			return 1;
 		}
 	}
+
+	if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, "SEM", &sem, sem, 0); };
+
     return 0;
 }
 #endif
@@ -352,6 +363,8 @@ int USemaphoreArrCreate(USemaphoreArr *sem, unsigned size, const int *init_value
         }
     }
 
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(name, "WSEA", sem, *sem, size); };
+
     return 0;
 }
 #else
@@ -365,6 +378,8 @@ int USemaphoreArrCreate(USemaphoreArr *sem, unsigned size, const int *init_value
     unsigned i = 0;
 
 	key = USys5IPCKeyFromGlobalName(name);
+
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(name, "SEA", sem, *sem, size); };
 
     USECURITY_ATTRIBUTES sem_access_mode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
     if (sa) sem_access_mode = *sa;
@@ -388,6 +403,8 @@ int USemaphoreArrCreate(USemaphoreArr *sem, unsigned size, const int *init_value
 		    return 1;
     	}
     }
+
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(name, "SEA", sem, *sem, size); };
 
     return 0;
 }
@@ -461,6 +478,7 @@ int USemaphoreArrRelease(USemaphoreArr sem, unsigned size, sys_call_error_fun fu
 
     free(sem);
 
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, "SEA", sem, *sem, size); };
     return 0;
 }
 #else
@@ -486,6 +504,8 @@ int USemaphoreArrRelease(USemaphoreArr sem, unsigned size, sys_call_error_fun fu
 			return 1;
 		}
 	}
+
+	if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, "SEA", &sem, sem, size); };
     return 0;
 }
 #endif

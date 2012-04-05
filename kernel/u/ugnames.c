@@ -11,6 +11,8 @@ static UGlobalNamesRegistryItem *registry = NULL;
 static UGlobalNamesRegistrySearchProc searchProc = NULL;
 static UGlobalNamesRegistryErrorProc errorProc = NULL;
 
+UGlobalGarbageCollector * UGlobalObjectsGC = NULL;
+
 /* }% */
 
 #ifdef _WIN32
@@ -109,10 +111,8 @@ UCreateGlobalName(const char *basename,
 				  char *buf,
 				  size_t bufSize)
 {
-	char prefix[32] = "", errorBuf[128];
-	int ordinal = 0;
+	char errorBuf[128];
 	const UGlobalNamesRegistryItem *item = NULL;
-	int stored = 0;
 
 	assert (basename);
 	item = searchProc(registry, basename);
@@ -122,22 +122,35 @@ UCreateGlobalName(const char *basename,
 		errorBuf[(sizeof errorBuf)-1]=0;
 		ThrowSystemException(errorBuf);
 	}
-	ordinal = item->rangeBegin + objectId;
-	if (item->prefix)
-	{
-		stored = snprintf(prefix, sizeof prefix, "%s%d.", item->prefix, objectId);
-		if (stored<0 || (size_t)stored>=(sizeof prefix))
-			ThrowSystemException("UCreateGlobalName: prefix too long");
-	}
-	if (ordinal >= item->rangeEnd || ordinal < item->rangeBegin)
-		ThrowSystemException("CreateGlobalName: generated ordinal out of range");
 
-	stored = snprintf(buf, bufSize, "SEDNA%d.%s%s@%d", registry->rangeBegin, prefix, basename, ordinal);
-	if (stored<0 || (size_t)stored>=bufSize)
-		ThrowSystemException("CreateGlobalName: buffer too small");
-
-	return buf;
+    return UCreateGlobalNameFromRegistry(item, objectId, buf, bufSize);
 }
+
+const char* UCreateGlobalNameFromRegistry(const UGlobalNamesRegistryItem* item, int objectId, char* buf, size_t bufSize)
+{
+    char prefix[32] = "";
+    int ordinal = 0;
+    int stored = 0;
+
+    assert (item);
+
+    ordinal = item->rangeBegin + objectId;
+    if (item->prefix)
+    {
+        stored = snprintf(prefix, sizeof prefix, "%s%d.", item->prefix, objectId);
+        if (stored<0 || (size_t)stored>=(sizeof prefix))
+            ThrowSystemException("UCreateGlobalName: prefix too long");
+    }
+    if (ordinal >= item->rangeEnd || ordinal < item->rangeBegin)
+        ThrowSystemException("CreateGlobalName: generated ordinal out of range");
+    
+    stored = snprintf(buf, bufSize, "SEDNA%d.%s%s@%d", registry->rangeBegin, prefix, registry->basename, ordinal);
+    if (stored<0 || (size_t)stored>=bufSize)
+        ThrowSystemException("CreateGlobalName: buffer too small");
+    
+    return buf;
+}
+
 
 struct GlobalNameComponents
 {

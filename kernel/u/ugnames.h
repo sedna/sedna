@@ -62,6 +62,16 @@
 #endif
 #endif
 
+#include "u/u.h"
+
+typedef void (* UGlobalObjectEvent) (global_name name, const char * type, void * data, int arg1, int arg2);
+
+typedef struct UGlobalGarbageCollector_tag_ {
+    UGlobalObjectEvent onCleanup;
+    UGlobalObjectEvent onCreate;
+    UGlobalObjectEvent onDestroy;
+} UGlobalGarbageCollector;
+
 /*	An item of the global names registry. */ 
 typedef struct UGlobalNamesRegistryItem_tag_
 {
@@ -82,6 +92,9 @@ const UGlobalNamesRegistryItem *
 typedef
 void
 (* UGlobalNamesRegistryErrorProc)(const char *msg);
+
+EXTERNC
+UGlobalGarbageCollector * UGlobalObjectsGC;
 
 /* Initialize global names registry. */ 
 EXTERNC
@@ -104,6 +117,14 @@ UCreateGlobalName(const char *basename,
 				  int objectId,
 				  char *buf,
 				  size_t bufSize);
+
+/*  Create a global name. */
+EXTERNC
+const char *
+UCreateGlobalNameFromRegistry(const UGlobalNamesRegistryItem * item,
+                  int objectId,
+                  char *buf,
+                  size_t bufSize);
 
 /* Create a compound name (an array of global names). */ 
 EXTERNC

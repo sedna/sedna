@@ -18,9 +18,6 @@
 
 typedef struct UEvent_tag_
 {
-#ifdef __cplusplus
-private:
-#endif
 #ifdef _WIN32
 	HANDLE handle;
 #else

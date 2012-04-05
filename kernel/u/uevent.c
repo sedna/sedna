@@ -234,6 +234,8 @@ int UEventCreate(UEvent *uEvent,
 	if (sa) evmode = *sa;
 	evmode |= IPC_CREAT | IPC_EXCL;
 
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(gn, "EVT", uEvent, 0, 0); };
+
 	if (eventType != U_AUTORESET_EVENT && eventType != U_MANUALRESET_EVENT)
 	{
 		d_printf1("UEventCreate: unrecognised event type requested\n");
@@ -263,7 +265,10 @@ int UEventCreate(UEvent *uEvent,
 			
 	}
 	if (status == 0) uEvent->semid = semid;
-	return status;
+    
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(gn, "EVT", uEvent, 0, 0); };
+    
+    return status;
 }
 
 int UEventOpen(UEvent *uEvent, 
@@ -309,7 +314,9 @@ int UEventCloseAndUnlink(UEvent *uEvent,
 		SYS_CALL_ERROR(fun,"semctl");
 	else status = 0;
 
-	return (status==0) ? UEventClose(uEvent, fun) : status;
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, "EVT", uEvent, 0, 0); };
+
+    return (status==0) ? UEventClose(uEvent, fun) : status;
 }
 
 
