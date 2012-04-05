@@ -67,7 +67,8 @@ typedef struct UGlobalNamesRegistryItem_tag_
 {
 	const char *basename;	/* used for registry lookup and for names generation */ 
 	const char *prefix;		/* when we have multiple global names in the family we need prefix */ 
-	int nObjectsMax;		/* how many objects we are going to have */ 
+	int nObjectsMax;		/* how many objects we are going to have */
+	int tag; /* User data */
 	int rangeBegin;			/* internal */ 
 	int rangeEnd;			/* internal */ 
 }
@@ -78,13 +79,18 @@ const UGlobalNamesRegistryItem *
 (* UGlobalNamesRegistrySearchProc)(const UGlobalNamesRegistryItem *registry, 
 								   const char *basename);
 
+typedef
+void
+(* UGlobalNamesRegistryErrorProc)(const char *msg);
+
 /* Initialize global names registry. */ 
 EXTERNC
 void 
 UInitGlobalNamesRegistry(UGlobalNamesRegistryItem *registry,
-						 UGlobalNamesRegistrySearchProc searchProc,
-						 int rangeBegin,
-						 int rangeEnd);
+                         UGlobalNamesRegistrySearchProc searchProc,
+                         UGlobalNamesRegistryErrorProc errorProc,
+                         int rangeBegin,
+                         int rangeEnd);
 
 /* Release allocated resources. */ 
 EXTERNC

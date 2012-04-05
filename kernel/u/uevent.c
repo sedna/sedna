@@ -5,10 +5,13 @@
 
 
 #include <assert.h>
+
 #include "uevent.h"
-#include "common/errdbg/d_printf.h"
+
 #include "u/usecurity.h"
 #include "u/ugnames.h"
+
+#include "common/errdbg/d_printf.h"
 
 #ifdef _WIN32
 

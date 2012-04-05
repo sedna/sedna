@@ -27,33 +27,21 @@ char *u_ltoa(long value, char *str, int radix)
 
 char *u_ultoa(unsigned long value, char *str, int radix)
 {
-    if (radix != 10)
-    {
-        d_printf1("radix in call to _ultoa has unsupported value\n");
-        return NULL;
-    }
+    U_ASSERT(radix == 10);
     sprintf(str, "%lu", value);
     return str;
 }
 
 char *u_i64toa(int64_t value, char *str, int radix)
 {
-    if (radix != 10)
-    {
-        d_printf1("radix in call to _ultoa has unsupported value\n");
-        return NULL;
-    }
+    U_ASSERT(radix == 10);
     sprintf(str, "%"PRId64, value);
     return str;
 }
 
 char *u_ui64toa(uint64_t value, char *str, int radix)
 {
-    if (radix != 10)
-    {
-        d_printf1("radix in call to _ui64toa has unsupported value\n");
-        return NULL;
-    }
+    U_ASSERT(radix == 10);
     sprintf(str, "%"PRIu64, value);
     return str;
 }

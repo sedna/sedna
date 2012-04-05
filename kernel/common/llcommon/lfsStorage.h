@@ -9,7 +9,7 @@
 #ifndef _LFS_STORAGE_
 #define _LFS_STORAGE_
 
-#include "common/lfsGlobals.h"
+#include "lfsGlobals.h"
 
 // Init lfs subsystem; this function must be called only once to initialze lfs subsystem.
 // All additional users must call lfsConnect function.

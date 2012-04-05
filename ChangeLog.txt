@@ -7,4 +7,5 @@
 
 * Global memory mapping have now an instance per database
 
-* 
+* Global objects are now string constants, and should be referenced via
+  GLOBALNAME macro which stringize them

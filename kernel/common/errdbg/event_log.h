@@ -15,7 +15,6 @@
 #define _EVENT_LOG_H
 
 #include "common/base.h"
-#include "common/globalobjects/globalnames.h"
 
 /* Error level codes */
 #define EL_DBG      8    /* debugging messages */

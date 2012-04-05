@@ -9,6 +9,7 @@
 
 static UGlobalNamesRegistryItem *registry = NULL;
 static UGlobalNamesRegistrySearchProc searchProc = NULL;
+static UGlobalNamesRegistryErrorProc errorProc = NULL;
 
 /* }% */
 
@@ -25,8 +26,9 @@ static UGlobalNamesRegistrySearchProc searchProc = NULL;
 void
 UReleaseGlobalNamesRegistry()
 {
-	registry = NULL;
-	searchProc = NULL;
+    registry = NULL;
+    searchProc = NULL;
+    errorProc = NULL;
 }
 
 static
@@ -39,10 +41,9 @@ SearchGlobalNamesRegistry(const UGlobalNamesRegistryItem *registry,
 	return registry->basename ? registry : NULL;
 }
 
-static void ThrowSystemException(const char *msg)
+inline static void ThrowSystemException(const char *msg)
 {
-// !FIXME -- turn this on some time
-//	throw SYSTEM_EXCEPTION(msg);
+    if (errorProc) { errorProc(msg); }
 }
 
 static int ValidateBaseName(const char *baseName)
@@ -65,9 +66,10 @@ static int ValidateCompoundName(const char *compoundName)
 
 void
 UInitGlobalNamesRegistry(UGlobalNamesRegistryItem *registryParam,
-						 UGlobalNamesRegistrySearchProc searchProcParam,
-						 int rangeBegin,
-						 int rangeEnd)
+                         UGlobalNamesRegistrySearchProc searchProcParam,
+                         UGlobalNamesRegistryErrorProc errorProcParam,
+                         int rangeBegin,
+                         int rangeEnd)
 {
 	int rangeSizeMin = 0;
 	UGlobalNamesRegistryItem *i = NULL;
@@ -98,6 +100,7 @@ UInitGlobalNamesRegistry(UGlobalNamesRegistryItem *registryParam,
 	}
 	/* complete initialization */
 	searchProc = (searchProcParam ? searchProcParam : SearchGlobalNamesRegistry);
+        errorProc = errorProcParam;
 }
 
 const char *
@@ -143,7 +146,7 @@ struct GlobalNameComponents
 };
 
 static
-void ParseGlobalName(GlobalNameComponents *components,
+void ParseGlobalName(struct GlobalNameComponents *components,
 					 const char *globalName)
 {
 	assert(components);
@@ -181,7 +184,7 @@ const char *StrNameFromGlobalName(const char *globalName,
 {
 	char bufjr[16];
 	int partSz = 0, stored = 0;
-	GlobalNameComponents components = {NULL};
+	struct GlobalNameComponents components = {NULL};
 
 	assert(prefix);
 	ParseGlobalName(&components,globalName);
@@ -234,7 +237,7 @@ const char *UPosixIPCNameFromGlobalName(const char *globalName,
 int USys5IPCKeyFromGlobalName(const char *globalName)
 {
 	int key = 0;
-	GlobalNameComponents components = {NULL};
+	struct GlobalNameComponents components = {NULL};
 
 	ParseGlobalName(&components,globalName);
 	if (globalName == NULL)

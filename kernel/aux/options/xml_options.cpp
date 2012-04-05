@@ -1,5 +1,6 @@
 #include "xml_options.h"
-#include "common/cppcast.h"
+
+#include "aux/cppcast.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -7,7 +8,7 @@
 #include <map>
 #include <sstream>
 
-#include <expat.h>
+#include "expat.h"
 
 using namespace std;
 
@@ -400,7 +401,7 @@ void ExpatWrapperPP::execute(istream* stream)
         isFinal = stream->eof();
         if (XML_Parse(p, buffer, len, isFinal) != XML_STATUS_OK) {
           snprintf(errorBuffer, ERROR_BUFFER_SIZE,
-                         "XML parse error on line %lu: %s",
+                         "XML parse error on line %llu: %s",
                          XML_GetCurrentLineNumber(p), XML_ErrorString(XML_GetErrorCode(p)));
           throw EXMLParserException(errorBuffer);
         }
