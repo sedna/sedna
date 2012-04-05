@@ -888,6 +888,9 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
     char buf_pid[20];
     const char* str = component2str(component);
     char buf[SEDNA_DATA_VAR_SIZE + 128];
+    
+
+    /* !TODO: get it from config as separate option */
 
     if (SEDNA_DATA == NULL) {
         elog(EL_FATAL, ("Can't set sedna data to write sedna fault information\n"));
