@@ -6,11 +6,11 @@
 
 #include <fstream>
 #include "common/base.h"
-#include "common/u/ugnames.h"
-#include "common/u/uhdd.h"
-#include "common/u/uprocess.h"
+#include "u/ugnames.h"
+#include "u/uhdd.h"
+#include "u/uprocess.h"
 #include "common/errdbg/d_printf.h"
-#include "common/u/uutils.h"
+#include "u/uutils.h"
 
 using namespace std;
 

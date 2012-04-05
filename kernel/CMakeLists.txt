@@ -1,3 +1,10 @@
+if (CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Werror")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Werror")
+endif(CMAKE_COMPILER_IS_GNUCXX)
+
+add_subdirectory(u)
+add_subdirectory(aux)
 add_subdirectory(common)
 add_subdirectory(sm)
 add_subdirectory(tr)

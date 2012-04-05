@@ -3,7 +3,6 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #ifndef __UTILS_H
 #define __UTILS_H
 

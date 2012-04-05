@@ -135,7 +135,7 @@ Errors could be outputted to the user in the format of <sedna-message>:
 
 #include <stdexcept>
 #include <string>
-#include "common/utils.h"
+
 #include "common/errdbg/error_codes.h"
 
 /*	Never use catch(...), use catch(ANY_SE_EXCEPTION) instead. Catch(...) 

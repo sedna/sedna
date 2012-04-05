@@ -1,4 +1,4 @@
-set(errdbg_SRC assert.c d_printf.c event_log.c exceptions.cpp error_codes.c error_codes.h)
+set(errdbg_SRC assert.c d_printf.c event_log.c errors.c exceptions.cpp error_codes.c error_codes.h)
 
 set(errdbg_GENERATED ${CMAKE_CURRENT_BINARY_DIR}/errdbg/error_codes.c ${CMAKE_CURRENT_BINARY_DIR}/errdbg/error_codes.h
                      ${CMAKE_CURRENT_BINARY_DIR}/errdbg/error_codes_scm.scm ${CMAKE_CURRENT_BINARY_DIR}/errdbg/ErrorCodes.java

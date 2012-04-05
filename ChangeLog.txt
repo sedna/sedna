@@ -1,0 +1,10 @@
+* Directory structure changed (many things in different directories now)
+
+* Sedna namespace finally changed to "sedna.org" (TODO : fix all that mentions it)
+
+* As soon as now SEDNA_DATA is actually the first thing, process know about,
+  there is no need to use stupid set_data_dir as fault directory
+
+* Global memory mapping have now an instance per database
+
+* 

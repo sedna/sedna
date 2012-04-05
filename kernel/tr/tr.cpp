@@ -87,14 +87,6 @@ int TRmain(int argc, char *argv[])
         }
         else
         {
-//             uSleep(10, __sys_call_error);
-            try {
-                open_global_memory_mapping(SE4400);
-                close_global_memory_mapping();
-                sedna_server_is_running = true;
-            } catch (SednaUserException &e) {
-                if (e.get_code() != SE4400) throw;
-            }
             OS_EXCEPTIONS_INSTALL_HANDLER
         }
 

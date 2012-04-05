@@ -9,10 +9,12 @@
 
 #include "common/sedna.h"
 #include "common/errdbg/event_log.h"
-#include "common/u/uhdd.h"
-#include "common/u/uprocess.h"
+
+#include "u/uhdd.h"
+#include "u/uprocess.h"
+
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
-#include "common/st/stacktrace.h"
+#include "aux/stacktrace/stacktrace.h"
 #ifdef _WIN32
 #include <dbghelp.h>
 #include <shellapi.h>

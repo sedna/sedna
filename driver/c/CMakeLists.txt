@@ -1,12 +1,18 @@
 # sources from common library
-set(common_dir ${CMAKE_SOURCE_DIR}/kernel/common)
-set(common_drv_SRC ${common_dir}/sp.c ${common_dir}/u/uhdd.c
-    ${common_dir}/u/usocket.c ${common_dir}/u/uutils.c
-    ${common_dir}/u/usecurity.c ${common_dir}/errdbg/d_printf.c
-    ${CMAKE_BINARY_DIR}/kernel/common/errdbg/error_codes.c ${common_dir}/u/u.c)
+set(sedna_dir ${CMAKE_SOURCE_DIR}/kernel)
+
+set(common_drv_SRC
+    ${sedna_dir}/u/u.c
+    ${sedna_dir}/u/uhdd.c
+    ${sedna_dir}/u/usocket.c
+    ${sedna_dir}/u/uutils.c
+    ${sedna_dir}/u/usecurity.c
+    ${sedna_dir}/common/protocol/sp.c
+    ${sedna_dir}/common/errdbg/d_printf.c
+    ${sedna_dir}/common/errdbg/error_codes.c)
 
 # error_codes.c is a generated file
-set_source_files_properties(${CMAKE_BINARY_DIR}/kernel/common/errdbg/error_codes.c
+set_source_files_properties(${sedna_dir}/common/errdbg/error_codes.c
                             PROPERTIES GENERATED TRUE)
 
 # driver sources

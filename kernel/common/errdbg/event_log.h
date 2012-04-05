@@ -14,8 +14,8 @@
 #ifndef _EVENT_LOG_H
 #define _EVENT_LOG_H
 
-#include "common/sedna.h"
-#include "common/u/uhdd.h"
+#include "common/base.h"
+#include "common/globalobjects/globalnames.h"
 
 /* Error level codes */
 #define EL_DBG      8    /* debugging messages */
@@ -48,28 +48,6 @@
 #define EL_STOP     7
 #define EL_TRN      8
 #define EL_RCV      9
-
-
-typedef struct event_log_msg
-{
-    int  processed;
-    int  global_elevel;
-
-    int  type;
-    int  elevel;
-    int  component;
-    char component_detail[SE_MAX_DB_NAME_LENGTH + 1];
-    int  sid;
-    int  trid;
-    int  pid;
-    int  lineno;
-    char filename[SE_EVENT_LOG_FILENAME_LEN];
-    char funcname[SE_EVENT_LOG_FUNCNAME_LEN];
-    char content[SE_EVENT_LOG_CONTENT_LEN];
-} event_log_msg;
-
-
-
 
 
 /*----------
@@ -200,11 +178,6 @@ int event_logger_set_trid(int trid);
 * the one of the known by event log (EL_LOG, EL_ERRORS, etc).
 */
 int el_convert_log_level(int level);
-
-/*
- * Creates a file for soft fault log
- */
-UFile sedna_soft_fault_log_fh(int component, const char *suffix);
 
 /*
  * Creates a separate file with soft fault log (log_message) for the component (component).

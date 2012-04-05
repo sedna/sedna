@@ -3,14 +3,35 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/errdbg/event_log.h"
-#include "common/u/uutils.h"
-#include "common/u/uthread.h"
-#include "common/u/uprocess.h"
-#include "common/u/ushm.h"
-#include "common/u/usem.h"
-#include "common/u/uhdd.h"
+#include "event_log.h"
+#include "errors.h"
 
+#include "u/uutils.h"
+#include "u/uthread.h"
+#include "u/uprocess.h"
+#include "u/ushm.h"
+#include "u/usem.h"
+#include "u/uhdd.h"
+
+#include "sp_defs.h"
+
+typedef struct event_log_msg
+{
+    int  processed;
+    int  global_elevel;
+
+    int  type;
+    int  elevel;
+    int  component;
+    char component_detail[SE_MAX_DB_NAME_LENGTH + 1];
+    int  sid;
+    int  trid;
+    int  pid;
+    int  lineno;
+    char filename[SE_EVENT_LOG_FILENAME_LEN];
+    char funcname[SE_EVENT_LOG_FUNCNAME_LEN];
+    char content[SE_EVENT_LOG_CONTENT_LEN];
+} event_log_msg;
 
 
 #define SE_EVENT_LOG_FILENAME          "event.log"
@@ -841,17 +862,19 @@ static const char *component2str(int component)
     }
 }
 
+static
 UFile sedna_soft_fault_log_fh(int component, const char *suffix)
 {
     char buf_pid[20];
     const char* str = component2str(component);
     char buf[SEDNA_DATA_VAR_SIZE + 128];
 
-    if (!set_sedna_data(buf, NULL))
-    {
-      fprintf(stderr, "Can't set sedna data to write sedna fault information\n");
-      return U_INVALID_FD;
-    }
+    if (SEDNA_DATA == NULL) {
+        elog(EL_FATAL, ("Can't set sedna data to write sedna fault information\n"));
+        return U_INVALID_FD;
+    };
+
+    strncpy(buf, SEDNA_DATA, SEDNA_DATA_VAR_SIZE);
 
 #ifdef _WIN32
     strcat(buf, "\\data\\");
@@ -861,7 +884,7 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
 
     if (uMkDir(buf, NULL, NULL) == 0)
     {
-       fprintf(stderr, "Cannot create data directory for soft fault logs\n");
+       elog(EL_FATAL, ("Cannot create data directory for soft fault logs\n"));
        return U_INVALID_FD;
     }
 
@@ -869,7 +892,7 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
 
     if (uMkDir(buf, NULL, NULL) == 0)
     {
-       fprintf(stderr, "Cannot create directory for soft fault logs\n");
+       elog(EL_FATAL, ("Cannot create directory for soft fault logs\n"));
        return U_INVALID_FD;
     }
 
@@ -880,8 +903,11 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
 #endif
 
     strcat(buf, str);
-    if (suffix)
-    	strcat(buf, suffix);
+
+    if (suffix) {
+        strcat(buf, suffix);
+    }
+
     strcat(buf, u_itoa(uGetCurrentProcessId(__sys_call_error), buf_pid, 10));
     strcat(buf, ".log");
 
