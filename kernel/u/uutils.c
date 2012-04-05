@@ -13,14 +13,14 @@
 
 char *u_itoa(int value, char *str, int radix)
 {
-    U_ASSERT(radix == 10)
+    U_ASSERT(radix == 10);
     sprintf(str, "%d", value);
     return str;
 }
 
 char *u_ltoa(long value, char *str, int radix)
 {
-    U_ASSERT(radix == 10)
+    U_ASSERT(radix == 10);
     sprintf(str, "%ld", value);
     return str;
 }

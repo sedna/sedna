@@ -49,6 +49,7 @@ include(AddToConfig)
 # Determine features and options to be used
 
 option(EL_DEBUG "Debug logging" OFF)
+option(UNIT_TESTS "Compile unit tests" OFF)
 option(RCV_TEST "Recovery testing facilities" OFF)
 option(JAVA_DRIVER "Compile Sedna Java Driver" OFF)
 option(MAKE_DOC "Compile Documentation files" OFF)
@@ -274,6 +275,11 @@ add_subdirectory(export)
 if (MAKE_DOC)
     add_subdirectory(doc)
 endif (MAKE_DOC)
+
+# unit tests
+if (UNIT_TESTS)
+    add_subdirectory(utest)
+endif (UNIT_TESTS)
 
 # configure some files
 ConfigOutputTree()
