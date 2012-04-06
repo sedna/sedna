@@ -112,13 +112,6 @@ extern FILE* res_os;
 #define  EOD_SYMBOL     ((char)253)
 #define  EOALL_SYMBOL   ((char)252)
 
-/* Defines variouse kinds of se_stop command */
-enum stoptype
-{
-    SE_STOP_NO   = 0, /// sedna operates
-    SE_STOP_SOFT = 1, /// wait for transactions are completed
-    SE_STOP_HARD = 2  /// attempts to immediately rollback all running transactions.
-};
 
 /* The following definitions are related to gov<-->rc protocol */
 #define  SE_RC_VALID     ((char)1)

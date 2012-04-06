@@ -125,38 +125,32 @@ enum se_item_type
 };
 
 
+
+/* Attenttion! You should be very careful:
+ * If you want to define new protocol constants for communications with
+ * client you should do it there. If you want to add some constants for
+ * internal Sedna processes communication you should do it in 
+ * kernel/common/protocol/int_sp.h
+ * You MUST watch for se_sp_instructions and se_int_sp_instructions do not
+ * intersect by numeric values, otherwise you will debug it very-very long
+ */
 enum se_sp_instructions
 {   
     se_ErrorResponse                               = 100,
     se_StartUp                                     = 110,
     se_SessionParameters                           = 120,
-    se_RegisterNewSession                          = 121,
-    se_UnRegisterSession                           = 122,
-    se_RegisterDB                                  = 123,
-    se_RegisterCDB                                 = 124,
-    se_UnRegisterDB                                = 125,
     se_AuthenticationParameters                    = 130,
     se_SendSessionParameters                       = 140,
     se_SendAuthParameters                          = 150,
     se_AuthenticationOK                            = 160,
-    se_TrnRegisterOK                               = 161,
-    se_TrnRegisterOKFirstTransaction               = 162,
-    se_UnixSocketReady                             = 163,
-    se_ReceiveSocket                               = 164,
-    se_SocketReceivedOK                            = 165,
     se_AuthenticationFailed                        = 170,
-    se_TrnRegisterFailedNotRunningOrSpecialMode    = 171,
-    se_TrnRegisterFailedMaxSessLimit               = 172,
-    se_SMRegisteringOK                             = 181,
-    se_SMRegisteringFailed                         = 182,
-    se_CdbRegisteringOK                            = 183,
-    se_CdbRegisteringFailed                        = 184,
-    se_CreateDbRequest                             = 185,
+
+    se_CreateDbRequest                             = 185, /// for cdb-client
     se_CreateDbParams                              = 186,
     se_CreateDbOK                                  = 187,
     se_CreateDbFailed                              = 188,
     se_CreateDbFailedExists                        = 189,
-    
+
     se_BeginTransaction                            = 210,
     se_CommitTransaction                           = 220,
     se_RollbackTransaction                         = 225,
@@ -189,8 +183,6 @@ enum se_sp_instructions
     se_ShowTime                                    = 451,
     se_LastQueryTime                               = 452,
     se_CloseConnection                             = 500,
-    se_Stop                                        = 501,
-    se_StopSM                                      = 502,
     se_CloseConnectionOk                           = 510,
     se_TransactionRollbackBeforeClose              = 520,
     se_Authenticate                                = 90,
@@ -199,8 +191,14 @@ enum se_sp_instructions
     se_SetSessionOptionsOk                         = 540,
     se_ResetSessionOptions                         = 550,
     se_ResetSessionOptionsOk                       = 560,
+    
+    se_Stop                                        = 501,  /// wait for transactions are completed
+    se_Stop_Hard                                   = 502,  /// attempts to immediately rollback all running transactions.
+    
+    se_StopSM                                      = 503,  /// se-smsd-client
+   
     se_RuntimeConfig                               = 600,
-    se_StartHotBackup                              = 666,
+    se_StartHotBackup                              = 666,  /// se-hotbackup-client
     se_CheckIfSMisRunning                          = 888
 };
 
