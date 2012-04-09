@@ -16,14 +16,37 @@
 
 
 typedef std::map<std::string, GlobalObjectDescriptor *> GlobalObjectMap;
+typedef std::map<std::string, GlobalObjectDescriptorFactory> GlobalObjectFactoryMap;
 
 struct GlobalObjectsCollectorImplementation {
     UFile objectLogFile;
     GlobalObjectMap objects;
+    GlobalObjectFactoryMap objFactoryMap;
 };
 
 static GlobalObjectsCollectorImplementation * gcimpl = NULL;
 UGlobalGarbageCollector gogc = {};
+
+void GlobalObjectsCollector::registerFactory(const char* objType, GlobalObjectDescriptorFactory factory)
+{
+    gcimpl->objFactoryMap.insert(GlobalObjectFactoryMap::value_type(objType, factory));
+}
+
+void GlobalObjectsCollector::add(GlobalObjectDescriptor* desc)
+{
+    gcimpl->objects.insert(GlobalObjectMap::value_type(desc->getId(), desc));
+}
+
+void GlobalObjectsCollector::clear(const std::string& id)
+{
+    gcimpl->objects.erase(id);
+}
+
+void GlobalObjectsCollector::cleanupObjects(std::istream* stream)
+{
+//    stream << ;
+}
+
 
 class SemaphoreDescriptor : public GlobalObjectDescriptor {
     USemaphore sem;
@@ -160,6 +183,27 @@ struct GlobalObjectsLess {
 };
 
 static
+void globalObjectCleanup(global_name name, const char * type, void * data, int arg1, int arg2)
+{
+    scoped_ptr<GlobalObjectDescriptor> tmp_desc;
+
+    if (strcmp(type, "SEM") == 0) {
+        tmp_desc = new SemaphoreDescriptor(name, arg1);
+    } else if (strcmp(type, "SEA") == 0) {
+        tmp_desc = new SemaphoreArrayDescriptor(name, arg1, arg2);
+    } else if (strcmp(type, "SHM") == 0) {
+        tmp_desc = new SharedMemoryDescriptor(name, (UShMem *) data);
+    } else if (strcmp(type, "EVT") == 0) {
+        tmp_desc = new EventDescriptor(name, (UEvent *) data);
+    } else {
+        return;
+    };
+
+    tmp_desc->cleanup();
+};
+
+
+static
 void globalObjectCreate(global_name name, const char * type, void * data, int arg1, int arg2)
 {
     GlobalObjectDescriptor * desc;
@@ -176,12 +220,7 @@ void globalObjectCreate(global_name name, const char * type, void * data, int ar
         return;
     };
 
-    gcimpl->objects.insert(GlobalObjectMap::value_type(desc->getId(), desc));
-
-    
-//    if (gcimpl->objectLogFile) {
-//        uCreateFile();
-//    };
+    GlobalObjectsCollector::add(desc);
 };
 
 static
@@ -201,7 +240,7 @@ void globalObjectDestroy(global_name name, const char * type, void * data, int a
         return;
     };
 
-    gcimpl->objects.erase(tmp_desc->getId());
+    GlobalObjectsCollector::clear(tmp_desc->getId());
 };
 
 void GlobalObjectsCollector::cleanup()
@@ -224,6 +263,7 @@ GlobalObjectsCollector::GlobalObjectsCollector()
 //    gcimpl->objectLogFile = uFile
 
 #ifndef _WIN32
+    gogc.onCleanup = globalObjectCleanup;
     gogc.onCreate = globalObjectCreate;
     gogc.onDestroy = globalObjectDestroy;
 

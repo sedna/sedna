@@ -8,16 +8,14 @@
 #include <string>
 #include <map>
 
-#define SINGLETON_GLOBAL_NAME(NAME, TAG) \
-  __GLOBAL_NAME_REGISTRY_ENTRY(NAME, NULL, 1, TAG)
+#define SINGLETON_GLOBAL_NAME(NAME) \
+  __GLOBAL_NAME_REGISTRY_ENTRY(NAME, NULL, 1)
   
-#define DATABASE_GLOBAL_NAME(NAME, TAG) \
-  __GLOBAL_NAME_REGISTRY_ENTRY(NAME,  "DB", (MAX_DBS_NUMBER), TAG)
+#define DATABASE_GLOBAL_NAME(NAME) \
+  __GLOBAL_NAME_REGISTRY_ENTRY(NAME,  "DB", (MAX_DBS_NUMBER))
   
-#define SESSION_GLOBAL_NAME(NAME, TAG) \
-  __GLOBAL_NAME_REGISTRY_ENTRY(NAME, "SESSION", (UPPER_SESSIONS_NUM_BOUND), TAG)
-
-enum { go_unknown = 0, go_shm, go_semap, go_event, go_sem, };
+#define SESSION_GLOBAL_NAME(NAME) \
+  __GLOBAL_NAME_REGISTRY_ENTRY(NAME, "SESSION", (UPPER_SESSIONS_NUM_BOUND))
 
 // This parameter should not be exactly right, its just an upper bound
 #define GLOBAL_NAME_COUNT 32
@@ -29,15 +27,15 @@ enum { go_unknown = 0, go_shm, go_semap, go_event, go_sem, };
 static UGlobalNamesRegistryItem globalNameRegistry[] =
 {
 /* Event log communication memory / semaphore pair */
-SINGLETON_GLOBAL_NAME(EVENT_LOG_SHM, go_shm),
-SINGLETON_GLOBAL_NAME(EVENT_LOG_SEM, go_sem),
+SINGLETON_GLOBAL_NAME(EVENT_LOG_SHM),
+SINGLETON_GLOBAL_NAME(EVENT_LOG_SEM),
 
 /* Buffer memory */
-DATABASE_GLOBAL_NAME(BUFFER_MEMORY_SHM, go_shm),
+DATABASE_GLOBAL_NAME(BUFFER_MEMORY_SHM),
 
 /* SM comminucation channel */
-DATABASE_GLOBAL_NAME(SM_TALK_SHM, go_shm),
-DATABASE_GLOBAL_NAME(SM_TALK_SEM, go_sem),
+DATABASE_GLOBAL_NAME(SM_TALK_SHM),
+DATABASE_GLOBAL_NAME(SM_TALK_SEM),
 
 {},
 };
@@ -59,11 +57,17 @@ global_name createSednaGlobalName(const char* globalNameBase)
         if (strcmp(regItem->basename, globalNameBase) == 0) {
             break;
         };
+
+        regItem++;
     } while (regItem->basename != NULL);
 
     if (regItem->basename == NULL) {
         U_ASSERT(false);
         throw SYSTEM_EXCEPTION("Internal error (not registered global object was about to be created)");
+    };
+
+    if (regItem->tag > -1) {
+        return globalNameBuffer + regItem->tag;
     };
 
     if (regItem->prefix == NULL) {
@@ -77,10 +81,12 @@ global_name createSednaGlobalName(const char* globalNameBase)
         throw SYSTEM_EXCEPTION("Internal error (not registered global object was about to be created)");
     };
 
-    const char * result = UCreateGlobalName(globalNameBase, objectId,
+    const char * result = UCreateGlobalNameFromRegistry(regItem, objectId,
         globalNameBufferPtr, GLOBAL_NAME_BUFFER_LEN - (globalNameBufferPtr - globalNameBuffer));
 
     globalNameBufferPtr += strlen(result) + 1;
+
+    regItem->tag = (int) (globalNameBufferPtr - globalNameBuffer);
 
     return result;
 };

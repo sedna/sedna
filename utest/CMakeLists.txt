@@ -16,3 +16,11 @@ add_dependencies(event_log_test u)
 target_link_libraries(event_log_test u)
 target_link_libraries(event_log_test ${sysaux_LIB})
 
+add_executable(global_names_test global_names_test.cpp)
+add_dependencies(global_names_test generate_error_codes)
+add_dependencies(global_names_test u)
+add_dependencies(global_names_test common)
+target_link_libraries(global_names_test u)
+target_link_libraries(global_names_test common)
+target_link_libraries(global_names_test ${sysaux_LIB})
+
