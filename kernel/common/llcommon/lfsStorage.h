@@ -9,7 +9,11 @@
 #ifndef _LFS_STORAGE_
 #define _LFS_STORAGE_
 
+#include "u/u.h"
 #include "lfsGlobals.h"
+
+extern global_name lfsSyncSemName;
+extern global_name lfsSyncShmName;
 
 // Init lfs subsystem; this function must be called only once to initialze lfs subsystem.
 // All additional users must call lfsConnect function.

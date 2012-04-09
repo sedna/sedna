@@ -34,6 +34,8 @@
 #include "common/sedna.h"
 #include "common/base.h"
 
+#include "aux/cppcast.h"
+
 #include "u/uhdd.h"
 #include "u/ushm.h"
 #include "u/usem.h"
@@ -45,6 +47,9 @@
 #include <stdint.h>
 
 using namespace std;
+
+global_name lfsSyncSemName = NULL;
+global_name lfsSyncShmName = NULL;
 
 // LFS runtime info shared between processes
 struct lfsInfo_t
@@ -109,7 +114,7 @@ static void _lfsProcessError(const char *file, const char *func, int line, const
  		err_msg += ": " + string(adds);
 
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
-	err_msg += " - (" + string(file) + ':' + string(func) + ':' + int2string(line) + ')';
+	err_msg += " - (" + string(file) + ':' + string(func) + ':' + cast_to_string(line) + ')';
 #endif
 
 	throw SYSTEM_EXCEPTION(err_msg.c_str());
@@ -124,7 +129,7 @@ static void _lfsProcessWarning(const char *file, const char *func, int line, con
         err_msg += ": " + string(adds);
 
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
-    err_msg += " - (" + string(file) + ':' + string(func) + ':' + int2string(line) + ')';
+    err_msg += " - (" + string(file) + ':' + string(func) + ':' + cast_to_string(line) + ')';
 #endif
 
     elog(EL_WARN, ("%s", err_msg.c_str()));
@@ -412,7 +417,7 @@ static int _lfsInitSync(int BufSize)
 	int res;
 
 	// create semaphore for synchronization purposes
-	res = USemaphoreCreate(&SyncSem, 1, 1, SEDNA_LFS_SEM_NAME, NULL, __sys_call_error);
+	res = USemaphoreCreate(&SyncSem, 1, 1, lfsSyncSemName, NULL, __sys_call_error);
 	if (res != 0)
 	{
 		LFS_ERROR("lfs error: cannot create semaphore");
@@ -420,7 +425,7 @@ static int _lfsInitSync(int BufSize)
 	}
 
 	// create shared memory
-	res = uCreateShMem(&ShDsc, SEDNA_LFS_SHARED_MEM_NAME, sizeof(lfsInfo_t) + BufSize, NULL, __sys_call_error);
+	res = uCreateShMem(&ShDsc, lfsSyncShmName, sizeof(lfsInfo_t) + BufSize, NULL, __sys_call_error);
 
 	if (res != 0)
 	{
@@ -727,7 +732,7 @@ int lfsRelease()
 		return -1;
 	}
 
-	if (uReleaseShMem(&ShDsc, SEDNA_LFS_SHARED_MEM_NAME, __sys_call_error) != 0)
+	if (uReleaseShMem(&ShDsc, lfsSyncShmName, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot release shared memory");
 		return -1;
@@ -756,14 +761,14 @@ int lfsConnect(const char *cDataPath, const char *cPrefix, const char *cExt, int
 		return -1;
 
 	// open semaphore for synchronization purposes
-	if (USemaphoreOpen(&SyncSem, SEDNA_LFS_SEM_NAME, __sys_call_error) != 0)
+	if (USemaphoreOpen(&SyncSem, lfsSyncSemName, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot open semaphore");
 		return -1;
 	}
 
 	// create shared memory
-	if (uOpenShMem(&ShDsc, SEDNA_LFS_SHARED_MEM_NAME, __sys_call_error) != 0)
+	if (uOpenShMem(&ShDsc, lfsSyncShmName, __sys_call_error) != 0)
 	{
 		LFS_ERROR("lfs error: cannot open shared memory");
 		return -1;

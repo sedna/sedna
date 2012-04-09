@@ -11,11 +11,14 @@
  *
  */
 
-#include "common/llcommon/llMain.h"
-#include "common/u/ushm.h"
-#include "common/u/usem.h"
+#include "llMain.h"
+
+#include "u/ushm.h"
+#include "u/usem.h"
+#include "u/uevent.h"
+
+#include "common/sedna.h"
 #include "common/base.h"
-#include "common/u/uevent.h"
 #include "common/llcommon/lfsStorage.h"
 
 #include <assert.h>
@@ -26,6 +29,11 @@
 #define LL_WRITEBUF_SIZE 1024 * 1024                          // write buffer size (for lfs)
 #define LL_READBUF_SIZE 1024                                  // read buffer size (for lfs)
 #define LL_MAX_LOG_FILES ((uint32_t)max_log_files)            // maximum files until truncate
+
+global_name logicalLogShm = NULL;
+global_name logicalLogSem = NULL;
+global_name checkpointFinished = NULL;
+global_name checkpointEvent = NULL;
 
 struct llRecordHead
 {

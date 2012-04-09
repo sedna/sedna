@@ -16,4 +16,6 @@
 #include "common/errdbg/exceptions.h"
 #endif
 
+#define RECOVERY_CRASH { }
+
 #endif /*_SEDNA_H */

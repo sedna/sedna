@@ -9,9 +9,9 @@
 #ifndef _LL_MAIN_
 #define _LL_MAIN_
 
-#include "common/lfsGlobals.h"
-#include "common/wutypes.h"
 #include "common/base.h"
+#include "common/llcommon/lfsGlobals.h"
+#include "common/xptr/wutypes.h"
 
 //#define LOG_TRACE // turns on extensive logical log trace in event log
 
@@ -108,6 +108,10 @@ struct llGlobalInfo
 	uint64_t next_arch_file;       							// file from which to archive on next increment; if 0 - then db isn't in incremental mode
 };
 
+extern global_name logicalLogShm;
+extern global_name logicalLogSem;
+extern global_name checkpointFinished;
+extern global_name checkpointEvent;
 
 extern llGlobalInfo *llInfo; // pointer to the global info memory
 
