@@ -20,8 +20,7 @@ extern "C"
 #define U_SOCKET_ERROR              SOCKET_ERROR
 
 #else
-#include <sys/socket.h>
-    
+
     typedef int USOCKET;
 
 #define U_INVALID_SOCKET			(-1)

@@ -1,19 +1,24 @@
 #ifndef SOCKETUTILS_H
 #define SOCKETUTILS_H
 
-#include "common/u/usocket.h"
-#include "common/sp.h"
-#include "common/u/uutils.h"
-#include "common/u/uprocess.h"
-#include "common/structures/listener_states.h"
-#include "common/counted_ptr.h"
+#include "u/usocket.h"
+#include "u/uprocess.h"
+#include "aux/counted_ptr.h"
+#include "common/protocol/sp.h"
 
 #include <string>
+
+enum message_exch_state_t {
+      exch_ready_to_receive,
+      exch_getting_message,          //by this moment instruction number and full length of the message is already received.
+      exch_got_full_message,
+      exch_connection_closed_ok,
+      exch_connection_closed_error,
+};
 
 void    socketSetNoDelay (USOCKET sock);
 
 /* class SocketReader inlined for better performance */
-
 class SocketReader {
 // TODO: implement buffer reallocation on exceeding capacity
   private:
@@ -213,6 +218,26 @@ class SocketClient {
     
     virtual               ~SocketClient() {};
     virtual SocketClient * processData() = 0;
+};
+
+class MessageExchangerException : public std::exception {
+private:
+    const char * error;
+public:
+    MessageExchangerException(const char* _error)
+      : error(_error) { };
+
+    virtual const char* what() const throw() { return error; };
+};
+
+class SocketTransmissionException : public MessageExchangerException {
+private:
+    const char * error;
+public:
+    SocketTransmissionException(const char* _error)
+      : MessageExchangerException(_error) {}
+
+    virtual const char* what() const throw() { return error; };
 };
 
 #endif /* SOCKETUTILS_H */

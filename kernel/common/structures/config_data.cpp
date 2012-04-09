@@ -2,8 +2,9 @@
 /* However move this to config parameters */
 
 #include "config_data.h"
-#include "xml_config.h"
-#include "common/cppcast.h"
+
+#include "aux/cppcast.h"
+#include "aux/options/xml_options.h"
 
 #include <sstream>
 

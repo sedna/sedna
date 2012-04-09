@@ -9,7 +9,9 @@
 
 #include "u/u.h"
 #include "u/uni.h"
+
 #include "common/errdbg/event_log.h"
+#include "common/errdbg/error_codes.h"
 
 #ifdef __cplusplus
 #include <cstddef>

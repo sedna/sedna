@@ -5,10 +5,11 @@
 
 
 #include <assert.h>
-#include "common/SSMMsg.h"
-#include "common/utils.h"
+
+#include "SSMMsg.h"
+
 #include "common/errdbg/d_printf.h"
-#include "common/u/ugnames.h"
+#include "u/ugnames.h"
 
 using namespace std;
 
@@ -123,7 +124,7 @@ int SSMMsg::init()
         //d_printf2("shar_mem 0x%x\n", shar_mem);
         //d_printf2("shared_memory_size %d\n", shared_memory_size);
 
-        int *init_values = se_new int[sems_num];
+        int *init_values = new int[sems_num];
 
         init_values[sem_clients]      = 0;
         init_values[sem_servers]      = 0;
@@ -369,10 +370,10 @@ int SSMMsg::serve_clients(process_msg_func func)
 {
     shutdown_server_proc = false;
 
-    server_param = se_new SSMMsg_server_thread_param;
+    server_param = new SSMMsg_server_thread_param;
     server_param->func = func;
     server_param->ssmmsg = this;
-    thread_handles = se_new UTHANDLE[servers_amount];
+    thread_handles = new UTHANDLE[servers_amount];
     for (int i = 0; i < servers_amount; i++)
     {
         //d_printf2("server thread number %d started\n", i);

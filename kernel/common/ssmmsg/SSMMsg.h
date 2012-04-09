@@ -13,9 +13,9 @@
 
 #include "common/sedna.h"
 
-#include "common/u/usem.h"
-#include "common/u/uthread.h"
-#include "common/u/ushm.h"
+#include "u/usem.h"
+#include "u/uthread.h"
+#include "u/ushm.h"
 
 #define SSMMSG_DEFAULT_TIMEOUT		10000
 

@@ -1,14 +1,6 @@
 #ifndef LISTENER_STATES_H
 #define LISTENER_STATES_H
 
-enum message_exch_state_t {
-      exch_ready_to_receive,
-      exch_getting_message,          //by this moment instruction number and full length of the message is already received.
-      exch_got_full_message,
-      exch_connection_closed_ok,
-      exch_connection_closed_error,
-};
-
 enum listener_progress_t {
       receive_new_message,
       in_progress
