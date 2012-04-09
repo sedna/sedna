@@ -111,13 +111,10 @@ int main () {
         /* This message will never appear in event.log. If test hangs at this point or 
         * falls with stack overflow, it's an error.
         */
-        elog(log_level, ("If you are in debug mode and you see this line as active, then I'm in infinite loop!"));
         elog_long(log_level, "Hi, I'm long message in log!", "And you shouldn't see me too");
+        elog(log_level, ("If you are in debug mode and you see this line as active, then I'm in infinite loop!"));
       } catch (std::string a) { std::cout << a; }
     }
   
-  
-  
-  
-  return 0;
+    return 0;
 }

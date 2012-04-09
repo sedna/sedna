@@ -63,7 +63,7 @@
                                                                  __LINE__, \
                                                                  __SE_FUNCTION__, \
                                                                  (event_log_short_msg_param rest))) \
-                                    : (event_log_short_write_to_stderr rest)) \
+                                    : (event_log_short_write_to_buffer rest)) \
          : 0)
 
 /*----------
@@ -79,7 +79,7 @@
                                                           __SE_FUNCTION__, \
                                                           (short_str), \
                                                           (long_str))) \
-                                    : (event_log_long_write_to_stderr((short_str), (long_str)))) \
+                                    : (event_log_long_write_to_buffer((short_str), (long_str)))) \
          : 0)
 
 
@@ -119,7 +119,7 @@ int event_log_short_msg(int elevel,
                         const char *s, 
                         ...);
 
-int event_log_short_write_to_stderr(const char *s, ...);
+int event_log_short_write_to_buffer(const char *s, ...);
 
 
 /* ============================================================================
@@ -133,7 +133,7 @@ int event_log_long_msg(int elevel,
                        const char *short_str,
                        const char *long_str);
 
-int event_log_long_write_to_stderr(const char *short_str, const char *long_str);
+int event_log_long_write_to_buffer(const char *short_str, const char *long_str);
 
 
 /* ============================================================================
