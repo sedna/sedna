@@ -37,6 +37,19 @@ DATABASE_GLOBAL_NAME(BUFFER_MEMORY_SHM),
 DATABASE_GLOBAL_NAME(SM_TALK_SHM),
 DATABASE_GLOBAL_NAME(SM_TALK_SEM),
 
+/* lfs state & buffer in shared memory */
+DATABASE_GLOBAL_NAME(LFS_SHM),
+DATABASE_GLOBAL_NAME(LFS_SEM),
+
+/* logical log state & buffer in shared memory */
+DATABASE_GLOBAL_NAME(LOGICAL_LOG_SHM),
+DATABASE_GLOBAL_NAME(LOGICAL_LOG_SEM),
+
+/* signals that a checkpoint must be activated or snapshots must be advanced */
+DATABASE_GLOBAL_NAME(NEW_JOB_4_CHECKPOINT_THREAD_EVENT),
+
+/* to wait for checkpoint to finish */
+DATABASE_GLOBAL_NAME(CHECKPOINT_FINISHED_SEM),
 {},
 };
 
@@ -125,17 +138,13 @@ void releaseSednaGlobalNameRegistry()
 
 //        {"SEMAP_LOCKMGR",                                       POLICY_INSTANCE_PER_DB()}, /* serialises requests to lock manager (in SM) */
 //        {"EVENT_LOCK_GRANTED",                          POLICY_INSTANCE_PER_SESSION()}, /* if transaction request for a lock on DB entity is not satisfied immediately trn waits until the event is signalled (hence if transaction enters the wait state, it can't become a victim for the deadlock-resolution process) */
+//    {"SEMAP_CHECKPOINT_FINISHED",       POLICY_INSTANCE_PER_DB()}, /* to wait for checkpoint to finish */
 
 //        {"SEMAP_TRN_REGULATION",                        POLICY_INSTANCE_PER_DB()}, /* currently if checkpoint is active no updater transactions are allowed and vice-versa (earlier mutual exclusion applied to micro-ops but not transactions) */
 //        {"EVENT_NEW_JOB_4_CHECKPOINT_THREAD", POLICY_INSTANCE_PER_DB()}, /* signals that a checkpoint must be activated or snapshots must be advanced */
 //        {"EVENT_READONLY_TRN_COMPLETED",        POLICY_INSTANCE_PER_DB()}, /* signals read-only transaction completion */
 
-//        {"SHMEM_LFS",                                           POLICY_INSTANCE_PER_DB()}, /* lfs state & buffer in shared memory */
-//        {"SEMAP_LFS",                                           POLICY_INSTANCE_PER_DB()}, /* synchronises operation with lfs */
-//    {"SEMAP_CHECKPOINT_FINISHED",       POLICY_INSTANCE_PER_DB()}, /* to wait for checkpoint to finish */
 
-//        {"SHMEM_LOGICAL_LOG",                           POLICY_INSTANCE_PER_DB()}, /* logical log state & buffer in shared memory */
-//        {"SEMAP_LOGICAL_LOG",                           POLICY_INSTANCE_PER_DB()}, /* synchronises operation with logical log */
 
 //        {"EVENT_SM_SHUTDOWN_COMMAND",           POLICY_INSTANCE_PER_DB()}, /* signaled by SSMMsg thread in SM when shutdown command arrives via messaging interface */
 
