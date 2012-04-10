@@ -4,6 +4,7 @@
 #include "common/base.h"
 #include "common/socketutils/socketutils.h"
 
+#include "worker_client.h"
 #include "process_structures.h"
 
 #include <map>
@@ -12,37 +13,56 @@
 class ClientConnectionProcessor;
 
 struct SocketClientGreater {
-    bool operator()( const SocketClient * & lx, const SocketClient * & rx ) const {
-        if (lx->getType() == rx->getType()) {
+    bool operator()( const WorkerSocketClient * & lx, const WorkerSocketClient * & rx ) const {
+        if (lx->getPriority() == rx->getPriority()) {
             return lx - rx < 0;
         } else {
-            return lx->getType() < rx->getType();
+            return lx->getPriority() < rx->getPriority();
         }
     }
 };
 
-typedef std::set<SocketClient *, SocketClientGreater> SocketClientList;
-typedef std::set<SocketClient *> SocketClientList;
+typedef std::set<WorkerSocketClient *, SocketClientGreater> SocketClientList;
+
+typedef std::map<USOCKET, WorkerSocketClient *> SystemSocketMap;
 typedef std::set<ClientConnectionProcessor *> ClientConnectionList;
 typedef std::map<std::string, DatabaseProcessInfo *> DatabaseMap;
 typedef std::map<std::string, ClientConnectionList > SessionClientMap;
 typedef std::multimap<std::string, SocketClient * > DatabaseServiceClientMap;
 
 typedef std::map<session_id, SessionProcessInfo *> SessionMap;
+typedef std::string ClientTicket;
+
+class IProcessCallback {
+public:
+    virtual ~IProcessCallback() {};
+
+    virtual void onError(const char * cause) = 0;
+    virtual void onDatabaseProcessStart(DatabaseProcessInfo *, WorkerSocketClient *) = 0;
+    virtual void onSessionProcessStart(SessionProcessInfo *, WorkerSocketClient *) = 0;
+    virtual void onDatabaseShutdown() = 0;
+};
 
 // TODO: Move it into another file
 class ProcessManager {
+    GlobalParameters parameters;
+
     ProcessList processList;
-    SocketClientList clientConnectionList;
+    SystemSocketMap systemSocketMap;
 
     DatabaseMap databaseMap;
     SessionClientMap clientsWaitingForSession;
     DatabaseServiceClientMap clientsWaitingForDatabase;
-
     SessionMap sessionIndexById;
 
     session_id lastSessionId;
+
+    bool requestsPending;
+    void doProcessRequests();
 public:
+    ProcessManager() : lastSessionId(0), requestsPending(false) {};
+    ~ProcessManager();
+
     session_id getNewSessionId() { return lastSessionId++; };
 
     void addSessionProcess(SessionProcessInfo * session);
@@ -50,12 +70,17 @@ public:
     void removeSessionProcess(session_id sid);
     void removeSessionProcess(SessionProcessInfo * session);
 
-    void addClientConnection(SocketClient * cc);
-    void removeClientConnection(SocketClient * cc);
+    void startDatabase(const std::string& dbName, IProcessCallback * callback);
+    void shutdownDatabase(DatabaseProcessInfo * sm, IProcessCallback * callback);
 
-    void addDatabase(DatabaseProcessInfo * sm);
-    void removeDatabase(DatabaseProcessInfo * sm);
+    void createDatabase(const std::string& dbName, IProcessCallback * callback);
+    
+    void requestSession(DatabaseProcessInfo * sm, IProcessCallback * callback);
 
+    void processRequests() {
+        if (requestsPending) { doProcessRequests(); }
+    };
+    
     DatabaseProcessInfo * getDatabaseProcess(const std::string& dbName);
 
     void addClientWaitingForSession(ClientConnectionProcessor * cc);
@@ -64,8 +89,29 @@ public:
     void addServiceClientWaitingForDatabase(SocketClient * client);
     SocketClient * getServiceClient(const std::string& dbName);
 
-    ProcessManager() : lastSessionId(0) {};
-    ~ProcessManager();
+    GlobalParameters * getGlobalParameters() { return &parameters; };
+
+    SessionProcessInfo * getAvailableSession(DatabaseProcessInfo * sm) const;
+    
+    WorkerSocketClient * getClientBySocket(USOCKET socket) const {
+        SystemSocketMap::const_iterator it = systemSocketMap.find(socket);
+
+        if (it == systemSocketMap.end()) {
+            return it->second;
+        } else {
+            return NULL;
+        };
+    };
+
+    SessionProcessInfo * getSessionById(session_id sid) const {
+        SessionMap::const_iterator it = sessionIndexById.find(sid);
+
+        if (it == sessionIndexById.end()) {
+            return it->second;
+        } else {
+            return NULL;
+        };
+    };
 };
 
 /*

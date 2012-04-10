@@ -2,9 +2,10 @@
 #define _PROCESS_STRUCTURES_H
 
 #include "common/base.h"
-#include "common/u/usocket.h"
-#include "common/u/uprocess.h"
 #include "common/structures/config_data.h"
+
+#include "u/usocket.h"
+#include "u/uprocess.h"
 
 #include <set>
 
@@ -30,6 +31,8 @@ struct ProcessInfo
 };
 
 typedef std::set<ProcessInfo *>  ProcessList;
+
+struct DatabaseProcessInfo;
 
 struct SessionProcessInfo : public ProcessInfo
 {

@@ -1,23 +1,56 @@
+#include "clients.h"
+
 #include "gov/cpool.h"
-#include "gov/clients.h"
-#include "gov/processes.h"
 #include "common/structures/listener_states.h"
-#include "common/errdbg/d_printf.h"
-#include "common/u/uutils.h"
-#include "common/db_utils.h"
-#include "common/ipc_ops.h"
-#include "common/ugc.h"
-#include "common/structures/cdb_structures.h"
-#include "common/SSMMsg.h"
-#include "common/sm_vmm_data.h"
 
-#include <iostream> // Temporary!!!
-
-
-// #include <arpa/inet.h>
+#include "common/protocol/int_sp.h"
 
 #include <set>
+
 using namespace std;
+
+
+class InternalProcessNegotiation : public InternalSocketClient {
+    enum {
+        iproc_initial,
+        iproc_awaiting_key,
+        iproc_ticket_recieved
+    } state;
+public:
+    InternalProcessNegotiation(WorkerSocketClient* producer)
+        : InternalSocketClient(producer, se_Client_Priority_SM) {}
+    
+    virtual SocketClient* processData();
+    virtual void cleanupOnError();
+};
+
+SocketClient* InternalProcessNegotiation::processData()
+{
+    switch(state) {
+      case iproc_initial :
+        if (!communicator->receive()) { return this; }
+        communicator->beginSend(se_Handshake);
+        // Here should be initial key someday
+        communicator->endSend();
+        state = iproc_awaiting_key;
+      case iproc_awaiting_key :
+        if (!communicator->receive()) { return this; }
+        // Here we recieve key, so we know type of client
+        // Next processor
+      default : break;
+    };
+
+    respondError();
+    setObsolete();
+    return NULL;
+}
+
+void InternalProcessNegotiation::cleanupOnError()
+{
+
+}
+
+
 
 /////////////////////////////class ClientNegotiationManager//////////////////////////////////
 
@@ -25,29 +58,44 @@ SocketClient * ClientNegotiationManager::processData() {
     if (!communicator->receive()) {
         return this;
     }
+
+    size_t length;
+    ProtocolVersion protocolVersion;
     
+    switch (communicator->getInstruction()) {
+      case se_StartUp :
+        length = communicator->getMessageLength();
+
+        // Tells new protocol from the old one
+        // New protocol sends protocol version immidiately
+        if (length > 8) {
+            // New protocol
+
+            protocolVersion.min = communicator->readChar();
+            protocolVersion.maj = communicator->readChar();
+
+            return new ServiceConnectionProcessor(this, protocolVersion);
+        } else {
+            return new ClientConnectionProcessor(this, ClientConnectionProcessor::CommonProtocolClient());
+        };
+
+        break;
+      case se_ConnectProcess :
+        return new InternalProcessNegotiation(this);
+      case se_ReceiveSocket :
+        U_ASSERT(false);
+        //worker->getProcessManager()->getSessionById();
+        //
+      default:
+        respondError();
+        setObsolete();
+        return NULL;
+    };
     // Message received, parsing it
     
     // !TODO: replace with switch-case
     
-    if (se_StartUp == communicator->getInstruction()) {
-        ClientConnectionProcessor * client = new ClientConnectionProcessor(this);
-        communicator = NULL;
-        return client;
-
-    } else if (se_RegisterDB == communicator->getInstruction()) {
-        SMConnectionProcessor * sm = new SMConnectionProcessor(this);
-        sm->registerSM();
-        communicator = NULL;
-        return sm;
-
-    } else if (se_RegisterNewSession == communicator->getInstruction()) {
-        TRNConnectionProcessor * trn = new TRNConnectionProcessor(this);
-        trn->registerTRN();
-        communicator = NULL;
-        return trn;
-        
-    } else if (se_ReceiveSocket == communicator->getInstruction()) { //this can happen only under *nix
+    if (se_ReceiveSocket == communicator->getInstruction()) { //this can happen only under *nix
         int s_id = communicator->readInt32();
         TRNInfo * info;
         info = worker->findTRNbyId(s_id);
@@ -56,50 +104,178 @@ SocketClient * ClientNegotiationManager::processData() {
         worker->resumePendingOnTrnClient(string(info->db_name), (TRNConnectionProcessor *) info->processor);
         info = NULL;
         return this;
-        
-    } else if (se_CreateDbRequest == communicator->getInstruction()) {
-        CdbRequestProcessor * cdbrequest = new CdbRequestProcessor(this);
-        communicator->beginSend(se_SendSessionParameters);
-        communicator->endSend();
-        communicator = NULL;
-        return cdbrequest;
-      
-    } else if (se_RegisterCDB == communicator->getInstruction()) {
-        CdbConnectionProcessor * cdb = new CdbConnectionProcessor(this);
-        cdb->registerCdb();
-        communicator = NULL;
-        return cdb;
-    } else if (se_Stop == communicator->getInstruction()) {
-        
-//       !TODO: Here should be auth for shutdown
-        SednaStopProcessor * se_stop = new SednaStopProcessor(this);
-        se_stop->getParams();
-        communicator = NULL;
-        return se_stop;
-         
-    } else if (se_StopSM == communicator->getInstruction()) {
-//       !TODO: Here should be auth for shutdown
-        SMStopProcessor * se_smsd = new SMStopProcessor(this);
-        se_smsd->getParams();
-        communicator = NULL;
-        return se_smsd;
-      
-    } else{
-//         char buf[4];
-//         u_itoa(communicator->getInstruction(),buf,10);
-        respondError();
-//         throw USER_EXCEPTION2(SE3009, buf);
-        setObsolete();
-        return NULL;
     }
 
     return this;
 };
 
+////////////////////////////class ClientConnectionProcessor//////////////////////////////////////////
+
+class ClientConnectionCallback : public IProcessCallback {
+public:
+    ClientConnectionProcessor * client;
+
+    ClientConnectionCallback(ClientConnectionProcessor * _client) : client(_client) {};
+
+    virtual ~ClientConnectionCallback() {
+        if (client != NULL && client->activeCallback == this) {
+            client->activeCallback = NULL;
+        }
+    }
+
+    virtual void onError(const char* cause) {
+        if (client != NULL) {
+            client->respondError(cause);
+            client->setObsolete(false);
+            client->state = client_close_connection;
+        }
+    };
+
+    virtual void onDatabaseProcessStart(DatabaseProcessInfo* sminfo, WorkerSocketClient* ) {
+        if (client != NULL) {
+            client->sminfo = sminfo;
+            client->processRequestSession();
+        }
+    };
+
+    virtual void onSessionProcessStart(SessionProcessInfo* trninfo, WorkerSocketClient* scl) {
+        if (client != NULL) {
+            client->trninfo = trninfo;
+            client->associatedSessionClient = scl;
+            client->processSendSocket();
+        }
+    };
+};
+
+ClientConnectionProcessor::~ClientConnectionProcessor() {
+    if (activeCallback != NULL) {
+        activeCallback->client = NULL;
+    };
+
+    setObsolete();
+};
+
+bool ClientConnectionProcessor::processStartDatabase()
+{
+    U_ASSERT(state == client_awaiting_sm_and_trn);
+
+    ProcessManager * pm = worker->getProcessManager();
+    
+    sminfo = pm->getDatabaseProcess(authData.databaseName);
+
+    if (sminfo == NULL) {
+        // Try to start storage manager and wait for SM to start
+        // NOTE: this function may instantly call onError function in callback!
+        pm->startDatabase(authData.databaseName, new ClientConnectionCallback(this));
+        return false;
+    };
+
+    return processRequestSession();
+}
+
+bool ClientConnectionProcessor::processRequestSession()
+{
+    U_ASSERT(state == client_awaiting_sm_and_trn);
+    U_ASSERT(sminfo != NULL);
+
+    ProcessManager * pm = worker->getProcessManager();
+    trninfo = pm->getAvailableSession(sminfo);
+
+    if (trninfo == NULL) {
+        // NOTE: this function may instantly call onError function in callback!
+        pm->requestSession(sminfo, new ClientConnectionCallback(this));
+        return false;
+    };
+
+    processSendSocket();
+
+    return true;
+}
+
+bool ClientConnectionProcessor::processSendSocket()
+{
+    U_ASSERT(state == client_awaiting_sm_and_trn);
+    U_ASSERT(trninfo != NULL);
+
+    communicator->beginSend(se_SendAuthParameters);
+    communicator->endSend();
+
+    state = client_awaiting_auth;
+
+    return true;
+}
+
+
+SocketClient * ClientConnectionProcessor::processData() {
+    ProcessManager * pm = worker->getProcessManager();
+
+    switch (state) {
+    case client_initial_state :
+        communicator->beginSend(se_SendSessionParameters);
+        communicator->endSend();
+        state = client_awaiting_parameters;
+
+    case client_awaiting_parameters:
+        if (!communicator->receive()) return this;
+
+        if (communicator->getInstruction() != se_SessionParameters) {
+            respondError("Waiting for session parameters");
+            return NULL;
+        }
+
+        protocolVersion.min = communicator->readChar();
+        protocolVersion.maj = communicator->readChar();
+
+        if (protocolVersion.maj < 3) {
+            respondError("Protocol version is too old");
+            return NULL;
+        } else if (protocolVersion.maj < 5) {
+            respondError("Protocol version is too old");
+            return NULL;
+            // TODO : implement
+//            return new OldProtocolClientProcessor(this);
+        };
+
+        authData.recvInitialAuth(communicator.get());
+        
+        state = client_awaiting_sm_and_trn;
+        
+    case client_awaiting_sm_and_trn:
+        if (!processStartDatabase()) {
+            return this;
+        };
+    case client_awaiting_auth:
+        if (!communicator->receive()) return this;
+
+        if (communicator->getInstruction() != se_AuthenticationParameters) {
+            respondError("");
+            return NULL;
+        }
+
+        authData.recvPassword(communicator.get());
+
+        trninfo->sendSocket(clientSocket);
+
+        // TODO : send auth info to trn
+        
+        state = client_close_connection;
+    case client_close_connection:
+        setObsolete(false);
+        return NULL;
+    case client_awaiting_sm_and_trn:
+    default:
+        return this;
+    }
+    
+    return this;
+}
+
+
+
 /////////////////////////////class SednaStopProcessor//////////////////////////////////
 
-SednaStopProcessor::SednaStopProcessor(WorkerSocketClient* producer)
-  : WorkerSocketClient(producer, se_Client_Priority_Stop) {}
+SednaShutdownProcessor::SednaShutdownProcessor(WorkerSocketClient* producer)
+  
 
 void SednaStopProcessor::getParams()
 {
@@ -129,9 +305,6 @@ SocketClient* SednaStopProcessor::processData() {
 
 
 /////////////////////////////class SMStopProcessor/////////////////////////////////////
-
-SMStopProcessor::SMStopProcessor(WorkerSocketClient* producer)
-  : WorkerSocketClient(producer, se_Client_Priority_SMsd) { }
 
 void SMStopProcessor::getParams()
 {
@@ -302,11 +475,6 @@ void SMConnectionProcessor::cleanupOnError()
 {
 /*!TODO write this*/
 }
-
-/////////////////////////////class TRNConnectionProcessor//////////////////////////////////
-
-TRNConnectionProcessor::TRNConnectionProcessor(WorkerSocketClient* producer)
-  : InternalSocketClient(producer, se_Client_Priority_TRN), s_id(0), trninfo(NULL) { }
 
 //////////////////////////////// Adding TRN to available TRNs list. //////////////////////
 void TRNConnectionProcessor::registerTRN()
@@ -548,141 +716,4 @@ SocketClient* CdbRequestProcessor::processData()
     return this;
 }
 
-
-////////////////////////////class ClientConnectionProcessor//////////////////////////////////////////
-
-ClientConnectionProcessor::~ClientConnectionProcessor() 
-{
-    setObsolete();
-};
-
-ClientConnectionProcessor::ClientConnectionProcessor(WorkerSocketClient* producer)
-  : WorkerSocketClient(producer, se_Client_Priority_Client),
-                            state(client_awaiting_parameters), 
-                            sminfo(NULL), 
-                            trninfo(NULL), 
-                            trn_launch(false), 
-                            is_socket_transmitted(false) {
-// TODO : remove this from constructor
-    //here we handle the first message.
-    communicator->beginSend(se_SendSessionParameters);
-    communicator->endSend();
-};
-
-void ClientConnectionProcessor::setTrn(TRNConnectionProcessor * trn) 
-{
-    trnProcessor = trn;
-} 
-
-SocketClient * ClientConnectionProcessor::processData() {
-        /*
-         * states:
-         * 1) wait for sm register/params
-         * 2) wait for trn register/params
-         * 3) pass client connection socket to trn and close it
-        */
-     switch (state) {
-      case client_awaiting_parameters:
-          
-          if (!communicator->receive()) return this;
-          
-          if (communicator->getInstruction() != se_SessionParameters) {
-            respondError();
-            return NULL;
-          }
-
-//           if (0 != sessionParams.readSessParams(communicator)) {
-//             respondError();
-//             return NULL;
-//           }
-
-          sessionParams.readSessParams(communicator.get());
-          
-          if (!worker->findAvailaibleSM(sminfo, sessionParams.dbName)) {
-            if (0 == worker->startStorageManager(sessionParams.dbName)) {
-              worker->addPendingOnSmClient(sessionParams.dbName, this);
-            } else {
-              respondError();
-              return NULL;
-            }
-            
-          } else if (!worker->findAvailaibleTRN(trninfo, sessionParams.dbName)) {
-              worker->addPendingOnTrnClient(sessionParams.dbName, this);
-              
-              if (!trn_launch) { //!TODO there should be a check for total number of started trn processes.
-                worker->startTransactionProcess(&sessionParams);
-                trn_launch = true;
-              }
-          }
-           
-          state = client_awaiting_sm_and_trn;
-          break;
-
-      case client_awaiting_sm_and_trn:
-          if (!worker->findAvailaibleSM(sminfo, sessionParams.dbName)) {
-            return this; //!TODO this is an error!
-          } else if (!worker->findAvailaibleTRN(trninfo, sessionParams.dbName)) {
-            worker->addPendingOnTrnClient(sessionParams.dbName, this);
-            
-            if (!trn_launch) { //!TODO there should be a check for total number of started trn processes.
-              worker->startTransactionProcess(&sessionParams);
-              trn_launch = true;
-              state = client_awaiting_trn_launch;
-            }
-            
-            break;
-            
-          } else if (trninfo->isError()) {
-            worker->removeTRN(trninfo->db_name, trninfo->sess_id);
-            respondError();
-            setObsolete();
-            return NULL;
-          }
-          
-          //do not insert "break here", i didn't forget about it.
-          
-      case client_awaiting_trn_launch:
-          if (!is_socket_transmitted) {
-            trnProcessor->communicator->sendSocket(trnProcessor->trninfo->pid, trnProcessor->trninfo->unix_s, clientSocket);
-            is_socket_transmitted = true;
-
-            trnProcessor->trninfo->setBusy();
-            
-            communicator->beginSend(se_SendAuthParameters);
-            communicator->endSend();
-            
-            state = client_awaiting_auth;
-          }
-
-          break;
-          
-      case client_awaiting_auth:
-          
-          if (!communicator->receive()) return this;
-          
-          if (communicator->getInstruction() != se_AuthenticationParameters) {
-            respondError();
-            return NULL;
-          }
-
-//           if (0 != sessionParams.readAuthParams(communicator)) {
-//             // TODO : auth failed check -- now it returns 0 always
-//             respondError();
-//             return NULL;
-//           }
-          
-          sessionParams.readAuthParams(communicator.get());
-        
-          sessionParams.sendSessParams(trnProcessor->communicator.get());
-          sessionParams.sendAuthParams(trnProcessor->communicator.get());
-          
-          setObsolete(false);
-          return NULL;
-          
-          break;
-    }
-
-      
-    return this;
-}
 

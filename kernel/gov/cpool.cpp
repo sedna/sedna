@@ -638,78 +638,77 @@ WorkerSocketClient * Worker::createListener() {
 }
 
 void Worker::run() {
-    try {
-        for (;;) {
-            memcpy(&readySet, &allSet, sizeof(readySet));
+    for (;;) {
+        memcpy(&readySet, &allSet, sizeof(readySet));
 
-            int readyCount = uselect_read_arr(&readySet, maxfd, NULL, __sys_call_error);
-            
-            if (readyCount == U_SOCKET_ERROR) {
-                U_ASSERT(false);
-                throw USER_EXCEPTION2(SE3007, usocket_error_translator());
+        int readyCount = uselect_read_arr(&readySet, maxfd, NULL, __sys_call_error);
+
+        if (readyCount == U_SOCKET_ERROR) {
+            U_ASSERT(false);
+            throw USER_EXCEPTION2(SE3007, usocket_error_translator());
+        }
+
+        for (SocketClientList::iterator i = clientList.begin(); i != clientList.end(); ) {
+            WorkerSocketClient * client = *i;
+
+            if (client->isObsolete()) {
+                USOCKET socket = client->getSocket();
+                U_SSET_CLR(socket, &allSet);
+                i = clientList.erase(i);
+                delete client;
+                continue;
             }
 
-            for (ClientList::iterator i = clientList.begin(); i != clientList.end(); ) {
-                WorkerSocketClient * client = *i;
+            USOCKET socket = client->getSocket();
 
-                if (client->isObsolete()) {
-                    USOCKET socket = client->getSocket();
-                    U_SSET_CLR(socket, &allSet);
-                    i = clientList.erase(i);
-                    delete client;
-                    continue;
-                }
-
-//              d_printf2("Current client type is %d \n", client->getType());
-                USOCKET socket = client->getSocket();
-
-                if (U_SSET_ISSET(socket, &readySet)) {
-                    try {
-                        WorkerSocketClient * nextProcessor = static_cast<WorkerSocketClient *>(client->processData());
+            if (U_SSET_ISSET(socket, &readySet)) {
+                try {
+                    while (client != NULL) {
+                        WorkerSocketClient * nextProcessor =
+                            static_cast<WorkerSocketClient *>(client->processData());
                         readyCount--;
 
                         if (client != nextProcessor) {
                             delete client;
                             client = nextProcessor;
                             *i = client;
-                        }
-
-                        if (client == NULL) {
-                            U_SSET_CLR(socket, &allSet);
-                            i = clientList.erase(i);
-                            continue;
-                        }
-                    } catch (SednaGovSocketException e) {
-                       e.ref->cleanupOnError();
+                        } else {
+                            break;
+                        };
                     }
+
+                    if (client == NULL) {
+                        U_SSET_CLR(socket, &allSet);
+                        i = clientList.erase(i);
+                        continue;
+                    }
+                } catch (SednaGovSocketException e) {
+                    e.ref->cleanupOnError();
                 }
-                ++i;
-
-                /* If we already read all desciptors, break inner loop */
-                if (readyCount == 0) {
-                    break;
-                };
             }
+            ++i;
 
-            /* Add new clients to client list */
-            if (!newClients.empty()) {
-                clientList.insert(clientList.end(), newClients.begin(), newClients.end());
-                newClients.clear();
-//                sort(clientList.begin(), clientList.end(), WorkerSocketClientGreater());
-            }
-
-            if (runningSms.empty() && getShutdown()) {
-                for (ClientList::iterator j = clientsWaitingForShutdown.begin(); j!= clientsWaitingForShutdown.end(); j++) {
-                    (*j)->processData();
-                }
-                clientsWaitingForShutdown.clear();
+            /* If we already read all desciptors, break inner loop */
+            if (readyCount == 0) {
                 break;
-            }
+            };
         }
 
-        delete ownListenerSocket;
-    } catch (ANY_SE_EXCEPTION e) {
-        cout << e.what();
-        this->stopAllDatabases();
+        /* Add new clients to client list */
+        if (!newClients.empty()) {
+            clientList.insert(clientList.end(), newClients.begin(), newClients.end());
+            newClients.clear();
+//                sort(clientList.begin(), clientList.end(), WorkerSocketClientGreater());
+        }
+
+        if (runningSms.empty() && getShutdown()) {
+            for (ClientList::iterator j = clientsWaitingForShutdown.begin(); j!= clientsWaitingForShutdown.end(); j++) {
+                (*j)->processData();
+            }
+            clientsWaitingForShutdown.clear();
+            break;
+        }
     }
+
+    delete ownListenerSocket;
 }

@@ -1,1 +1,1 @@
-set(procutils_SRC cmdlines.cpp version.c)
+set(procutils_SRC version.c)

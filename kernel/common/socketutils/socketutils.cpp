@@ -168,6 +168,7 @@ void BaseMessageExchanger::readString(char* dest, size_t maxlen)
 void BaseMessageExchanger::readString(std::string & dest, size_t maxlen)
 {
     if (0 == readChar()) {
+// FIXME : combine this with previous method
 //      size_t len = strlen(reader_buffer + offset);
         size_t len = readInt32();
         if (len >= maxlen) {

@@ -1,69 +1,141 @@
 #ifndef CLIENTS_H
 #define CLIENTS_H
 
+#include "common/base.h"
+
 #include "common/socketutils/socketutils.h"
-#include "gov/processes.h"
-#include "common/structures/listener_states.h"
-#include "common/structures/cdb_structures.h"
-#include "common/structures/sm_structures.h"
-#include "common/structures/tr_structures.h"
-#include "common/xptr.h"
+#include "common/structures/config_data.h"
 
 #include "worker_client.h"
 
-class Worker;
-struct SessionParameters;
-class ClientConnectionProcessor;
+#include <string>
 
-inline static
-void socket_check(int result) {
-    if (U_SOCKET_ERROR == result) {
-        throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
-    }
+struct DatabaseProcessInfo;
+struct SessionProcessInfo;
+
+class Worker;
+
+enum client_state_t {
+      client_initial_state,
+      client_awaiting_parameters,
+      client_awaiting_auth,
+      client_awaiting_sm_and_trn,
+      client_close_connection,
+};
+
+enum cdb_state_t {
+      cdb_awaiting_parameters,
+      cdb_awaiting_auth,
+      cdb_awaiting_db_options,
+      cdb_awaiting_sm_start
+};
+
+struct ProtocolVersion {
+    uint8_t min;
+    uint8_t maj;
+};
+
+struct ServiceProtocolClient {
+    const ProtocolVersion & protocolVersion;
+    const std::string & databaseName;
+
+    explicit ServiceProtocolClient(
+      const ProtocolVersion & _protocolVersion,
+      const std::string & _databaseName)
+        : protocolVersion(_protocolVersion),
+          databaseName(_databaseName) {};
 };
 
 class ClientNegotiationManager : public WorkerSocketClient {
-  public:
+public:
                                 ClientNegotiationManager(Worker * _parent, USOCKET sock) 
                                   : WorkerSocketClient(_parent, sock, se_Client_Priority_Negot) { };
 
     virtual SocketClient *      processData();
 };
 
-class SednaStopProcessor : public WorkerSocketClient {
-  public:
-                                SednaStopProcessor(WorkerSocketClient * producer);
-    void                        getParams();
-    
-    virtual SocketClient *      processData();
+class DatabaseConnectionProcessor : public InternalSocketClient {
+private:
+    DatabaseProcessInfo * info;
+public:
+    DatabaseConnectionProcessor   (WorkerSocketClient * producer)
+      : WorkerSocketClient(producer, se_Client_Priority_SMsd), info(NULL) { }
+
+    void registerSM();
+    virtual SocketClient * processData();
+    virtual void cleanupOnError();
 };
 
-
-class SMStopProcessor : public WorkerSocketClient {
-  public:
-                                SMStopProcessor(WorkerSocketClient * producer);
-    void                        getParams();
+class SessionConnectionProcessor : public InternalSocketClient {
+private:
+    session_id                  sid;
+    SessionProcessInfo *        trninfo;
+public:
+    SessionConnectionProcessor  (WorkerSocketClient * producer)
+      : InternalSocketClient(producer, se_Client_Priority_TRN), sid(0), trninfo(NULL) { }
                                 
-    virtual SocketClient *      processData();
+    virtual SocketClient * processData ();
+    virtual void cleanupOnError();
+};
+
+class SednaShutdownProcessor : public WorkerSocketClient {
+public:
+    SednaShutdownProcessor(WorkerSocketClient * producer)
+      : WorkerSocketClient(producer, se_Client_Priority_Stop) {};
+
+    virtual SocketClient * processData();
 };
 
 
+class DatabaseShutdownProcessor : public WorkerSocketClient {
+public:
+    DatabaseShutdownProcessor(WorkerSocketClient * producer)
+      : WorkerSocketClient(producer, se_Client_Priority_SMsd) {};
 
-class SMConnectionProcessor : public InternalSocketClient {
-  private:
-    struct SMInfo *             info;
-    
-  public:
-                                SMConnectionProcessor   (WorkerSocketClient * producer);
-    void                        registerSM              ();
-    virtual SocketClient *      processData             ();
-    virtual void                cleanupOnError();
+    virtual SocketClient * processData();
 };
+
+class ClientConnectionProcessor : public WorkerSocketClient {
+private:
+    friend class ClientConnectionCallback;
+
+    ClientConnectionCallback * activeCallback;
+
+    ProtocolVersion protocolVersion;
+    client_state_t state;
+
+    CommonClientAuthentication authData;
+
+    DatabaseProcessInfo * sminfo;
+    SessionProcessInfo * trninfo;
+    SessionConnectionProcessor * associatedSessionClient;
+public:
+    struct CommonProtocolClient { };
+
+    explicit ClientConnectionProcessor(WorkerSocketClient * producer, const CommonProtocolClient & )
+        : activeCallback(NULL), WorkerSocketClient(producer, se_Client_Priority_Client),
+          state(client_initial_state), sminfo(NULL), trninfo(NULL),
+          associatedSessionClient(NULL) {};
+
+    explicit ClientConnectionProcessor(WorkerSocketClient * producer, const ServiceProtocolClient & _authData)
+        : activeCallback(NULL), WorkerSocketClient(producer, se_Client_Priority_Client),
+          state(client_awaiting_sm_and_trn), sminfo(NULL), trninfo(NULL),
+          associatedSessionClient(NULL) {
+        authData.databaseName = _authData.databaseName;
+    };
+        
+    virtual ~ClientConnectionProcessor();
+    virtual SocketClient * processData();
+
+    bool processStartDatabase();
+    bool processRequestSession();
+    bool processSendSocket();
+};
+
 
 class CdbConnectionProcessor : public InternalSocketClient {
   private:
-    string                      db_name;
-    
+    std::string                      db_name;
   public:
                                 CdbConnectionProcessor   (WorkerSocketClient * producer);
     void                        registerCdb              ();
@@ -72,44 +144,9 @@ class CdbConnectionProcessor : public InternalSocketClient {
 };
 
 
-class TRNConnectionProcessor : public InternalSocketClient {
-  private:
-    session_id                  s_id;
-    TRNInfo *                   trninfo;
-
-  public:
-                                TRNConnectionProcessor  (WorkerSocketClient * producer);
-    void                        registerTRN             ();
-    void                        setAvailable            ();
-    virtual SocketClient *      processData             ();
-    virtual void                cleanupOnError();
-    
-    friend class ClientConnectionProcessor;
-};
-
-class ClientConnectionProcessor : public WorkerSocketClient {
-  private:
-    client_state_t              state;
-    SMInfo *                    sminfo;
-    TRNInfo *                   trninfo;
-    TRNConnectionProcessor *    trnProcessor;
-
-    struct SessionParameters    sessionParams;
-    bool                        trn_launch;
-    bool                        is_socket_transmitted;
-    
-  public:
-                                ClientConnectionProcessor(WorkerSocketClient * producer);
-
-    virtual                    ~ClientConnectionProcessor();
-    virtual SocketClient *      processData();
-    void                        setTrn (TRNConnectionProcessor * trn);
-};
-
 class CdbRequestProcessor : public WorkerSocketClient {
   private:
-    struct SessionParameters    sessionParams;
-    struct CdbParameters *      cdbParams;
+    struct DatabaseOptions *    cdbParams;
     cdb_state_t                 state;
     
   public:

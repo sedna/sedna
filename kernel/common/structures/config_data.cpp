@@ -6,7 +6,20 @@
 #include "aux/cppcast.h"
 #include "aux/options/xml_options.h"
 
+#include "common/socketutils/socketutils.h"
+
 #include <sstream>
+
+void CommonClientAuthentication::recvInitialAuth(MessageExchanger* comm)
+{
+     comm->readString(username, SE_MAX_LOGIN_LENGTH);
+     comm->readString(databaseName, SE_MAX_DB_NAME_LENGTH);
+}
+
+void CommonClientAuthentication::recvPassword(MessageExchanger* comm)
+{
+     comm->readString(password, SE_MAX_PASSWORD_LENGTH);
+}
 
 #define EXPANDR(OPT) #OPT, &options->OPT 
 #define EXPANDW(OPT) #OPT, options->OPT 
@@ -44,6 +57,10 @@ struct DatabaseOptionsXmlReader : public XmlNodeReader {
         this->setElementReader("tmpFileSize", &tmpFileSizeReader);
     };
 };
+
+
+
+/*
 
 void saveSednaOptions(SednaOptions* options, XMLBuilder* xmlBuilder)
 {
@@ -98,6 +115,7 @@ void loadGlobalParameters(GlobalParameters * options, std::istream * stream);
 
 static SednaOptions sednaOptions;
 
+/*
 int main() {
     static SednaOptionsXmlReader sednaOptionsReader(&sednaOptions);
 
@@ -118,4 +136,4 @@ int main() {
 
     return 0;
 }
-
+*/

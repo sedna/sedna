@@ -6,7 +6,23 @@
 #include <iosfwd>
 #include <map>
 
+class MessageExchanger;
 class XmlBuilder;
+
+struct TopLevelAuthentication {
+    std::string username;
+    std::string password;
+    std::string ticket;
+};
+
+struct CommonClientAuthentication {
+    std::string username;
+    std::string databaseName;
+    std::string password;
+    
+    void recvInitialAuth(MessageExchanger * comm);
+    void recvPassword(MessageExchanger * comm);
+};
 
 struct DatabaseOptions {
     std::string databaseName;
@@ -25,6 +41,9 @@ struct DatabaseOptions {
 
     DatabaseFileSize dataFile;
     DatabaseFileSize tmpFile;
+    
+    void saveToXml(XmlBuilder * xmlBuilder);
+    void saveToStream(std::ostream * stream);
 };
 
 struct SednaOptions {
@@ -33,22 +52,21 @@ struct SednaOptions {
 
     int listenPort;
     int osObjectsOffset;
+    
+    void saveToXml(XmlBuilder * xmlBuilder);
+    void saveToStream(std::ostream * stream);
 };
 
 struct GlobalParameters {
     SednaOptions global;
     DatabaseOptions defaultDatabaseParameters;
     std::map<std::string, DatabaseOptions> databaseOptions;
+
+    void saveToXml(XmlBuilder * xmlBuilder);
+    void saveToStream(std::ostream * stream);
 };
 
-void saveSednaOptions(SednaOptions * options, XmlBuilder * xmlBuilder);
-void saveSednaOptions(SednaOptions * options, std::ostream * stream);
 
-void saveDatabaseOptions(DatabaseOptions * options, XmlBuilder * xmlBuilder);
-void saveDatabaseOptions(DatabaseOptions * options, std::ostream * stream);
-
-void saveGlobalParameters(GlobalParameters * options, XmlBuilder * xmlBuilder);
-void saveGlobalParameters(GlobalParameters * options, std::ostream * stream);
 
 
 #endif /* _CONFIG_DATA_H_ */

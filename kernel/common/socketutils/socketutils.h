@@ -117,6 +117,7 @@ class BaseMessageExchanger {
     sp_int32                getInstruction  (void) const        { return instruction; };
     uint8_t                 getFormatCode   (void) const        { return format_code; };
     void                    setFormatCode   (void)              { format_code = 0; };
+    size_t                  getMessageLength()     const        { return length; };
 
     void                    writeString     (const char * source);
     void                    writeString     (const std::string & source);
@@ -210,6 +211,14 @@ class SocketClient {
                               communicator->endSend();
                               setObsolete();
                            };
+
+    inline void            respondError(const char * message) {
+                              communicator->beginSend(se_ErrorResponse);
+                              communicator->writeString(message);
+                              communicator->endSend();
+                              setObsolete();
+                           };
+                           
     inline void            respondError(sp_int32 error_code) {
                               communicator->beginSend(error_code);
                               communicator->endSend();

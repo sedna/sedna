@@ -13,7 +13,7 @@ using namespace std;
  (at this moment it is initialized on cdb or sm start. */
                //       !TODO: fix upd-crt
                //       string(u_dtoa
-               
+
 string constructClForSM (gov_config_struct* cfg, SMInfo* sminfo, char * dbname) {
     string command_line;
     char buf[U_MAX_PATH + 10]; //!FIXME -- there should be some reasonable buf size
