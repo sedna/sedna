@@ -46,6 +46,8 @@ struct SessionProcessInfo : public ProcessInfo
     bool specialTransaction; // True for non-client transactions
 
     DatabaseProcessInfo * database; // Database process for transaction
+    
+    void sendSocket (USOCKET clientSock);
 };
 
 typedef std::set<SessionProcessInfo *> SessionList;

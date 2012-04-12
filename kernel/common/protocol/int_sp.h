@@ -17,6 +17,12 @@
 
 enum se_int_sp_instructions 
 {
+/* TODO: sort signals in the order of they appear */
+  
+    se_ConnectProcess                              = 180,
+    se_ReceiveSocket                               = 164,
+    se_Handshake                                   = 121
+/*  
     se_RegisterNewSession                          = 121,
     se_UnRegisterSession                           = 122,
     se_RegisterDB                                  = 123,
@@ -33,6 +39,7 @@ enum se_int_sp_instructions
     se_SMRegisteringFailed                         = 182,
     se_CdbRegisteringOK                            = 183,
     se_CdbRegisteringFailed                        = 184
+    */
 } se_int_sp_instructions;
 
 #endif /* _INT_SP_H */

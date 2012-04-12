@@ -453,7 +453,7 @@ int main(int argc, char **argv)
     program_name_argv_0 = argv[0];
 //     pping_client *ppc = NULL;
     char buf[1024];
-    SednaUserException ppc_ex = USER_EXCEPTION(SE4400); /* used below in ppc->startup() */
+//     SednaUserException ppc_ex = USER_EXCEPTION(SE4400); /* used below in ppc->startup() */
     int sedna_db_version = 0;
 
     /*Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,

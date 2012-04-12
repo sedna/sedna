@@ -66,9 +66,9 @@ SocketClient * ClientNegotiationManager::processData() {
       case se_StartUp :
         length = communicator->getMessageLength();
 
-        // Tells new protocol from the old one
-        // New protocol sends protocol version immidiately
-        if (length > 8) {
+        // Distincts new protocol from the old one
+        // New protocol sends protocol version immediately
+        if (length == 2) {
             // New protocol
 
             protocolVersion.min = communicator->readChar();
@@ -95,7 +95,7 @@ SocketClient * ClientNegotiationManager::processData() {
     
     // !TODO: replace with switch-case
     
-    if (se_ReceiveSocket == communicator->getInstruction()) { //this can happen only under *nix
+/*    if (se_ReceiveSocket == communicator->getInstruction()) { //this can happen only under *nix
         int s_id = communicator->readInt32();
         TRNInfo * info;
         info = worker->findTRNbyId(s_id);
@@ -105,7 +105,7 @@ SocketClient * ClientNegotiationManager::processData() {
         info = NULL;
         return this;
     }
-
+*/
     return this;
 };
 
@@ -226,15 +226,16 @@ SocketClient * ClientConnectionProcessor::processData() {
         protocolVersion.min = communicator->readChar();
         protocolVersion.maj = communicator->readChar();
 
-        if (protocolVersion.maj < 3) {
-            respondError("Protocol version is too old");
-            return NULL;
-        } else if (protocolVersion.maj < 5) {
-            respondError("Protocol version is too old");
-            return NULL;
-            // TODO : implement
-//            return new OldProtocolClientProcessor(this);
-        };
+//         if (protocolVersion.maj < 3) {
+//             respondError("Protocol version is too old");
+//             return NULL;
+//         } else if (protocolVersion.maj < 5) {
+//             respondError("Protocol version is too old");
+//             return NULL;
+//             // TODO : implement
+// //            return new OldProtocolClientProcessor(this);
+// 
+//         };
 
         authData.recvInitialAuth(communicator.get());
         
@@ -262,7 +263,7 @@ SocketClient * ClientConnectionProcessor::processData() {
     case client_close_connection:
         setObsolete(false);
         return NULL;
-    case client_awaiting_sm_and_trn:
+
     default:
         return this;
     }
@@ -279,20 +280,16 @@ SednaShutdownProcessor::SednaShutdownProcessor(WorkerSocketClient* producer)
 
 void SednaStopProcessor::getParams()
 {
-// !TODO: need to make real auth check
-  string login;
-  string password;
-  
-  communicator->readString(login, SE_MAX_LOGIN_LENGTH);
-  communicator->readString(password, SE_MAX_PASSWORD_LENGTH);
+/* we can get here only after auth in ServiceConnectionProcessor */
   elog(EL_LOG, ("Request for Sedna shutdown issued"));
   
-  worker->addShutdownClient(this);
+/*  worker->addShutdownClient(this);
   
   if (!worker->getShutdown()) {
     worker->setShutdown();
     worker->stopAllDatabases();
   }
+  */
 }
 
 

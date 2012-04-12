@@ -95,6 +95,19 @@ public:
     virtual SocketClient * processData();
 };
 
+class ServiceConnectionProcessor : public WorkerSocketClient {
+private:
+    ProtocolVersion protocolVersion;
+    CommonClientAuthentication authData;
+    
+public:
+    ServiceConnectionProcessor(WorkerSocketClient * producer, ProtocolVersion _protocolVersion)
+      : WorkerSocketClient(producer, se_Client_Priority_Client), protocolVersion(_protocolVersion) { };
+      
+    virtual ~ServiceConnectionProcessor();
+    virtual  SocketClient * processData();
+};
+
 class ClientConnectionProcessor : public WorkerSocketClient {
 private:
     friend class ClientConnectionCallback;

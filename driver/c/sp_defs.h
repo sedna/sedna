@@ -144,13 +144,13 @@ enum se_sp_instructions
     se_SendAuthParameters                          = 150,
     se_AuthenticationOK                            = 160,
     se_AuthenticationFailed                        = 170,
-
+/*
     se_CreateDbRequest                             = 185, /// for cdb-client
     se_CreateDbParams                              = 186,
     se_CreateDbOK                                  = 187,
     se_CreateDbFailed                              = 188,
     se_CreateDbFailedExists                        = 189,
-
+*/
     se_BeginTransaction                            = 210,
     se_CommitTransaction                           = 220,
     se_RollbackTransaction                         = 225,
