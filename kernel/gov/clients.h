@@ -165,7 +165,8 @@ public:
 class CdbConnectionProcessor : public InternalSocketClient {
   private:
     cdb_internal_state_t        state;
-    std::string                 db_name;
+    std::string                 dbName;
+    DatabaseProcessInfo *       cdbInfo;
   public:
                                 CdbConnectionProcessor   (WorkerSocketClient * producer);
     void                        registerCdb              ();
@@ -176,7 +177,6 @@ class CdbConnectionProcessor : public InternalSocketClient {
 
 class CdbRequestProcessor : public WorkerSocketClient {
   private:
-    struct DatabaseOptions *    cdbParams;
     cdb_state_t                 state;
     
   public:

@@ -399,13 +399,6 @@ SocketClient* SMStopProcessor::processData() {
 CdbConnectionProcessor::CdbConnectionProcessor(WorkerSocketClient* producer)
   : InternalSocketClient(producer, se_Client_Priority_Cdb), state(cdb_initial_state) { }
 
-// void CdbConnectionProcessor::registerCdb()
-// {
-//   
-// 
-// 
-//   return;
-// }
 
 SocketClient* CdbConnectionProcessor::processData()
 {
@@ -415,257 +408,77 @@ SocketClient* CdbConnectionProcessor::processData()
   switch (state) {
     case cdb_initial_state:
       if (!communicator->receive()) { return this; }
-      if (!se_RegisterCDB == communicator->getInstruction()) {
-        communicator->beginSend(se_CdbRegisteringFailed);
-        communicator->endSend();
-        setObsolete();
-        return NULL;
+
+      if (!(se_RegisterCDB == communicator->getInstruction())) {
+          communicator->beginSend(se_CdbRegisteringFailed);
+          communicator->endSend();
+          setObsolete();
+          return NULL;
       }
-      communicator->readString(db_name);
-      
-      DatabaseProcessInfo * cdb_info = pm->getDatabaseProcess(db_name);
-      
+
+      communicator->readString(dbName);
+
+      DatabaseOptions options = pm->getDatabaseOptions(dbName);
+
+      if (options == NULL) {
+          respondError();
+          return NULL;
+      };
+
+//       NOTE : do not copy/paste
+      cdbInfo = dynamic_cast<DatabaseProcessInfo *>(pm->getUnregisteredProcess(ticket));
+
+      if (cdbInfo == NULL) {
+          pm->processRegistrationFailed(ticket, "Invalid ticket");
+          respondError();
+          return NULL;
+      };
+
       communicator->beginSend(se_CdbRegisteringOK); //send params to cdb
-      ostream * serializedOptionsStream;
-      cdb_info->options.saveToStream(serializedOptionsStream);
-      std::string serializedOptions;
-      serializedOptionsStream >> serializedOptions;
       communicator->writeString(serializedOptions);
       communicator->endSend();
+
       state = cdb_awaiting_cdb_finishes;
-      return this;
-      
+
     case cdb_awaiting_cdb_finishes:
-      pm->onDatabaseCreationFinished(cdb_info);
-      setObsolete();
-      return NULL;
+      if (!communicator->receive()) { return this; }
+
+      if (se_RegistrationFailed == communicator->getInstruction()) {
+          pm->processRegistrationFailed(ticket, communicator->readString(MAX_ERROR_LENGTH));
+          setObsolete();
+          return NULL;
+      }
       
-    default:
-      communicator->beginSend(se_CdbRegisteringFailed);
-      communicator->endSend();
+      if (!(se_UnRegisterDB == communicator->getInstruction())) {
+          pm->processRegistrationFailed(ticket, "Invalid CDB response");
+          respondError("Invalid response");
+          return NULL;
+      }
+
+      pm->processRegistered(ticket);
+
       setObsolete();
       return NULL;
   }
-  
-  
 }
 
 void CdbConnectionProcessor::cleanupOnError()
 {
-    /*!TODO write this*/
+    pm->processRegistrationFailed(ticket, "Unexpected socket error in CDB connection");
+    setObsolete();
 }
 
-
-
-/////////////////////////////class SMConnectionProcessor//////////////////////////////////
-
-SMConnectionProcessor::SMConnectionProcessor(WorkerSocketClient* producer)
-  : InternalSocketClient(producer, se_Client_Priority_SM)
-{
-
-}
-
-
-/////////////////////////////Adding SM to running SM list. ///////////////////////////////
-void SMConnectionProcessor::registerSM()
-{
-    UPID sm_pid;
-    uint32_t db_id;
-    string db_name;
-    bool cdb_mode;
-    int res, res2;
-
-    communicator->readString(db_name, SE_MAX_DB_NAME_LENGTH);
-    sm_pid = communicator->readInt32();
-    db_id = communicator->readInt32();
-    
-    cdb_mode = (1 == communicator->readChar());
-//    d_printf3("Listener: register SM pid: %d, name: %s", sm_pid, db_name);
-    /* Registering as SMInfo */
-    info = new SMInfo (db_name, sm_pid, db_id, cdb_mode);
-    res = worker->addSM(info);
-
-    switch (res) {
-      case 0:
-        communicator->beginSend(se_SMRegisteringOK);
-        if (U_SOCKET_ERROR == communicator->endSend()) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
-        
-        if (cdb_mode) {
-          worker->resumePendingOnCdbClients(db_name);
-          char buf[1024];
-          SSMMsg * sm_server = new SSMMsg(SSMMsg::Client,
-          sizeof (sm_msg_struct),
-          SEDNA_SSMMSG_SM_ID(db_id, buf, 1024), 
-          SM_NUMBER_OF_SERVER_THREADS);
-
-          if (sm_server->init() != 0)
-              throw SYSTEM_EXCEPTION("Failed to initialize SSMMsg service (message service)");
-
-          sm_msg_struct msg;
-          msg.cmd = 10;
-
-          if (sm_server->send_msg(&msg) != 0)
-              throw SYSTEM_EXCEPTION("Can't send message via SSMMsg");
-
-          if (sm_server->shutdown() != 0)
-              throw SYSTEM_EXCEPTION("Failed to shutdown SSMMsg service (message service)");
-
-          delete sm_server;
-          sm_server = NULL;
-
-        } else {
-          worker->resumePendingOnSMClients(db_name);
-        }
-
-        break;
-      
-      case -2:                                  //-2, -3, -4 -- errors
-      case -3:
-      case -4:
-      default:
-        communicator->beginSend(se_SMRegisteringFailed);
-        if (cdb_mode) {
-          worker->removeCdb(db_name);
-        } else {
-          worker->removeSM(db_name);
-        }
-        if (U_SOCKET_ERROR == communicator->endSend()) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
-        setObsolete();
-        break;
-    }
-
-    return;
-}
-
-SocketClient* SMConnectionProcessor::processData()
-{
-  if (!communicator->receive()) return this;
-  if (se_UnRegisterDB == communicator->getInstruction()) {
-    worker->resumePendingOnSMSmsd(info->dbname);
-    worker->removeSM(info->dbname);
-    communicator->beginSend(se_UnRegisterDB);
-    communicator->endSend();
-  }
-  setObsolete();
-  return NULL;
-}
-
-void SMConnectionProcessor::cleanupOnError()
-{
-/*!TODO write this*/
-}
-
-//////////////////////////////// Adding TRN to available TRNs list. //////////////////////
-void TRNConnectionProcessor::registerTRN()
-{
-    msg_struct reg_msg;
-    UPID sess_pid;
-    char db_name[SE_MAX_DB_NAME_LENGTH+1];
-    int res; 
-    bool first_transaction;
-    
-    
-    communicator->readString(db_name, SE_MAX_DB_NAME_LENGTH+1);
-    sess_pid = communicator->readInt32();
-    first_transaction = (1 == communicator->readChar());
-    
-//    d_printf3("Listener: register TRN pid: %d, name: %s", sess_pid, db_name);
-    
-    string db_name_str = string(db_name);
-    res = worker->addTRN(new TRNInfo (db_name_str, communicator->getCommunicationSock(), sess_pid, first_transaction, (void *) this), &s_id);
-    
-    switch (res) {
-      case trnSessionRegistered:
-        /* Session registered successfully, we send session id back to the TRN */
-        communicator->beginSend(se_TrnRegisterOK);
-        communicator->writeInt32(s_id);  //FIXME: after changing all of the session_id usages, it would be needed to be changed to writeint64. Maybe.
-        socket_check(communicator->endSend());
-
-#ifdef EL_DEBUG
-        elog(EL_LOG, ("Trn process registered on gov successfully"));              
-#endif 
-        
-        setAvailable();
-        
-#ifdef _WIN32
-        worker->resumePendingOnTrnClient(db_name_str, this);
-#endif
-        break;
-      
-      case trnFirstTransaction:
-        communicator->beginSend(se_TrnRegisterOKFirstTransaction);
-        communicator->writeInt32(s_id);  //FIXME: after changing all of the session_id usages, it would be needed to be changed to writeint64. Maybe.
-        socket_check(communicator->endSend());
-        break;
-        
-      case trnNotReady:
-        /* Database is not running or operates in special mode */
-        communicator->beginSend(se_TrnRegisterFailedNotRunningOrSpecialMode);
-        socket_check(communicator->endSend());
-//         worker->resumePendingOnTrnClient(db_name_str, NULL);
-        break;
-        
-      case trnNoMoreSessionSlots:
-        /* Currently there are maximum number of session in the system */
-        communicator->beginSend(se_TrnRegisterFailedMaxSessLimit);
-        socket_check(communicator->endSend());
-//         worker->resumePendingOnTrnClient(db_name_str, NULL);
-        break;
-
-      default:
-        throw SYSTEM_EXCEPTION("Governor failed while registering a new session");
-    }
-
-    return;
-}
-
-void TRNConnectionProcessor::setAvailable()
-{
-  trninfo = worker->findTRNbyId(s_id);
-#ifndef _WIN32  
-//   worker->createUnixListener(info, communicator);
-#endif
-  trninfo->state = trninfo_availaible;
-  
-}
-
-
-SocketClient* TRNConnectionProcessor::processData()
-{
-    if (!communicator->receive()) {
-        return this;
-    }
-    if (communicator->getState() == exch_got_full_message) {
-      
-      if (se_AuthenticationOK == communicator->getInstruction()) {
-        return this;
-      }
-      
-      if (se_UnRegisterSession == communicator->getInstruction()) {
-        string tmp_db_name;
-        session_id tmp_sess_id;
-        
-        communicator->readString(tmp_db_name, SE_MAX_DB_NAME_LENGTH);
-        tmp_sess_id = communicator->readInt32();
-        worker->removeTRN(tmp_db_name, tmp_sess_id);
-        
-        communicator->beginSend(se_UnRegisterSession);
-        communicator->endSend();
-      }
-    return NULL;
-    } else cleanupOnError();
-}
-
-void TRNConnectionProcessor::cleanupOnError()
-{
-/*!TODO write this*/
-}
 
 
 ////////////////////////////class CdbRequestProcessor//////////////////////////////////////////////
 
+class CreateDatabaseCallback : IProcessCallback {
+public:
+    CdbRequestProcessor requestClient;
+};
+
 CdbRequestProcessor::CdbRequestProcessor(WorkerSocketClient* producer)
-  : WorkerSocketClient(producer, se_Client_Priority_Cdb), cdbParams(NULL), state(cdb_awaiting_db_options) {  }
+  : WorkerSocketClient(producer, se_Client_Priority_Cdb), state(cdb_awaiting_db_options) {  }
 
 SocketClient* CdbRequestProcessor::processData()
 {
@@ -681,14 +494,18 @@ SocketClient* CdbRequestProcessor::processData()
           }
           
           elog(EL_LOG, ("Request for database creation"));
-          cdbParams = new CdbParameters();
 
-          cdbParams->loadFromStream(communicator->get());
-          
-          pm->createDatabase(&cdbParams, new ClientConnectionCallback(this));
-          pm->addServiceClientWaitingForDatabase(this);
+          communicator->readString(dbName);
+
+          if (pm->getDatabaseOptions(dbName) != NULL) {
+              respondError();
+              return NULL;
+          };
+
+          pm->setDatabaseOptions(dbName, communicator->readString());
+          pm->createDatabase(dbName, new CreateDatabaseCallback(this));
+
           break;
-    
        case cdb_awaiting_sm_start:
           communicator->beginSend(se_CreateDbOK);
           communicator->endSend();

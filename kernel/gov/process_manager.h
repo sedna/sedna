@@ -51,8 +51,6 @@ class ProcessManager {
     SystemSocketMap systemSocketMap;
 
     DatabaseMap databaseMap;
-    SessionClientMap clientsWaitingForSession;
-    DatabaseServiceClientMap clientsWaitingForDatabase;
     SessionMap sessionIndexById;
 
     session_id lastSessionId;
@@ -83,12 +81,6 @@ public:
     };
     
     DatabaseProcessInfo * getDatabaseProcess(const std::string& dbName);
-
-    void addClientWaitingForSession(ClientConnectionProcessor * cc);
-    ClientConnectionList * getClientsForSession(const std::string& dbName);
-
-    void addServiceClientWaitingForDatabase(SocketClient * client);
-    SocketClient * getServiceClient(const std::string& dbName);
 
     GlobalParameters * getGlobalParameters() { return &parameters; };
 
