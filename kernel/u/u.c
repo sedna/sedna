@@ -130,33 +130,6 @@ int ustrerror_r(int errnum, char *buf, size_t n)
 int uerrno(const char *funcname, const void* arg)
 {
 #ifdef _WIN32
-#if 0
-    if (strcmp(funcname, "WSAStartup") == 0)
-    {
-        return (arg ? *(int*)arg : 0);
-    }
-    else if (   strcmp(funcname, "WSACleanup") == 0
-             || strcmp(funcname, "socket") == 0
-             || strcmp(funcname, "getaddrinfo") == 0
-             || strcmp(funcname, "bind") == 0
-             || strcmp(funcname, "connect") == 0
-             || strcmp(funcname, "setsockopt") == 0
-             || strcmp(funcname, "getsockopt") == 0
-             || strcmp(funcname, "listen") == 0
-             || strcmp(funcname, "accept") == 0
-             || strcmp(funcname, "recv") == 0
-             || strcmp(funcname, "send") == 0
-             || strcmp(funcname, "closesocket") == 0
-             || strcmp(funcname, "shutdown") == 0
-             || strcmp(funcname, "select") == 0)
-    {
-        return WSAGetLastError();
-    }
-    else 
-    {
-        return GetLastError();
-    }
-#endif
     /* WSAGetLastError() is an alias for GetLastError() */ 
     return GetLastError();
 #else
@@ -175,53 +148,9 @@ void uperror(const char *s)
 #endif
 }
 
-void __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg)
-{
-#if !(defined(SE_NO_EVENT_LOG))
-    char buf[256];
-    int code = uerrno(funcname, arg);
-#endif
-
-    d_perror(sys_call);
-
-#if !(defined(SE_NO_EVENT_LOG))
-    ustrerror_r(code, buf, 256);
-    event_log_short_msg(EL_SYS, 
-                        filename, 
-                        lineno, 
-                        funcname, 
-                        "%s (code = %d): %s", 
-                        sys_call, 
-                        code, 
-                        buf);
-#endif
-}
-
 void __sys_call_error_nop(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg)
 {
 }
-
-
-/* Simply writes message to the event log 
- * Intended to be used inside u-functions to
- * write additional error condition information.
- */
-void
- __u_call_error(const char *filename, 
-               int lineno, 
-               const char *funcname, 
-               const char *message)
-{
-#if !(defined(SE_NO_EVENT_LOG))
-    event_log_short_msg(EL_ERROR, 
-                        filename, 
-                        lineno, 
-                        funcname, 
-                        message);
-#endif /* !SE_NO_EVENT_LOG */
-
-}
-
 
 int uNotInheritDescriptor(UHANDLE h, sys_call_error_fun fun)
 {

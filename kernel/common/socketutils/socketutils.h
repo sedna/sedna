@@ -5,6 +5,7 @@
 #include "u/uprocess.h"
 #include "aux/counted_ptr.h"
 #include "common/protocol/sp.h"
+#include "common/errdbg/errors.h"
 
 #include <string>
 

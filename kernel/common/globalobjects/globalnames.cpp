@@ -10,6 +10,7 @@
 
 #include "common/sedna.h"
 #include "common/errdbg/event_log.h"
+#include "common/errdbg/errors.h"
 
 #include <string>
 #include <map>

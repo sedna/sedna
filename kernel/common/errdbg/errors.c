@@ -12,6 +12,53 @@
 #include <fcntl.h>
 #endif
 
+#include "u/u.h"
+
+#include "common/errdbg/event_log.h"
+#include "common/errdbg/d_printf.h"
+
+void __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg)
+{
+#if !(defined(SE_NO_EVENT_LOG))
+    char buf[256];
+    int code = uerrno(funcname, arg);
+#endif
+
+    d_perror(sys_call);
+
+#if !(defined(SE_NO_EVENT_LOG))
+    ustrerror_r(code, buf, 256);
+    event_log_short_msg(EL_SYS,
+                        filename,
+                        lineno,
+                        funcname,
+                        "%s (code = %d): %s",
+                        sys_call,
+                        code,
+                        buf);
+#endif
+}
+
+/* Simply writes message to the event log
+ * Intended to be used inside u-functions to
+ * write additional error condition information.
+ */
+void
+ __u_call_error(const char *filename,
+               int lineno,
+               const char *funcname,
+               const char *message)
+{
+#if !(defined(SE_NO_EVENT_LOG))
+    event_log_short_msg(EL_ERROR,
+                        filename,
+                        lineno,
+                        funcname,
+                        message);
+#endif /* !SE_NO_EVENT_LOG */
+
+}
+
 void DumpFaultInfo()
 {
         int processId = -1, bIsTrunc = 0;

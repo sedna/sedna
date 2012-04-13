@@ -415,9 +415,9 @@ int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exist
         return 0;
     }
 
-    if (uGetFileSize(src, &src_file_size, __sys_call_error) == 0)
+    if (uGetFileSize(src, &src_file_size, fun) == 0)
         return 0;
-    if (uSetEndOfFile(des, src_file_size, U_FILE_BEGIN, __sys_call_error) == 0)
+    if (uSetEndOfFile(des, src_file_size, U_FILE_BEGIN, fun) == 0)
         return 0;
 
     while ((c = read(src, buf, BUFFLEN)) > 0)
@@ -467,23 +467,19 @@ int uGetFileSizeByName(const char* name, int64_t * file_size, sys_call_error_fun
    int res;
    UFile fd;
 
-   fd = uOpenFile(name,
-                        U_SHARE_READ,
-                        U_READ,
-                        0,
-                        __sys_call_error);
+   fd = uOpenFile(name, U_SHARE_READ, U_READ, 0, fun);
 
    if (fd == U_INVALID_FD)  return 0;
 
-   res = uGetFileSize(fd, file_size, __sys_call_error);
+   res = uGetFileSize(fd, file_size, fun);
    
    if (res == 0)
    {
-     uCloseFile(fd, __sys_call_error);
+     uCloseFile(fd, fun);
      return 0;
    }
 
-   if (uCloseFile(fd, __sys_call_error) == 0) return 0;
+   if (uCloseFile(fd, fun) == 0) return 0;
 
    return 1;
 }

@@ -501,16 +501,16 @@ typedef const char *global_name;
 #define sys_call_error(sys_call)          (fun ? fun(__FILE__, __LINE__, __SE_FUNCTION__, sys_call, NULL) : (void)0)
 #define sys_call_error2(sys_call, arg)    (fun ? fun(__FILE__, __LINE__, __SE_FUNCTION__, sys_call, arg) : (void)0)
 
-#define u_call_error(message)             (fun ? __u_call_error(__FILE__, __LINE__, __SE_FUNCTION__, message) : (void)0)
+#define u_call_error(message)             (fun ? fun(__FILE__, __LINE__, __SE_FUNCTION__, NULL, message) : (void)0)
 
 typedef void (*sys_call_error_fun)(const char *filename, int lineno, const char *funcname, const char *sys_call, const void*);
 
 char*  ustrerror(int errnum);
 int    ustrerror_r(int errnum, char *buf, size_t n);
+int    uerrno(const char *funcname, const void* arg);
 void   uperror(const char *s);
-void   __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg);
+
 void   __sys_call_error_nop(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg);
-void   __u_call_error(const char *filename, int lineno, const char *funcname, const char *message);
 
 
 /*=============================================================================

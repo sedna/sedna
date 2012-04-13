@@ -531,11 +531,11 @@ int uWaitForProcess(UPID pid, UPHANDLE h, sys_call_error_fun fun)
 
     for (;;)
     {
-       status = uIsProcessExist(pid, h, __sys_call_error);
+       status = uIsProcessExist(pid, h, fun);
        /* Error happened in uIsProcessExist */
        if (-2 == status) return -1;
        /* Process still alive */
-       if ( 0 == status) uSleep(1, __sys_call_error);
+       if ( 0 == status) uSleep(1, fun);
        /* status == -1, there is no such process */
        else break;
     }
