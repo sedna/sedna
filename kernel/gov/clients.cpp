@@ -241,7 +241,7 @@ SocketClient * ClientConnectionProcessor::processData() {
         authData.recvInitialAuth(communicator.get());
         
         state = client_awaiting_sm_and_trn;
-        
+
     case client_awaiting_sm_and_trn:
         if (!processStartDatabase()) {
             return this;
