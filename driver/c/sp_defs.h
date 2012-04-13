@@ -142,15 +142,18 @@ enum se_sp_instructions
     se_AuthenticationParameters                    = 130,
     se_SendSessionParameters                       = 140,
     se_SendAuthParameters                          = 150,
+    se_SendServiceAuth                             = 151,
     se_AuthenticationOK                            = 160,
     se_AuthenticationFailed                        = 170,
-/*
+
     se_CreateDbRequest                             = 185, /// for cdb-client
     se_CreateDbParams                              = 186,
     se_CreateDbOK                                  = 187,
     se_CreateDbFailed                              = 188,
     se_CreateDbFailedExists                        = 189,
-*/
+    
+    se_DropDbRequest                               = 190,
+
     se_BeginTransaction                            = 210,
     se_CommitTransaction                           = 220,
     se_RollbackTransaction                         = 225,
@@ -195,7 +198,8 @@ enum se_sp_instructions
     se_Stop                                        = 501,  /// wait for transactions are completed
     se_Stop_Hard                                   = 502,  /// attempts to immediately rollback all running transactions.
     
-    se_StopSM                                      = 503,  /// se-smsd-client
+    se_StartSM                                     = 503,  /// se-sm-client
+    se_StopSM                                      = 504,  /// se-smsd-client
    
     se_RuntimeConfig                               = 600,
     se_StartHotBackup                              = 666,  /// se-hotbackup-client

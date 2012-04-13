@@ -23,6 +23,12 @@ enum client_state_t {
       client_close_connection,
 };
 
+enum service_client_state_t {
+      service_client_initial_state,  //we get here at initial construction at negotiationProcessor
+      service_client_awaiting_auth,  //here we wait for login and password
+      service_client_awaiting_instructions  //we get here after each service operation -- we already have auth.
+};
+
 enum cdb_state_t {
       cdb_awaiting_parameters,
       cdb_awaiting_auth,
@@ -95,10 +101,13 @@ public:
     virtual SocketClient * processData();
 };
 
+
 class ServiceConnectionProcessor : public WorkerSocketClient {
 private:
     ProtocolVersion protocolVersion;
     CommonClientAuthentication authData;
+    
+    service_client_state_t state;
     
 public:
     ServiceConnectionProcessor(WorkerSocketClient * producer, ProtocolVersion _protocolVersion)
@@ -107,6 +116,7 @@ public:
     virtual ~ServiceConnectionProcessor();
     virtual  SocketClient * processData();
 };
+
 
 class ClientConnectionProcessor : public WorkerSocketClient {
 private:

@@ -4,6 +4,7 @@
 #include "common/structures/listener_states.h"
 
 #include "common/protocol/int_sp.h"
+#include <aux/internstr.h>
 
 #include <set>
 
@@ -265,10 +266,71 @@ SocketClient * ClientConnectionProcessor::processData() {
         return NULL;
 
     default:
-        return this;
+        respondError("Unexpected instruction at ClientConnectionProcessor");
+        setObsolete();
+        return NULL;
     }
     
     return this;
+}
+
+
+/////////////////////////////class ServiceConnectionProcessor//////////////////////////////////
+
+SocketClient* ServiceConnectionProcessor::processData()
+{
+   ProcessManager * pm = worker->getProcessManager();
+   
+   switch (state) {
+     case service_client_initial_state:
+        communicator->beginSend(se_SendServiceAuth);
+        communicator->endSend();
+        state = service_client_awaiting_auth;
+        
+     case service_client_awaiting_auth:
+        if (!communicator->receive()) { return this; }
+        if (communicator->getInstruction() != se_SendServiceAuth) {
+            respondError("");
+            return NULL;
+        }
+        
+        authData.recvServiceAuth(communicator.get());
+        
+        /* TODO: auth check and respondError if auth failed */
+        communicator->beginSend(se_AuthenticationOK);    //here we ask what client wants us to do
+        communicator->endSend();
+        
+     case service_client_awaiting_instructions:
+       if (!communicator->receive()) { return this; }
+       switch (communicator->getInstruction()) {
+//          case se_StartSM: need to think if we need this at all
+           
+         case se_StartUp:   //start new session;
+         case se_CreateDbRequest:
+           return new CdbConnectionProcessor(this);
+         case se_Stop:
+           return new SednaShutdownProcessor(this);
+         case se_StopSM:
+           return new DatabaseShutdownProcessor(this);
+         case se_RuntimeConfig:
+//            return new RuntimeConfigProcessor(this);
+         case se_DropDbRequest:
+//            return new DropDatabaseProcessor(this);
+         case se_StartHotBackup:
+           return new HotBackupConnectionProcessor(this);
+           
+         default:
+           respondError("Unexpected instruction at ServiceConnectionProcessor");
+           setObsolete();
+           return NULL;
+       }
+       
+     default:
+       respondError("Unexpected state at ServiceConnectionProcessor");
+       setObsolete();
+       return NULL;
+   }
+   return this;
 }
 
 

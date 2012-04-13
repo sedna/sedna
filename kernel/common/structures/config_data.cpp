@@ -21,6 +21,13 @@ void CommonClientAuthentication::recvPassword(MessageExchanger* comm)
      comm->readString(password, SE_MAX_PASSWORD_LENGTH);
 }
 
+void CommonClientAuthentication::recvServiceAuth(MessageExchanger* comm)
+{
+     comm->readString(username, SE_MAX_LOGIN_LENGTH);
+     comm->readString(password, SE_MAX_PASSWORD_LENGTH);
+}
+
+
 #define EXPANDR(OPT) #OPT, &options->OPT 
 #define EXPANDW(OPT) #OPT, options->OPT 
 

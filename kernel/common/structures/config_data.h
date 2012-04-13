@@ -22,6 +22,7 @@ struct CommonClientAuthentication {
     
     void recvInitialAuth(MessageExchanger * comm);
     void recvPassword(MessageExchanger * comm);
+    void recvServiceAuth(MessageExchanger * comm);
 };
 
 struct DatabaseOptions {
