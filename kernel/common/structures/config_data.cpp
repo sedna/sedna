@@ -21,24 +21,34 @@ void CommonClientAuthentication::recvPassword(MessageExchanger* comm)
      comm->readString(password, SE_MAX_PASSWORD_LENGTH);
 }
 
-void CommonClientAuthentication::recvServiceAuth(MessageExchanger* comm)
+void TopLevelAuthentication::recvServiceAuth(MessageExchanger* comm)
 {
      comm->readString(username, SE_MAX_LOGIN_LENGTH);
      comm->readString(password, SE_MAX_PASSWORD_LENGTH);
 }
 
-
 #define EXPANDR(OPT) #OPT, &options->OPT 
-#define EXPANDW(OPT) #OPT, options->OPT 
+#define EXPANDW(OPT) #OPT, OPT
+#define EXPANDWC(OPT) #OPT, cast_to_string(OPT)
 
-struct SednaOptionsXmlReader : public XmlNodeReader {
-    SednaOptionsXmlReader(SednaOptions* options) {
-        this->readStringValue(EXPANDR(dataDirectory));
-        this->readIntValue(EXPANDR(listenPort));
-        this->readStringValue(EXPANDR(bindAddress));
-        this->readIntValue(EXPANDR(osObjectsOffset));
+
+struct SessionOptionsXmlReader : public XmlNodeReader {
+    SessionOptionsXmlReader(SessionOptions* options) {
+        this->readIntValue(EXPANDR(executionStackDepth));
+        this->readIntValue(EXPANDR(queryTimeout));
     }
 };
+
+XmlNodeReader* SessionOptions::createReader()
+{
+    return new SessionOptionsXmlReader(this);
+}
+
+void SessionOptions::saveToXml(XMLBuilder* xmlBuilder) const
+{
+    xmlBuilder->addElement(EXPANDWC(executionStackDepth));
+    xmlBuilder->addElement(EXPANDWC(executionStackDepth));
+}
 
 struct DatabaseFileSizeXmlReader : public XmlNodeReader {
     DatabaseFileSizeXmlReader(DatabaseOptions::DatabaseFileSize* options) {
@@ -48,11 +58,22 @@ struct DatabaseFileSizeXmlReader : public XmlNodeReader {
     };
 };
 
+void DatabaseOptions::DatabaseFileSize::saveToXml(XMLBuilder* xmlBuilder) const
+{
+    xmlBuilder->addElement(EXPANDWC(initial));
+    xmlBuilder->addElement(EXPANDWC(max));
+    xmlBuilder->addElement(EXPANDWC(extension));
+}
+
 struct DatabaseOptionsXmlReader : public XmlNodeReader {
     DatabaseFileSizeXmlReader dataFileSizeReader, tmpFileSizeReader;
+    SessionOptionsXmlReader sessionReader;
 
     DatabaseOptionsXmlReader(DatabaseOptions* options) 
-      : dataFileSizeReader(&options->dataFile), tmpFileSizeReader(&options->tmpFile)
+      : dataFileSizeReader(&options->dataFile),
+        tmpFileSizeReader(&options->tmpFile),
+        sessionReader(&options->sessionOptions)
+        
     {
         this->readStringValue(EXPANDR(databaseName));
         this->readUintValue(EXPANDR(bufferCount));
@@ -62,85 +83,90 @@ struct DatabaseOptionsXmlReader : public XmlNodeReader {
 
         this->setElementReader("dataFileSize", &dataFileSizeReader);
         this->setElementReader("tmpFileSize", &tmpFileSizeReader);
+
+        this->setElementReader("sessionOptions", &sessionReader);
     };
 };
 
-
-
-/*
-
-void saveSednaOptions(SednaOptions* options, XMLBuilder* xmlBuilder)
+void DatabaseOptions::saveToXml(XMLBuilder* xmlBuilder) const
 {
-    xmlBuilder->beginElement("sednaOptions");
+    xmlBuilder->addElement(EXPANDW(databaseName));
+    xmlBuilder->addElement(EXPANDWC(bufferCount));
+    xmlBuilder->addElement(EXPANDWC(maxLogFiles));
+    xmlBuilder->addElement(EXPANDWC(updateCriteria));
+    xmlBuilder->addElement(EXPANDWC(securityOptions));
 
-    xmlBuilder->addElement("dataDirectory", options->dataDirectory);
-    xmlBuilder->addElement("listenPort", cast_to_string(options->listenPort), false);
-    xmlBuilder->addElement("bindAddress", options->bindAddress, false);
-    xmlBuilder->addElement("osObjectsOffset", cast_to_string(options->osObjectsOffset), false);
-
-    xmlBuilder->endElement();
-};
-
-static
-void saveDatabaseFileSize(DatabaseOptions::DatabaseFileSize * options, XMLBuilder* xmlBuilder)
-{
-    xmlBuilder->addElement("initial", cast_to_string(options->initial), false);
-    xmlBuilder->addElement("max", cast_to_string(options->max), false);
-    xmlBuilder->addElement("extension", cast_to_string(options->extension), false);
-};
-
-void saveDatabaseOptions(DatabaseOptions * options, XMLBuilder* xmlBuilder)
-{
-    xmlBuilder->beginElement("databaseOptions").addAttribute("name", options->databaseName);
-
-    xmlBuilder->addElement("databaseName", options->databaseName);
-    xmlBuilder->addElement("bufferCount", cast_to_string(options->bufferCount), false);
-    xmlBuilder->addElement("maxLogFiles", cast_to_string(options->maxLogFiles), false);
-    xmlBuilder->addElement("updateCriteria", cast_to_string(options->updateCriteria), false);
-    xmlBuilder->addElement("securityOptions", cast_to_string(options->securityOptions), false);
-
-    xmlBuilder->beginElement("dataFile");
-    saveDatabaseFileSize(&options->dataFile, xmlBuilder);
+    xmlBuilder->beginElement("dataFileSize");
+    dataFile.saveToXml(xmlBuilder);
     xmlBuilder->endElement();
 
-    xmlBuilder->beginElement("tmpFile");
-    saveDatabaseFileSize(&options->tmpFile, xmlBuilder);
+    xmlBuilder->beginElement("tmpFileSize");
+    tmpFile.saveToXml(xmlBuilder);
     xmlBuilder->endElement();
 
+    xmlBuilder->beginElement("sessionOptions");
+    sessionOptions.saveToXml(xmlBuilder);
     xmlBuilder->endElement();
-};
-
-#include <iostream>
-
-//void saveSednaOptions(SednaOptions * options, std::ostream * stream);
-//void saveDatabaseOptions(DatabaseOptions * options, std::ostream * stream);
-//void saveGlobalParameters(GlobalParameters * options, std::ostream * stream);
-
-void loadSednaOptions(SednaOptions * options, std::istream * stream);
-void loadDatabaseOptions(DatabaseOptions * options, std::istream * stream);
-void loadGlobalParameters(GlobalParameters * options, std::istream * stream);
-
-static SednaOptions sednaOptions;
-
-/*
-int main() {
-    static SednaOptionsXmlReader sednaOptionsReader(&sednaOptions);
-
-    sednaOptions.bindAddress = "0.0.0.0";
-    sednaOptions.dataDirectory = "../data";
-    sednaOptions.listenPort = 5050;
-    sednaOptions.osObjectsOffset = 1200;
-
-    XmlReader reader;
-    reader.getDocNodeReader()->setElementReader(SimpleNodeTest("sednaOptions", false, true), &sednaOptionsReader);
-    reader.readStream(&(std::cin));
-
-    XMLBuilder builder(&(std::cout));
-    saveSednaOptions(&sednaOptions, &builder);
-    builder.close();
-
-    std::cout << "\n";
-
-    return 0;
 }
-*/
+
+XmlNodeReader* DatabaseOptions::createReader()
+{
+    return new DatabaseOptionsXmlReader(this);
+}
+
+struct SednaOptionsXmlReader : public XmlNodeReader {
+    SednaOptionsXmlReader(SednaOptions* options)
+    {
+        this->readStringValue(EXPANDR(dataDirectory));
+        this->readIntValue(EXPANDR(listenPort));
+        this->readStringValue(EXPANDR(bindAddress));
+        this->readIntValue(EXPANDR(osObjectsOffset));
+        this->readIntValue(EXPANDR(logLevel));
+    }
+};
+
+XmlNodeReader* SednaOptions::createReader()
+{
+    return new SednaOptionsXmlReader(this);
+}
+
+void SednaOptions::saveToXml(XMLBuilder* xmlBuilder) const
+{
+    xmlBuilder->addElement(EXPANDW(dataDirectory));
+    xmlBuilder->addElement(EXPANDWC(listenPort));
+    xmlBuilder->addElement(EXPANDW(bindAddress));
+    xmlBuilder->addElement(EXPANDWC(osObjectsOffset));
+    xmlBuilder->addElement(EXPANDWC(logLevel));
+}
+
+void GlobalParameters::loadFromStream(std::istream* stream)
+{
+    SednaOptionsXmlReader sednaOptionsReader(&this->global);
+    DatabaseOptionsXmlReader dbOptionsReader(&this->defaultDatabaseParameters);
+    XmlReader parser;
+    
+    XmlNodeReader * root =
+      parser.getDocNodeReader()->createElementReader("sednaOptions", new XmlNodeReader());
+
+    root->setElementReader("global", &sednaOptionsReader);
+    root->setElementReader("databaseDefaults", &dbOptionsReader);
+    
+    parser.readStream(stream);
+}
+
+void GlobalParameters::saveToStream(std::ostream* stream) const
+{
+    XMLBuilder writer(stream);
+
+    writer.beginElement("sednaOptions");
+
+    writer.beginElement("global");
+    global.saveToXml(&writer);
+    writer.endElement();
+
+    writer.beginElement("databaseDefaults");
+    defaultDatabaseParameters.saveToXml(&writer);
+    writer.endElement();
+
+    writer.close();
+}

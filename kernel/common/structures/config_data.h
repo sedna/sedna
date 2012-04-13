@@ -6,13 +6,15 @@
 #include <iosfwd>
 #include <map>
 
+class XMLBuilder;
+class XmlNodeReader;
 class MessageExchanger;
-class XmlBuilder;
 
 struct TopLevelAuthentication {
     std::string username;
     std::string password;
-    std::string ticket;
+
+    void recvServiceAuth(MessageExchanger * comm);
 };
 
 struct CommonClientAuthentication {
@@ -22,7 +24,17 @@ struct CommonClientAuthentication {
     
     void recvInitialAuth(MessageExchanger * comm);
     void recvPassword(MessageExchanger * comm);
-    void recvServiceAuth(MessageExchanger * comm);
+};
+
+struct SessionOptions {
+    int executionStackDepth;
+    int queryTimeout;
+
+    void saveToXml(XMLBuilder * xmlBuilder) const;
+    void saveToStream(std::ostream * stream) const;
+
+    XmlNodeReader * createReader();
+    void loadFromStream(std::istream * stream);
 };
 
 struct DatabaseOptions {
@@ -38,13 +50,20 @@ struct DatabaseOptions {
         uint32_t max;
         uint32_t initial;
         uint32_t extension;
+
+        void saveToXml(XMLBuilder * xmlBuilder) const;
     };
 
     DatabaseFileSize dataFile;
     DatabaseFileSize tmpFile;
+
+    SessionOptions sessionOptions;
     
-    void saveToXml(XmlBuilder * xmlBuilder);
-    void saveToStream(std::ostream * stream);
+    void saveToXml(XMLBuilder * xmlBuilder) const;
+    void saveToStream(std::ostream * stream) const;
+
+    XmlNodeReader * createReader();
+    void loadFromStream(std::istream * stream);
 };
 
 struct SednaOptions {
@@ -53,21 +72,25 @@ struct SednaOptions {
 
     int listenPort;
     int osObjectsOffset;
+
+    int logLevel;
     
-    void saveToXml(XmlBuilder * xmlBuilder);
-    void saveToStream(std::ostream * stream);
+    void saveToXml(XMLBuilder * xmlBuilder) const;
+    void saveToStream(std::ostream * stream) const;
+
+    XmlNodeReader * createReader();
+    void loadFromStream(std::istream * stream);
 };
 
 struct GlobalParameters {
     SednaOptions global;
     DatabaseOptions defaultDatabaseParameters;
+
     std::map<std::string, DatabaseOptions> databaseOptions;
 
-    void saveToXml(XmlBuilder * xmlBuilder);
-    void saveToStream(std::ostream * stream);
+    void saveToStream(std::ostream * stream) const;
+    void loadFromStream(std::istream * stream);
 };
-
-
 
 
 #endif /* _CONFIG_DATA_H_ */
