@@ -294,7 +294,7 @@ SocketClient* ServiceConnectionProcessor::processData()
             return NULL;
         }
         
-        authData.recvServiceAuth(communicator.get());
+        topLevelAuthData.recvAuth(communicator.get());
         
         /* TODO: auth check and respondError if auth failed */
         communicator->beginSend(se_AuthenticationOK);    //here we ask what client wants us to do
@@ -307,7 +307,7 @@ SocketClient* ServiceConnectionProcessor::processData()
            
          case se_StartUp:   //start new session;
          case se_CreateDbRequest:
-           return new CdbConnectionProcessor(this);
+           return new CdbRequestProcessor(this);
          case se_Stop:
            return new SednaShutdownProcessor(this);
          case se_StopSM:
@@ -397,37 +397,57 @@ SocketClient* SMStopProcessor::processData() {
 /////////////////////////////class CdbConnectionProcessor//////////////////////////////////
 
 CdbConnectionProcessor::CdbConnectionProcessor(WorkerSocketClient* producer)
-  : InternalSocketClient(producer, se_Client_Priority_Cdb) { }
+  : InternalSocketClient(producer, se_Client_Priority_Cdb), state(cdb_initial_state) { }
 
-void CdbConnectionProcessor::registerCdb()
-{
-  CdbParameters * cdb_params;
-  communicator->readString(db_name, SE_MAX_DB_NAME_LENGTH);
-
-  //find cdb request parameters
-  cdb_params = worker->findCdbByDbName(db_name);
-
-  //send cdb params
-  communicator->beginSend(se_CdbRegisteringOK);
-  cdb_params->sendCdbParams(communicator.get());
-  communicator->endSend();
-  
-  return;
-}
+// void CdbConnectionProcessor::registerCdb()
+// {
+//   
+// 
+// 
+//   return;
+// }
 
 SocketClient* CdbConnectionProcessor::processData()
 {
-  if (!communicator->receive()) return this;
-  if (se_RegisterDB == communicator->getInstruction()) {
-    SMConnectionProcessor * sm = new SMConnectionProcessor(this); 
-    sm->registerSM();
-    communicator = NULL;
-    return sm;
-  } else {
-    worker->removeCdb(db_name);
-    setObsolete();
-    return NULL; //it's an error/
+  // at this point handshake is over -- we must get here from  internal process negotiation.
+  ProcessManager * pm = worker->getProcessManager();
+  
+  switch (state) {
+    case cdb_initial_state:
+      if (!communicator->receive()) { return this; }
+      if (!se_RegisterCDB == communicator->getInstruction()) {
+        communicator->beginSend(se_CdbRegisteringFailed);
+        communicator->endSend();
+        setObsolete();
+        return NULL;
+      }
+      communicator->readString(db_name);
+      
+      DatabaseProcessInfo * cdb_info = pm->getDatabaseProcess(db_name);
+      
+      communicator->beginSend(se_CdbRegisteringOK); //send params to cdb
+      ostream * serializedOptionsStream;
+      cdb_info->options.saveToStream(serializedOptionsStream);
+      std::string serializedOptions;
+      serializedOptionsStream >> serializedOptions;
+      communicator->writeString(serializedOptions);
+      communicator->endSend();
+      state = cdb_awaiting_cdb_finishes;
+      return this;
+      
+    case cdb_awaiting_cdb_finishes:
+      pm->onDatabaseCreationFinished(cdb_info);
+      setObsolete();
+      return NULL;
+      
+    default:
+      communicator->beginSend(se_CdbRegisteringFailed);
+      communicator->endSend();
+      setObsolete();
+      return NULL;
   }
+  
+  
 }
 
 void CdbConnectionProcessor::cleanupOnError()
@@ -643,85 +663,15 @@ void TRNConnectionProcessor::cleanupOnError()
 
 
 ////////////////////////////class CdbRequestProcessor//////////////////////////////////////////////
-/////////////////////////// It's only the first part, all cdb-connected stuff is in cdb_utils.cpp ///
 
 CdbRequestProcessor::CdbRequestProcessor(WorkerSocketClient* producer)
-  : WorkerSocketClient(producer, se_Client_Priority_Cdb), cdbParams(NULL), state(cdb_awaiting_parameters)
-{
-    cdbParams = new CdbParameters();
-    elog(EL_LOG, ("Request for database creation"));
-}
-
-
-// void CdbConnectionProcessor::authAndPrepare()
-// {
-  /*
-    if (communicator->getInstruction() != se_SessionParameters) {
-      communicator->beginSend(se_ErrorResponse);
-      communicator->endSend();
-      aIsObsolete = true;
-      return NULL;
-    }
-    if (0 != sessionParams.readSessParams(communicator)) {
-      communicator->beginSend(se_ErrorResponse);
-      communicator->endSend();
-      aIsObsolete = true;
-      return NULL;
-    }
-    sessionParams.readAuthParams();
-    */
-
-// }
+  : WorkerSocketClient(producer, se_Client_Priority_Cdb), cdbParams(NULL), state(cdb_awaiting_db_options) {  }
 
 SocketClient* CdbRequestProcessor::processData()
 {
+    ProcessManager * pm = worker->getProcessManager();
+    
     switch (state) {
-      case cdb_awaiting_parameters:
-          if (!communicator->receive()) {
-              return this;
-          }
-          
-          if (communicator->getInstruction() != se_SessionParameters) {
-              respondError();
-              elog(EL_LOG, ("Database creation aborted: unexpected message; username and dbname were expected"));
-              return NULL;
-          }
-
-//           if (0 != sessionParams.readSessParams(communicator)) {
-//               respondError();
-//               elog(EL_LOG, ("Database creation aborted: user is not allowed to create databases"));
-//               return NULL;
-//           }
-
-          sessionParams.readSessParams(communicator.get());
-
-          communicator->beginSend(se_SendAuthParameters);
-          communicator->endSend();
-
-          state = cdb_awaiting_auth;
-          break;
-          
-       case cdb_awaiting_auth:
-          if (!communicator->receive()) return this;
-          if (communicator->getInstruction() != se_AuthenticationParameters) {
-              respondError();
-              elog(EL_LOG, ("Database creation aborted: unexpected message, password was expected"));
-              return NULL;
-          }
-//           if (0 != sessionParams.readAuthParams(communicator)) {
-//             // TODO : auth failed check -- now it returns 0 always
-//               respondError();
-//               elog(EL_LOG, ("Database creation aborted: user has provided wrong password"));              
-//               return NULL;
-//           }
-          
-          sessionParams.readAuthParams(communicator.get());
-          
-          communicator->beginSend(se_AuthenticationOK);
-          communicator->endSend();
-          state = cdb_awaiting_db_options;
-          break;
-          
        case cdb_awaiting_db_options:
           if (!communicator->receive()) return this;
           if (communicator->getInstruction() != se_CreateDbParams) {
@@ -729,48 +679,22 @@ SocketClient* CdbRequestProcessor::processData()
               elog(EL_LOG, ("Database creation aborted: unexpected message, database parameters were expected"));
               return NULL;
           }
-//           if (0 != cdbParams->readCdbParams(communicator)) {
-//               respondError();
-//               return NULL;
-//           }
-          strcpy(cdbParams->db_name, sessionParams.dbName);
           
-          check_db_name_validness(cdbParams->db_name);
-          if (exist_db(cdbParams->db_name)) {
-              respondError();
-              elog(EL_LOG, ("Database creation failed: database with the same name already exists"));
-              return NULL;
-          }
+          elog(EL_LOG, ("Request for database creation"));
+          cdbParams = new CdbParameters();
 
-#ifdef REQUIRE_ROOT
-          if (!uIsAdmin(__sys_call_error)) {
-              respondError();
-              elog(EL_LOG, ("Database creation failed: this action requires root privilegies"));
-              return NULL;
-          }
-#endif
-
-          cdbParams->db_id = get_next_free_db_id(worker->cfg);
-          if (cdbParams->db_id == -1) {
-              respondError();
-              elog(EL_LOG, ("Database creation failed: the maximum number of databases hosted by one server is exceeded"));
-              return NULL;
-          }
-
-//           createDb(); //it's implementation is in cdb_utils.cpp
-
-          worker->addPendingOnCdbClient(sessionParams.dbName, this);
-          worker->addCdb(cdbParams);
-
-          worker->startCdb(cdbParams);
-
-          state = cdb_awaiting_sm_start;
+          cdbParams->loadFromStream(communicator->get());
+          
+          pm->createDatabase(&cdbParams, new ClientConnectionCallback(this));
+          pm->addServiceClientWaitingForDatabase(this);
           break;
     
        case cdb_awaiting_sm_start:
-          setObsolete();
+          communicator->beginSend(se_CreateDbOK);
+          communicator->endSend();
           elog(EL_LOG, ("Request for database creation satisfied"));
-          return NULL;
+          
+          return new ServiceConnectionProcessor(this, true);
     }
     return this;
 }

@@ -73,7 +73,8 @@ public:
     void startDatabase(const std::string& dbName, IProcessCallback * callback);
     void shutdownDatabase(DatabaseProcessInfo * sm, IProcessCallback * callback);
 
-    void createDatabase(const std::string& dbName, IProcessCallback * callback);
+    void createDatabase(const DatabaseOptions& options, IProcessCallback * callback);
+    void onDatabaseCreationFinished(const DatabaseOptions& options);
     
     void requestSession(DatabaseProcessInfo * sm, IProcessCallback * callback);
 

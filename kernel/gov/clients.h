@@ -30,10 +30,13 @@ enum service_client_state_t {
 };
 
 enum cdb_state_t {
-      cdb_awaiting_parameters,
-      cdb_awaiting_auth,
       cdb_awaiting_db_options,
       cdb_awaiting_sm_start
+};
+
+enum cdb_internal_state_t {
+      cdb_initial_state,
+      cdb_awaiting_cdb_finishes
 };
 
 struct ProtocolVersion {
@@ -105,13 +108,16 @@ public:
 class ServiceConnectionProcessor : public WorkerSocketClient {
 private:
     ProtocolVersion protocolVersion;
-    CommonClientAuthentication authData;
+    TopLevelAuthentication authData;
     
     service_client_state_t state;
     
 public:
     ServiceConnectionProcessor(WorkerSocketClient * producer, ProtocolVersion _protocolVersion)
       : WorkerSocketClient(producer, se_Client_Priority_Client), protocolVersion(_protocolVersion) { };
+    
+    ServiceConnectionProcessor(WorkerSocketClient * producer, bool toContinue)
+      : WorkerSocketClient(producer, se_Client_Priority_Client), state(service_client_awaiting_instructions) { };
       
     virtual ~ServiceConnectionProcessor();
     virtual  SocketClient * processData();
@@ -158,7 +164,8 @@ public:
 
 class CdbConnectionProcessor : public InternalSocketClient {
   private:
-    std::string                      db_name;
+    cdb_internal_state_t        state;
+    std::string                 db_name;
   public:
                                 CdbConnectionProcessor   (WorkerSocketClient * producer);
     void                        registerCdb              ();
@@ -174,7 +181,6 @@ class CdbRequestProcessor : public WorkerSocketClient {
     
   public:
                                 CdbRequestProcessor  (WorkerSocketClient * producer);
-//     void                        authAndPrepare          (void);
     virtual SocketClient *      processData             (void);
 };
 

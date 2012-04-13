@@ -21,12 +21,15 @@ enum se_int_sp_instructions
   
     se_ConnectProcess                              = 180,
     se_ReceiveSocket                               = 164,
-    se_Handshake                                   = 121
+    se_Handshake                                   = 121,
+    se_RegisterCDB                                 = 124,
+    se_CdbRegisteringOK                            = 183,
+    se_CdbRegisteringFailed                        = 184,
 /*  
     se_RegisterNewSession                          = 121,
     se_UnRegisterSession                           = 122,
     se_RegisterDB                                  = 123,
-    se_RegisterCDB                                 = 124,
+    
     se_UnRegisterDB                                = 125,
     se_TrnRegisterOK                               = 161,
     se_TrnRegisterOKFirstTransaction               = 162,
@@ -37,8 +40,8 @@ enum se_int_sp_instructions
     se_TrnRegisterFailedMaxSessLimit               = 172,
     se_SMRegisteringOK                             = 181,
     se_SMRegisteringFailed                         = 182,
-    se_CdbRegisteringOK                            = 183,
-    se_CdbRegisteringFailed                        = 184
+    
+    
     */
 } se_int_sp_instructions;
 
