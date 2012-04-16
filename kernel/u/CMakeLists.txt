@@ -5,3 +5,5 @@ set(u_SRC u.c uevent.c ugnames.c uhdd.c ushm.c ummap.c umutex.c uprocess.c usecu
 
 SET_SOURCES(u_SRC 1)
 add_library(u STATIC ${u_SRC})
+
+target_link_libraries(u ${sysaux_LIB})
