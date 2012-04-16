@@ -42,20 +42,20 @@
   normal constructors, because they are not castable to xs:string.
   So this expression will lead to an error:
 
-	<query>
+	<query>{
 	(# se:light-constructors #) {
 		<error />
 	}
-	</query>
+	}</query>
 
   However, this expression will work fine:
 
 (# se:light-constructors #) {
-	<query>
+	<query>{
 	(# se:no-light-constructors #) {
 		<error />
 	}
-	</query>
+	}</query>
 }
 
  2. Lightweight constructors are an experimental featurw, so there
