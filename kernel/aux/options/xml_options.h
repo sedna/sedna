@@ -108,6 +108,9 @@ class XmlNodeReader {
     void readDoubleValue(const SimpleNodeTest& expr, double * value);
     void readStringValue(const SimpleNodeTest& expr, std::string * value);
 
+    /* All other elements will trigger error */
+    void setJealousMode(bool _jealousMode);
+
     XmlNodeReader * createElementReader(const SimpleNodeTest& expr, XmlNodeReader * reader);
     void setElementReader(const SimpleNodeTest& expr, XmlNodeReader * reader);
 };

@@ -31,10 +31,7 @@ struct SessionOptions {
     int queryTimeout;
 
     void saveToXml(XMLBuilder * xmlBuilder) const;
-    void saveToStream(std::ostream * stream) const;
-
     XmlNodeReader * createReader();
-    void loadFromStream(std::istream * stream);
 };
 
 struct DatabaseOptions {
@@ -45,6 +42,9 @@ struct DatabaseOptions {
 
     double updateCriteria;
     int securityOptions;
+
+    int sessionPoolSize;
+    bool autoStart;
 
     struct DatabaseFileSize {
         uint32_t max;
@@ -58,12 +58,9 @@ struct DatabaseOptions {
     DatabaseFileSize tmpFile;
 
     SessionOptions sessionOptions;
-    
-    void saveToXml(XMLBuilder * xmlBuilder) const;
-    void saveToStream(std::ostream * stream) const;
 
+    void saveToXml(XMLBuilder * xmlBuilder) const;
     XmlNodeReader * createReader();
-    void loadFromStream(std::istream * stream);
 };
 
 struct SednaOptions {
@@ -76,18 +73,20 @@ struct SednaOptions {
     int logLevel;
     
     void saveToXml(XMLBuilder * xmlBuilder) const;
-    void saveToStream(std::ostream * stream) const;
-
     XmlNodeReader * createReader();
-    void loadFromStream(std::istream * stream);
 };
 
 struct GlobalParameters {
     SednaOptions global;
     DatabaseOptions defaultDatabaseParameters;
 
-    std::map<std::string, DatabaseOptions> databaseOptions;
+    typedef std::map<std::string, DatabaseOptions> DatabaseOptionMap;
 
+    DatabaseOptionMap databaseOptions;
+
+    void saveDatabaseToStream(const std::string &dbname, std::ostream * stream) const;
+    void loadDatabaseFromStream(const std::string &dbname, std::istream * stream);
+    
     void saveToStream(std::ostream * stream) const;
     void loadFromStream(std::istream * stream);
 };

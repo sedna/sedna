@@ -189,7 +189,9 @@ bool SimpleNodeTest::matches(const char* _name, bool _attribute, bool _deep) con
 struct XmlParserTrigger {
     typedef std::map<std::string, XmlNodeProcessingInfo *> ParserTreeMap;
     ParserTreeMap hitMap;
+    bool jealousMode;
 
+    XmlParserTrigger() : jealousMode(false) {};
     ~XmlParserTrigger();
 
     // We do not pass string here in case we would want to process namespaces
@@ -211,6 +213,10 @@ XmlParserTrigger* XmlParserTrigger::onElement(const char* name, bool deep)
 {
     ParserTreeMap::const_iterator it = hitMap.find(std::string(name));
 
+    if (jealousMode && it == hitMap.end()) {
+        throw EXMLParserException("Unknown element : " + std::string(name));
+    };
+    
     if (it != hitMap.end() && (it->second->trigger != NULL) && it->second->test.matches(name, false, deep)) {
         return it->second->trigger;
     }
@@ -289,6 +295,11 @@ void XmlNodeReader::readUlongValue(const SimpleNodeTest& expr, uint64_t* value)
     trigger->hitMap.insert(
       XmlParserTrigger::ParserTreeMap::value_type(expr.toString(),
         new XmlNodeProcessingInfo(expr, &setUlong, value)));
+}
+
+void XmlNodeReader::setJealousMode(bool _jealousMode)
+{
+    trigger->jealousMode = _jealousMode;
 }
 
 XmlNodeReader* XmlNodeReader::createElementReader(const SimpleNodeTest& expr, XmlNodeReader* reader)

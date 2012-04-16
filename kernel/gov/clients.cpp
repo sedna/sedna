@@ -468,8 +468,6 @@ void CdbConnectionProcessor::cleanupOnError()
     setObsolete();
 }
 
-
-
 ////////////////////////////class CdbRequestProcessor//////////////////////////////////////////////
 
 class CreateDatabaseCallback : IProcessCallback {
@@ -492,7 +490,7 @@ SocketClient* CdbRequestProcessor::processData()
               elog(EL_LOG, ("Database creation aborted: unexpected message, database parameters were expected"));
               return NULL;
           }
-          
+
           elog(EL_LOG, ("Request for database creation"));
 
           communicator->readString(dbName);

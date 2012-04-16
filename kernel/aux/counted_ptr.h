@@ -31,7 +31,7 @@ class scoped_ptr {
     T& operator*() const throw() { return *p; }
     T* operator->() const throw() { return p; }
 
-    scoped_ptr(T * _p = NULL) : p(_p) {}
+    scoped_ptr(T * _p = 0) : p(_p) {}
 
     /* Recall: delete operator have no effect on NULL anyway, so this is safe. */
     ~scoped_ptr() { Deallocator::deallocate(p); }
@@ -42,8 +42,8 @@ class scoped_ptr {
     // Scoped pointer MUST NOT be neither copied nor assigned to any other scoped pointer!
     // scoped_ptr (const scoped_ptr<T> &ptr) throw() { U_ASSERT(false); }
 
-    void clear() { Deallocator::deallocate(p); p; p = NULL; };
-    bool isnull() const { return NULL == p; };
+    void clear() { Deallocator::deallocate(p); p; p = 0; };
+    bool isnull() const { return 0 == p; };
 
     /* This implementation of scoped pointer does DELETE old object on assignment  */
     scoped_ptr<T>& operator= (T* ptr) throw() {
@@ -68,15 +68,15 @@ class counted_ptr {
   public:
     // initialize pointer with existing pointer
     // - requires that the pointer p is a return value of new
-    counted_ptr (T* p = NULL) : item(NULL) {
-        if (NULL != p) {
+    counted_ptr (T* p = 0) : item(0) {
+        if (0 != p) {
             item = new ptr_with_counter(p);
         }
     }
 
     // copy pointer (one more owner)
     counted_ptr (const counted_ptr<T, Deallocator>& p) throw() : item(p.item) {
-        if (item != NULL) { ++(item->count); }
+        if (item != 0) { ++(item->count); }
     }
 
     // destructor (delete value if this was the last owner)
@@ -89,7 +89,7 @@ class counted_ptr {
         if (this != &p) {
             release();
             item = p.item;
-            if (NULL != item) { ++(item->count); }
+            if (0 != item) { ++(item->count); }
         }
         return *this;
     }
@@ -98,18 +98,18 @@ class counted_ptr {
     T& operator*() const throw() { return *(item->ptr); }
     T* operator->() const throw() { return item->ptr; }
     T& operator[](int i) const throw() { return item->ptr[i]; }
-    T* get() const throw() { return item == NULL ? NULL : item->ptr; }
+    T* get() const throw() { return item == 0 ? 0 : item->ptr; }
 
     bool unique() const throw() { return item->count == 1; }
-    bool isnull() const  { return item == NULL; }
+    bool isnull() const  { return item == 0; }
 
   private:
 
     void release() {
-        if (item != NULL) {
+        if (item != 0) {
             --(item->count);
             if (item->count == 0) {
-                if (item->ptr != NULL) { Deallocator::deallocate(item->ptr); }
+                if (item->ptr != 0) { Deallocator::deallocate(item->ptr); }
                 delete item;
             }
         }
