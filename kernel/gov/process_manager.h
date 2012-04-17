@@ -33,6 +33,8 @@ typedef std::multimap<std::string, SocketClient * > DatabaseServiceClientMap;
 typedef std::map<session_id, SessionProcessInfo *> SessionMap;
 typedef std::string ClientTicket;
 
+typedef std::map<ClientTicket, std::pair<DatabaseOptions *, bool> > DatabaseProcessMap;
+
 class IProcessCallback {
 public:
     virtual ~IProcessCallback() {};
@@ -50,6 +52,7 @@ class ProcessManager {
     ProcessList processList;
     SystemSocketMap systemSocketMap;
 
+    DatabaseProcessMap databaseProcessMap;
     DatabaseMap databaseMap;
     SessionMap sessionIndexById;
 
