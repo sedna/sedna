@@ -4,6 +4,7 @@
 #include "tr/executor/xpath/XPathTypes.h"
 #include "tr/opt/cost/Statistics.h"
 #include "tr/opt/phm/Operations.h"
+#include "tr/structures/producer.h"
 
 double PlanInfo::evaluateTotalCost() const
 {
@@ -14,12 +15,12 @@ double PlanInfo::evaluateTotalCost() const
     return sum;
 }
 
-int PlanTupleScheme::update(int index, SchemeElement* el)
+int PlanInfo::updateScheme(int index, SchemeElement* el)
 {
-    PlanTupleSchemeMap::iterator it = content.find(index);
+    PlanTupleSchemeMap::iterator it = scheme.find(index);
 
-    if (it == content.end()) {
-        content.insert(PlanTupleSchemeMap::value_type(index, el));
+    if (it == scheme.end()) {
+        scheme.insert(PlanTupleSchemeMap::value_type(index, el));
     } else {
         it->second = el;
     };
@@ -27,15 +28,27 @@ int PlanTupleScheme::update(int index, SchemeElement* el)
     return index;
 }
 
+PlanInfo::PlanInfo()
+  : totalCost(0), desc(0)
+{ };
 
-SchemeElement * PlanInfo::materialize(SchemeElement * el) {
-    if (el->evaluated || !el->available) {
+PlanInfo::PlanInfo(const PlanInfo* parent)
+  : totalCost(0), scheme(parent->scheme), joinTree(parent->joinTree), desc(parent->desc)
+{
+
+}
+
+SchemeElement * PhysicalModel::materialize(SchemeElement * el)
+{
+    if (!el->available) {
+        return NULL;
+    } else if (el->evaluated) {
         return el;
     } else switch (el->node->type) {
 //        case DataNode::dnExternal : return new PPAdapter(el);
 //        case DataNode::dnConst : return new TSCache(el);
         case DataNode::dnDatabase :
-            this->joinTree.push_back(new AbsPathScanPrototype(el, el->node->path, el->node->root));
+            this->plan->joinTree.push_back(new AbsPathScanPrototype(el, el->node->path, el->node->root));
             break;
         default :
             U_ASSERT(false);
@@ -49,47 +62,35 @@ SchemeElement* PlanInfo::initSchemeElement(DataNode* node)
     SchemeElement* result = new SchemeElement();
     result->node = node;
     publicCostModel->evaluateBaseStatistics(result);
+    updateScheme(node->varIndex, result);
 
     return result;
 }
 
-PlanInfo* PlanInfo::evaluateInitialPlanInfo(PlanTupleScheme* scheme, Predicate* pred, PlanDesc desc)
+PlanInfo* PlanInfo::extend(Predicate* what) const
 {
-    PhysicalModel phm;
-
-    phm.result = NULL;
-    phm.plan = new PlanInfo();
-    phm.plan->schema = scheme;
-    phm.plan->desc = desc;
-    pred->compile(&phm);
-
-    return phm.plan;
-}
-
-PlanInfo* PlanInfo::clone() const
-{
-    PlanInfo* result = new PlanInfo;
-    result->desc = desc;
-    result->joinTree = joinTree;
-    result->schema = new PlanTupleScheme(*schema);
-    return result;
-}
-
-PlanInfo* PlanInfo::apply(Predicate* what)
-{
-    PhysicalModel phm;
-
-    phm.result = NULL;
-    phm.plan = this;
-    phm.plan->desc |= what->indexBit;
+    PhysicalModel phm(new PlanInfo(this));
+    
+    phm.plan->desc = this->desc | what->indexBit;
     what->compile(&phm);
 
     return phm.plan;
 }
 
+
 PPIterator* PlanInfo::compile()
 {
     return NULL;
+}
+
+#define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, #N)
+
+IElementProducer* PlanInfo::toXML(IElementProducer* element) const
+{
+    element = element->addElement(CDGQNAME(plan), xs_anyType);
+//    element->addElement() 
+    element->close();
+    return element;
 }
 
 
@@ -100,15 +101,15 @@ bool isCacheReasonable(const Range &amass) {
 
 void* PhysicalModel::compile(VPredicate* pred)
 {
-    SchemeElement * left = plan->schema->get(pred->leftNode->varIndex);
-    SchemeElement * right = plan->schema->get(pred->rightNode->varIndex);
+    SchemeElement * left = plan->scheme[pred->leftNode->varIndex];
+    SchemeElement * right = plan->scheme[pred->rightNode->varIndex];
 
     if (!left->evaluated && left->available) {
-        left = plan->materialize(left);
+        left = materialize(left);
     }
 
     if (!right->evaluated && right->available) {
-        right = plan->materialize(right);
+        right = materialize(right);
     }
 
     if (left->evaluated && right->evaluated) {
@@ -132,16 +133,16 @@ void* PhysicalModel::compile(VPredicate* pred)
         return NULL;
     };
 
-    plan->schema->update(pred->leftNode->varIndex, left);
-    plan->schema->update(pred->rightNode->varIndex, right);
+    plan->updateScheme(pred->leftNode->varIndex, left);
+    plan->updateScheme(pred->rightNode->varIndex, right);
 
     return result;
 }
 
 void* PhysicalModel::compile(SPredicate* pred)
 {
-    SchemeElement * left = plan->schema->get(pred->leftNode->varIndex);
-    SchemeElement * right = plan->schema->get(pred->rightNode->varIndex);
+    SchemeElement * left = plan->scheme[pred->leftNode->varIndex];
+    SchemeElement * right = plan->scheme[pred->rightNode->varIndex];
 
     if (left->evaluated && right->evaluated) {
         result = new StructuralSortMergeJoinPrototype(left, right, pred->path);
@@ -156,11 +157,11 @@ void* PhysicalModel::compile(SPredicate* pred)
 */
     } else if (left->evaluated) {
         result = new AxisStepPrototype(left, right, pred->path);
-    } else if (right->evaluated) {
+    } else if (right->evaluated && pred->path.inversable()) {
         result = new AxisStepPrototype(right, left, pred->path.inverse());
     // TODO: Select between two available choices
     } else if (left->available || right->available) {
-        result = new AxisStepPrototype(plan->materialize(left), right, pred->path);
+        result = new AxisStepPrototype(materialize(left), right, pred->path);
 //        result = new PathStepPrototype(plan->materialize(right), left, pred->path.inverse());
     } else {
         result = NULL;
@@ -171,12 +172,9 @@ void* PhysicalModel::compile(SPredicate* pred)
         plan->joinTree.push_back(result);
     };
 
-    plan->schema->update(pred->leftNode->varIndex, left);
-    plan->schema->update(pred->rightNode->varIndex, right);
+    plan->updateScheme(pred->leftNode->varIndex, left);
+    plan->updateScheme(pred->rightNode->varIndex, right);
     
     return result;
 }
 
-/*
-
-*/

@@ -308,6 +308,11 @@ Path Path::inverse() const
     return Path();
 }
 
+bool Path::inversable() const
+{
+    return false;
+}
+
 Path Path::squeeze() const
 {
     return *this;

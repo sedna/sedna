@@ -26,15 +26,14 @@ class TupleIn { public:
 // TODO: Actually redudant data structure, that holds 
 class SchemeElement : public IPlanDisposable {
 public:
-    SchemeElement() : available(false), evaluated(false), statistics(NULL), node(NULL) {};
-    SchemeElement(const SchemeElement &);
-
     bool available;
     bool evaluated;
 
     Statistics * statistics;
     DataNode * node;
     POProtIn pop;
+
+    SchemeElement() : available(false), evaluated(false), statistics(NULL), node(NULL) {};
 };
 
 class SortMergeJoinPrototype : public POProt {

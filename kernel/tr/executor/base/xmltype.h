@@ -2,6 +2,7 @@
 #define _XML_TYPE_H_
 
 #include "common/u/u.h"
+#include "common/xptr.h"
 
 enum storage_type_t {
     st_node = 0x0001,
@@ -34,7 +35,9 @@ public:
 
 union variant_t {
     void * _ptr;
-    uint64_t _int;
+    int64_t _int;
+    uint64_t _uint;
+    xptr _xptr;
     IXmlObjectDisposable * _object;
 };
 
@@ -51,7 +54,9 @@ class XmlType {
     inline void releaseObject() {
         if ((x._type & st_object) > 0) {
             U_ASSERT(x.val._object != NULL);
-            x.val._object->incRef();
+            if (x.val._object->decRef() == 0) {
+                delete x.val._object;
+            };
         };
     };
 
@@ -64,6 +69,10 @@ class XmlType {
 public:
     XmlType() {};
 
+    explicit XmlType(xml_type_t _x) : x(_x.x) {
+        acquireObject();
+    };
+    
     XmlType(const XmlType& _x) : x(_x.x) {
         acquireObject();
     };
@@ -82,5 +91,26 @@ public:
         return *this;
     };
 };
+
+template<typename Source>
+XmlType xmltype_cast(const Source & src);
+
+template<typename Source>
+XmlType xmltype_atomic_cast(uint32_t atomic_type, const Source & src);
+
+
+template<>
+XmlType xmltype_cast<int64_t>(const int64_t & src)
+{
+    return xmltype_atomic_cast(xs_integer, src);
+};
+
+template<>
+XmlType xmltype_atomic_cast<int64_t>(uint32_t atomic_type, const int64_t & src)
+{
+    xml_type_t x = {st_atomic, atomic_type };
+    x.val._int = src;
+    return XmlType(x);
+}
 
 #endif /* _XML_TYPE_H_ */

@@ -38,6 +38,8 @@ class PlanDescIterator {
   public:
     PlanDescIterator(PlanDesc _desc) : z(_desc), pos(0) {};
 
+    inline bool empty() const { return z == 0; };
+    
     inline int next() {
         if (z == 0) {
             return -1;
@@ -64,7 +66,6 @@ struct Variable;
 struct DataGraph;
 
 class SchemeElement;
-class PlanTupleScheme;
 class PhysicalModel;
 
 typedef std::vector<Predicate *> PredicateList;

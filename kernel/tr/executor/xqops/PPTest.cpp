@@ -353,9 +353,10 @@ void PPDataGraph::do_next(tuple& t)
 
         IElementProducer * rootProducer = SCElementProducer::getVirtualRoot(XNULL);
         IElementProducer * dgElement = dg->toXML(rootProducer);
-
+        
         t.cells[0] = dgElement->close();
-//        t.cells[0] = tuple_cell::atomic_deep(xs_string, dg->toLRString().c_str());
+
+        PPOpIn op(dgm.compile(dg), 1);
     }
 }
 

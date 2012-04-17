@@ -81,19 +81,19 @@ void BinaryPredicate::setVertices(DataGraph* dg, TupleId left, TupleId right)
 PlanDesc DataGraph::getNeighbours(PlanDesc x)
 {
     PlanDescIterator iter(x);
-    int i;
     PlanDesc result = 0;
     
+    int i;
     while (-1 != (i = iter.next())) {
         result |= predicates.at(i)->neighbours;
     }
 
-    return result;
+    return (result & ~x);
 }
 
 void DataGraph::updateIndex()
 {
-    int i = 0;
+    allPredicates = 0;
 
     for (DataNodeList::iterator d = dataNodes.begin(); d != dataNodes.end(); ++d) {
         if (*d != NULL) {
@@ -104,6 +104,7 @@ void DataGraph::updateIndex()
     for (PredicateList::iterator p = predicates.begin(); p != predicates.end(); ++p) {
         if (*p != NULL) {
             (*p)->update();
+            allPredicates |= (*p)->indexBit;
         }
     }
 }

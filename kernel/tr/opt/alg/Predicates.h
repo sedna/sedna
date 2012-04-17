@@ -49,6 +49,8 @@ struct DataGraph {
     PredicateList predicates;
     DataNodeList dataNodes;
 
+    PlanDesc allPredicates;
+
     void updateIndex();
     void precompile();
 

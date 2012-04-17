@@ -259,7 +259,8 @@ public:
 
     PlanInfo * getLastPlan() { return last; };
 
-    PlanInfo * update(PlanDesc desc, PlanInfo * _plan) {
+    PlanInfo * update(PlanInfo * _plan) {
+        PlanDesc desc = _plan->getDesc();
         PlanInfoMap::iterator i = planInfoMap.find(desc);
 
         if (i == planInfoMap.end()) {
@@ -278,378 +279,60 @@ public:
 
 PPIterator* DataGraphMaster::compile(DataGraph* dg)
 {
-    PlanTupleScheme * initialScheme = new PlanTupleScheme();
+    PlanMap * planMap = new PlanMap();
+
     PlanDescSet set1, set2;
 
     PlanDescSet * currentStepSet = &set1;
     PlanDescSet * nextStepSet = &set2;
 
-    PlanMap * planMap = new PlanMap();
+    PlanInfo * nullPlan = new PlanInfo();
+
+    int branchLimit = 3;
 
     for (DataNodeList::iterator i = dg->dataNodes.begin(); i != dg->dataNodes.end(); ++i) {
-        initialScheme->update((*i)->varIndex, PlanInfo::initSchemeElement(*i));
-    };
-
-    for (PredicateList::iterator p = dg->predicates.begin(); p != dg->predicates.end(); ++p) {
-        PlanDesc desc = (*p)->indexBit;
-        PlanInfo * initialPlanInfo = PlanInfo::evaluateInitialPlanInfo(initialScheme, *p, desc);
-
-        if (initialPlanInfo != NULL) {
-            planMap->update(desc, initialPlanInfo);
-            currentStepSet->insert(desc);
+        if (*i != NULL) {
+            nullPlan->initSchemeElement(*i);
         }
     };
 
-    while (!currentStepSet->empty()) {
-        nextStepSet->clear();
+    planMap->update(nullPlan);
 
-        for (PlanDescSet::const_iterator it = currentStepSet->begin(); it != currentStepSet->end(); ++it) {
-            int nei;
-            PlanInfo * info = planMap->get(*it);
-            PlanDesc desc = info->getDesc();
-            PlanInfo * candidate = NULL;
-            PlanDescIterator neighbours(dg->getNeighbours(desc));
-
-            while (-1 != (nei = neighbours.next())) {
-                Predicate * p = dg->predicates[nei];
-                PlanDesc ndesc = desc | p->indexBit;
-                planMap->update(ndesc, info->clone()->apply(p));
-                nextStepSet->insert(ndesc);
-            };
-        };
-
-        PlanDescSet * swapset = currentStepSet;
-        currentStepSet = nextStepSet;
-        nextStepSet = swapset;
-    };
-
-    PPIterator * result = planMap->getLastPlan()->compile();
-
-    return result;
-}
-
-
-//DataGraph::pre
-
-/*
-
-#include "tr/executor/methods/SequenceModel.h"
-#include "tr/executor/methods/SequenceHelpers.h"
-
-
-// ***************************** Data Graph ***************************
-
-PPIterator* DataGraphMaster::compile(DataGraph* dg)
-{
-    PlanTupleScheme * initialScheme = new PlanTupleScheme(dg->dataNodes.size());
-    PlanDescSet set1, set2;
-
-    PlanDescSet * currentStepSet = &set1;
-    PlanDescSet * nextStepSet = &set2;
-
-    PlanMap * planMap = new PlanMap();
-
-    for (DataNodeList::iterator i = dg->dataNodes.begin(); i != dg->dataNodes.end(); ++i) {
-        initialScheme->update(i->index, PlanInfo::initSchemeElement(*i));
-    };
-
-    for (PredicateList::iterator p = dg->predicates.begin(); p != dg->predicates.end(); ++p) {
-        PlanDesc desc = singlePlanDesc(p->index);
-        PlanInfo * initialPlanInfo = PlanInfo::evaluateInitialPlanInfo(initialScheme, &(*p), desc);
-
-        if (initialPlanInfo != NULL) {
-            planMap->update(desc, initialPlanInfo);
-            currentStepSet->insert(desc);
-        }
-    };
-
-    while (!currentStepSet->empty()) {
-        nextStepSet->clear();
-
-        for (PlanDescSet::const_iterator it = currentStepSet->begin(); it != currentStepSet->end(); ++it) {
-            PlanInfo * info = planMap->get(*it);
-            PlanDesc desc = info->getDesc();
-            PlanInfo * candidate = NULL;
-            PredicateSet neighbours = dg->getNeighbours(desc);
-
-            for (PredicateSet::const_iterator p = neighbours.begin(); p != neighbours.end(); ++p) {
-                PlanDesc ndesc = desc | singlePlanDesc(p->index);
-                planMap->update(ndesc, info->apply(*p));
-                nextStepSet->insert(ndesc);
-            };
-        };
-
-        PlanDescSet * swapset = currentStepSet;
-        currentStepSet = nextStepSet;
-        nextStepSet = swapset;
-    };
-
-    PPIterator * result = planMap->getLastPlan()->compile();
-
-    return result;
-}
-
-struct Reduce : public AbstractSequence {
-    AbstractSequence * inSequence;
-    TupleMap savemap;
-
-    Reduce(AbstractSequence * in, TupleMap map) : AbstractSequence(in->body.cells_number), inSequence(in), savemap(map) {
-    };
-
-    virtual bool open() {};
-
-    virtual bool next() {
-        inSequence->next();
-        remap_tuple(body, inSequence->get(), savemap);
-    };
-};
-
-
-inline DataNodeList & dataNodeUnion(const DataNodeList & A, const DataNodeList & B, DataNodeList & result) {
-    std::set_union(A.begin(), A.end(), B.begin(), B.end(), back_inserter(result));
-    return result;
-}
-
-/*
-struct OpProt {
-    SequenceElement source;
-    Range getCardinality();
-};
-
-struct PlanData {
-  private:
-    typedef vector<OpProt *> Operations;
-    Operations operations;
-
-    typedef map<DataNode *, OpProt *> DataMap;
-    DataMap dataMap;
-  public:
-    OpProt * getSource(DataNode * dn) {
-        DataMap::iterator it = dataMap.find(dn);
-//        Data
-    };
-
-    bool checkSource(DataNode* dn);
-    void update(DataNode* dn, AbstractSequence * op, int pos);
-};
-
-struct DataNode {
-    TupleId boundVariable;
-    virtual OpProt * generate(PlanData * planData);
-};
-
-struct SchemaNodeSource : public DataNode {
-    schema_node_cptr scn;
-};
-
-struct PPAdapterNode : public DataNode {
-    PPOpIn op;
-};
-
-struct Atomic : public DataNode {
-    tuple_cell value;
-};
-
-struct Predicate {
-    virtual ~Predicate() {};
-    virtual Predicate * map(Predicate *) = 0;
-    virtual bool generate(PlanData * planData);
-};
-
-struct Bond : public Predicate {
-    DataNode *in;
-    vector<DataNode *> out;
-};
-
-struct SJoin : public Predicate {
-    xpe::Path * path;
-    DataNode *left, *right;
-
-    virtual bool generate(PlanData* planData) {
-        bool leftExists = planData->checkSource(left);
-        bool rightExists = planData->checkSource(right);
-
-        if (leftExists && rightExists) {
-            OpProt * leftP = planData->getSource(left);
-            OpProt * rightP = planData->getSource(right);
-
-            GeneralizedSortMergeJoin * smj;
-
-            planData->update(left, smj, leftP->source.pos);
-            planData->update(right, smj, rightP->source.pos);
-        } else if (leftExists) {
-            OpProt * leftP = planData->getSource(left);
-
-            PathStep * pathStep = new PathStep(leftP->source, path);
-
-            planData->update(left, pathStep, leftP->source.pos);
-            planData->update(right, pathStep, pathStep->outTuple);
-        } else if (rightExists) {
-            OpProt * leftP = planData->getSource(left);
-            OpProt * rightP = planData->getSource(right);
-
-            GeneralizedSortMergeJoin * smj;
-
-            planData->update(left, smj, leftP->source.pos);
-            planData->update(right, smj, rightP->source.pos);
-        } else {
-            OpProt * leftP = planData->getSource(left);
-
-            PathStep * pathStep = new PathStep(leftP->source, path);
-
-            planData->update(left, pathStep, leftP->source.pos);
-            planData->update(right, pathStep, pathStep->outTuple);
-        }
-
-        OpProt * leftP = planData->getSource(left);;
-        OpProt * rightP = planData->getSource(right);
-    };
-};
-
-struct VJoin : public Predicate {
-    DataNode *left, *right;
-
-    virtual OpProt * generate(PlanData * planData) {
-        OpProt * leftP = planData->getSource(left);
-        if (leftP == NULL) { return NULL; }
-        OpProt * rightP = planData->getSource(right);
-        if (rightP == NULL) { return NULL; }
-
-        Range cardLeft = leftP->getCardinality();
-        Range cardRight = rightP->getCardinality();
-
-        GeneralizedSortMergeJoin * vj = new GeneralizedSortMergeJoin(leftP->source, rightP->source);
-
-        planData->update(left, vj, leftP->source.pos);
-        planData->update(right, vj, rightP->source.pos);
-    };
-};
-
-
-DataGraph* DataGraphMaster::collapse(DataGraph* dg)
-{
-}
-
-
-/*
-
-
-DataGraph* DataGraphMaster::apply(DataGraph* function, DataGraph* operand, rqp::TupleId var)
-{
-    DataGraph* result = new DataGraph();
-
-    std::set_union(function->dataNodes.begin(), function->dataNodes.end(), operand->dataNodes.begin(), operand->dataNodes.end(), back_inserter(result->dataNodes));
-    std::set_union(function->predicates.begin(), function->predicates.end(), operand->predicates.begin(), operand->predicates.end(), back_inserter(result->predicates));
-
-    allGraphs.push_back(result);
-    return result;
-}
-
-
-DataGraph* DataGraphMaster::map(DataGraph* function, DataGraph* operand)
-{
-    DataGraph* result = new DataGraph();
-
-    dataNodeUnion(function->dataNodes, operand->dataNodes, result->dataNodes);
-
-    allGraphs.push_back(result);
-    return result;
-}
-
-DataGraph* DataGraphMaster::createFnDoc(counted_ptr<db_entity> db_ent)
-{
-    SchemaNodeSource * docNode = new SchemaNodeSource();
-    DataGraph * result = new DataGraph();
-
-    allPredicates.push_back(docNode);
-    allGraphs.push_back(result);
-
-    result->dataNodes.push_back(docNode);
-
-    docNode->scn = get_schema_node(db_ent, "Unable to resolve document during optimization");
-
-    return result;
-}
-
-DataGraph* DataGraphMaster::createSJ(DataNode* left, DataNode* right, const pe::Path& path)
-{
-    DataGraph * result = new DataGraph();
-    SJoin * sj = new SJoin();
-
-    allGraphs.push_back(result);
-    allPredicates.push_back(sj);
-
-    sj->path = new xpath::LightPathExpression(path);
-    sj->left = left;
-    sj->right = right;
-
-    result->predicates.push_back(sj);
-    result->dataNodes.push_back(left);
-    result->dataNodes.push_back(right);
-
-    return result;
-}
-
-DataNode* DataGraphMaster::getVarNode(rqp::TupleId var)
-{
-    VariableMap::const_iterator it = variableMap.find(var);
+    currentStepSet->insert(0);
     
-    if (it == variableMap.end()) {
-        Variable * result = new Variable();
+    while (!currentStepSet->empty()) {
+        nextStepSet->clear();
 
-        result->var = var;
-        result->boundVariables.push_back(var);
-        allNodes.push_back(result);
-        variableMap.insert(VariableMap::value_type(var, result));
+        for (PlanDescSet::const_iterator it = currentStepSet->begin(); it != currentStepSet->end(); ++it) {
+            PlanInfo * info = planMap->get(*it);
+            PlanDesc dsc = dg->getNeighbours(info->getDesc());
+            
+            if (dsc == 0 && branchLimit > 0) {
+                branchLimit--;
+                dsc = dg->allPredicates & ~info->getDesc();
+            };
 
-        return result;
-    } else {
-        return it->second;
-    }
+            PlanDescIterator neighbours(dsc);
+            
+            int nei;
+            while (-1 != (nei = neighbours.next())) {
+                PlanInfo * candidate = info->extend(dg->predicates[nei]);
+
+                if (candidate != NULL) {
+                    candidate = planMap->update(candidate);
+                    nextStepSet->insert(candidate->getDesc());
+                }
+            };
+        };
+
+        PlanDescSet * swapset = currentStepSet;
+        currentStepSet = nextStepSet;
+        nextStepSet = swapset;
+    };
+
+    PPIterator * result = planMap->getLastPlan()->compile();
+
+    return result;
 }
-
-*/
-
-
-
-/* Iterator */
-
-/*
-DataGraphIterator::DataGraphIterator(DataGraph* datagraph, const rqp::TupleScheme & scheme) :
-  m_datagraph(datagraph), m_elements(scheme.size()), m_tuple(scheme.size())
-{
-    std::copy(scheme.begin(), scheme.end(), back_inserter(m_elements));
-}
-
-const tuple & DataGraphIterator::next()
-{
-    for (vector<int>::size_type i = 0; i < m_elements.size(); ++i) {
-        m_datagraph->groupByNodes
-//        tuple.cells[i] = ;
-    }
-}
-
-DataGraphIterator::~DataGraphIterator()
-{
-
-}
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

@@ -10,23 +10,34 @@
 #include "common/sedna.h"
 #include "tr/opt/OptTypes.h"
 
-struct OperationCost;
+class IElementProducer;
 class PPIterator;
+class PlanInfo;
+
+struct OperationCost;
+struct VPredicate;
+struct SPredicate;
+
+struct prot_info_t
+{
+    const char * name;
+};
 
 class POProt : public IPlanDisposable {
+    const prot_info_t * protInfo;
 public:
     OperationCost * cost;
 
     SchemeElement * leftElement;
     SchemeElement * rightElement;
 
+    const prot_info_t * getProtInfo() const { return protInfo; };
+    
+    POProt(const prot_info_t * pinfo) : protInfo(pinfo), cost(NULL), leftElement(NULL), rightElement(NULL) {};
+
     virtual PPIterator * compile() = 0;
+    virtual IElementProducer * toXML(IElementProducer *) const = 0;
 };
-
-struct VPredicate;
-struct SPredicate;
-
-class PlanInfo;
 
 class PhysicalModel {
 public:
@@ -34,21 +45,12 @@ public:
     DataGraph * dg;
     POProt * result;
 
+    PhysicalModel(PlanInfo * _plan) : plan(_plan), dg(NULL), result(NULL) {};
+
+    SchemeElement * materialize(SchemeElement * el);
+
     void * compile(VPredicate * pred);
     void * compile(SPredicate * pred);
-};
-
-class PlanTupleScheme : public IPlanDisposable {
-private:
-    typedef std::map<int, SchemeElement *> PlanTupleSchemeMap;
-    PlanTupleSchemeMap content;
-public:
-    PlanTupleScheme() {};
-    PlanTupleScheme(const PlanTupleScheme & scheme) : content(scheme.content) {};
-    virtual ~PlanTupleScheme() {};
-
-    SchemeElement * get(int index) const { return content.at(index); };
-    int update(int index, SchemeElement * el);
 };
 
 class PlanInfo : public IPlanDisposable {
@@ -56,7 +58,8 @@ friend class PhysicalModel;
 protected:
     mutable double totalCost;
 
-    PlanTupleScheme * schema;
+    typedef std::map<int, SchemeElement *> PlanTupleSchemeMap;
+    PlanTupleSchemeMap scheme;
 
     typedef std::vector<POProt *> JoinTree;
     JoinTree joinTree;
@@ -64,9 +67,10 @@ protected:
 
     double evaluateTotalCost() const;
 public:
-    SchemeElement * materialize(SchemeElement *);
-    static SchemeElement * initSchemeElement(DataNode * node);
-    static PlanInfo * evaluateInitialPlanInfo(PlanTupleScheme * scheme, Predicate * pred, PlanDesc desc);
+    PlanInfo();
+    explicit PlanInfo(const PlanInfo * parent);
+  
+    SchemeElement* initSchemeElement(DataNode * node);
 
     double getTotalCost() const {
         if (totalCost == 0) {
@@ -76,10 +80,15 @@ public:
         return totalCost;
     };
 
+    int updateScheme(int index, SchemeElement * el);
+    
     PlanDesc getDesc() const { return desc; };
-    PlanInfo * clone() const;
-    PlanInfo * apply(Predicate * what);
+
+    PlanInfo * extend(Predicate * what) const;
+
     PPIterator * compile();
+
+    IElementProducer * toXML(IElementProducer *) const;
 };
 
 #endif /* PHYSICAL_MODEL_H */

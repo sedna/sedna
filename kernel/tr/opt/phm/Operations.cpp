@@ -3,12 +3,6 @@
 
 double blockSize = 64*1000;
 
-SchemeElement::SchemeElement(const SchemeElement& x)
-    : IPlanDisposable(), available()
-{
-    
-}
-
 SortMergeJoinPrototype::SortMergeJoinPrototype(SchemeElement* _left, SchemeElement* _right, const Comparison& _cmp)
  : leftIn(_left), rightIn(_right), cmp(_cmp)
 {
