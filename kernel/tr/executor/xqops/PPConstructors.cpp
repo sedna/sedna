@@ -1122,10 +1122,10 @@ void PPTextConstructor::do_next (tuple &t)
 
             text_source_t ts = concatTextSequence(&atomized_content);
 
-            if (text_is_null(ts)) {
+            if (atomized_content.size() == 0) {
                 result = tuple_cell::eos();
             } else {
-                result = constructorContext.getParent(deep_copy)->addText(ts);
+                result = constructorContext.getParent(deep_copy)->addText(concatTextSequence(&atomized_content));
             }
         }
 
