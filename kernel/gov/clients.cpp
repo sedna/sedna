@@ -493,7 +493,7 @@ SocketClient* CdbRequestProcessor::processData()
 
           elog(EL_LOG, ("Request for database creation"));
 
-          communicator->readString(dbName);
+          string dbName = communicator->readString();
 
           if (pm->getDatabaseOptions(dbName) != NULL) {
               respondError();

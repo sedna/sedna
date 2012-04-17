@@ -33,7 +33,8 @@ typedef std::multimap<std::string, SocketClient * > DatabaseServiceClientMap;
 typedef std::map<session_id, SessionProcessInfo *> SessionMap;
 typedef std::string ClientTicket;
 
-typedef std::map<ClientTicket, std::pair<DatabaseOptions *, bool> > DatabaseProcessMap;
+typedef std::map<ClientTicket, ProcessInfo *> ProcessMap;
+
 
 class IProcessCallback {
 public:
@@ -52,7 +53,8 @@ class ProcessManager {
     ProcessList processList;
     SystemSocketMap systemSocketMap;
 
-    DatabaseProcessMap databaseProcessMap;
+    ProcessMap processMap;
+
     DatabaseMap databaseMap;
     SessionMap sessionIndexById;
 
@@ -74,7 +76,11 @@ public:
     void startDatabase(const std::string& dbName, IProcessCallback * callback);
     void shutdownDatabase(DatabaseProcessInfo * sm, IProcessCallback * callback);
 
-    void createDatabase(const DatabaseOptions& options, IProcessCallback * callback);
+    DatabaseOptions * getDatabaseOptions(const std::string& dbName);
+    void setDatabaseOptions(const std::string& dbName, const std::string& xmlOptions);
+
+    void removeDatabaseProcess(const std::string& dbName);
+    void createDatabase(const std::string& dbName, IProcessCallback * callback);
     void onDatabaseCreationFinished(const DatabaseOptions& options);
     
     void requestSession(DatabaseProcessInfo * sm, IProcessCallback * callback);
@@ -82,13 +88,18 @@ public:
     void processRequests() {
         if (requestsPending) { doProcessRequests(); }
     };
+
+    ProcessInfo * getUnregisteredProcess(const std::string& ticket);
+    void processRegistered(const std::string& ticket);
+    
+    void processRegistrationFailed(const std::string& ticket, const std::string& reason);
     
     DatabaseProcessInfo * getDatabaseProcess(const std::string& dbName);
 
     GlobalParameters * getGlobalParameters() { return &parameters; };
 
     SessionProcessInfo * getAvailableSession(DatabaseProcessInfo * sm) const;
-    
+
     WorkerSocketClient * getClientBySocket(USOCKET socket) const {
         SystemSocketMap::const_iterator it = systemSocketMap.find(socket);
 

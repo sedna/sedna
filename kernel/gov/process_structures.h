@@ -9,6 +9,7 @@
 
 #include <set>
 
+class IProcessCallback;
 class SocketClient;
 
 enum trninfo_state_t {
@@ -28,6 +29,8 @@ struct ProcessInfo
     UPHANDLE pHandle;
     SocketClient * socketClient; // Every process communicates
                   // with the master process, namely gov
+    bool locked;
+    set<IProcessCallback *> clientCallbackSet;
 };
 
 typedef std::set<ProcessInfo *>  ProcessList;
