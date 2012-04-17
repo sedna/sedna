@@ -6,8 +6,9 @@
 #ifndef PRODUCER_H_
 #define PRODUCER_H_
 
-#include "tr/executor/base/xsd.h"
 #include "tr/strings/strings_base.h"
+
+#include "tr/executor/base/xsd.h"
 #include "tr/executor/base/tuple.h"
 
 class IElementProducer {

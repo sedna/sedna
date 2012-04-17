@@ -57,37 +57,39 @@ class scoped_ptr {
 template <class T, class Deallocator = de_delete<T> >
 class counted_ptr {
   private:
-    struct storage {
-        int count;   // number of owners
+    struct ptr_with_counter {
         T* ptr;       // pointer to the value
-    } * item;
+        int count;   // number of owners
+        ptr_with_counter(T* p) : ptr(p), count(1) {};
+    };
+
+    ptr_with_counter * item;
 
   public:
     // initialize pointer with existing pointer
     // - requires that the pointer p is a return value of new
-    counted_ptr (T* p = NULL)
-     : item(new storage) {
-        item->ptr = p;
-        item->count = 1;
+    counted_ptr (T* p = NULL) : item(NULL) {
+        if (NULL != p) {
+            item = new ptr_with_counter(p);
+        }
     }
 
     // copy pointer (one more owner)
-    counted_ptr (const counted_ptr<T, Deallocator>& p) throw()
-     : item(p.item) {
+    counted_ptr (const counted_ptr<T, Deallocator>& p) throw() : item(p.item) {
         if (item != NULL) { ++(item->count); }
     }
 
     // destructor (delete value if this was the last owner)
     ~counted_ptr () throw() {
-        dispose();
+        release();
     }
 
     // assignment (unshare old and share new value)
     counted_ptr<T, Deallocator>& operator= (const counted_ptr<T, Deallocator>& p) throw() {
         if (this != &p) {
-            dispose();
+            release();
             item = p.item;
-            if (item != NULL) { ++(item->count); }
+            if (NULL != item) { ++(item->count); }
         }
         return *this;
     }
@@ -97,10 +99,13 @@ class counted_ptr {
     T* operator->() const throw() { return item->ptr; }
     T& operator[](int i) const throw() { return item->ptr[i]; }
     T* get() const throw() { return item == NULL ? NULL : item->ptr; }
-    bool unique() const throw() {return item->count == 1; }
+
+    bool unique() const throw() { return item->count == 1; }
+    bool isnull() const  { return item == NULL; }
 
   private:
-    void dispose() {
+
+    void release() {
         if (item != NULL) {
             --(item->count);
             if (item->count == 0) {
@@ -110,6 +115,8 @@ class counted_ptr {
         }
     }
 };
+
+
 
 #endif // COUNTED_PTR_H
 

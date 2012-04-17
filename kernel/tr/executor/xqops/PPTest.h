@@ -16,6 +16,23 @@
 /// PPTest
 ///////////////////////////////////////////////////////////////////////////////
 
+class PPDataGraph : public PPIterator {
+protected:
+    PPOpIn graphString;
+public:
+    virtual void do_accept(PPVisitor& v);
+    virtual void do_close();
+    virtual PPIterator* do_copy(dynamic_context* _cxt_);
+    virtual void do_next(tuple& t);
+    virtual void do_open();
+    virtual void do_reopen();
+
+    PPDataGraph(dynamic_context *_cxt_,
+                operation_info _info_,
+                PPOpIn _seq_);
+
+    virtual ~PPDataGraph();
+};
 
 class PPTest : public PPIterator
 {
@@ -24,7 +41,6 @@ protected:
     PPOpIn seq;
 
     t_test_fun test_fun;
-
 private:
     virtual void do_open   ();
     virtual void do_reopen ();

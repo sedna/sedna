@@ -12,6 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <map>
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -60,6 +61,52 @@ class StringStorage {
     void clear() {
         for (hash_table::iterator i = m_table.begin(); i != m_table.end(); ++i) {
             i->clear();
+        }
+    }
+};
+
+class ConstStringHashMap {
+  private:
+    typedef std::map<std::string, const void *> bucket;
+    typedef std::vector<bucket> hash_table;
+
+    hash_table m_table;
+
+    bucket & get_bucket(const char * str) {
+        return m_table.at(strhash(str) % m_table.size());
+    }
+
+    const bucket & get_bucket(const char * str) const {
+        return m_table.at(strhash(str) % m_table.size());
+    }
+
+    const void * insert(bucket & b, const std::string& str, const void * object) {
+        b.insert(bucket::value_type(str, object));
+        return object;
+    }
+
+  public:
+    ConstStringHashMap(size_t size = 64) : m_table(size) {}
+
+    const void * put(const std::string &s, const void * object) {
+        bucket & b = get_bucket(s.c_str());
+        bucket::iterator n = b.find(s);
+
+        if (n == b.end()) {
+            return insert(b, s, object);
+        } else {
+            return n->second;
+        }
+    }
+
+    const void * get(const std::string &s) const {
+        const bucket & b = get_bucket(s.c_str());
+        bucket::const_iterator n = b.find(s);
+
+        if (n == b.end()) {
+            return NULL;
+        } else {
+            return n->second;
         }
     }
 };

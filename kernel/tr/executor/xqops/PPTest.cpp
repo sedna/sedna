@@ -11,11 +11,17 @@
 #include "tr/executor/xqops/PPTest.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+#include "tr/executor/xpath/XPathTypes.h"
+
 #include "tr/strings/strings.h"
 #include "tr/pstr/pstr.h"
 
 #include "tr/structures/nodeutils.h"
 #include "tr/mo/nodemoutils.h"
+#include "tr/opt/alg/Predicates.h"
+
+#include "tr/opt/alg/DataGraph.h"
+#include "tr/executor/base/SCElementProducer.h"
 
 using namespace std;
 //#include <atlstr.h>
@@ -324,3 +330,70 @@ void PPTest::do_accept(PPVisitor &v)
     seq.op->accept(v);
     v.pop();
 }
+
+void PPDataGraph::do_next(tuple& t)
+{
+    static DataGraphMaster dgm;
+
+    graphString.op->next(t);
+
+    if (!t.eos) {
+        TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
+        reader.read();
+
+        std::string list(reader.buffer, reader.size);
+        AutoSchemeList scml(list.c_str());
+
+//        DataRoot dr(scml.get()->at(0).internal.list);
+//        pe::Path x(scml.get()->at(1).internal.list);
+
+        DataGraph *dg = dgm.createGraphFromLR(scml.get());
+
+        dg->precompile();
+
+        IElementProducer * rootProducer = SCElementProducer::getVirtualRoot(XNULL);
+        IElementProducer * dgElement = dg->toXML(rootProducer);
+
+        t.cells[0] = dgElement->close();
+//        t.cells[0] = tuple_cell::atomic_deep(xs_string, dg->toLRString().c_str());
+    }
+}
+
+void PPDataGraph::do_accept(PPVisitor& v)
+{
+    //   v.visit(this);
+}
+
+void PPDataGraph::do_close()
+{
+    graphString.op->close();
+}
+
+PPIterator* PPDataGraph::do_copy(dynamic_context* _cxt_)
+{
+    return new PPDataGraph(_cxt_, info, PPOpIn(graphString.op->copy(_cxt_), 1));
+}
+
+void PPDataGraph::do_open()
+{
+    graphString.op->open();
+}
+
+void PPDataGraph::do_reopen()
+{
+    graphString.op->reopen();
+}
+
+PPDataGraph::PPDataGraph(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)
+    : PPIterator(_cxt_, _info_, "PPDataGraph"), graphString(_seq_)
+{
+}
+
+PPDataGraph::~PPDataGraph()
+{
+    delete graphString.op;
+    graphString.op = NULL;
+}
+
+
+
