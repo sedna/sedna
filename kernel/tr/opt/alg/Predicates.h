@@ -153,6 +153,8 @@ typedef std::vector<tuple_cell> MemoryTupleSequence;
 struct DataNode {
     counted_ptr<std::string> varName;
 
+    int absoluteIndex;
+
     TupleId varIndex;
     PlanDesc indexBit;
     int index;

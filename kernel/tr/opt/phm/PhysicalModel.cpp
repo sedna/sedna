@@ -6,115 +6,163 @@
 #include "tr/opt/phm/Operations.h"
 #include "tr/structures/producer.h"
 
-double PlanInfo::evaluateTotalCost() const
+PlanInfo::PlanInfo(size_t initialTupleSetSize)
+  : desc(0), totalCost(0)
 {
-    double sum = 0;
-
-    joinTree.back()->cost->fullCost.first;
-
-    return sum;
-}
-
-int PlanInfo::updateScheme(int index, SchemeElement* el)
-{
-    PlanTupleSchemeMap::iterator it = scheme.find(index);
-
-    if (it == scheme.end()) {
-        scheme.insert(PlanTupleSchemeMap::value_type(index, el));
-    } else {
-        it->second = el;
-    };
-
-    return index;
-}
-
-PlanInfo::PlanInfo()
-  : totalCost(0), desc(0)
-{ };
-
-PlanInfo::PlanInfo(const PlanInfo* parent)
-  : totalCost(0), scheme(parent->scheme), joinTree(parent->joinTree), desc(parent->desc)
-{
-
-}
-
-SchemeElement * PhysicalModel::materialize(SchemeElement * el)
-{
-    if (!el->available) {
-        return NULL;
-    } else if (el->evaluated) {
-        return el;
-    } else switch (el->node->type) {
-//        case DataNode::dnExternal : return new PPAdapter(el);
-//        case DataNode::dnConst : return new TSCache(el);
-        case DataNode::dnDatabase :
-            this->plan->joinTree.push_back(new AbsPathScanPrototype(el, el->node->path, el->node->root));
-            break;
-        default :
-            U_ASSERT(false);
-    };
-
-    return el;
+    initialTupleSet = new TupleChrysalis(initialTupleSetSize);
+    branchList.resize(initialTupleSetSize, NULL);
 };
 
-SchemeElement* PlanInfo::initSchemeElement(DataNode* node)
+PlanInfo::PlanInfo(const PlanInfo* parent)
+  : desc(parent->desc), opList(parent->opList), totalCost(0),
+    branchList(parent->branchList), initialTupleSet(parent->initialTupleSet)
 {
-    SchemeElement* result = new SchemeElement();
-    result->node = node;
-    publicCostModel->evaluateBaseStatistics(result);
-    updateScheme(node->varIndex, result);
+}
+
+TupleRef PlanInfo::initTupleSet(DataNode* node)
+{
+    TupleRef ref(initialTupleSet, node->absoluteIndex);
+
+    ref->status = ElementDescriptor::available;
+    ref->node = node;
+    publicCostModel->evaluateBaseStatistics(ref->statistics);
+
+    return ref;
+}
+
+TupleChrysalis::TupleChrysalis(size_t size)
+  : availableTupleMask(0), rowSize(0, 0), rowCount(0, 0), op(0)
+{
+    ElementDescriptor _z = {};
+    tuples.resize(size, _z);
+}
+
+TupleChrysalis::TupleChrysalis(const TupleChrysalis* parent, POProt * _op)
+  : availableTupleMask(0), rowSize(0, 0), rowCount(0, 0), op(_op)
+{
+    availableTupleMask = parent->availableTupleMask;
+    rowCount = parent->rowCount;
+    rowSize = parent->rowSize;
+}
+
+TupleRef PhysicalModel::updateOne(const TupleChrysalis* parent, const POProtIn& op)
+{
+    TupleChrysalis * t = new TupleChrysalis(parent);
+    t->tuples.at(op.index)._gen = op;
+    t->tuples.at(op.index).status = ElementDescriptor::evaluated;
+}
+
+TupleRef PhysicalModel::updateTwo(const TupleChrysalis* x, const TupleChrysalis* y, POProt* op, TupleId ind1, TupleId ind2)
+{
+    U_ASSERT(x->size() == y->size());
+
+    TupleChrysalis* result = new TupleChrysalis(x->size());
+
+    result->rowSize = x->rowSize + y->rowSize;
+    result->availableTupleMask = x->availableTupleMask | y->availableTupleMask;
+
+    for (unsigned i = 0; i < x->size(); ++i) {
+        ElementDescriptor * xd = &(x->tuples[i]);
+        ElementDescriptor * yd = &(y->tuples[i]);
+
+        if (xd->statistics == ElementDescriptor::evaluated && yd->statistics == ElementDescriptor::evaluated) {
+            U_ASSERT(false);
+        };
+
+        if (xd->statistics == ElementDescriptor::evaluated) {
+            result->tuples[i] = *xd;
+        } else if (yd->statistics == ElementDescriptor::evaluated) {
+            result->tuples[i] = *yd;
+        } else {
+            result->tuples[i] = plan->initialTupleSet->tuples[i];
+        };
+    };
+
+    result->tuples.at(ind1).status = ElementDescriptor::evaluated;
+    result->tuples.at(ind1)._gen = op;
+    
+    result->tuples.at(ind2).status = ElementDescriptor::evaluated;
+    result->tuples.at(ind2)._gen = op;
+    
+    result->rowCount = x->rowCount * y->rowCount;
 
     return result;
+}
+
+double PlanInfo::evaluateTotalCost() const
+{
+    double sum = opList.back().cost->fullCost.;
+    return sum;
 }
 
 PlanInfo* PlanInfo::extend(Predicate* what) const
 {
     PhysicalModel phm(new PlanInfo(this));
-    
+
     phm.plan->desc = this->desc | what->indexBit;
     what->compile(&phm);
 
     return phm.plan;
 }
 
-
-PPIterator* PlanInfo::compile()
+POProtIn PhysicalModel::doMaterialize(TupleId t)
 {
-    return NULL;
+    TupleRef tref(plan->initialTupleSet, t);
+  
+    switch (tref->status) {
+        case ElementDescriptor::available : {
+            POProt * op;
+            DataNode * node = tref->node;
+
+            U_ASSERT(tref.tupleDesc == plan->initialTupleSet);
+
+            switch (node->type) {
+    //        case DataNode::dnExternal : return new PPAdapter(el);
+    //        case DataNode::dnConst : return new TSCache(el);
+            case DataNode::dnDatabase :
+                op = new AbsPathScanPrototype(this, tref);
+                break;
+            default :
+                U_ASSERT(false);
+            };
+
+            plan->branchList.at(tref.tid) = op;
+            plan->opList.push_back(op);
+
+            return POProtIn(op, t);
+        } break;
+        case ElementDescriptor::empty :
+          return POProtIn(NULL, t);
+        default:
+          U_ASSERT(false);
+          return POProtIn(NULL, t);
+    };
 }
 
-#define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, #N)
-
-IElementProducer* PlanInfo::toXML(IElementProducer* element) const
+void PhysicalModel::updateBranch(const POProt* op)
 {
-    element = element->addElement(CDGQNAME(plan), xs_anyType);
-//    element->addElement() 
-    element->close();
-    return element;
+    TupleChrysalis* x = op->result;
+
+    for (unsigned i = 0; i != x->size(); ++i) {
+        if (x->get(i)->status == ElementDescriptor::evaluated) {
+            plan->branchList[i] = op;
+        };
+    };
 }
 
 
-static inline
-bool isCacheReasonable(const Range &amass) {
-    return amass.second < 64*1024;
-};
+#define EVALUATED(x) ((x)->status == ElementDescriptor::evaluated)
+#define AVAILABLE(x) ((x)->status == ElementDescriptor::available)
 
 void* PhysicalModel::compile(VPredicate* pred)
 {
-    SchemeElement * left = plan->scheme[pred->leftNode->varIndex];
-    SchemeElement * right = plan->scheme[pred->rightNode->varIndex];
+    POProtIn leftOp = materialize(plan->getRef(pred->leftNode->absoluteIndex));
+    POProtIn rightOp = materialize(plan->getRef(pred->rightNode->absoluteIndex));
 
-    if (!left->evaluated && left->available) {
-        left = materialize(left);
-    }
+    result = NULL;
 
-    if (!right->evaluated && right->available) {
-        right = materialize(right);
-    }
-
-    if (left->evaluated && right->evaluated) {
-        result = new SortMergeJoinPrototype(left, right, pred->cmp);
-        plan->joinTree.push_back(result);
+    if (leftOp.op != NULL && rightOp.op != NULL) {
+        result = new SortMergeJoinPrototype(leftOp, rightOp, pred->cmp);
 /*
         if (isCacheReasonable(left->statistics->nodeMass)) {
             result = new CachedNestedLoop(left->source, right->source, pred->Path);
@@ -129,23 +177,25 @@ void* PhysicalModel::compile(VPredicate* pred)
         };
 */
     } else {
-        result = NULL;
         return NULL;
     };
 
-    plan->updateScheme(pred->leftNode->varIndex, left);
-    plan->updateScheme(pred->rightNode->varIndex, right);
+    updateBranch(result);
+    plan->opList.push_back(result);
 
     return result;
 }
 
 void* PhysicalModel::compile(SPredicate* pred)
 {
-    SchemeElement * left = plan->scheme[pred->leftNode->varIndex];
-    SchemeElement * right = plan->scheme[pred->rightNode->varIndex];
+    POProtIn leftOp = plan->getRef(pred->leftNode->absoluteIndex);
+    POProtIn rightOp = plan->getRef(pred->rightNode->absoluteIndex);
+    
+    result = NULL;
 
-    if (left->evaluated && right->evaluated) {
-        result = new StructuralSortMergeJoinPrototype(left, right, pred->path);
+    if (leftOp.op != NULL && rightOp.op != NULL) {
+        result = new StructuralJoinPrototype(leftOp, rightOp, pred->path);
+
 /*
         if (isCacheReasonable(left->mass)) {
             result = new CachedNestedLoop(left->source, right->source, pred->path);
@@ -155,26 +205,57 @@ void* PhysicalModel::compile(SPredicate* pred)
             result = new SortMergeJoin(left->source, right->source, pred->path);
         };
 */
-    } else if (left->evaluated) {
-        result = new AxisStepPrototype(left, right, pred->path);
-    } else if (right->evaluated && pred->path.inversable()) {
-        result = new AxisStepPrototype(right, left, pred->path.inverse());
-    // TODO: Select between two available choices
-    } else if (left->available || right->available) {
-        result = new AxisStepPrototype(materialize(left), right, pred->path);
-//        result = new PathStepPrototype(plan->materialize(right), left, pred->path.inverse());
+    } else if (leftOp.op != NULL) {
+        result = new PathEvaluationPrototype(this,
+            leftOp, initialRef(rightOp.index), pred->path);
+    } else if (rightOp.op != NULL && pred->path.inversable()) {
+        result = new PathEvaluationPrototype(this,
+            rightOp, initialRef(leftOp.index), pred->path.inverse().squeeze());
     } else {
-        result = NULL;
-        return NULL;
+        leftOp = materialize(leftOp);
+        rightOp = materialize(rightOp);
+
+        return asdlfknasdklgas;
+        
+        if (leftOp.op != NULL && rightOp.op != NULL) {
+//            result = new PathEvaluationPrototype(this,
+//              leftOp, right, pred->path);
+        } else {
+            return NULL;
+        };
     };
 
-    if (result != NULL) {
-        plan->joinTree.push_back(result);
-    };
+    updateBranch(result);
+    plan->opList.push_back(result);
 
-    plan->updateScheme(pred->leftNode->varIndex, left);
-    plan->updateScheme(pred->rightNode->varIndex, right);
-    
     return result;
 }
 
+
+
+PPIterator* PlanInfo::compile()
+{
+    return NULL;
+}
+
+static inline
+bool isCacheReasonable(const Range &amass) {
+    return amass.second < 64*1024;
+};
+
+
+
+
+#define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
+
+IElementProducer* PlanInfo::toXML(IElementProducer* element) const
+{
+    element = element->addElement(CDGQNAME("plan"), xs_anyType);
+
+    for (OperationList::const_iterator i = opList.begin(); i != opList.end(); ++i) {
+        (*i)->toXML(element);
+    };
+
+    element->close();
+    return element;
+}

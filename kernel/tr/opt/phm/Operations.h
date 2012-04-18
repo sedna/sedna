@@ -7,96 +7,37 @@
 
 struct Statistics;
 
-class POProtIn { public:
-    POProt * op;
-    TupleId index;
-
-    POProtIn() : op(NULL), index(0) {};
-    POProtIn(POProt * _op, const TupleId _index) : op(_op), index(_index) {};
-    POProtIn(const POProtIn& _other) : op(_other.op), index(_other.index) {};
-};
-
-/*
-class TupleIn { public:
-    POProtIn opIn;
-    Statistics * statistics;
-};
-*/
-
-// TODO: Actually redudant data structure, that holds 
-class SchemeElement : public IPlanDisposable {
+class BinaryOpPrototype : public POProt {
 public:
-    bool available;
-    bool evaluated;
-
-    Statistics * statistics;
-    DataNode * node;
-    POProtIn pop;
-
-    SchemeElement() : available(false), evaluated(false), statistics(NULL), node(NULL) {};
+    BinaryOpPrototype(const prot_info_t* pinfo, const POProtIn & _left, const POProtIn & _right)
+      : POProt(pinfo), result(NULL) { in.push_back(_left); in.push_back(_right); };
 };
 
-class SortMergeJoinPrototype : public POProt {
+class SortMergeJoinPrototype : public BinaryOpPrototype {
 protected:
-    SchemeElement * leftIn;
-    SchemeElement * rightIn;
-
     const Comparison cmp;
 public:
-    SortMergeJoinPrototype(SchemeElement * _left, SchemeElement * _right, const Comparison& _cmp);
-
-    virtual PPIterator* compile();
+    SortMergeJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, const Comparison& _cmp);
 };
 
-class PathExpressionPrototype : public POProt {
-protected:
-    const pe::Path path;
+class StructuralJoinPrototype : public BinaryOpPrototype {
+    pe::Path path;
 public:
-    PathExpressionPrototype(const pe::Path& _path);
-
-    virtual PPIterator* compile();
+    StructuralJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, const pe::Path& _path);
 };
 
-class AxisStepPrototype : public PathExpressionPrototype {
+class AbsPathScanPrototype : public POProt {
+    DataRoot dataRoot;
+    TupleRef result;
 public:
-    AxisStepPrototype(SchemeElement* _in, SchemeElement* _out, const pe::Path& _path);
-
-    virtual PPIterator* compile();
+    AbsPathScanPrototype(PhysicalModel * model, const TupleRef & tref);
 };
 
-class StructuralSortMergeJoinPrototype : public PathExpressionPrototype {
-protected:
-    SchemeElement * leftIn;
-    SchemeElement * rightIn;
+class PathEvaluationPrototype : public POProt {
+    pe::Path path;
+    TupleRef result;
 public:
-    StructuralSortMergeJoinPrototype(SchemeElement* _left, SchemeElement* _right, const pe::Path& _path);
-
-    virtual PPIterator* compile();
+    PathEvaluationPrototype(PhysicalModel * model, const POProtIn & _left, const TupleRef & _right, const pe::Path& _path);
 };
-
-class AbsPathScanPrototype : public PathExpressionPrototype {
-private:
-    const DataRoot& dataRoot;
-public:
-    AbsPathScanPrototype(SchemeElement* _in, const pe::Path& _path, const DataRoot& _dataRoot);
-
-    virtual PPIterator* compile();
-};
-
-
-/*
-class PathStepPrototype : public PathExpressionPrototype {
-private:
-    SchemeElement * leftIn;
-    SchemeElement * rightIn;
-public:
-    PathStepPrototype(SchemeElement* _left, SchemeElement* _right, const pe::Path& _path)
-    : PathExpressionPrototype(_left, _right, _path) {};
-
-    virtual OperationCost* evaluateCost();
-    virtual PPIterator* compile();
-};
-
-*/
 
 #endif /* _OPERATIONS_H */

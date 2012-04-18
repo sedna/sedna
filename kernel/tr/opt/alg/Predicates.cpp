@@ -93,11 +93,13 @@ PlanDesc DataGraph::getNeighbours(PlanDesc x)
 
 void DataGraph::updateIndex()
 {
+    int nodeIndex = 0;
     allPredicates = 0;
 
     for (DataNodeList::iterator d = dataNodes.begin(); d != dataNodes.end(); ++d) {
         if (*d != NULL) {
             (*d)->predicates = 0;
+            (*d)->absoluteIndex = nodeIndex++;
         }
     };
 

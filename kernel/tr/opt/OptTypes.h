@@ -65,7 +65,6 @@ struct DataNode;
 struct Variable;
 struct DataGraph;
 
-class SchemeElement;
 class PhysicalModel;
 
 typedef std::vector<Predicate *> PredicateList;

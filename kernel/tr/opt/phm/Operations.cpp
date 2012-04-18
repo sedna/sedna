@@ -3,6 +3,41 @@
 
 double blockSize = 64*1000;
 
+#define OPINFO(OP) static const prot_info_t OP##_info = {#OP, };
+#define OPREF(OP) (&(OP##_info))
+
+OPINFO(AbsPathScanPrototype)
+OPINFO(PathEvaluationPrototype)
+OPINFO(SortMergeJoinPrototype)
+OPINFO(StructuralJoinPrototype)
+
+AbsPathScanPrototype::AbsPathScanPrototype(PhysicalModel* model, const TupleRef& tref)
+  : POProt(OPREF(AbsPathScanPrototype)) 
+{
+    result = model->updateOne(tref.tupleDesc, POProtIn(this, tref.tid));
+}
+
+PathEvaluationPrototype::PathEvaluationPrototype(PhysicalModel* model, const POProtIn& _left, const TupleRef& _right, const pe::Path& _path)
+  : POProt(OPREF(PathEvaluationPrototype)), path(_path), result(_right)
+{
+    in.push_back(_left);
+    result = model->updateOne(_left.op->result, POProtIn(this, _right.tid));
+}
+
+SortMergeJoinPrototype::SortMergeJoinPrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, const Comparison& _cmp)
+  : BinaryOpPrototype(OPREF(SortMergeJoinPrototype), _left, _right), cmp(_cmp)
+{
+    result = model->updateTwo(_left.op->result, POProtIn(this, _left.index), POProtIn(this, _right.index));
+}
+
+StructuralJoinPrototype::StructuralJoinPrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, const pe::Path& _path)
+  : BinaryOpPrototype(OPREF(StructuralJoinPrototype), _left, _right), path(_path)
+{
+
+}
+
+
+/*
 SortMergeJoinPrototype::SortMergeJoinPrototype(SchemeElement* _left, SchemeElement* _right, const Comparison& _cmp)
  : leftIn(_left), rightIn(_right), cmp(_cmp)
 {
@@ -117,3 +152,4 @@ PPIterator* StructuralSortMergeJoinPrototype::compile()
     return PathExpressionPrototype::compile();
 }
 
+*/
