@@ -214,7 +214,6 @@ void* PhysicalModel::compile(VPredicate* pred)
 }
 
 
-
 void* PhysicalModel::compile(SPredicate* pred)
 {
     enum strategy_t {
@@ -354,6 +353,18 @@ IElementProducer* POProt::__toXML(IElementProducer* element) const
     return element;
 }
 
+inline static
+IElementProducer* rangeToElement(Range x, IElementProducer* element, const char * name)
+{
+    element = element->addElement(CDGQNAME(name));
+    element->addAttributeValue(CDGQNAME("low"), tuple_cell::atomic(x.lower));
+    element->addAttributeValue(CDGQNAME("up"), tuple_cell::atomic(x.upper));
+    element->addAttributeValue(CDGQNAME("avg"), tuple_cell::atomic(x.avg()));
+    element->close();
+
+    return element;
+};
+
 IElementProducer* POProt::toXML(IElementProducer* element) const
 {
     element = element->addElement(CDGQNAME(this->getProtInfo()->name));
@@ -361,6 +372,12 @@ IElementProducer* POProt::toXML(IElementProducer* element) const
 
     __commonToXML(element);
     __toXML(element);
+
+    IElementProducer * cost = element->addElement(CDGQNAME("cost"));
+    rangeToElement(this->cost->firstCost, cost, "first");
+    rangeToElement(this->cost->nextCost, cost, "next");
+    rangeToElement(this->cost->fullCost, cost, "total");
+    cost->close();
 
     element->close();
     return element;

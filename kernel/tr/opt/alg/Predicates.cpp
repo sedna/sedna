@@ -197,9 +197,7 @@ bool DataGraph::replaceNode(DataNode* n1, DataNode* n2)
 
 bool SPredicate::replacable(DataNode* n1, DataNode* n2)
 {
-    const StepPredicate redundantPathStep(StepPredicate::axis(axis_child) | StepPredicate::axis(axis_parent));
-
-    return this->disposable && path.forall(redundantPathStep);
+    return this->disposable && path.forall(pe::StepPredicate(pe::CDPAAxisTest));
 }
 
 Predicate * SPredicate::replace(DataNode* n1, DataNode* n2)

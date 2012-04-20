@@ -106,7 +106,7 @@ struct Range {
     inline Range & normalize() { if (lower > upper) { std::swap(lower, upper); }; return *this; };
 
     inline Range operator* (const Range &y) const { return Range(lower * y.lower, upper * y.upper).normalize(); }
-    inline Range operator/ (const Range &y) const { return Range(lower - y.lower, upper - y.upper).normalize(); }
+    inline Range operator/ (const Range &y) const { return Range(lower / y.lower, upper / y.upper).normalize(); }
 
     inline Range operator+ (const Range &y) const { return Range(lower + y.lower, upper + y.upper); }
     inline Range operator- (const Range &y) const { return Range(lower - y.lower, upper - y.upper); }

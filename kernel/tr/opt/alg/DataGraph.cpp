@@ -307,7 +307,7 @@ PPIterator* DataGraphMaster::compile(DataGraph* dg)
 
     PlanInfo * nullPlan = new PlanInfo(dg->nodeCount);
 
-    int branchLimit = 1;
+    int branchLimit = 2;
 
     for (DataNodeList::iterator i = dg->dataNodes.begin(); i != dg->dataNodes.end(); ++i) {
         if (*i != NULL) {

@@ -41,6 +41,14 @@ public:
     std::string toLRString() const;
 };
 
+namespace pe {
+    struct AbsPath {
+        DataRoot root;
+        Path path;
+        size_t hash;
+    };
+}
+
 struct DataGraph {
     int lastIndex;
     int nodeCount;

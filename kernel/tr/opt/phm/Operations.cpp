@@ -26,11 +26,6 @@ AbsPathScanPrototype::AbsPathScanPrototype(PhysicalModel* model, const TupleRef&
     evaluateCost(publicCostModel);
 }
 
-PPIterator* AbsPathScanPrototype::compile()
-{
-
-}
-
 IElementProducer* AbsPathScanPrototype::__toXML(IElementProducer* element) const
 {
     POProt::__toXML(element);
@@ -59,11 +54,6 @@ PathEvaluationPrototype::PathEvaluationPrototype(PhysicalModel* model, const POP
     evaluateCost(publicCostModel);
 }
 
-PPIterator* PathEvaluationPrototype::compile()
-{
-    
-}
-
 IElementProducer* PathEvaluationPrototype::__toXML(IElementProducer* element) const
 {
     POProt::__toXML(element);
@@ -85,11 +75,6 @@ SortMergeJoinPrototype::SortMergeJoinPrototype(PhysicalModel* model, const POPro
     evaluateCost(publicCostModel);
 }
 
-PPIterator* SortMergeJoinPrototype::compile()
-{
-
-}
-
 StructuralJoinPrototype::StructuralJoinPrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, const pe::Path& _path)
   : BinaryOpPrototype(OPREF(StructuralJoinPrototype), _left, _right), path(_path)
 {
@@ -98,11 +83,6 @@ StructuralJoinPrototype::StructuralJoinPrototype(PhysicalModel* model, const POP
     resultSet.push_back(_right.index);
 
     evaluateCost(publicCostModel);
-}
-
-PPIterator* StructuralJoinPrototype::compile()
-{
-
 }
 
 IElementProducer* StructuralJoinPrototype::__toXML(IElementProducer* element) const
@@ -120,28 +100,21 @@ IElementProducer* StructuralJoinPrototype::__toXML(IElementProducer* element) co
 ValueScanPrototype::ValueScanPrototype(PhysicalModel* model, const POProtIn& _left, const TupleRef& _right, const Comparison& _cmp)
   : POProt(OPREF(ValueScanPrototype)), cmp(_cmp)
 {
+    in.push_back(_left);
+  
     result = model->updateOne(_left.op->result, POProtIn(this, _left.index));
     resultSet.push_back(_left.index);
 
     evaluateCost(publicCostModel);
 }
 
-PPIterator* ValueScanPrototype::compile()
-{
-
-    
-}
 
 
 
 
 
 
-
-
-
-
-struct XLogXOp { double operator() (double x) { return x*log(x); } };
+struct XLogXOp { double operator() (double x) { return x*log(1+x); } };
 
 void AbsPathScanPrototype::evaluateCost(CostModel* model)
 {
@@ -150,7 +123,7 @@ void AbsPathScanPrototype::evaluateCost(CostModel* model)
     PathCostModel * costInfo = model->getAbsPathCost(dataRoot, path, stats);
 
     result->rowCount = stats->distinctValues;
-    result->rowSize = 1;
+    result->rowSize = model->getNodeSize();
 
     cost = new OperationCost();
 
@@ -160,6 +133,8 @@ void AbsPathScanPrototype::evaluateCost(CostModel* model)
     Range heapSortCost = costInfo->card.map<XLogXOp>() * model->getCPUCost();
 
     cost->nextCost = (evalCost + heapSortCost) / stats->distinctValues;
+
+    U_ASSERT(cost->nextCost.lower > 0);
     cost->fullCost = cost->firstCost + evalCost + heapSortCost;
 }
 
@@ -234,7 +209,7 @@ void PathEvaluationPrototype::evaluateCost(CostModel* model)
 {
     TupleRef inRef(in[0], NULL);
     TupleRef outRef(result, resultSet[0]);
-    OperationCost * inCost = in.at(0).op->getCost();
+    const OperationCost * inCost = in.at(0).op->getCost();
 
     U_ASSERT(inRef->statistics);
 
@@ -244,7 +219,7 @@ void PathEvaluationPrototype::evaluateCost(CostModel* model)
     model->getPathCost(inRef, path, outRef->statistics);
 
     result->rowCount = outRef->statistics->distinctValues;
-    result->rowSize = inRef.tupleDesc->rowSize + 1;
+    result->rowSize = inRef.tupleDesc->rowSize + model->getNodeSize();
 
     cost->firstCost = inCost->firstCost;
     cost->fullCost  = inCost->fullCost + inRef->statistics->distinctValues * outRef->statistics->pathInfo->iterationCost;
@@ -276,16 +251,64 @@ void StructuralJoinPrototype::evaluateCost(CostModel* model)
 
     result->rowCount = std::min(leftIn.tupleDesc->rowCount, rightIn.tupleDesc->rowCount) * cmpInfo->selectivity;
 
-    cost->firstCost = in.at(0).op->getCost()->fullCost + in.at(1).op->getCost()->fullCost +
+    // This operation may be implemented in two different ways with completely different costs
+    
+    Range bestFirstCost = in.at(0).op->getCost()->firstCost + in.at(1).op->getCost()->firstCost;
+    Range worseFirstCost = in.at(0).op->getCost()->fullCost + in.at(1).op->getCost()->fullCost +
         leftSeq->sortCost + rightSeq->sortCost;
 
-    Range mergeCost =
+    Range bestMergeCost = cmpInfo->opCost * std::max(leftIn.tupleDesc->rowCount, rightIn.tupleDesc->rowCount);
+
+    Range worseMergeCost =
         leftSeq->card * cmpInfo->opCost +
         rightSeq->card * cmpInfo->opCost +
         leftSeq->blockCount * model->getIOCost() +
         rightSeq->blockCount * model->getIOCost();
 
+    Range mergeCost = Range(bestMergeCost.lower, worseMergeCost.upper).normalize();
+        
+    cost->firstCost = Range(bestFirstCost.lower, worseFirstCost.upper).normalize();
     cost->nextCost = mergeCost / result->rowCount;
     cost->fullCost = cost->firstCost + mergeCost;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PPIterator* AbsPathScanPrototype::compile()
+{
+    return NULL;
+}
+
+PPIterator* PathEvaluationPrototype::compile()
+{
+    return NULL;
+}
+
+PPIterator* SortMergeJoinPrototype::compile()
+{
+    return NULL;
+}
+
+PPIterator* StructuralJoinPrototype::compile()
+{
+    return NULL;
+}
+
+PPIterator* ValueScanPrototype::compile()
+{
+    return NULL;
 }
 

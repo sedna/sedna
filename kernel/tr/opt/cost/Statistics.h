@@ -21,6 +21,7 @@ struct PathCostModel : public IPlanDisposable {
     Range card;
     Range blockCount;
 
+    Range nidSize;
     Range iterationCost;
     Range schemaTraverseCost;
 };
@@ -76,12 +77,13 @@ public:
 
     double getIOCost() const { return C_IO_Cost; };
     double getCPUCost() const { return C_CPU_Cost; };
+    double getNodeSize() const { return sizeof(tuple_cell); };
 
     TupleStatistics* getConstInfo(const MemoryTupleSequence* cnst);
 
     ComparisonInfo * getCmpInfo(TupleStatistics* m1, TupleStatistics* m2, const Comparison& cmp);
     ComparisonInfo * getDocOrderInfo(PathCostModel* m1, PathCostModel* m2, const pe::Path & path);
-
+    
 //    void startProfile();
 //    void endProfile();
 };
