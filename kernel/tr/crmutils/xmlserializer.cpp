@@ -202,7 +202,7 @@ void XDMSerializer::printNode(IXDMNode * node)
     }
 }
 
-void XDMSerializer::serialize(tuple & t) {
+void XDMSerializer::serialize(const tuple& t) {
     if (crmout == NULL) { return; }
 
     if (t.is_eos()) { return; }

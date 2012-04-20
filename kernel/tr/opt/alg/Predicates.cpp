@@ -71,18 +71,17 @@ void * VPredicate::compile(PhysicalModel* model)
     return model->compile(this);
 }
 
-void BinaryPredicate::setVertices(DataGraph* dg, TupleId left, TupleId right)
+void BinaryPredicate::setVertices(DataGraph* dg, TupleId _left, TupleId _right)
 {
-    leftNode = dg->owner->getVarNode(left);
-    rightNode = dg->owner->getVarNode(right);
-    dataNodes = leftNode->indexBit | rightNode->indexBit;
+    dataNodeList.push_back(dg->owner->getVarNode(_left));
+    dataNodeList.push_back(dg->owner->getVarNode(_right));
 }
 
 PlanDesc DataGraph::getNeighbours(PlanDesc x)
 {
     PlanDescIterator iter(x);
     PlanDesc result = 0;
-    
+
     int i;
     while (-1 != (i = iter.next())) {
         result |= predicates.at(i)->neighbours;
@@ -97,16 +96,36 @@ void DataGraph::updateIndex()
     allPredicates = 0;
 
     for (DataNodeList::iterator d = dataNodes.begin(); d != dataNodes.end(); ++d) {
-        if (*d != NULL) {
-            (*d)->predicates = 0;
-            (*d)->absoluteIndex = nodeIndex++;
+        DataNode * dd = *d;
+        if (dd != NULL) {
+            dd->predicates = 0;
+            dd->absoluteIndex = nodeIndex++;
         }
     };
 
+    nodeCount = nodeIndex;
+
     for (PredicateList::iterator p = predicates.begin(); p != predicates.end(); ++p) {
-        if (*p != NULL) {
-            (*p)->update();
+        Predicate * pp = *p;
+        if (pp != NULL) {
+            pp->dataNodeMask = 0;
             allPredicates |= (*p)->indexBit;
+
+            for (DataNodeList::iterator d = pp->dataNodeList.begin(); d != pp->dataNodeList.end(); ++d) {
+                pp->dataNodeMask |= (*d)->indexBit;
+                (*d)->predicates |= pp->indexBit;
+            }
+        }
+    }
+
+    for (PredicateList::iterator p = predicates.begin(); p != predicates.end(); ++p) {
+        Predicate * pp = *p;
+        if (pp != NULL) {
+            pp->neighbours = 0;
+
+            for (DataNodeList::iterator d = pp->dataNodeList.begin(); d != pp->dataNodeList.end(); ++d) {
+                pp->neighbours |= (*d)->predicates;
+            }
         }
     }
 }
@@ -192,23 +211,6 @@ Predicate * SPredicate::replace(DataNode* n1, DataNode* n2)
     }
 }
 
-
-void BinaryPredicate::update()
-{
-    dataNodes = leftNode->indexBit | rightNode->indexBit;
-
-    leftNode->predicates |= indexBit;
-    rightNode->predicates |= indexBit;
-
-    neighbours = (leftNode->predicates | rightNode->predicates) & ~indexBit;
-}
-
-
-
-
-
-
-
 /* Static optimization phase */
 
 
@@ -219,6 +221,8 @@ void DataGraph::precompile()
 
     typedef std::set< std::pair<DataNode *, DataNode *> > RemovalList;
     RemovalList removalCandidates;
+
+    updateIndex();
 
 // Find all root vertices
 
@@ -241,26 +245,26 @@ void DataGraph::precompile()
             while (-1 != (i = it.next())) {
                 SPredicate * pred = dynamic_cast<SPredicate*>(this->predicates.at(i));
 
-                if (NULL != pred && pred->leftNode == dn &&
-                  pred->rightNode->type == DataNode::dnFreeNode)
+                if (NULL != pred && pred->left() == dn &&
+                  pred->right()->type == DataNode::dnFreeNode)
                 {
-                    pe::Path path = (pred->leftNode->path + pred->path).squeeze();
+                    pe::Path path = (pred->left()->path + pred->path).squeeze();
 
 /*
                     if (!path.evaluatable()) {
                         continue;
                     }
 */
-                    pred->rightNode->type = DataNode::dnDatabase;
-                    pred->rightNode->root = pred->leftNode->root;
-                    pred->rightNode->path = path;
+                    pred->right()->type = DataNode::dnDatabase;
+                    pred->right()->root = pred->left()->root;
+                    pred->right()->path = path;
 
                     pred->disposable = true;
 
-                    backList->push_back(pred->rightNode);
+                    backList->push_back(pred->right());
 
                     if (!dn->output) {
-                        removalCandidates.insert(RemovalList::key_type(dn, pred->rightNode));
+                        removalCandidates.insert(RemovalList::key_type(dn, pred->right()));
                     }
                 }
             }
@@ -271,6 +275,7 @@ void DataGraph::precompile()
         backList = swp;
     }
 
+    updateIndex();
 // Optimization: try to delete delete all redundant nodes
 
     for (RemovalList::const_iterator p = removalCandidates.begin(); p != removalCandidates.end(); ++p) {
@@ -465,7 +470,7 @@ std::string DataRoot::toLRString() const
 std::string SPredicate::toLRString() const
 {
     std::stringstream stream;
-    stream << "(sj " << leftNode->getName() << " " << rightNode->getName() << " " << path.toLRString() << ")";
+    stream << "(sj " << left()->getName() << " " << right()->getName() << " " << path.toLRString() << ")";
     return stream.str();
 }
 
@@ -492,7 +497,7 @@ std::string Comparison::toLRString() const
 std::string VPredicate::toLRString() const
 {
     std::stringstream stream;
-    stream << "(vj " << leftNode->getName() << " " << rightNode->getName() << " " << cmp.toLRString() << ")";
+    stream << "(vj " << left()->getName() << " " << right()->getName() << " " << cmp.toLRString() << ")";
     return stream.str();
 }
 
@@ -508,11 +513,11 @@ IElementProducer* SPredicate::toXML(IElementProducer* element) const
     child->close();
 
     child = element->addElement(CDGQNAME("left"), xs_untyped);
-    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(leftNode->index).c_str()), xs_integer);
+    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(left()->index).c_str()), xs_integer);
     child->close();
 
     child = element->addElement(CDGQNAME("right"), xs_untyped);
-    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(rightNode->index).c_str()), xs_integer);
+    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(right()->index).c_str()), xs_integer);
     child->close();
 
     element->close();
@@ -532,11 +537,11 @@ IElementProducer* VPredicate::toXML(IElementProducer* element) const
     child->close();
 
     child = element->addElement(CDGQNAME("left"), xs_untyped);
-    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(leftNode->index).c_str()), xs_integer);
+    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(left()->index).c_str()), xs_integer);
     child->close();
 
     child = element->addElement(CDGQNAME("right"), xs_untyped);
-    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(rightNode->index).c_str()), xs_integer);
+    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(right()->index).c_str()), xs_integer);
     child->close();
 
     element->close();

@@ -353,7 +353,7 @@ public:
     explicit tuple_cell(int64_t _data_)
     {
         t = tc_light_atomic_fix_size | xs_integer;
-		*(int64_t*)(&(data)) = _data_;
+        *(int64_t*)(&(data)) = _data_;
     }
     // for xs_decimal atomics
     explicit tuple_cell(xs_decimal_t _data_)
@@ -472,9 +472,20 @@ public:
         return tuple_cell(tc_unsafenode, _p_);
     }
 
+    static tuple_cell atomic_int(int64_t _data_)
+    {
+        tuple_cell t;
+        t.t = tc_light_atomic_fix_size | xs_integer;
+        *(int64_t*)(&(t.data)) = _data_;
+        return t;
+    }
+
     static tuple_cell atomic(int64_t _data_)
     {
-        return tuple_cell(_data_);
+        tuple_cell t;
+        t.t = tc_light_atomic_fix_size | xs_integer;
+        *(int64_t*)(&(t.data)) = _data_;
+        return t;
     }
 
     static tuple_cell atomic_deep(xmlscm_type _xtype_, const char *_str_, size_t size)

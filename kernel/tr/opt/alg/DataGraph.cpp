@@ -115,24 +115,21 @@ Predicate* DataGraphMaster::createPredicateFromLR(DataGraph* dg, const scheme_li
     if (strcmp(node_type, "sj") == 0) {
         SPredicate * sp = new SPredicate();
 
-        sp->leftNode = getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError));
-        sp->rightNode = getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError));
+        sp->dataNodeList.push_back(getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)));
+        sp->dataNodeList.push_back(getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)));
+
         sp->path = pe::Path(scmGetList(lst, i++, predicateLRError));
 
         result = createPredicate(dg, sp);
-
-        sp->update();
     } else if (strcmp(node_type, "vj") == 0) {
         VPredicate * vp = new VPredicate();
 
-        vp->leftNode = getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError));
-        vp->rightNode = getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError));
+        vp->dataNodeList.push_back(getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)));
+        vp->dataNodeList.push_back(getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)));
 
         vp->cmp = Comparison(scmGetList(lst, i++, predicateLRError));
 
         result = createPredicate(dg, vp);
-
-        vp->update();
     }
 
     return result;
@@ -164,6 +161,8 @@ DataGraph* DataGraphMaster::createGraphFromLR(const scheme_list* vf)
         };
         createPredicateFromLR(dg, i->internal.list, &tmpMap);
     };
+
+    dg->updateIndex();
 
     return dg;
 }
@@ -277,8 +276,28 @@ public:
 
 // ***************************** Data Graph ***************************
 
+#include <iostream>
+#include <fstream>
+#include "tr/executor/base/SCElementProducer.h"
+#include "tr/crmutils/serialization.h"
+#include "tr/crmutils/exec_output.h"
+
 PPIterator* DataGraphMaster::compile(DataGraph* dg)
 {
+    std::ofstream F("/tmp/datagraph.log");
+    se_stdlib_ostream Fstream(F);
+
+    SCElementProducer * vrt = SCElementProducer::getVirtualRoot(XNULL);
+    GlobalSerializationOptions opt;
+
+    opt.indent = true;
+    opt.indentSequence = "  ";
+    opt.separateTuples = true;
+    opt.useCharmap = true;
+
+    Serializer * serializer = Serializer::createSerializer(se_output_method_xml);
+    serializer->prepare(&Fstream, &opt);
+
     PlanMap * planMap = new PlanMap();
 
     PlanDescSet set1, set2;
@@ -286,34 +305,42 @@ PPIterator* DataGraphMaster::compile(DataGraph* dg)
     PlanDescSet * currentStepSet = &set1;
     PlanDescSet * nextStepSet = &set2;
 
-    PlanInfo * nullPlan = new PlanInfo();
+    PlanInfo * nullPlan = new PlanInfo(dg->nodeCount);
 
-    int branchLimit = 3;
+    int branchLimit = 1;
 
     for (DataNodeList::iterator i = dg->dataNodes.begin(); i != dg->dataNodes.end(); ++i) {
         if (*i != NULL) {
-            nullPlan->initSchemeElement(*i);
+            // TODO: External nodes MUST become evaluated initially.
+            nullPlan->initTupleSet(*i);
         }
     };
 
     planMap->update(nullPlan);
-
     currentStepSet->insert(0);
-    
+
     while (!currentStepSet->empty()) {
         nextStepSet->clear();
+
+        F << "\n Next set : ";
+
+        for (PlanDescSet::const_iterator it = currentStepSet->begin(); it != currentStepSet->end(); ++it) {
+            F << *it << " ";
+        }
+
+        F << "\n\n";
 
         for (PlanDescSet::const_iterator it = currentStepSet->begin(); it != currentStepSet->end(); ++it) {
             PlanInfo * info = planMap->get(*it);
             PlanDesc dsc = dg->getNeighbours(info->getDesc());
-            
+
             if (dsc == 0 && branchLimit > 0) {
                 branchLimit--;
                 dsc = dg->allPredicates & ~info->getDesc();
             };
 
             PlanDescIterator neighbours(dsc);
-            
+
             int nei;
             while (-1 != (nei = neighbours.next())) {
                 PlanInfo * candidate = info->extend(dg->predicates[nei]);
@@ -321,9 +348,16 @@ PPIterator* DataGraphMaster::compile(DataGraph* dg)
                 if (candidate != NULL) {
                     candidate = planMap->update(candidate);
                     nextStepSet->insert(candidate->getDesc());
+
+                    serializer->serialize(tuple(candidate->toXML(vrt)->close()));
+
+                    F << "\n--------------\n";
+                    F.flush();
                 }
             };
         };
+
+        F << "\n============\n";
 
         PlanDescSet * swapset = currentStepSet;
         currentStepSet = nextStepSet;

@@ -10,24 +10,50 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/cat/catptr.h"
 #include "tr/executor/xpath/XPathTypes.h"
+#include "tr/opt/alg/Predicates.h"
 
 class POProt;
+class TupleRef;
 
-struct BaseOperationCosts {
-    double valueSortCost;
-    double textSize;
+struct PathCostModel : public IPlanDisposable {
+    IPlanDisposable * data;
+
+    Range card;
+    Range blockCount;
+
+    Range iterationCost;
+    Range schemaTraverseCost;
+};
+
+struct ValueCostModel : public IPlanDisposable {
+    IPlanDisposable * data;
+
+    Range size;
+    Range atomizationCost;
+};
+
+struct SequenceInfo : public IPlanDisposable {
+    Range card;
+    Range blockCount;
+    Range sortCost;
+};
+
+struct ComparisonInfo : public IPlanDisposable {
+    Range opCost;
+    Range selectivity;
 };
 
 struct TupleStatistics : public IPlanDisposable {
-    Range nodeCount;
-    Range schemaNodeCount;
+    Range distinctValues;
+    Range valueSize;
 
-    void * values;
-    void * baseOperationCosts;
-};
+    PathCostModel * pathInfo;
+    ValueCostModel * valueInfo;
 
-struct Statistics : public IPlanDisposable {
-    TupleStatistics * self;
+    TupleStatistics() : distinctValues(0), valueSize(0), pathInfo(NULL), valueInfo(NULL) {}
+
+    explicit TupleStatistics(const TupleStatistics * _x)
+        : distinctValues(_x->distinctValues), valueSize(_x->valueSize), pathInfo(_x->pathInfo), valueInfo(_x->valueInfo) {};
 };
 
 struct OperationCost : public IPlanDisposable {
@@ -36,19 +62,30 @@ struct OperationCost : public IPlanDisposable {
     Range fullCost;
 };
 
+extern const double C_IO_Cost;
+extern const double C_CPU_Cost;
+
 class CostModel {
 public:
-    void evaluateBaseStatistics(SchemeElement * stats);
-    Range getBaseSortCost(Statistics * stats);
-    Range getPathSelectivity(SchemeElement * base, const pe::Path & path);
+    PathCostModel * getAbsPathCost(const DataRoot& root, const pe::Path & path, TupleStatistics * result);
+    PathCostModel * getPathCost(const TupleRef & base, const pe::Path & path, TupleStatistics * result);
+    ValueCostModel * getValueCost(PathCostModel * m, TupleStatistics * result);
+
+    SequenceInfo * getDocOrderSequenceCost(const TupleRef & tuple);
+    SequenceInfo * getValueSequenceCost(const TupleRef & tuple);
+
+    double getIOCost() const { return C_IO_Cost; };
+    double getCPUCost() const { return C_CPU_Cost; };
+
+    TupleStatistics* getConstInfo(const MemoryTupleSequence* cnst);
+
+    ComparisonInfo * getCmpInfo(TupleStatistics* m1, TupleStatistics* m2, const Comparison& cmp);
+    ComparisonInfo * getDocOrderInfo(PathCostModel* m1, PathCostModel* m2, const pe::Path & path);
+
+//    void startProfile();
+//    void endProfile();
 };
 
 extern CostModel * publicCostModel;
-
-// #define GET_COST(FN)
-// #define PROFILE(OP)
-// #define PROFILABLE(FN)
-
-// #define FN_PROFILABLE_DECL(FN)
 
 #endif /* COST_MODEL_H */

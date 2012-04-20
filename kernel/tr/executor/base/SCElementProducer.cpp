@@ -36,6 +36,16 @@ tuple_cell SCElementProducer::addAttribute(const xsd::QName& qname, const text_s
     return tuple_cell::node_indir(left);
 }
 
+tuple_cell SCElementProducer::addAttributeValue(const xsd::QName& qname, const tuple_cell value)
+{
+    if (!value.is_atomic()) {
+        throw XQUERY_EXCEPTION2(XPTY0004, "Atomic type needed");
+    };
+
+    return addAttribute(qname, text_source_tuple_cell(cast(value, xs_string)), value.get_atomic_type());
+}
+
+
 tuple_cell SCElementProducer::addNS(const xmlns_ptr ns)
 {
     processAtomics();

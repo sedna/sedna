@@ -43,6 +43,7 @@ public:
 
 struct DataGraph {
     int lastIndex;
+    int nodeCount;
 
     DataGraphMaster * owner;
 
@@ -70,17 +71,22 @@ struct DataGraph {
     IElementProducer * toXML(IElementProducer * producer) const;
 };
 
+extern const int reverseComparisonMap[];
+
 struct Comparison {
     enum comp_t {
-        invalid,
-        g_eq, g_gt, g_ge, g_lt, g_le,
-        do_before, do_after,
+        invalid = 0,
+        g_eq = 0x01, g_gt = 0x02, g_ge = 0x03, g_lt = 0x04, g_le = 0x05,
+        do_before = 0x11, do_after = 0x12,
     } op;
 
     Comparison() : op(invalid) {};
-    Comparison(enum comp_t _op) : op(_op) {};
+    explicit Comparison(enum comp_t _op) : op(_op) {};
     Comparison(const Comparison & x) : op(x.op) {};
     Comparison(const scheme_list * lst);
+
+    bool inversable() const { return false; };
+    Comparison inverse() const { U_ASSERT(false); return Comparison(invalid); };
 
     std::string toLRString() const;
 };
@@ -91,10 +97,11 @@ struct Predicate {
     int index;
 
     PlanDesc neighbours;
-    PlanDesc dataNodes;
+    PlanDesc dataNodeMask;
+
+    DataNodeList dataNodeList;
 
     virtual void * compile(PhysicalModel * model) = 0;
-    virtual void update() = 0;
 
     virtual bool replacable(DataNode * n1, DataNode * n2);
     virtual Predicate * replace(DataNode * n1, DataNode * n2);
@@ -104,12 +111,10 @@ struct Predicate {
 };
 
 struct BinaryPredicate : public Predicate {
-    DataNode * leftNode;
-    DataNode * rightNode;
-
     void setVertices(DataGraph* dg, TupleId left, TupleId right);
 
-    virtual void update();
+    DataNode * left() const { return dataNodeList[0]; };
+    DataNode * right() const { return dataNodeList[1]; };
 };
 
 struct VPredicate : public BinaryPredicate {
@@ -120,6 +125,15 @@ struct VPredicate : public BinaryPredicate {
     virtual std::string toLRString() const;
     virtual IElementProducer * toXML(IElementProducer * ) const;
 };
+
+/* TODO:
+
+struct ValuedExpression : public BinaryPredicate {
+};
+
+struct LongIndexCandidate : public BinaryPredicate {
+};
+*/
 
 /*
 struct GPredicate : public BinaryPredicate {
