@@ -26,7 +26,7 @@ TupleRef PlanInfo::initTupleSet(DataNode* node)
 {
     TupleRef ref(initialTupleSet, node->absoluteIndex);
 
-    ref->status = ElementDescriptor::available;
+    ref->status = TupleValueInfo::available;
     ref->node = node;
     ref->statistics = NULL;
 
@@ -36,7 +36,7 @@ TupleRef PlanInfo::initTupleSet(DataNode* node)
 TupleChrysalis::TupleChrysalis(size_t size)
   : _width(0), rowSize(0, 0), rowCount(0, 0)
 {
-    ElementDescriptor _z = {};
+    TupleValueInfo _z = {};
     tuples.resize(size, _z);
 }
 
@@ -53,8 +53,8 @@ TupleChrysalis * PhysicalModel::updateOne(TupleChrysalis* parent, const POProtIn
     TupleRef opT(t, op.index);
     opT->_gen = op.op;
 
-    if (opT->status != ElementDescriptor::evaluated) {
-        opT->status = ElementDescriptor::evaluated;
+    if (opT->status != TupleValueInfo::evaluated) {
+        opT->status = TupleValueInfo::evaluated;
         t->_width++;
     };
 
@@ -72,16 +72,16 @@ TupleChrysalis * PhysicalModel::updateTwo(TupleChrysalis* x, TupleChrysalis* y, 
         result->rowCount = x->rowCount * y->rowCount;
 
         for (unsigned i = 0; i < result->tuples.size(); ++i) {
-            ElementDescriptor * xd = x->get(i);
-            ElementDescriptor * yd = y->get(i);
+            TupleValueInfo * xd = x->get(i);
+            TupleValueInfo * yd = y->get(i);
 
-            if (xd->status == ElementDescriptor::evaluated && yd->status == ElementDescriptor::evaluated) {
+            if (xd->status == TupleValueInfo::evaluated && yd->status == TupleValueInfo::evaluated) {
                 U_ASSERT(false);
             };
 
-            if (xd->status == ElementDescriptor::evaluated) {
+            if (xd->status == TupleValueInfo::evaluated) {
                 result->tuples[i] = *xd;
-            } else if (yd->status == ElementDescriptor::evaluated) {
+            } else if (yd->status == TupleValueInfo::evaluated) {
                 result->tuples[i] = *yd;
             } else {
                 result->tuples[i] = plan->initialTupleSet->tuples[i];
@@ -89,15 +89,15 @@ TupleChrysalis * PhysicalModel::updateTwo(TupleChrysalis* x, TupleChrysalis* y, 
         };
     };
 
-    result->tuples.at(ind1).status = ElementDescriptor::evaluated;
+    result->tuples.at(ind1).status = TupleValueInfo::evaluated;
     result->tuples.at(ind1)._gen = op;
 
-    result->tuples.at(ind2).status = ElementDescriptor::evaluated;
+    result->tuples.at(ind2).status = TupleValueInfo::evaluated;
     result->tuples.at(ind2)._gen = op;
 
     result->_width = 0;
     for (unsigned i = 0; i < x->tuples.size(); ++i) {
-        if (result->get(i)->status == ElementDescriptor::evaluated) {
+        if (result->get(i)->status == TupleValueInfo::evaluated) {
             result->_width++;
         }
     }
@@ -125,7 +125,7 @@ POProtIn PhysicalModel::doMaterialize(TupleId t, bool addToTree)
     TupleRef tref(plan->initialTupleSet, t);
   
     switch (tref->status) {
-        case ElementDescriptor::available : {
+        case TupleValueInfo::available : {
             POProt * op;
             DataNode * node = tref->node;
 
@@ -149,7 +149,7 @@ POProtIn PhysicalModel::doMaterialize(TupleId t, bool addToTree)
 
             return POProtIn(op, t);
         } break;
-        case ElementDescriptor::empty :
+        case TupleValueInfo::empty :
           return POProtIn(NULL, t);
         default:
           U_ASSERT(false);
@@ -163,15 +163,15 @@ void PhysicalModel::updateBranch(POProt* op)
 
     x->_width = 0;
     for (unsigned i = 0; i != x->tuples.size(); ++i) {
-        if (x->get(i)->status == ElementDescriptor::evaluated) {
+        if (x->get(i)->status == TupleValueInfo::evaluated) {
             plan->branchList.at(i) = op;
             x->_width++;
         };
     };
 }
 
-#define EVALUATED(x) ((x)->status == ElementDescriptor::evaluated)
-#define AVAILABLE(x) ((x)->status == ElementDescriptor::available)
+#define EVALUATED(x) ((x)->status == TupleValueInfo::evaluated)
+#define AVAILABLE(x) ((x)->status == TupleValueInfo::available)
 
 inline static
 bool isConst(const TupleRef &x) { return AVAILABLE(x) && x->node->type == DataNode::dnConst; };

@@ -23,7 +23,7 @@ struct SPredicate;
 
 class POProt;
 
-struct ElementDescriptor {
+struct TupleValueInfo {
     enum element_status_t {
         empty = 0,
         available,
@@ -33,6 +33,12 @@ struct ElementDescriptor {
     element_status_t status;
     TupleStatistics * statistics;
 
+    enum order_t {
+        none = 0, node_unique, node_ddo, value
+    };
+
+    order_t order;
+    
     DataNode * node;
     POProt * _gen;
 };
@@ -43,7 +49,7 @@ public:
     explicit TupleChrysalis(size_t size);
     explicit TupleChrysalis(const TupleChrysalis * parent);
 
-    std::vector<ElementDescriptor> tuples;
+    std::vector<TupleValueInfo> tuples;
 
     unsigned _width;
 
@@ -52,7 +58,7 @@ public:
 
     unsigned width() const { return _width; };
 
-    ElementDescriptor * get(TupleId i) { return &(tuples.at(i)); };
+    TupleValueInfo * get(TupleId i) { return &(tuples.at(i)); };
 };
 
 class POProtIn { public:
@@ -108,9 +114,9 @@ class TupleRef { public:
 
     TupleRef & operator=(const TupleRef & _x) { if (this != &_x) { tupleDesc = _x.tupleDesc; tid = _x.tid; }; return *this; };
 
-    ElementDescriptor * get() const { return tupleDesc->get(tid); }
-    ElementDescriptor & operator*() const { return *tupleDesc->get(tid); };
-    ElementDescriptor * operator->() const { return tupleDesc->get(tid); }
+    TupleValueInfo * get() const { return tupleDesc->get(tid); }
+    TupleValueInfo & operator*() const { return *tupleDesc->get(tid); };
+    TupleValueInfo * operator->() const { return tupleDesc->get(tid); }
 };
 
 class PlanInfo : public IPlanDisposable {

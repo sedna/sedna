@@ -83,15 +83,6 @@ class OptimizationSpace {};
 void setSpace(OptimizationSpace *);
 void popSpace(OptimizationSpace *);
 
-/*
-static inline
-Range &operator= (Range &x, const double y) {
-    x.first = y;
-    x.second = y;
-    return x;
-};
-*/
-
 struct Range {
     double lower, upper;
 
