@@ -304,13 +304,28 @@ Path Path::operator+(const pe::Path& x)
 
 Path Path::inverse() const
 {
-    U_ASSERT(false);
-    return Path();
+    Path result;
+
+    if (body.isnull()) {
+        return result;
+    };
+
+    result.modify();
+    result.body->reserve(this->body->size());
+
+    for (PathVector::const_reverse_iterator i = body->rbegin(); i != body->rend(); ++i) {
+        if (i->getAxis() == axis_child) {
+            result.body->push_back(Step(axis_parent, nt_any_kind, xsd::NCName(), xsd::NCName()));
+        };
+    }
+
+    return result;
 }
 
 bool Path::inversable() const
 {
     return false;
+//    return forall(StepPredicate::axis(axis_child));
 }
 
 Path Path::squeeze() const
@@ -344,40 +359,83 @@ bool Path::exist(const pe::StepPredicate& sp) const
     return false;
 }
 
-
-
-/*
-inline static pe::axis_t ASTAxis2XPathAxis(ASTAxisStep::AxisType axis) {
-  switch(axis) {
-    case ASTAxisStep::CHILD : return pe::axis_child;
-    case ASTAxisStep::DESCENDANT : return pe::axis_descendant;
-    case ASTAxisStep::ATTRIBUTE : return pe::axis_attribute;
-    case ASTAxisStep::SELF : return pe::axis_self;
-    case ASTAxisStep::DESCENDANT_OR_SELF : return pe::axis_descendant_or_self;
-    case ASTAxisStep::DESCENDANT_ATTRIBUTE : U_ASSERT(false); return pe::axis_error;
-    case ASTAxisStep::FOLLOWING_SIBLING : return pe::axis_following_sibling;
-    case ASTAxisStep::FOLLOWING : return pe::axis_following;
-    case ASTAxisStep::PARENT : return pe::axis_parent;
-    case ASTAxisStep::ANCESTOR : return pe::axis_ancestor;
-    case ASTAxisStep::PRECEDING_SIBLING : return pe::axis_preceding_sibling;
-    case ASTAxisStep::PRECEDING : return pe::axis_preceding;
-    case ASTAxisStep::ANCESTOR_OR_SELF : return pe::axis_ancestor_or_self;
-    default : return pe::axis_error;
-  };
-}
-
-Step::Step(const ASTAxisStep* s, sedna::lr2rqp* context)
+AtomizedPath Path::atomize() const
 {
-    if (s->axis == ASTAxisStep::DESCENDANT_ATTRIBUTE) {
-        U_ASSERT(false);
-    } else {
-        this->axis = ASTAxis2XPathAxis(s->axis);
+    AtomizedPath_int * path = new AtomizedPath_int();
 
-        U_ASSERT(s->test != NULL);
-        context->setTestDescriptor(&(this->nodeTest));
-        s->test->accept(context);
-        context->setTestDescriptor(NULL);
+    for (PathVector::const_iterator i = body->begin(); i != body->end(); ++i) {
+        bool closure = false;
+        t_item pnk = ti_dmchildren;
+
+        switch (i->getAxis()) {
+          case axis_descendant_or_self :
+          case axis_ancestor_or_self :
+            path->list.push_back(new AxisPathAtom(axis_self, false));
+            path->list.push_back(new UnionAtom());
+          case axis_descendant :
+          case axis_ancestor :
+            closure = true;
+          case axis_attribute :
+            if (i->getAxis() == axis_attribute) {
+                pnk = attribute;
+            }
+          case axis_child : 
+          case axis_parent:
+            path->list.push_back(new AxisPathAtom(i->getAxis(), closure));
+          case axis_self :
+            pnk = ti_all_valid;
+            break;
+          default :
+            U_ASSERT(false);
+            return NULL;
+        };
+
+        switch (i->getTest()) {
+          case nt_document :   pnk = t_item::document; break;
+          case nt_element :    pnk = t_item::element; break;
+          case nt_attribute :  pnk = t_item::attribute; break;
+          case nt_pi :         pnk = t_item::pr_ins; break;
+          case nt_comment :    pnk = t_item::comment; break;
+          case nt_text :       pnk = t_item::text; break;
+
+          default : break;
+        };
+
+        
+        switch (i->getTest()) {
+          case nt_element :
+          case nt_attribute :
+            // FIXME : is there really no prefix test so???
+            if (!i->name.valid()) {
+          case nt_document :
+          case nt_comment :
+          case nt_text :
+          case nt_wildcard_star :
+                path->list.push_back(new TypeTestAtom(pnk));
+                break;
+            } else if (!i->prefix.valid()) {
+          case nt_pi :
+          case nt_wildcard_name :
+                path->list.push_back(new NameTestAtom(pnk, i->name.getValue()));
+                break;
+            } else {
+          case nt_qname :
+                path->list.push_back(new QNameTestAtom(pnk, i->getQName(NULL)));
+                break;
+            };
+          case nt_wildcard_prefix :
+            path->list.push_back(new PrefixTestAtom(pnk, i->prefix.getValue()));
+            break;
+            
+          case nt_schema_element :
+          case nt_schema_attribute :
+            U_ASSERT(false);
+          case nt_any_kind :
+            break;
+        };
     }
+    
+    return path;
 }
 
-*/
+

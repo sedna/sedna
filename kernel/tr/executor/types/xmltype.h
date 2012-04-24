@@ -25,10 +25,6 @@ public:
 
     inline int decRef() { return --referenceCount; };
     inline int incRef() { return ++referenceCount; };
-/*
-    virtual serialize(char * buffer) = 0;
-    virtual deserialize(char * buffer) = 0;
-*/
 };
 
 // Total size should be equal to 4+4+8 = 16
@@ -91,26 +87,5 @@ public:
         return *this;
     };
 };
-
-template<typename Source>
-XmlType xmltype_cast(const Source & src);
-
-template<typename Source>
-XmlType xmltype_atomic_cast(uint32_t atomic_type, const Source & src);
-
-
-template<>
-XmlType xmltype_cast<int64_t>(const int64_t & src)
-{
-    return xmltype_atomic_cast(xs_integer, src);
-};
-
-template<>
-XmlType xmltype_atomic_cast<int64_t>(uint32_t atomic_type, const int64_t & src)
-{
-    xml_type_t x = {st_atomic, atomic_type };
-    x.val._int = src;
-    return XmlType(x);
-}
 
 #endif /* _XML_TYPE_H_ */

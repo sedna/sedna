@@ -109,7 +109,7 @@ public:
 
     char * name; /* for elements/attributes */ /* persistent string */
 
-    doc_schema_node_xptr root; /* persistent */
+    doc_schema_node_cptr root; /* persistent */
     schema_node_xptr     parent; /* pointer to the parent node */ /* persistent */
 
     t_item type; /* type of node: element/text/attribute/simple */ /* persistent */
@@ -253,6 +253,8 @@ public:
     inline static bool has_text(t_item type) { return internal::isTextType(type); }
     inline bool has_text() { return has_text(this->type); }
 //    inline char * get_child_name(int i) { return children.get(i)->name; };
+
+    static const char * toMagicName(const xsd::QName & qname, t_item type);
 };
 
 
@@ -269,9 +271,11 @@ struct doc_schema_node_object: public schema_node_object
 
 /* Fields */
 
-    xptr    ext_nids_block; /* persistent */
+    xptr ext_nids_block; /* persistent */
     uint64_t total_ext_nids; /* persistent */
     xmlns_ptr_pers xmlns_list;
+
+    xptr schema_node_name_index; /* persistent */
 
     cat_list<index_cell_xptr> *full_index_list; /* persistent special */
     void delete_index(index_cell_xptr c);
@@ -295,6 +299,8 @@ struct doc_schema_node_object: public schema_node_object
     /* Create virtual root */
     static catalog_object_header * create_virtual_root();
 
+    void find_children(const xsd::QName & qname, t_item type, std::vector<schema_node_xptr> * result);
+    
     doc_schema_node_object();
     doc_schema_node_object(bool _persistent);
     ~doc_schema_node_object() {};
@@ -313,8 +319,8 @@ struct col_schema_node_object : public doc_schema_node_object
 
 /* Fields */
 
-    xptr    eblk;     /* persistent */       /* pointer to the last block of block chain */
-    xptr    metadata; /* persistent */
+    xptr eblk;     /* persistent */       /* pointer to the last block of block chain */
+    xptr metadata; /* persistent */
 
     /* Create new collection node */
     static catalog_object_header * create();

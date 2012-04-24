@@ -14,6 +14,7 @@
 
 /* Namespace pe stands for PathEvaluator. */
 
+extern btree_blk_hdr a;
 namespace sedna { class lr2rqp; }
 class ASTAxisStep;
 
@@ -80,10 +81,10 @@ class Step {
 private:
     axis_t axis;
     node_test_t nodeTest;
-
+public:
     xsd::NCName prefix;
     xsd::NCName name;
-public:
+
     Step() : axis(axis_error), nodeTest(nt_error) {};
     Step(const scheme_list * lst);
     Step(axis_t _axis, node_test_t _nodeTest, const xsd::NCName &_prefix, const xsd::NCName &_name)
@@ -122,6 +123,72 @@ public:
 typedef std::vector<Step> PathVector;
 typedef counted_ptr<PathVector> PathVectorPtr;
 
+class PathAtom {
+private:
+    int _type;
+public:
+    virtual ~PathAtom() {};
+    int type() const { return _type; };
+};
+
+enum atom_t {
+    atom_axis = 1,
+    atom_type,
+    atom_qname,
+    atom_name,
+    atom_prefix,
+    atom_union,
+};
+
+class AxisPathAtom : public PathAtom { public: 
+    axis_t axis;
+    bool closure;
+
+    AxisPathAtom(axis_t _axis, bool _closure)
+      : _type(atom_axis), axis(_axis), closure(_closure) {};
+};
+
+class TypeTestAtom : public PathAtom { public: 
+    t_item itemType;
+
+    TypeTestAtom(t_item _itemType)
+      : _type(atom_type), itemType(_itemType) {};
+};
+
+class QNameTestAtom : public TypeTestAtom { public:
+    xsd::QName qname;
+
+    QNameTestAtom(t_item _itemType, const xsd::QName & _qname)
+      : _type(atom_qname), itemType(_itemType), qname(_qname) {};
+};
+
+class NameTestAtom : public TypeTestAtom { public:
+    std::string name;
+
+    NameTestAtom(t_item _itemType, const std::string& _name)
+      : _type(atom_name), itemType(_itemType), name(_name) {};
+};
+
+class PrefixTestAtom : public TypeTestAtom { public:
+    std::string prefix;
+
+    NameTestAtom(t_item _itemType, const std::string& _prefix)
+      : _type(atom_prefix), itemType(_itemType), prefix(_prefix) {};
+};
+
+class UnionAtom : public PathAtom { public:
+    UnionAtom() : _type(atom_union) {};
+};
+
+class AtomizedPath_int {
+public:
+    ~AtomizedPath_int();
+
+    std::vector<PathAtom *> list;
+};
+
+typedef counted_ptr<AtomizedPath_int> AtomizedPath;
+
 class Path {
 private:
     PathVectorPtr body;
@@ -151,6 +218,8 @@ public:
 
     Path inverse() const;
     Path squeeze() const;
+
+    AtomizedPath atomize() const;
 
     bool inversable() const;
 

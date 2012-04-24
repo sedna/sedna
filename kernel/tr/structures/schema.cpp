@@ -20,6 +20,10 @@
 #include "tr/cat/catstore.h"
 #include "tr/locks/locks.h"
 
+#include "idx/btreeindex.h"
+
+typedef idx::BTreeMultimap NameIndexTree;
+
 #define CAT_FOR_EACH(T, i, list) for (cat_list<T>::item * i = list->first; i != NULL; i = i->next)
 
 
@@ -181,7 +185,10 @@ void schema_node_object::serialize_data(se_simplestream &stream)
 
     stream.write(&persistent, sizeof(bool));
     stream.write_string(name);
-    stream.write(&root, sizeof(doc_schema_node_xptr));
+
+    xptr xroot = root.ptr();
+    stream.write(&xroot, sizeof(doc_schema_node_xptr));
+
     stream.write(&parent, sizeof(schema_node_xptr));
     stream.write(&type, sizeof(t_item));
     stream.write(&xmlns_pers, sizeof(xmlns_ptr_pers));
@@ -211,7 +218,11 @@ void schema_node_object::deserialize_data(se_simplestream &stream)
     stream.read(&persistent, sizeof(bool));
     name = (char *) cat_malloc(this, stream.read_string_len());
     stream.read_string(SSTREAM_SAVED_LENGTH, name);
-    stream.read(&root, sizeof(doc_schema_node_xptr));
+
+    xptr xroot;
+    stream.read(&xroot, sizeof(doc_schema_node_xptr));
+    root = xroot;
+
     stream.read(&parent, sizeof(schema_node_xptr));
     stream.read(&type, sizeof(t_item));
     stream.read(&xmlns_pers, sizeof(xmlns_ptr_pers));
@@ -245,6 +256,19 @@ schema_node_xptr schema_node_object::get_first_child(const xmlns_ptr xmlns, cons
 
     return XNULL;
 }
+
+const char* schema_node_object::toMagicName(const xsd::QName& qname, t_item type)
+{
+    switch (type) {
+      case element : return qname.getLocalName();
+      case text : return "::text";
+      case attribute : return qname.getLocalName();
+      case comment : return "::comment";
+      case pr_ins : return "::prins";
+      default : return "::*";
+    };
+}
+
 
 schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char * name, t_item type)
 {
@@ -282,6 +306,14 @@ schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char
         #endif
     }
 
+    if (root->schema_node_name_index != NULL) {
+        scoped_ptr<idx::KeyValueMultimap> tree(NameIndexTree::openIndex(root->schema_node_name_index));
+
+        tree->insertPair(
+          tuple_cell::atomic_deep(toMagicName(new_node->get_qname(), new_node->type)),
+          tuple_cell::atomic_xptr(new_node->p_object));
+    };
+    
     return ((schema_node_xptr) new_node.ptr());
 };
 
@@ -470,6 +502,7 @@ catalog_object_header * doc_schema_node_object::create(bool persistent)
     catalog_object_header * b = catalog_create_object(a, persistent);
 
     a->root = a->p_object;
+    schema_node_name_index = scoped_ptr<idx::KeyValueMultimap>(NameIndexTree::createIndex(xs_string))->getEntryPoint();
 
     return b;
 }
@@ -492,6 +525,7 @@ void doc_schema_node_object::serialize_data(se_simplestream &stream)
 
     stream.write(&ext_nids_block, sizeof(xptr));
     stream.write(&total_ext_nids, sizeof(int64_t));
+    stream.write(&schema_node_name_index, sizeof(xptr));
 
     full_index_list->serialize(stream);
 #ifdef SE_ENABLE_FTSEARCH
@@ -508,6 +542,7 @@ void doc_schema_node_object::deserialize_data(se_simplestream &stream)
 
     stream.read(&ext_nids_block, sizeof(xptr));
     stream.read(&total_ext_nids, sizeof(int64_t));
+    stream.read(&schema_node_name_index, sizeof(xptr));
 
     full_index_list->deserialize(stream);
 #ifdef SE_ENABLE_FTSEARCH
@@ -517,6 +552,21 @@ void doc_schema_node_object::deserialize_data(se_simplestream &stream)
     full_trigger_list->deserialize(stream);
 #endif
 };
+
+void doc_schema_node_object::find_children(const xsd::QName& qname, t_item type, std::vector< schema_node_xptr >* result)
+{
+    U_ASSERT(result != NULL);
+
+    if (schema_node_name_index != NULL) {
+        scoped_ptr<idx::KeyValueMultimap> index = NameIndexTree::openIndex(schema_node_name_index);
+        scoped_ptr<idx::KeyValueIterator> iterator = index->find_equal(tuple_cell::atomic_deep(xs_string, toMagicName(qname, type)));
+
+        if (!iterator->isnull()) do {
+            result->push_back(iterator->getValue().get_xptr());
+        } while (iterator->nextValue());
+    };
+}
+
 
 /*
  * If _doc_drop_mode is set, substructure deletion (index, for example) does not cause
@@ -586,6 +636,8 @@ void doc_schema_node_object::drop()
     CAT_FOR_EACH(trigger_cell_xptr, i, this->root->full_trigger_list)  { i->object->drop(); }
     #endif
 
+    NameIndexTree(schema_node_name_index).dropTree();
+    
     schema_node_object::drop();
 
     _doc_drop_mode = false;

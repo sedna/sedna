@@ -3,51 +3,13 @@
 
 #include "tr/opt/OptTypes.h"
 #include "tr/executor/xpath/XPathTypes.h"
+#include "tr/executor/xpath/DataSources.h"
 #include "tr/executor/base/tuple.h"
 
 struct IElementProducer;
 
 class DataNode;
 class DataGraphMaster;
-
-class DataRoot {
-public:
-    enum data_root_type_t {
-        drt_null,
-        drt_document,
-        drt_collection,
-        drt_external,
-    };
-private:
-    data_root_type_t type;
-    counted_ptr<std::string> name;
-public:
-    DataRoot() : type(drt_null), name(NULL) {};
-    DataRoot(data_root_type_t type, const char * name);
-    DataRoot(const counted_ptr<db_entity> dbe);
-    DataRoot(const scheme_list * x);
-
-    counted_ptr<db_entity> toDBEntity() const;
-
-    DataRoot(const DataRoot & x) : type(x.type), name(x.name) {};
-    const DataRoot& operator=(const DataRoot& x) {
-        if (&x != this) {
-            type = x.type;
-            name = x.name;
-        }
-        return *this;
-    }
-
-    std::string toLRString() const;
-};
-
-namespace pe {
-    struct AbsPath {
-        DataRoot root;
-        Path path;
-        size_t hash;
-    };
-}
 
 struct DataGraph {
     int lastIndex;
@@ -191,6 +153,8 @@ struct DataNode {
 
     DataRoot root;
     pe::Path path;
+    DataNode * source;
+
     counted_ptr<MemoryTupleSequence> sequence; // Actually, we assume, that this is the ONLY pointer to this array
 
     std::string getName() const;

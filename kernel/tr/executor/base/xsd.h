@@ -118,6 +118,11 @@ class AnyURI : public Name {
 
 /// XML Schema Part 2 QName (qualified name from Namespaces in XML standard)
 
+struct const_qname_t {
+    xmlns_ptr ns;
+    const char * localName;
+};
+
 class QName {
   private:
     xmlns_ptr ns;
@@ -128,6 +133,10 @@ class QName {
   public:
     QName(); // invalid!
     QName(const QName & from);
+
+    explicit QName(const const_qname_t & x) : ns(x.ns), localName(x.localName) {};
+    
+    const_qname_t toConst() { const_qname_t result = {ns, localName}; return result; };
 
     void toLR(std::ostream& os) const;
     std::string toLRString() const;

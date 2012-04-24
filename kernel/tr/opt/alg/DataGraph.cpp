@@ -316,6 +316,9 @@ PPIterator* DataGraphMaster::compile(DataGraph* dg)
         }
     };
 
+
+    IElementProducer * element;
+
     planMap->update(nullPlan);
     currentStepSet->insert(0);
 
