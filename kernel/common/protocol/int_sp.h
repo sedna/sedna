@@ -24,6 +24,7 @@ enum se_int_sp_instructions
     se_Handshake                                   = 121,
     se_RegisterCDB                                 = 124,
     se_UnRegisterDB                                = 125,
+    se_SMRegisteringOK                             = 181,
     se_RegistrationFailed                          = 182,
     se_CdbRegisteringOK                            = 183,
     se_CdbRegisteringFailed                        = 184,
@@ -41,7 +42,7 @@ enum se_int_sp_instructions
     se_SocketReceivedOK                            = 165,
     se_TrnRegisterFailedNotRunningOrSpecialMode    = 171,
     se_TrnRegisterFailedMaxSessLimit               = 172,
-    se_SMRegisteringOK                             = 181,
+    
     se_SMRegisteringFailed                         = 182,
     
     

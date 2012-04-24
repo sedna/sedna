@@ -488,28 +488,6 @@ int Worker::startStorageManager(SMInfo * sminfo)
     }
 }
 
-/* Cdb launch */ 
-int Worker::startCdb(CdbParameters * cdbinfo)
-{
-    UPID pid;
-    UPHANDLE phandle;
-    int res;
-    char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH]; //!FIXME: need to change buf size, but i don't know what is the real max size of full command line
-    
-    string com_line = constructClForCdb(cfg, cdbinfo, cdbinfo->db_id);
-    
-    memcpy(buf, com_line.c_str(), com_line.length() + 1);
-    
-    if (uSetEnvironmentVariable("SEDNA_SM_BACKGROUND_MODE", "1", NULL, __sys_call_error) != 0) {
-          throw USER_EXCEPTION2(SE4072, "SEDNA_SM_BACKGROUND_MODE");
-    }
-
-    if (uCreateProcess(buf, false, NULL, 0, &phandle, NULL, &pid, NULL, NULL, __sys_call_error) != 0) {
-          throw USER_EXCEPTION(SE4401);
-    }
-    
-    return 0;
-}
 
 /////////////////////Launching: TRN /////////////////////////////////
 int Worker::startTransactionProcess(SessionParameters * sess_params) {

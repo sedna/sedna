@@ -34,9 +34,9 @@ enum cdb_state_t {
       cdb_awaiting_sm_start
 };
 
-enum cdb_internal_state_t {
-      cdb_initial_state,
-      cdb_awaiting_cdb_finishes
+enum sm_internal_state_t {
+      sm_initial_state,
+      sm_awaiting_db_stop
 };
 
 struct ProtocolVersion {
@@ -61,18 +61,6 @@ public:
                                   : WorkerSocketClient(_parent, sock, se_Client_Priority_Negot) { };
 
     virtual SocketClient *      processData();
-};
-
-class DatabaseConnectionProcessor : public InternalSocketClient {
-private:
-    DatabaseProcessInfo * info;
-public:
-    DatabaseConnectionProcessor   (WorkerSocketClient * producer)
-      : WorkerSocketClient(producer, se_Client_Priority_SMsd), info(NULL) { }
-
-    void registerSM();
-    virtual SocketClient * processData();
-    virtual void cleanupOnError();
 };
 
 class SessionConnectionProcessor : public InternalSocketClient {
@@ -162,13 +150,13 @@ public:
 };
 
 
-class CdbConnectionProcessor : public InternalSocketClient {
+class DatabaseConnectionProcessor : public InternalSocketClient {
   private:
-    cdb_internal_state_t        state;
+    sm_internal_state_t         state;
     std::string                 dbName;
-    DatabaseProcessInfo *       cdbInfo;
+    DatabaseProcessInfo *       dbInfo;
   public:
-                                CdbConnectionProcessor   (WorkerSocketClient * producer);
+                                DatabaseConnectionProcessor   (WorkerSocketClient * producer);
     void                        registerCdb              ();
     virtual SocketClient *      processData              ();
     virtual void                cleanupOnError();

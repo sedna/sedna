@@ -394,19 +394,20 @@ SocketClient* SMStopProcessor::processData() {
 }
 
 
-/////////////////////////////class CdbConnectionProcessor//////////////////////////////////
+/////////////////////////////class DatabaseConnectionProcessor////////////////////////////////////////
+///* This class is responsible for communications between se_gov and se_sm (create db and start db) */
 
-CdbConnectionProcessor::CdbConnectionProcessor(WorkerSocketClient* producer)
-  : InternalSocketClient(producer, se_Client_Priority_Cdb), state(cdb_initial_state) { }
+DatabaseConnectionProcessor::DatabaseConnectionProcessor(WorkerSocketClient* producer)
+  : InternalSocketClient(producer, se_Client_Priority_Cdb), state(sm_initial_state) { }
 
 
-SocketClient* CdbConnectionProcessor::processData()
+SocketClient* DatabaseConnectionProcessor::processData()
 {
   // at this point handshake is over -- we must get here from  internal process negotiation.
   ProcessManager * pm = worker->getProcessManager();
   
   switch (state) {
-    case cdb_initial_state:
+    case sm_initial_state:
       if (!communicator->receive()) { return this; }
 
       if (!(se_RegisterCDB == communicator->getInstruction())) {
@@ -426,21 +427,28 @@ SocketClient* CdbConnectionProcessor::processData()
       };
 
 //       NOTE : do not copy/paste
-      cdbInfo = dynamic_cast<DatabaseProcessInfo *>(pm->getUnregisteredProcess(ticket));
+      dbInfo = dynamic_cast<DatabaseProcessInfo *>(pm->getUnregisteredProcess(ticket));
 
-      if (cdbInfo == NULL) {
+      if (dbInfo == NULL) {
           pm->processRegistrationFailed(ticket, "Invalid ticket");
           respondError();
           return NULL;
       };
 
-      communicator->beginSend(se_CdbRegisteringOK); //send params to cdb
+      if (dbInfo->databaseCreationMode) {
+        
+        communicator->beginSend(se_CdbRegisteringOK); //send params to cdb
+        state = sm_awaiting_db_stop;
+      } else {
+        communicator->beginSend(se_SMRegisteringOK);
+      }
+      
+      std::string serializedOptions;
+      options.saveToXml(serializedOptions);
       communicator->writeString(serializedOptions);
       communicator->endSend();
 
-      state = cdb_awaiting_cdb_finishes;
-
-    case cdb_awaiting_cdb_finishes:
+    case sm_awaiting_db_stop:
       if (!communicator->receive()) { return this; }
 
       if (se_RegistrationFailed == communicator->getInstruction()) {
