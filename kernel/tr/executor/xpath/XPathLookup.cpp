@@ -5,12 +5,36 @@
 
 
 #include "XPathLookup.h"
-#include "XPathExecution.h"
 
 #include "common/errdbg/exceptions.h"
 
 using namespace pe;
 
+
+SchemaLookup& SchemaLookup::compile()
+{
+    
+}
+
+void SchemaLookup::execute(schema_node_cptr base, std::vector< schema_node_xptr >* output)
+{
+    
+}
+
+SchemaLookup::SchemaLookup(const pe::Path& _path) : path(_path)
+{
+    AtomizedPath atomizedPath = path.atomize();
+
+    
+}
+
+SchemaLookup::~SchemaLookup()
+{
+
+}
+
+
+/*
 class DumbIterator : public IPathIterator {
   public:
     virtual Node next();
@@ -88,7 +112,6 @@ class TraverseAll : public StateIterator {
 PathLookup::PathLookup(const pe::Path& _path)
   : path(_path) { }
 
-
 StepByStepLookup::StepByStepLookup(const pe::Path& path)
   : PathLookup(path), currentIterator(NULL)
 {
@@ -129,7 +152,6 @@ void StepByStepLookup::compile()
     }
 
     currentIterator =
-*/    
 }
 
 NodeIterator StepByStepLookup::execute(const Node& node)

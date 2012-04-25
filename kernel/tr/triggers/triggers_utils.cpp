@@ -174,7 +174,7 @@ xptr find_trigger_for_newly_inserted_node(schema_node_cptr parent, const char* i
 {
     cat_list<trigger_cell_xptr>::item* sc_trigger;
     // check if insert into a document (not into constructor)
-    if(parent->root != XNULL)
+    if(parent->root.found())
         sc_trigger=parent->root->full_trigger_list->first;
     else return XNULL;
 

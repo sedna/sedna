@@ -9,37 +9,6 @@
 
 #include <bits/algorithmfwd.h>
 
-DataRoot::DataRoot(const data_root_type_t _type, const char* _name)
-    : type(_type), name(NULL)
-{
-    name = new std::string(_name);
-}
-
-DataRoot::DataRoot(const scheme_list* lst)
-    : type(drt_null), name(NULL)
-{
-    if (lst->size() != 2 || lst->at(0).type != SCM_SYMBOL || lst->at(1).type != SCM_STRING) {
-        throw USER_EXCEPTION2(SE1004, "Invalid root LR string");
-    }
-
-    const char * _type = lst->at(0).internal.symb;
-
-    switch (_type[0]) {
-        case 'd' : if (strncmp("doc", _type, 3) == 0) {
-            type = drt_document;
-            break;
-        };
-        case 'c' : if (strncmp("coll", _type, 4) == 0) {
-            type = drt_collection;
-            break;
-        };
-        default : 
-            throw USER_EXCEPTION2(SE1004, "Invalid root type");
-    };
-
-    name = new std::string(lst->at(1).internal.str);
-}
-
 DataGraph::DataGraph(DataGraphMaster* _owner) : lastIndex(1), owner(_owner), predicates(64, NULL), dataNodes(64, NULL)
 {
 }
@@ -431,36 +400,6 @@ std::string DataNode::getName() const
     } else {
         stream << *varName;
     }
-
-    return stream.str();
-}
-
-
-std::string DataRoot::toLRString() const
-{
-    std::stringstream stream;
-
-    stream << "(";
-
-    switch(type) {
-        case drt_document :
-            stream << " doc ";
-            stream << "\"" << *name << "\"";
-            break;
-        case drt_collection :
-            stream << " collection ";
-            stream << "\"" << *name << "\"";
-            break;
-        case drt_null :
-            stream << " null ";
-            break;
-        case drt_external :
-            stream << " ext ";
-            stream << "\"" << *name << "\"";
-            break;
-    };
-
-    stream << ")";
 
     return stream.str();
 }

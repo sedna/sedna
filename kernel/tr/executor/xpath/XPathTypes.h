@@ -14,10 +14,6 @@
 
 /* Namespace pe stands for PathEvaluator. */
 
-extern btree_blk_hdr a;
-namespace sedna { class lr2rqp; }
-class ASTAxisStep;
-
 namespace pe {
 
 enum axis_t {
@@ -124,9 +120,10 @@ typedef std::vector<Step> PathVector;
 typedef counted_ptr<PathVector> PathVectorPtr;
 
 class PathAtom {
-private:
+protected:
     int _type;
 public:
+    PathAtom(int __type) : _type(__type) {};
     virtual ~PathAtom() {};
     int type() const { return _type; };
 };
@@ -145,39 +142,37 @@ class AxisPathAtom : public PathAtom { public:
     bool closure;
 
     AxisPathAtom(axis_t _axis, bool _closure)
-      : _type(atom_axis), axis(_axis), closure(_closure) {};
+      : PathAtom(atom_axis), axis(_axis), closure(_closure) {};
 };
 
-class TypeTestAtom : public PathAtom { public: 
+class TypeTestAtom : public PathAtom {
+protected:
+    TypeTestAtom(int __type, t_item _itemType) : PathAtom(__type), itemType(_itemType) {};
+public: 
     t_item itemType;
-
-    TypeTestAtom(t_item _itemType)
-      : _type(atom_type), itemType(_itemType) {};
+    TypeTestAtom(t_item _itemType) : PathAtom(atom_type), itemType(_itemType) {};
 };
 
 class QNameTestAtom : public TypeTestAtom { public:
     xsd::QName qname;
-
-    QNameTestAtom(t_item _itemType, const xsd::QName & _qname)
-      : _type(atom_qname), itemType(_itemType), qname(_qname) {};
+    QNameTestAtom(t_item _itemType, const xsd::QName & _qname) : TypeTestAtom(atom_qname, _itemType), qname(_qname) {};
 };
 
 class NameTestAtom : public TypeTestAtom { public:
     std::string name;
 
-    NameTestAtom(t_item _itemType, const std::string& _name)
-      : _type(atom_name), itemType(_itemType), name(_name) {};
+    NameTestAtom(t_item _itemType, const std::string& _name)  : TypeTestAtom(atom_name, _itemType), name(_name) {};
 };
 
 class PrefixTestAtom : public TypeTestAtom { public:
     std::string prefix;
 
-    NameTestAtom(t_item _itemType, const std::string& _prefix)
-      : _type(atom_prefix), itemType(_itemType), prefix(_prefix) {};
+    PrefixTestAtom(t_item _itemType, const std::string& _prefix)
+    : TypeTestAtom(atom_prefix, _itemType), prefix(_prefix) {};
 };
 
 class UnionAtom : public PathAtom { public:
-    UnionAtom() : _type(atom_union) {};
+    UnionAtom() : PathAtom(atom_union) {};
 };
 
 class AtomizedPath_int {

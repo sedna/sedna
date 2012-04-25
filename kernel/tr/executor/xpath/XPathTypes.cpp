@@ -152,6 +152,12 @@ Path::Path(const scheme_list* lst)
     }
 }
 
+xsd::QName Step::getQName(INamespaceMap* _context) const
+{
+    U_ASSERT(false);
+    return xsd::QName();
+}
+
 
 std::string Step::toXPathString() const
 {
@@ -391,17 +397,16 @@ AtomizedPath Path::atomize() const
         };
 
         switch (i->getTest()) {
-          case nt_document :   pnk = t_item::document; break;
-          case nt_element :    pnk = t_item::element; break;
-          case nt_attribute :  pnk = t_item::attribute; break;
-          case nt_pi :         pnk = t_item::pr_ins; break;
-          case nt_comment :    pnk = t_item::comment; break;
-          case nt_text :       pnk = t_item::text; break;
+          case nt_document :   pnk = document; break;
+          case nt_element :    pnk = element; break;
+          case nt_attribute :  pnk = attribute; break;
+          case nt_pi :         pnk = pr_ins; break;
+          case nt_comment :    pnk = comment; break;
+          case nt_text :       pnk = text; break;
 
           default : break;
         };
 
-        
         switch (i->getTest()) {
           case nt_element :
           case nt_attribute :
@@ -426,12 +431,13 @@ AtomizedPath Path::atomize() const
           case nt_wildcard_prefix :
             path->list.push_back(new PrefixTestAtom(pnk, i->prefix.getValue()));
             break;
-            
+
+          case nt_any_kind :
+              break;
           case nt_schema_element :
           case nt_schema_attribute :
+          default:
             U_ASSERT(false);
-          case nt_any_kind :
-            break;
         };
     }
     

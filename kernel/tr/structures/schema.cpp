@@ -20,7 +20,7 @@
 #include "tr/cat/catstore.h"
 #include "tr/locks/locks.h"
 
-#include "idx/btreeindex.h"
+#include "tr/idx/btreeindex.h"
 
 typedef idx::BTreeMultimap NameIndexTree;
 
@@ -170,8 +170,8 @@ schema_node_object::schema_node_object(
 #endif
 
     name = cat_strcpy(this, _name);
-    U_ASSERT((root != XNULL) || (_xmlns == NULL));
-    if (root != XNULL) { xmlns_pers = root->xmlns_register(_xmlns); }
+    U_ASSERT((root.found()) || (_xmlns == NULL));
+    if (root.found()) { xmlns_pers = root->xmlns_register(_xmlns); }
 };
 
 schema_node_object::~schema_node_object() {
@@ -181,7 +181,7 @@ schema_node_object::~schema_node_object() {
 
 void schema_node_object::serialize_data(se_simplestream &stream)
 {
-    if (root != XNULL) { cs_set_hint(root); }
+    if (root.found()) { cs_set_hint(root.ptr()); }
 
     stream.write(&persistent, sizeof(bool));
     stream.write_string(name);
@@ -284,7 +284,7 @@ schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char
      if ((this->children->count() + 1) > internal::maxElementChildCount)
         throw USER_EXCEPTION(SE2040); // Too many childs by schema
 
-    schema_node_cptr new_node(schema_node_object::create(this->root, xmlns, name, type, this->persistent));
+    schema_node_cptr new_node(schema_node_object::create(this->root.ptr(), xmlns, name, type, this->persistent));
     children->add_object_tail(new_node.ptr(), name, root->xmlns_register(xmlns), type);
 
     new_node->parent = this->p_object;
@@ -306,11 +306,11 @@ schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char
         #endif
     }
 
-    if (root->schema_node_name_index != NULL) {
+    if (root->schema_node_name_index != XNULL) {
         scoped_ptr<idx::KeyValueMultimap> tree(NameIndexTree::openIndex(root->schema_node_name_index));
 
         tree->insertPair(
-          tuple_cell::atomic_deep(toMagicName(new_node->get_qname(), new_node->type)),
+          tuple_cell::atomic_deep(xs_string, toMagicName(new_node->get_qname(), new_node->type)),
           tuple_cell::atomic_xptr(new_node->p_object));
     };
     
@@ -502,7 +502,7 @@ catalog_object_header * doc_schema_node_object::create(bool persistent)
     catalog_object_header * b = catalog_create_object(a, persistent);
 
     a->root = a->p_object;
-    schema_node_name_index = scoped_ptr<idx::KeyValueMultimap>(NameIndexTree::createIndex(xs_string))->getEntryPoint();
+    a->schema_node_name_index = scoped_ptr<idx::KeyValueMultimap>(NameIndexTree::createIndex(xs_string))->getEntryPoint();
 
     return b;
 }
@@ -557,7 +557,7 @@ void doc_schema_node_object::find_children(const xsd::QName& qname, t_item type,
 {
     U_ASSERT(result != NULL);
 
-    if (schema_node_name_index != NULL) {
+    if (schema_node_name_index != XNULL) {
         scoped_ptr<idx::KeyValueMultimap> index = NameIndexTree::openIndex(schema_node_name_index);
         scoped_ptr<idx::KeyValueIterator> iterator = index->find_equal(tuple_cell::atomic_deep(xs_string, toMagicName(qname, type)));
 

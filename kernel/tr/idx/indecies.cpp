@@ -169,7 +169,7 @@ void index_cell_object::on_schema_node_created(schema_node_cptr snode) const
 {
     t_scmnodes res;
     t_scmnodes objs;
-    executePathExpression(snode->root, *object, &objs, NULL, NULL);
+    executePathExpression(snode->root.ptr(), *object, &objs, NULL, NULL);
 
     const xpath::NodeTest node_test_nodes_deep(xpath::axis_descendant, xpath::node_test_text);
 

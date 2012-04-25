@@ -149,7 +149,7 @@ void	nid_assign(xptr node, t_prefix p) {
             moSetUserException(SE2023);
 		}
 		if (IS_DATA_BLOCK(node)) {
-			nid_holder=getSchemaNode(node)->root;
+			nid_holder=getSchemaNode(node)->root.ptr();
             U_ASSERT(nid_holder != XNULL);
         }
 		blk = nid_get_blk(p.size, IS_DATA_BLOCK(node));

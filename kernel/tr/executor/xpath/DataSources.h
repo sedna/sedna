@@ -20,10 +20,9 @@ private:
 public:
     DataRoot() : type(drt_null), name(NULL) {};
     DataRoot(data_root_type_t type, const char * name);
-    DataRoot(const counted_ptr<db_entity> dbe);
     DataRoot(const scheme_list * x);
 
-    counted_ptr<db_entity> toDBEntity() const;
+    schema_node_cptr getSchemaNode() const;
 
     DataRoot(const DataRoot & x) : type(x.type), name(x.name) {};
     const DataRoot& operator=(const DataRoot& x) {

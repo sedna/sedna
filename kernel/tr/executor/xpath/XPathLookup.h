@@ -27,25 +27,29 @@ class IPathIterator {
 
 typedef counted_ptr<IPathIterator> NodeIterator;
 
-/*
-class AbsolutePathLookup {
-private:
-    AxisHints * evaluationInfo;
+class SchemaLookup {
+    Path path;
 public:
-    AbsolutePathLookup(const DataRoot& _root, const pe::Path& _path);
+    SchemaLookup(const Path & path);
+    ~SchemaLookup();
 
-    void compile();
+    SchemaLookup & compile();
 
-    NodeIterator execute();
+    void execute(schema_node_cptr base, std::vector<schema_node_xptr> * output);
+    void executeLimited(schema_node_cptr base, std::vector<schema_node_xptr> * output, int limit);
+
+    void findPossibleNodesLimited(const DataRoot& root, std::vector<schema_node_xptr> * output, int limit);
+
+    bool check(schema_node_cptr a, schema_node_cptr b);
 };
-*/
 
 struct LookupInfo;
 
+/*
 class PathLookup {
-  protected:
+protected:
     Path path;
-  public:
+public:
     PathLookup(const Path & path);
     virtual ~PathLookup() {};
 
@@ -55,6 +59,7 @@ class PathLookup {
     static PathLookup * createPathLookup(const pe::Path &path);
     static PathLookup * createStepLookup(const pe::Path &path);
 };
+*/
 
 };
 

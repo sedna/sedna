@@ -7,7 +7,7 @@
 #define NODETYPES_H_
 
 #include "common/base.h"
-#include "executor/types/xstypes.h"
+#include "tr/executor/types/xstypes.h"
 
 /*
  * Possible atomic types
