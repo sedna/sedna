@@ -30,7 +30,7 @@ struct ProcessInfo
     SocketClient * socketClient; // Every process communicates
                   // with the master process, namely gov
     bool locked;
-    set<IProcessCallback *> clientCallbackSet;
+    std::set<IProcessCallback *> clientCallbackSet;
 };
 
 typedef std::set<ProcessInfo *>  ProcessList;

@@ -23,6 +23,7 @@ class WorkerSocketClient : public SocketClient {
 protected: 
     Worker * worker;
     int priority;
+
 public:
     WorkerSocketClient (Worker * _parent, USOCKET _socket, int _priority)
       : SocketClient(_socket), worker(_parent), priority(_priority) {};
@@ -50,9 +51,15 @@ struct WorkerSocketClientLess {
 /* InternalSocketClient --- for connections with parts of Sedna
  */
 class InternalSocketClient : public WorkerSocketClient {
+protected:
+    std::string ticket;
 public:
-    InternalSocketClient(WorkerSocketClient * producer, int _priority)
-      : WorkerSocketClient(producer, _priority) {};
+    InternalSocketClient(WorkerSocketClient * producer, int _priority, const std::string& _ticket)
+      : WorkerSocketClient(producer, _priority), ticket(_ticket) {};
+
+    InternalSocketClient(InternalSocketClient * producer, int _priority)
+      : WorkerSocketClient(producer, _priority), ticket(producer->ticket) {};
+
     virtual void           cleanupOnError() = 0;
 };
 

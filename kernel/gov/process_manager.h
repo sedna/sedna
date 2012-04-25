@@ -9,6 +9,7 @@
 
 #include <map>
 #include <set>
+#include <queue>
 
 class ClientConnectionProcessor;
 
@@ -35,15 +36,27 @@ typedef std::string ClientTicket;
 
 typedef std::map<ClientTicket, ProcessInfo *> ProcessMap;
 
+struct CallbackMessage {
+    IProcessCallback * callback;
+    
+    enum cbmessage_t {
+        Error,
+        Success,
+    };
+    
+    cbmessage_t result;
+
+    ProcessInfo * pinfo;
+    WorkerSocketClient * socketClient;
+    const char * messageInfo;
+};
 
 class IProcessCallback {
 public:
     virtual ~IProcessCallback() {};
 
     virtual void onError(const char * cause) = 0;
-    virtual void onDatabaseProcessStart(DatabaseProcessInfo *, WorkerSocketClient *) = 0;
-    virtual void onSessionProcessStart(SessionProcessInfo *, WorkerSocketClient *) = 0;
-    virtual void onDatabaseShutdown() = 0;
+    virtual void onSuccess(CallbackMessage * cbm) = 0;
 };
 
 // TODO: Move it into another file
@@ -60,6 +73,11 @@ class ProcessManager {
 
     session_id lastSessionId;
 
+    std::queue<CallbackMessage> requestProcessQueue;
+    
+    void callbackError(IProcessCallback * cb, const char * messageInfo);
+    void callbackSuccess(IProcessCallback * cb, ProcessInfo * pinfo, WorkerSocketClient * socketClient);
+    
     bool requestsPending;
     void doProcessRequests();
 public:

@@ -36,6 +36,7 @@ SocketClient* InternalProcessNegotiation::processData()
         state = iproc_awaiting_key;
       case iproc_awaiting_key :
         if (!communicator->receive()) { return this; }
+        ticket = communicator->readString();
         // Here we recieve key, so we know type of client
         // Next processor
       default : break;
@@ -131,19 +132,24 @@ public:
             client->state = client_close_connection;
         }
     };
+};
 
-    virtual void onDatabaseProcessStart(DatabaseProcessInfo* sminfo, WorkerSocketClient* ) {
+class ClientDatabaseStartCallback : public ClientConnectionCallback {
+    virtual void onSuccess(CallbackMessage * cbm) {
         if (client != NULL) {
-            client->sminfo = sminfo;
+            client->sminfo = dynamic_cast<DatabaseProcessInfo *>(cbm->pinfo);
             client->processRequestSession();
         }
     };
+};
 
-    virtual void onSessionProcessStart(SessionProcessInfo* trninfo, WorkerSocketClient* scl) {
+class ClientSessionStartCallback : public ClientConnectionCallback {
+    virtual void onSuccess(CallbackMessage * cbm) {
         if (client != NULL) {
-            client->trninfo = trninfo;
+            client->trninfo = dynamic_cast<SessionProcessInfo *>(cbm->pinfo);
             client->associatedSessionClient = scl;
             client->processSendSocket();
+            client->processRequestSession();
         }
     };
 };
@@ -436,13 +442,12 @@ SocketClient* DatabaseConnectionProcessor::processData()
       };
 
       if (dbInfo->databaseCreationMode) {
-        
         communicator->beginSend(se_CdbRegisteringOK); //send params to cdb
         state = sm_awaiting_db_stop;
       } else {
         communicator->beginSend(se_SMRegisteringOK);
       }
-      
+
       std::string serializedOptions;
       options.saveToXml(serializedOptions);
       communicator->writeString(serializedOptions);
