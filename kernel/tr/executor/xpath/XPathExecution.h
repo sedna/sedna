@@ -9,6 +9,9 @@
 
 #include "XPathTypes.h"
 
+/*
+
+
 typedef Node (*NextNodeProc)(Node node, AxisHints * hint);
 typedef bool (*TestNodeProc)(Node node, AxisHints * hint);
 

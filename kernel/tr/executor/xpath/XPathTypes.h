@@ -34,6 +34,8 @@ enum axis_t {
     axis_preceding_sibling,
 
     axis_last,
+
+    axis_child_or_attribute, /* Special axis */
 };
 
 enum node_test_t {
@@ -116,73 +118,67 @@ public:
     std::string toLRString() const;
 };
 
+typedef std::vector<PathAtom *> AtomizedPathVector;
+
+#define ATOMPATH_FOR_EACH_CONST(path, var) for (AtomizedPathVector::const_iterator var = (path).begin(); var != (path).end; ++var)
+#define ATOMPATH_FOR_EACH(path, var) for (AtomizedPathVector::iterator var = (path).begin(); var != (path).end; ++var)
+
+class AtomizedPath {
+private:
+    bool isMutable;
+    counted_ptr<AtomizedPathVector> _list;
+
+    AtomizedPathVector::size_type _sliceStart;
+    AtomizedPathVector::size_type _sliceEnd;
+public:
+    struct Reverse {
+        AtomizedPath ap;
+
+        Reverse(const AtomizedPath & parent, AtomizedPathVector::size_type _start, AtomizedPathVector::size_type _end)
+          : ap(parent, _start, _end) {};
+    };
+  
+    inline AtomizedPath() : isMutable(true), _list(new AtomizedPathVector()), _sliceStart(0), _sliceEnd(0) {};
+
+    explicit AtomizedPath(const AtomizedPath::Reverse & reverse);
+    
+    inline explicit AtomizedPath(const AtomizedPath & parent)
+      : isMutable(false), _list(parent._list), _sliceStart(0), _sliceEnd(parent._list->size()) {};
+      
+    inline explicit AtomizedPath(const AtomizedPath & parent, AtomizedPathVector::size_type _start, AtomizedPathVector::size_type _end)
+      : isMutable(false), _list(parent._list), _sliceStart(_start), _sliceEnd(_end) {};
+
+    ~AtomizedPath();
+
+    inline void push_back(PathAtom * pathAtom) {
+        U_ASSERT(isMutable);
+
+        _list->push_back(pathAtom);
+        _sliceEnd++;
+    };
+
+    inline AtomizedPathVector::iterator begin() { return _list->begin() + _sliceStart; };
+    inline AtomizedPathVector::iterator end() { return _list->begin() + _sliceEnd; };
+
+    inline AtomizedPathVector::const_iterator begin() const { return _list->begin() + _sliceStart; };
+    inline AtomizedPathVector::const_iterator end() const { return _list->begin() + _sliceEnd; };
+
+    inline void setImmutable() { isMutable = false; };
+
+    inline int cost() const {
+        int __result = 0;
+
+        ATOMPATH_FOR_EACH_CONST(*this, _i) {
+          __result += _i->cost();
+        };
+
+        return __result;
+    };
+};
+
 typedef std::vector<Step> PathVector;
 typedef counted_ptr<PathVector> PathVectorPtr;
 
-class PathAtom {
-protected:
-    int _type;
-public:
-    PathAtom(int __type) : _type(__type) {};
-    virtual ~PathAtom() {};
-    int type() const { return _type; };
-};
-
-enum atom_t {
-    atom_axis = 1,
-    atom_type,
-    atom_qname,
-    atom_name,
-    atom_prefix,
-    atom_union,
-};
-
-class AxisPathAtom : public PathAtom { public: 
-    axis_t axis;
-    bool closure;
-
-    AxisPathAtom(axis_t _axis, bool _closure)
-      : PathAtom(atom_axis), axis(_axis), closure(_closure) {};
-};
-
-class TypeTestAtom : public PathAtom {
-protected:
-    TypeTestAtom(int __type, t_item _itemType) : PathAtom(__type), itemType(_itemType) {};
-public: 
-    t_item itemType;
-    TypeTestAtom(t_item _itemType) : PathAtom(atom_type), itemType(_itemType) {};
-};
-
-class QNameTestAtom : public TypeTestAtom { public:
-    xsd::QName qname;
-    QNameTestAtom(t_item _itemType, const xsd::QName & _qname) : TypeTestAtom(atom_qname, _itemType), qname(_qname) {};
-};
-
-class NameTestAtom : public TypeTestAtom { public:
-    std::string name;
-
-    NameTestAtom(t_item _itemType, const std::string& _name)  : TypeTestAtom(atom_name, _itemType), name(_name) {};
-};
-
-class PrefixTestAtom : public TypeTestAtom { public:
-    std::string prefix;
-
-    PrefixTestAtom(t_item _itemType, const std::string& _prefix)
-    : TypeTestAtom(atom_prefix, _itemType), prefix(_prefix) {};
-};
-
-class UnionAtom : public PathAtom { public:
-    UnionAtom() : PathAtom(atom_union) {};
-};
-
-class AtomizedPath_int {
-public:
-    ~AtomizedPath_int();
-
-    std::vector<PathAtom *> list;
-};
-
-typedef counted_ptr<AtomizedPath_int> AtomizedPath;
 
 class Path {
 private:
@@ -224,6 +220,63 @@ public:
     PathVectorPtr getBody() const { return body; };
     std::string toXPathString() const;
     std::string toLRString() const;
+};
+
+class PathAtom {
+protected:
+    int _cost;
+public:
+    PathAtom(int __cost) : _cost(__cost) {};
+    virtual ~PathAtom() {};
+    int cost() const { return _cost; };
+};
+
+#define CHILD_INITIAL_COST 10
+
+class AxisPathAtom : public PathAtom { public:
+    axis_t axis;
+    bool closure;
+    bool orSelf;
+
+    AxisPathAtom(axis_t _axis, bool _closure, bool _orSelf)
+      : PathAtom(CHILD_INITIAL_COST), axis(_axis), closure(_closure), orSelf(_orSelf) {
+        if (_axis == axis_parent) { cost = 1; };
+    };
+
+    AxisPathAtom inverse() {
+        AxisPathAtom result(*this);
+
+        switch(result.axis) {
+          case axis_child:
+          case axis_child_or_attribute:
+          case axis_attribute:
+            result.axis = axis_parent;
+            result._cost = CHILD_INITIAL_COST;
+            break;
+          case axis_parent:
+            result.axis = axis_child_or_attribute;
+            result._cost = 1;
+            break;
+          default:
+            U_ASSERT(false);
+            break;
+        };
+        
+        return result;
+    };
+};
+
+class TypeTestAtom : public PathAtom {
+protected:
+    TypeTestAtom(int __cost, t_item _itemType) : PathAtom(__cost), itemType(_itemType) {};
+public:
+    t_item itemType;
+    TypeTestAtom(t_item _itemType) : PathAtom(0), itemType(_itemType) {};
+};
+
+class NameTestAtom : public TypeTestAtom { public:
+    xsd::QName qname;
+    NameTestAtom(t_item _itemType, const xsd::QName & _qname) : TypeTestAtom(0, _itemType), qname(_qname) {};
 };
 
 };

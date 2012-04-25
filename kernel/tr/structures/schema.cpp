@@ -257,12 +257,12 @@ schema_node_xptr schema_node_object::get_first_child(const xmlns_ptr xmlns, cons
     return XNULL;
 }
 
-const char* schema_node_object::toMagicName(const xsd::QName& qname, t_item type)
+const char* schema_node_object::toMagicName(const char* localName, t_item type)
 {
     switch (type) {
-      case element : return qname.getLocalName();
+      case element : return localName;
       case text : return "::text";
-      case attribute : return qname.getLocalName();
+      case attribute : return localName;
       case comment : return "::comment";
       case pr_ins : return "::prins";
       default : return "::*";
@@ -466,7 +466,7 @@ void schema_node_object::remove_ft_index(const ft_index_cell_xptr &c)
  */
 
 
-doc_schema_node_object::doc_schema_node_object() : xmlns_list(XNULL)
+doc_schema_node_object::doc_schema_node_object() : xmlns_list(XNULL), schema_node_name_index(XNULL)
 {
     CatalogMemoryContext *context = CATALOG_PERSISTENT_CONTEXT;
 
@@ -481,7 +481,7 @@ doc_schema_node_object::doc_schema_node_object() : xmlns_list(XNULL)
 
 doc_schema_node_object::doc_schema_node_object(bool _persistent) :
     schema_node_object(XNULL, NULL, NULL, document, _persistent),
-    ext_nids_block(XNULL), total_ext_nids(0), xmlns_list(XNULL)
+    ext_nids_block(XNULL), total_ext_nids(0), xmlns_list(XNULL), schema_node_name_index(XNULL)
 {
     CatalogMemoryContext *context = (persistent) ? CATALOG_PERSISTENT_CONTEXT : CATALOG_TEMPORARY_CONTEXT;
 
@@ -502,7 +502,11 @@ catalog_object_header * doc_schema_node_object::create(bool persistent)
     catalog_object_header * b = catalog_create_object(a, persistent);
 
     a->root = a->p_object;
-    a->schema_node_name_index = scoped_ptr<idx::KeyValueMultimap>(NameIndexTree::createIndex(xs_string))->getEntryPoint();
+    if (persistent) {
+        a->schema_node_name_index = scoped_ptr<idx::KeyValueMultimap>(NameIndexTree::createIndex(xs_string))->getEntryPoint();
+    } else {
+        a->schema_node_name_index = XNULL;
+    };
 
     return b;
 }
@@ -515,6 +519,7 @@ catalog_object_header * doc_schema_node_object::create_virtual_root()
 
     a->type = virtual_root;
     a->root = a->p_object;
+    a->schema_node_name_index = XNULL;
 
     return b;
 }
@@ -553,7 +558,7 @@ void doc_schema_node_object::deserialize_data(se_simplestream &stream)
 #endif
 };
 
-void doc_schema_node_object::find_children(const xsd::QName& qname, t_item type, std::vector< schema_node_xptr >* result)
+void doc_schema_node_object::find_descendant(const xsd::QName& qname, t_item type, std::vector< schema_node_xptr >* result)
 {
     U_ASSERT(result != NULL);
 

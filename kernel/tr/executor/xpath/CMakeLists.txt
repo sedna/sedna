@@ -1,1 +1,1 @@
-set(xpath_SRC XPathLookup.cpp XPathTypes.cpp)
+set(xpath_SRC XPathLookup.cpp XPathTypes.cpp DataSources.cpp)

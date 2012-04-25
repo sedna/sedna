@@ -17,12 +17,21 @@ public:
 private:
     data_root_type_t type;
     counted_ptr<std::string> name;
+    mutable schema_node_xptr snode;
+
+    schema_node_xptr _getSchemaNode() const;
 public:
-    DataRoot() : type(drt_null), name(NULL) {};
+    DataRoot() : type(drt_null), name(NULL), snode(XNULL) {};
     DataRoot(data_root_type_t type, const char * name);
     DataRoot(const scheme_list * x);
 
-    schema_node_cptr getSchemaNode() const;
+    inline schema_node_cptr getSchemaNode() const {
+        if (snode != XNULL) {
+            snode = _getSchemaNode();
+        };
+
+        return snode;
+    };
 
     DataRoot(const DataRoot & x) : type(x.type), name(x.name) {};
     const DataRoot& operator=(const DataRoot& x) {

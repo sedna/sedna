@@ -11,6 +11,7 @@
 #include "tr/structures/nodeinterface.h"
 
 #include <string>
+#include <map>
 
 class AxisHints;
 class DataRoot;
@@ -28,7 +29,16 @@ class IPathIterator {
 typedef counted_ptr<IPathIterator> NodeIterator;
 
 class SchemaLookup {
+    typedef std::map<int, std::vector<schema_node_xptr> > CacheMap;
+
+    CacheMap cache;
+
+    AtomizedPath atomizedPath;
+    AtomizedPath reversePath;
+
     Path path;
+
+    void collectCache(doc_schema_node_cptr root, std::vector<PathAtom*> * pathAtoms);
 public:
     SchemaLookup(const Path & path);
     ~SchemaLookup();
@@ -38,7 +48,8 @@ public:
     void execute(schema_node_cptr base, std::vector<schema_node_xptr> * output);
     void executeLimited(schema_node_cptr base, std::vector<schema_node_xptr> * output, int limit);
 
-    void findPossibleNodesLimited(const DataRoot& root, std::vector<schema_node_xptr> * output, int limit);
+    /** This method tries to find schema nodes in entity, that satisfies the condition */
+    void findSomething(const DataRoot& root, std::vector<schema_node_xptr> * output, int limit);
 
     bool check(schema_node_cptr a, schema_node_cptr b);
 };

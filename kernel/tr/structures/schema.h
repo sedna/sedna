@@ -254,7 +254,7 @@ public:
     inline bool has_text() { return has_text(this->type); }
 //    inline char * get_child_name(int i) { return children.get(i)->name; };
 
-    static const char * toMagicName(const xsd::QName & qname, t_item type);
+    static const char * toMagicName(const char * localName, t_item type);
 };
 
 
@@ -299,7 +299,7 @@ struct doc_schema_node_object: public schema_node_object
     /* Create virtual root */
     static catalog_object_header * create_virtual_root();
 
-    void find_children(const xsd::QName & qname, t_item type, std::vector<schema_node_xptr> * result);
+    void find_descendant(const char * qname, t_item type, std::vector<schema_node_xptr> * result);
     
     doc_schema_node_object();
     doc_schema_node_object(bool _persistent);

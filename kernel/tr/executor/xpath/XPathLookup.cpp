@@ -5,26 +5,97 @@
 
 
 #include "XPathLookup.h"
+#include "DataSources.h"
 
 #include "common/errdbg/exceptions.h"
+
+#include <bits/stl_algo.h>
 
 using namespace pe;
 
 
 SchemaLookup& SchemaLookup::compile()
 {
-    
+    atomizedPath = path.atomize();
+    reversePath = AtomizedPath(AtomizedPath::Reverse(atomizedPath));
 }
 
-void SchemaLookup::execute(schema_node_cptr base, std::vector< schema_node_xptr >* output)
+void SchemaLookup::collectCache(doc_schema_node_cptr root, std::vector<PathAtom*> * pathAtoms)
 {
-    
+    cache.clear();
+
+    for (unsigned i = 0; i < pathAtoms->size(); ++i) {
+        NameTestAtom * nta = dynamic_cast<NameTestAtom *>(pathAtoms->at(i));
+
+        if (nta != NULL) {
+            CacheMap::value_type &x = cache.insert(CacheMap::value_type(i, std::vector<schema_node_xptr>()));
+            root->find_descendant(nta->qname.getLocalName(), nta->itemType, &x.second);
+        };
+    };
+};
+
+
+void executePathEx(schema_node_cptr base, const AtomizedPath & path, std::vector< schema_node_xptr >* output)
+{
+    ATOMPATH_FOR_EACH(path, it) {
+        
+    }
 }
 
-SchemaLookup::SchemaLookup(const pe::Path& _path) : path(_path)
-{
-    AtomizedPath atomizedPath = path.atomize();
+struct CacheSizeCompare {
+    bool operator() (const typename SchemaLookup::CacheMap::value_type &a, const typename SchemaLookup::CacheMap::value_type &b)
+    {
+        return a.second.size() < b.second.size();
+    };
+};
 
+
+
+void SchemaLookup::findSomething(const DataRoot& root, std::vector< schema_node_xptr >* output, int limit)
+{
+    AtomizedPath path = atomizedPath;
+
+    if (atomizedPath.cost() > reversePath.cost()) {
+        path = reversePath;
+    };
+    
+    AtomizedPathVector::const_iterator i;
+    NameTestAtom * firstNodeTest;
+    doc_schema_node_cptr rootNode = reinterpret_cast<doc_schema_node_cptr>(root.getSchemaNode());
+
+    for (i = atomizedPath.begin(); i != atomizedPath.end(); ++i) {
+        firstNodeTest = dynamic_cast<NameTestAtom *>(*i);
+
+        if (firstNodeTest != NULL) {
+            break;
+        };
+    };
+
+    std::vector<schema_node_xptr> nodeCandidates;
+
+    if (firstNodeTest != NULL) {
+        rootNode->find_descendant(firstNodeTest->qname.getLocalName(), firstNodeTest->itemType, &nodeCandidates);
+    }
+
+//    nodeCandidates.
+    
+/*
+    collectCache(reinterpret_cast<doc_schema_node_cptr>(root.getSchemaNode()), atomizedPath->list);
+
+    for (CacheMap::reverse_iterator i = cache.rbegin(); i != cache.rend(); ++i) {
+    };
+*/
+/*    
+    CacheMap::iterator mel = std::min_element(cache.begin(), cache.end(), CacheSizeCompare());
+
+    if (mel != cache.end()) {
+    };
+*/
+}
+
+
+SchemaLookup::SchemaLookup(const pe::Path& _path) : atomizedPath(NULL), path(_path)
+{
     
 }
 

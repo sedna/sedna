@@ -367,29 +367,47 @@ bool Path::exist(const pe::StepPredicate& sp) const
 
 AtomizedPath Path::atomize() const
 {
-    AtomizedPath_int * path = new AtomizedPath_int();
+    AtomizedPath path;
 
     for (PathVector::const_iterator i = body->begin(); i != body->end(); ++i) {
         bool closure = false;
         t_item pnk = ti_dmchildren;
+        axis_t actual_axis = 0;
+
+        switch (i->getAxis()) {
+          case axis_descendant_or_self :
+          case axis_descendant :
+          case axis_child :
+            actual_axis = axis_child;
+            break;
+          case axis_ancestor_or_self :
+          case axis_ancestor :
+          case axis_parent:
+            actual_axis = axis_parent;
+            break;
+          case axis_attribute :
+            actual_axis = axis_attribute;
+            pnk = attribute;
+          case axis_self :
+            pnk = ti_all_valid;
+            break;
+          default :
+            U_ASSERT(false);
+            return NULL;
+        };
 
         switch (i->getAxis()) {
           case axis_descendant_or_self :
           case axis_ancestor_or_self :
-            path->list.push_back(new AxisPathAtom(axis_self, false));
-            path->list.push_back(new UnionAtom());
+            path.push_back(new OrSelf());
           case axis_descendant :
           case axis_ancestor :
             closure = true;
           case axis_attribute :
-            if (i->getAxis() == axis_attribute) {
-                pnk = attribute;
-            }
           case axis_child : 
           case axis_parent:
-            path->list.push_back(new AxisPathAtom(i->getAxis(), closure));
+            path.push_back(new AxisPathAtom(actual_axis, closure));
           case axis_self :
-            pnk = ti_all_valid;
             break;
           default :
             U_ASSERT(false);
@@ -416,20 +434,20 @@ AtomizedPath Path::atomize() const
           case nt_comment :
           case nt_text :
           case nt_wildcard_star :
-                path->list.push_back(new TypeTestAtom(pnk));
+                path.push_back(new TypeTestAtom(pnk));
                 break;
             } else if (!i->prefix.valid()) {
           case nt_pi :
           case nt_wildcard_name :
-                path->list.push_back(new NameTestAtom(pnk, i->name.getValue()));
+                path.push_back(new NameTestAtom(pnk, i->name.getValue()));
                 break;
             } else {
           case nt_qname :
-                path->list.push_back(new QNameTestAtom(pnk, i->getQName(NULL)));
+                path.push_back(new QNameTestAtom(pnk, i->getQName(NULL)));
                 break;
             };
           case nt_wildcard_prefix :
-            path->list.push_back(new PrefixTestAtom(pnk, i->prefix.getValue()));
+            path.push_back(new PrefixTestAtom(pnk, i->prefix.getValue()));
             break;
 
           case nt_any_kind :
@@ -444,4 +462,30 @@ AtomizedPath Path::atomize() const
     return path;
 }
 
+AtomizedPath::AtomizedPath(const pe::AtomizedPath::Reverse& reverse) 
+  : isMutable(true), _list(new AtomizedPathVector), _sliceStart(0), _sliceEnd(0)
+{
+    _list->reserve(reverse.ap._sliceEnd - reverse.ap._sliceStart);
+    _sliceEnd = 0;
+
+    ATOMPATH_FOR_EACH_CONST(reverse.ap, i) {
+        AxisPathAtom * apa = dynamic_cast<AxisPathAtom *>(*i);
+
+        if (apa == NULL) {
+            U_ASSERT(false);
+        };
+
+        push_back(new AxisPathAtom(apa->inverse()));
+    };
+}
+
+
+AtomizedPath::~AtomizedPath()
+{
+    if (_list.unique()) {
+        for (std::vector<PathAtom *>::const_iterator i = _list->begin(); i != _list->end(); ++i) {
+            delete *i;
+        }
+    }
+}
 
