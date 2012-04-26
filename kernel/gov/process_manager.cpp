@@ -76,9 +76,29 @@ void ProcessManager::callbackSuccess(IProcessCallback* cb, ProcessInfo* pinfo, W
     requestsPending = true;
 }
 
+void ProcessManager::callbackError(IProcessCallback* cb, const char* messageInfo)
+{
+    CallbackMessage msg = {cb, CallbackMessage::Error, messageInfo};
+    requestProcessQueue.push(msg);
+    requestsPending = true;
+}
+
+
 void ProcessManager::doProcessRequests()
 {
-    
+  CallbackMessage msg;
+  if (requestsPending)  {
+      while (!requestProcessQueue.empty()) {
+          msg = requestProcessQueue.front();
+          if (msg.result == CallbackMessage::Error) {
+            msg.callback->onError(msg.messageInfo);
+          } else {
+            msg.callback->onSuccess(&msg);
+          }
+      }
+      
+      requestsPending = false;
+  }
 }
 
 
@@ -105,13 +125,16 @@ void ProcessManager::processRegistrationFailed(const std::string& ticket, const 
     std::set<IProcessCallback *>::iterator j = i->second->clientCallbackSet.begin();
     
     for (j; j != i->second->clientCallbackSet.end(); j++) {
-        j->onError();
+        callbackError(*j, reason.c_str());
     }
+    
+    i->second->clientCallbackSet.clear();
+    delete i->second;
     
     processMap.erase(ticket);  
 };
 
-void ProcessManager::processRegistered(const std::string& ticket)
+void ProcessManager::processRegistered(const std::string& ticket, WorkerSocketClient * processor)
 {
     ProcessMap::iterator i = processMap.find(ticket);
     if (i == processMap.end()) {
@@ -123,6 +146,8 @@ void ProcessManager::processRegistered(const std::string& ticket)
     std::set<IProcessCallback *>::iterator j = i->second->clientCallbackSet.begin();
     
     for (j; j != i->second->clientCallbackSet.end(); j++) {
-        j->onError();
+        callbackSuccess(*j, i->second, processor);
     }
+    
+    i->second->clientCallbackSet.clear();
 }

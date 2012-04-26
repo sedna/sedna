@@ -468,7 +468,7 @@ SocketClient* DatabaseConnectionProcessor::processData()
           return NULL;
       }
 
-      pm->processRegistered(ticket);
+      pm->processRegistered(ticket, this);
 
       setObsolete();
       return NULL;
