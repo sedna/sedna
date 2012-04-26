@@ -42,8 +42,6 @@ namespace idx {
         
         tuple_cell tmp_key;
         xptr tmp_value;
-        
-        CollationHandler *ch;
     public:
         MapIndexIterator(index_iter iter, index_map *mapping, CollationHandler *ch);
         
@@ -60,7 +58,6 @@ namespace idx {
     class MapIndex : public KeyValueMultimap {
     private:
         index_map *mapping;
-        CollationHandler *ch;
     public:
         MapIndex(index_map* mapping_ptr);
         MapIndex();

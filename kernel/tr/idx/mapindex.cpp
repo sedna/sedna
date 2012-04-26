@@ -74,13 +74,13 @@ idx::MapIndex::MapIndex()
 
 KeyValueIterator* MapIndex::find(tuple_cell key)
 {
-    MapIndexIterator *result = new MapIndexIterator(mapping->find(key), mapping, ch);
+    MapIndexIterator *result = new MapIndexIterator(mapping->find(key), mapping);
     return result;
 }
 
 KeyValueIterator* MapIndex::begin()
 {
-    MapIndexIterator *result = new MapIndexIterator(mapping->begin(), mapping, ch);
+    MapIndexIterator *result = new MapIndexIterator(mapping->begin(), mapping);
     return result;
 }
 
@@ -90,9 +90,8 @@ KeyValueIterator* MapIndex::end()
     return NULL;
 }
 
-MapIndexIterator::MapIndexIterator(index_iter iter, index_map* mapping, CollationHandler* ch)
+MapIndexIterator::MapIndexIterator(index_iter iter, index_map* mapping)
 {
-    this->ch = ch;
     this->iter = iter;
     this->mapping = mapping;
     if (iter != mapping->end()) {
@@ -183,6 +182,6 @@ bool MapIndexIterator::isnull() const
 
 KeyValueIterator* MapIndex::find_equal(tuple_cell key)
 {
-    MapIndexIterator *result = new MapIndexIterator(mapping->find(key), mapping, charset_handler->get_unicode_codepoint_collation());
+    MapIndexIterator *result = new MapIndexIterator(mapping->find(key), mapping);
     return result;
 }
