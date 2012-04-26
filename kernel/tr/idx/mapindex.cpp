@@ -19,7 +19,7 @@ bool MapIndex::deletePair(tuple_cell key, tuple_cell value)
 {
     index_range range = mapping->equal_range(key);
     for (index_iter it = range.first; it != range.second; it++) {
-        if (op_eq(it->second, value, charset_handler->get_unicode_codepoint_collation()).is_boolean_true()) {
+        if (it->second == value.get_node_inderection()) {
             mapping->erase(it);
             return true;
         }

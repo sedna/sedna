@@ -43,7 +43,7 @@ namespace idx {
         tuple_cell tmp_key;
         xptr tmp_value;
     public:
-        MapIndexIterator(index_iter iter, index_map *mapping, CollationHandler *ch);
+        MapIndexIterator(index_iter iter, index_map *mapping);
         
         virtual tuple_cell getKey();
         virtual tuple_cell getValue();
