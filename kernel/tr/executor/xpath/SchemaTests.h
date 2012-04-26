@@ -1,7 +1,7 @@
 #ifndef _SCHEMA_TEST_H_
 #define _SCHEMA_TEST_H_
 
-#include "structures/schema.h"
+#include "tr/structures/schema.h"
 
 struct SchemaTestData {
     t_item m_type;
@@ -31,5 +31,6 @@ struct SchemaTestOperatorUriType {
     inline static bool testref(const sc_ref &ref, const SchemaTestData * data) { return SchemaTestOperatorType::testref(ref, data) && same_xmlns_uri(ref.get_xmlns(), data->m_uri); };
 };
 
+#define CAT_FOR_EACH(T, i, list) for (cat_list<T>::item * i = list->first; i != NULL; i = i->next)
 
 #endif /* _SCHEMA_TEST_H_ */

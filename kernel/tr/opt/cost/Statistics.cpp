@@ -1,6 +1,7 @@
 #include "Statistics.h"
 
 #include "tr/opt/phm/Operations.h"
+#include "tr/executor/xpath/XPathLookup.h"
 
 CostModel * publicCostModel = NULL;
 
@@ -14,61 +15,94 @@ const double C_IO_Cost = 10.0;
 #define AXIS_DESC_COST_SINGLE (10.0)
 #define AXIS_CHILD_COST_SINGLE (1.0)
 
-PathCostModel* CostModel::getAbsPathCost(const DataRoot& root, const pe::Path& path, TupleStatistics * result)
-{
-    return getPathCost(TupleRef(NULL, 1), path, result);
-}
+// TODO : MAKE CACHE AT MUST !!!
 
-PathCostModel* CostModel::getPathCost(const TupleRef& base, const pe::Path& path, TupleStatistics * _result)
-{
-    PathCostModel * result = new PathCostModel();
+struct PathCostModelData : public IPlanDisposable {
+    std::vector<schema_node_xptr> snodes;
+    scoped_ptr<pe::SchemaLookup> lookup;
+};
 
-    pe::PathVectorPtr p = path.getBody();
+PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path& path, TupleStatistics * copyStats, PathCostModel * result)
+{
+    PathCostModelData * modelData = new PathCostModelData;
+    pe::SchemaLookup * scmLookup = new pe::SchemaLookup(path);
+
+    result->data = modelData;
+    modelData->lookup = scmLookup;
+
+    scmLookup->compile();
 
     result->schemaTraverseCost = 0;
-    result->iterationCost = 0;
     result->nidSize = 0;
 
-    if (base.tupleDesc != NULL && base->statistics != NULL) {
-        result->card = base->statistics->distinctValues;
-        U_ASSERT(base->statistics->pathInfo != NULL);
-        result->blockCount = base->statistics->pathInfo->blockCount;
-    } else {
-        result->card = 1;
-        result->blockCount = 1;
-    };
+    result->iterationCost = scmLookup->atomizedPath.cost();
+    result->schemaTraverseCost = scmLookup->atomizedPath.cost();
 
-    for (pe::PathVector::const_iterator i = p->begin(); i != p->end(); ++i) {
-        switch (i->getAxis()) {
-            case pe::axis_descendant :
-                result->schemaTraverseCost += AXIS_DESC_COST;
-                result->iterationCost += AXIS_DESC_COST_SINGLE;
-                result->card *= AXIS_DESC_COST;
-                result->blockCount *= (1 + AXIS_DESC_COST * 0.01);
-                break;
-            case pe::axis_parent :
-                result->schemaTraverseCost += AXIS_SINGLE_COST;
-                result->iterationCost += AXIS_SINGLE_COST;
-                result->blockCount *= 2;
-                break;
-            default:
-                result->schemaTraverseCost += AXIS_CHILD_COST;
-                result->iterationCost += AXIS_DESC_COST_SINGLE;
-                result->card *= AXIS_CHILD_COST;
-                result->blockCount *= (1 + AXIS_CHILD_COST * 0.01);
-                break;
+    scmLookup->findSomething(root, &modelData->snodes, 0);
+
+    if (modelData->snodes.empty()) {
+        result->blockCount = 0;
+        result->card = 0;
+        result->nidSize = 0;
+    } else {
+        std::vector<schema_node_xptr>::const_iterator it = modelData->snodes.begin();
+        schema_node_cptr sn = *it;
+
+        result->blockCount = sn->blockcnt;
+        result->card = sn->nodecnt;
+        result->nidSize = sn->extnids;
+
+        for (++it; it != modelData->snodes.end(); ++it) {
+            schema_node_cptr sn = *it;
+
+            result->blockCount.lower = std::min(result->blockCount.lower, (double) sn->blockcnt);
+            result->blockCount.upper += (double) sn->blockcnt;
+
+            result->card.lower = std::min(result->card.lower, (double) sn->nodecnt);
+            result->card.upper += (double) sn->nodecnt;
+
+            result->nidSize.lower = std::min(result->card.lower, (double) sn->extnids);
+            result->nidSize.upper += (double) sn->extnids;
         };
     };
 
     result->schemaTraverseCost *= getCPUCost();
     result->iterationCost *= getIOCost();
 
-    if (_result != NULL) {
-        _result->pathInfo = result;
-        _result->distinctValues = result->card;
+    if (copyStats != NULL) {
+        copyStats->pathInfo = result;
+        copyStats->distinctValues = result->card;
     };
 
     return result;
+};
+
+PathCostModel* CostModel::getAbsPathCost(const DataRoot& root, const pe::Path& path, TupleStatistics * result)
+{
+    PathCostModel * cm = new PathCostModel();
+
+    cm->card = 1;
+    cm->blockCount = 1;
+
+    return evaluatePathCost(root, path, result, cm);
+}
+
+PathCostModel* CostModel::getPathCost(const TupleRef& base, const pe::Path& path, TupleStatistics * _result)
+{
+    PathCostModel * cm = new PathCostModel();
+
+    U_ASSERT(base.tupleDesc != NULL);
+
+    if (base->statistics != NULL) {
+        cm->card = base->statistics->distinctValues;
+        U_ASSERT(base->statistics->pathInfo != NULL);
+        cm->blockCount = base->statistics->pathInfo->blockCount;
+    } else {
+        cm->card = 1;
+        cm->blockCount = 1;
+    };
+
+    return evaluatePathCost(base->node->root, path, _result, cm);
 }
 
 ValueCostModel* CostModel::getValueCost(PathCostModel* m, TupleStatistics * _result)
@@ -89,7 +123,7 @@ ValueCostModel* CostModel::getValueCost(PathCostModel* m, TupleStatistics * _res
 ComparisonInfo* CostModel::getCmpInfo(TupleStatistics* m1, TupleStatistics* m2, const Comparison& cmp)
 {
     ComparisonInfo* result = new ComparisonInfo;
-  
+
     switch (cmp.op) {
       case Comparison::g_eq :
         result->selectivity = Range(0.1, 0.5);

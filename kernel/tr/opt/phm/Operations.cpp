@@ -130,7 +130,7 @@ void AbsPathScanPrototype::evaluateCost(CostModel* model)
     cost->firstCost = costInfo->schemaTraverseCost;
 
     Range evalCost = costInfo->blockCount * model->getIOCost() + costInfo->card * model->getCPUCost();
-    Range heapSortCost = costInfo->card.map<XLogXOp>() * model->getCPUCost();
+    Range heapSortCost = wantSort ? costInfo->card.map<XLogXOp>() * model->getCPUCost() : 0;
 
     cost->nextCost = (evalCost + heapSortCost) / stats->distinctValues;
 

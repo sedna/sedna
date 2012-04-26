@@ -310,7 +310,7 @@ schema_node_xptr schema_node_object::add_child(const xmlns_ptr xmlns, const char
         scoped_ptr<idx::KeyValueMultimap> tree(NameIndexTree::openIndex(root->schema_node_name_index));
 
         tree->insertPair(
-          tuple_cell::atomic_deep(xs_string, toMagicName(new_node->get_qname(), new_node->type)),
+          tuple_cell::atomic_deep(xs_string, toMagicName(new_node->get_qname().getLocalName(), new_node->type)),
           tuple_cell::atomic_xptr(new_node->p_object));
     };
     
@@ -558,13 +558,13 @@ void doc_schema_node_object::deserialize_data(se_simplestream &stream)
 #endif
 };
 
-void doc_schema_node_object::find_descendant(const xsd::QName& qname, t_item type, std::vector< schema_node_xptr >* result)
+void doc_schema_node_object::find_descendant(const char * localName, t_item type, std::vector< schema_node_xptr >* result)
 {
     U_ASSERT(result != NULL);
 
     if (schema_node_name_index != XNULL) {
         scoped_ptr<idx::KeyValueMultimap> index = NameIndexTree::openIndex(schema_node_name_index);
-        scoped_ptr<idx::KeyValueIterator> iterator = index->find_equal(tuple_cell::atomic_deep(xs_string, toMagicName(qname, type)));
+        scoped_ptr<idx::KeyValueIterator> iterator = index->find_equal(tuple_cell::atomic_deep(xs_string, toMagicName(get_name(), type)));
 
         if (!iterator->isnull()) do {
             result->push_back(iterator->getValue().get_xptr());
@@ -641,7 +641,9 @@ void doc_schema_node_object::drop()
     CAT_FOR_EACH(trigger_cell_xptr, i, this->root->full_trigger_list)  { i->object->drop(); }
     #endif
 
-    NameIndexTree(schema_node_name_index).dropTree();
+    if (schema_node_name_index != XNULL) {
+        NameIndexTree(schema_node_name_index).dropTree();
+    }
     
     schema_node_object::drop();
 

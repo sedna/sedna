@@ -42,6 +42,8 @@ class AbsPathScanPrototype : public POProt {
 protected:
     virtual IElementProducer* __toXML(IElementProducer* ) const;
 public:
+    bool wantSort;
+
     AbsPathScanPrototype(PhysicalModel * model, const TupleRef & tref);
 
     virtual void evaluateCost(CostModel* model);

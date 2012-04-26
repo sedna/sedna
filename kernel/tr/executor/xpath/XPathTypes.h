@@ -57,6 +57,8 @@ enum node_test_t {
     nt_wildcard_name,
 
     nt_last,
+
+    nt_type_test,
 };
 
 struct StepPredicate {
@@ -118,10 +120,20 @@ public:
     std::string toLRString() const;
 };
 
+class PathAtom {
+protected:
+    int _cost;
+public:
+    PathAtom(int __cost) : _cost(__cost) {};
+    virtual ~PathAtom() {};
+    int cost() const { return _cost; };
+    virtual PathAtom * clone() = 0;
+};
+
 typedef std::vector<PathAtom *> AtomizedPathVector;
 
-#define ATOMPATH_FOR_EACH_CONST(path, var) for (AtomizedPathVector::const_iterator var = (path).begin(); var != (path).end; ++var)
-#define ATOMPATH_FOR_EACH(path, var) for (AtomizedPathVector::iterator var = (path).begin(); var != (path).end; ++var)
+#define ATOMPATH_FOR_EACH_CONST(path, var) for (AtomizedPathVector::const_iterator var = (path).begin(); var != (path).end(); ++var)
+#define ATOMPATH_FOR_EACH(path, var) for (AtomizedPathVector::iterator var = (path).begin(); var != (path).end(); ++var)
 
 class AtomizedPath {
 private:
@@ -131,22 +143,13 @@ private:
     AtomizedPathVector::size_type _sliceStart;
     AtomizedPathVector::size_type _sliceEnd;
 public:
-    struct Reverse {
-        AtomizedPath ap;
-
-        Reverse(const AtomizedPath & parent, AtomizedPathVector::size_type _start, AtomizedPathVector::size_type _end)
-          : ap(parent, _start, _end) {};
-    };
-  
     inline AtomizedPath() : isMutable(true), _list(new AtomizedPathVector()), _sliceStart(0), _sliceEnd(0) {};
 
-    explicit AtomizedPath(const AtomizedPath::Reverse & reverse);
-    
-    inline explicit AtomizedPath(const AtomizedPath & parent)
-      : isMutable(false), _list(parent._list), _sliceStart(0), _sliceEnd(parent._list->size()) {};
+    inline AtomizedPath(const AtomizedPath & parent)
+      : isMutable(false), _list(parent._list), _sliceStart(parent._sliceStart), _sliceEnd(parent._sliceEnd) {};
       
     inline explicit AtomizedPath(const AtomizedPath & parent, AtomizedPathVector::size_type _start, AtomizedPathVector::size_type _end)
-      : isMutable(false), _list(parent._list), _sliceStart(_start), _sliceEnd(_end) {};
+      : isMutable(false), _list(parent._list), _sliceStart(parent._sliceStart + _start), _sliceEnd(parent._sliceStart + _end) {};
 
     ~AtomizedPath();
 
@@ -156,6 +159,10 @@ public:
         _list->push_back(pathAtom);
         _sliceEnd++;
     };
+
+    AtomizedPath reverse() const;
+    
+    inline AtomizedPathVector::size_type size() const { return _sliceEnd - _sliceStart; };
 
     inline AtomizedPathVector::iterator begin() { return _list->begin() + _sliceStart; };
     inline AtomizedPathVector::iterator end() { return _list->begin() + _sliceEnd; };
@@ -169,7 +176,7 @@ public:
         int __result = 0;
 
         ATOMPATH_FOR_EACH_CONST(*this, _i) {
-          __result += _i->cost();
+          __result += (*_i)->cost();
         };
 
         return __result;
@@ -222,25 +229,20 @@ public:
     std::string toLRString() const;
 };
 
-class PathAtom {
-protected:
-    int _cost;
-public:
-    PathAtom(int __cost) : _cost(__cost) {};
-    virtual ~PathAtom() {};
-    int cost() const { return _cost; };
-};
-
 #define CHILD_INITIAL_COST 10
+#define CLOSURE_INITIAL_COST 10
 
 class AxisPathAtom : public PathAtom { public:
     axis_t axis;
     bool closure;
     bool orSelf;
 
+    virtual PathAtom* clone();
+    
     AxisPathAtom(axis_t _axis, bool _closure, bool _orSelf)
       : PathAtom(CHILD_INITIAL_COST), axis(_axis), closure(_closure), orSelf(_orSelf) {
-        if (_axis == axis_parent) { cost = 1; };
+        if (_axis == axis_parent) { _cost = 1; };
+        if (_closure) { _cost *= CLOSURE_INITIAL_COST; };
     };
 
     AxisPathAtom inverse() {
@@ -251,11 +253,17 @@ class AxisPathAtom : public PathAtom { public:
           case axis_child_or_attribute:
           case axis_attribute:
             result.axis = axis_parent;
-            result._cost = CHILD_INITIAL_COST;
+            result._cost = 1;
+
             break;
           case axis_parent:
             result.axis = axis_child_or_attribute;
-            result._cost = 1;
+            result._cost = CHILD_INITIAL_COST;
+
+            if (result.closure) {
+                result._cost *= CLOSURE_INITIAL_COST;
+            }
+
             break;
           default:
             U_ASSERT(false);
@@ -268,15 +276,19 @@ class AxisPathAtom : public PathAtom { public:
 
 class TypeTestAtom : public PathAtom {
 protected:
-    TypeTestAtom(int __cost, t_item _itemType) : PathAtom(__cost), itemType(_itemType) {};
+    TypeTestAtom(int __cost, t_item _itemType, node_test_t _nt) : PathAtom(__cost), itemType(_itemType), nt(_nt)  {};
 public:
     t_item itemType;
-    TypeTestAtom(t_item _itemType) : PathAtom(0), itemType(_itemType) {};
+    node_test_t nt;
+    
+    TypeTestAtom(t_item _itemType) : PathAtom(1), itemType(_itemType), nt(nt_type_test) {};
+    virtual PathAtom* clone();
 };
 
 class NameTestAtom : public TypeTestAtom { public:
     xsd::QName qname;
-    NameTestAtom(t_item _itemType, const xsd::QName & _qname) : TypeTestAtom(0, _itemType), qname(_qname) {};
+    NameTestAtom(t_item _itemType, const xsd::QName & _qname, node_test_t _nt) : TypeTestAtom(1, _itemType, _nt), qname(_qname) {};
+    virtual PathAtom* clone();
 };
 
 };

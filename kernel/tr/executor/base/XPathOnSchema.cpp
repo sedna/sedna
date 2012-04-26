@@ -44,9 +44,6 @@ struct SchemaTestOperatorUriType {
 };
 
 #define CAT_FOR_EACH(T, i, list) for (cat_list<T>::item * i = list->first; i != NULL; i = i->next)
-// #define FILTER_SCHEMA_OFFSPRINGS(n, x, i, test, action) CAT_FOR_EACH(sc_ref, i, (n->children)) { schema_node_cptr x = i->object.snode; if (test) { action; }; }
-// #define FILTER_SCHEMA_OFFSPRINGS_FAST(n, i, test, action) CAT_FOR_EACH(sc_ref, i, (n->children)) { if (test) { action; }; }
-
 
 template<typename TestOp>
 class SchemaTest : public ISchemaTest {

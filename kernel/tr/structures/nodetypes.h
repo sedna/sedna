@@ -44,6 +44,7 @@ const t_item ti_all_valid = (t_item) (element | text | attribute | document | xm
 const t_item ti_dmchildren = (t_item) (element | text | comment | pr_ins);
 const t_item ti_content = (t_item) (element | text | comment | pr_ins);
 const t_item ti_singleton_element = (t_item) (xml_namespace | text | comment | pr_ins);
+const t_item ti_with_children = (t_item) (element | document | virtual_root);
 
 #ifdef BITWISE_NODE_TYPES
 typedef int typemask_t;

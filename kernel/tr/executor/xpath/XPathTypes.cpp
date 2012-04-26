@@ -370,9 +370,9 @@ AtomizedPath Path::atomize() const
     AtomizedPath path;
 
     for (PathVector::const_iterator i = body->begin(); i != body->end(); ++i) {
-        bool closure = false;
+        bool closure = false, orSelf = false;
         t_item pnk = ti_dmchildren;
-        axis_t actual_axis = 0;
+        axis_t actual_axis = axis_error;
 
         switch (i->getAxis()) {
           case axis_descendant_or_self :
@@ -393,25 +393,25 @@ AtomizedPath Path::atomize() const
             break;
           default :
             U_ASSERT(false);
-            return NULL;
+            break;
         };
 
         switch (i->getAxis()) {
           case axis_descendant_or_self :
           case axis_ancestor_or_self :
-            path.push_back(new OrSelf());
+            orSelf = true;
           case axis_descendant :
           case axis_ancestor :
             closure = true;
           case axis_attribute :
           case axis_child : 
           case axis_parent:
-            path.push_back(new AxisPathAtom(actual_axis, closure));
+            path.push_back(new AxisPathAtom(actual_axis, closure, orSelf));
           case axis_self :
             break;
           default :
             U_ASSERT(false);
-            return NULL;
+            break;
         };
 
         switch (i->getTest()) {
@@ -421,7 +421,6 @@ AtomizedPath Path::atomize() const
           case nt_pi :         pnk = pr_ins; break;
           case nt_comment :    pnk = comment; break;
           case nt_text :       pnk = text; break;
-
           default : break;
         };
 
@@ -439,15 +438,15 @@ AtomizedPath Path::atomize() const
             } else if (!i->prefix.valid()) {
           case nt_pi :
           case nt_wildcard_name :
-                path.push_back(new NameTestAtom(pnk, i->name.getValue()));
+                path.push_back(new NameTestAtom(pnk, i->getQName(NULL), nt_wildcard_name));
                 break;
             } else {
           case nt_qname :
-                path.push_back(new QNameTestAtom(pnk, i->getQName(NULL)));
+                path.push_back(new NameTestAtom(pnk, i->getQName(NULL), nt_qname));
                 break;
             };
           case nt_wildcard_prefix :
-            path.push_back(new PrefixTestAtom(pnk, i->prefix.getValue()));
+            path.push_back(new NameTestAtom(pnk, i->getQName(NULL), nt_wildcard_prefix));
             break;
 
           case nt_any_kind :
@@ -456,29 +455,31 @@ AtomizedPath Path::atomize() const
           case nt_schema_attribute :
           default:
             U_ASSERT(false);
+            break;
         };
     }
     
     return path;
 }
 
-AtomizedPath::AtomizedPath(const pe::AtomizedPath::Reverse& reverse) 
-  : isMutable(true), _list(new AtomizedPathVector), _sliceStart(0), _sliceEnd(0)
+AtomizedPath AtomizedPath::reverse() const
 {
-    _list->reserve(reverse.ap._sliceEnd - reverse.ap._sliceStart);
-    _sliceEnd = 0;
+    AtomizedPath result;
 
-    ATOMPATH_FOR_EACH_CONST(reverse.ap, i) {
+    result._list->reserve(size());
+
+    ATOMPATH_FOR_EACH_CONST(*this, i) {
         AxisPathAtom * apa = dynamic_cast<AxisPathAtom *>(*i);
 
-        if (apa == NULL) {
-            U_ASSERT(false);
+        if (apa != NULL) {
+            result.push_back(new AxisPathAtom(apa->inverse()));
+        } else {
+            result.push_back(*i);
         };
-
-        push_back(new AxisPathAtom(apa->inverse()));
     };
-}
 
+    result.setImmutable();
+}
 
 AtomizedPath::~AtomizedPath()
 {
@@ -487,5 +488,20 @@ AtomizedPath::~AtomizedPath()
             delete *i;
         }
     }
+}
+
+PathAtom* AxisPathAtom::clone()
+{
+    return new AxisPathAtom(*this);
+}
+
+PathAtom* NameTestAtom::clone()
+{
+    return new NameTestAtom(*this);
+}
+
+PathAtom* TypeTestAtom::clone()
+{
+    return new TypeTestAtom(*this);
 }
 
