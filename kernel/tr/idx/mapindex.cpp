@@ -19,8 +19,7 @@ bool MapIndex::deletePair(tuple_cell key, tuple_cell value)
 {
     index_range range = mapping->equal_range(key);
     for (index_iter it = range.first; it != range.second; it++) {
-        if (op_eq(it->first, key, charset_handler->get_unicode_codepoint_collation()).is_boolean_true()) {
-        //if (it->first == key) {
+        if (op_eq(it->second, value, charset_handler->get_unicode_codepoint_collation()).is_boolean_true()) {
             mapping->erase(it);
             return true;
         }
@@ -111,7 +110,7 @@ bool MapIndexIterator::nextKey()
         return false;
     } else {
         index_iter next_key_iter = mapping->upper_bound(iter->first);
-        if (iter != mapping->end()) {
+        if (next_key_iter != mapping->end()) {
             iter = next_key_iter;
             tmp_key = iter->first;
             tmp_value = iter->second;
@@ -135,7 +134,6 @@ bool MapIndexIterator::nextValue()
         index_iter new_iter = iter;
         new_iter++;
         if (new_iter != mapping->end() && op_eq(new_iter->first, cur_key, charset_handler->get_unicode_codepoint_collation()).is_boolean_true()) {
-        //if (new_iter->first == cur_key) {
             iter = new_iter;
             tmp_value = iter->second;
             return true;
