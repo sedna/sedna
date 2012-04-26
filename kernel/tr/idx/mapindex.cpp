@@ -66,22 +66,11 @@ MapIndex* MapIndex::createIndex()
 idx::MapIndex::MapIndex(index_map* mapping_ptr)
 {
     mapping = mapping_ptr;
-    //CollationManager cm = CollationManager();
-    //ch = cm.get_default_collation_handler();
-    //ch = charset_handler->get_unicode_codepoint_collation();
 }
 
 idx::MapIndex::MapIndex()
 {
     mapping = NULL;
-    //CollationManager cm = CollationManager();
-    //ch = cm.get_default_collation_handler();
-    //ch = charset_handler->get_unicode_codepoint_collation();
-}
-
-idx::MapIndex::~MapIndex()
-{
-    //delete ch;
 }
 
 KeyValueIterator* MapIndex::find(tuple_cell key)

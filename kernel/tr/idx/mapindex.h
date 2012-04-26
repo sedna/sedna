@@ -21,18 +21,6 @@ class CollationHandler;
 #include <map>
 
 struct tuple_cell_comp {
-    CollationHandler *ch;
-    
-    tuple_cell_comp() {
-        //CollationManager cm = CollationManager();
-        //ch = cm.get_default_collation_handler();
-        //ch = charset_handler->get_unicode_codepoint_collation();
-    }
-    
-    ~tuple_cell_comp() {
-        //delete ch;
-    }
-    
     bool operator() (const tuple_cell& left, const tuple_cell& right) const
     {
         return op_lt(left, right, charset_handler->get_unicode_codepoint_collation()).get_xs_boolean();
@@ -58,8 +46,6 @@ namespace idx {
         CollationHandler *ch;
     public:
         MapIndexIterator(index_iter iter, index_map *mapping, CollationHandler *ch);
-
-        //virtual ~MapIndexIterator();
         
         virtual tuple_cell getKey();
         virtual tuple_cell getValue();
@@ -78,7 +64,6 @@ namespace idx {
     public:
         MapIndex(index_map* mapping_ptr);
         MapIndex();
-        ~MapIndex();
 
         /* insert key-value pair */
         virtual bool insertPair(tuple_cell key, tuple_cell value);
