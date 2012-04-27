@@ -86,19 +86,18 @@ void ProcessManager::callbackError(IProcessCallback* cb, const char* messageInfo
 
 void ProcessManager::doProcessRequests()
 {
-  CallbackMessage msg;
-  if (requestsPending)  {
-      while (!requestProcessQueue.empty()) {
-          msg = requestProcessQueue.front();
-          if (msg.result == CallbackMessage::Error) {
-            msg.callback->onError(msg.messageInfo);
-          } else {
-            msg.callback->onSuccess(&msg);
-          }
-      }
-      
-      requestsPending = false;
-  }
+    CallbackMessage msg;
+    
+    while (!requestProcessQueue.empty()) {
+        msg = requestProcessQueue.front();
+        if (msg.result == CallbackMessage::Error) {
+          msg.callback->onError(msg.messageInfo);
+        } else {
+          msg.callback->onSuccess(&msg);
+        }
+    }
+    
+    requestsPending = false;
 }
 
 

@@ -34,11 +34,6 @@
  */
 #include "gov/cpool.h"
 
-
-
-
-
-
 #define GOV_BACKGROUND_MODE_TIMEOUT                                     15000
 #define GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON           "SEDNA_GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON"
 

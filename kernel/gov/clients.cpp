@@ -368,38 +368,6 @@ SocketClient* SednaStopProcessor::processData() {
   return NULL;
 }
 
-
-/////////////////////////////class SMStopProcessor/////////////////////////////////////
-
-void SMStopProcessor::getParams()
-{
-// !TODO: need to make real auth check
-  string login;
-  string password;
-  string db_name;
-  
-  communicator->readString(login, SE_MAX_LOGIN_LENGTH);
-  communicator->readString(password, SE_MAX_PASSWORD_LENGTH);
-  communicator->readString(db_name, SE_MAX_DB_NAME_LENGTH);
-  elog(EL_LOG, ("Request for SM shutdown issued"));
-  
-  if (0 != worker->stopSM(db_name)) 
-  {
-    respondError(); //already stopped or not running
-  }
-  worker->addPendingOnSMSmsd(db_name, this);
-  
-}
-
-
-SocketClient* SMStopProcessor::processData() {
-  communicator->beginSend(se_UnRegisterDB);
-  communicator->endSend();
-  setObsolete();
-  return NULL;
-}
-
-
 /////////////////////////////class DatabaseConnectionProcessor////////////////////////////////////////
 ///* This class is responsible for communications between se_gov and se_sm (create db and start db) */
 
@@ -470,28 +438,25 @@ SocketClient* DatabaseConnectionProcessor::processData()
 
       pm->processRegistered(ticket, this);
 
+      //TODO when sm would be more clear: at this point cdb should terminate but sm should wait for shutdown
+      // that means that there should be one more message for both.
+      
       setObsolete();
       return NULL;
   }
 }
 
-void CdbConnectionProcessor::cleanupOnError()
-{
-    pm->processRegistrationFailed(ticket, "Unexpected socket error in CDB connection");
-    setObsolete();
-}
-
-////////////////////////////class CdbRequestProcessor//////////////////////////////////////////////
+////////////////////////////class CreateDatabaseRequestProcessor//////////////////////////////////////////////
 
 class CreateDatabaseCallback : IProcessCallback {
 public:
     CdbRequestProcessor requestClient;
 };
 
-CdbRequestProcessor::CdbRequestProcessor(WorkerSocketClient* producer)
+CreateDatabaseRequestProcessor::CreateDatabaseRequestProcessor(WorkerSocketClient* producer)
   : WorkerSocketClient(producer, se_Client_Priority_Cdb), state(cdb_awaiting_db_options) {  }
 
-SocketClient* CdbRequestProcessor::processData()
+SocketClient* CreateDatabaseRequestProcessor::processData()
 {
     ProcessManager * pm = worker->getProcessManager();
     

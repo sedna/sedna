@@ -163,12 +163,12 @@ class DatabaseConnectionProcessor : public InternalSocketClient {
 };
 
 
-class CdbRequestProcessor : public WorkerSocketClient {
+class CreateDatabaseRequestProcessor : public WorkerSocketClient {
   private:
     cdb_state_t                 state;
     
   public:
-                                CdbRequestProcessor  (WorkerSocketClient * producer);
+                                CreateDatabaseRequestProcessor (WorkerSocketClient * producer);
     virtual SocketClient *      processData             (void);
 };
 

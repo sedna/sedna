@@ -1,7 +1,7 @@
 # full common library for sedna
 set(aux_SRC )
 
-ADD_SUBFOLDER_SRC(aux_SRC argtable)
+ADD_SUBFOLDER_SRC(aux_SRC argtable2)
 ADD_SUBFOLDER_SRC(aux_SRC options)
 ADD_SUBFOLDER_SRC(aux_SRC stacktrace)
 
