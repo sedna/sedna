@@ -39,6 +39,7 @@ class PPTest : public PPIterator
 protected:
     typedef void (*t_test_fun)(xptr node);
     PPOpIn seq;
+    void * data;
 
     t_test_fun test_fun;
 private:

@@ -11,6 +11,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <iomanip>
+#include <stack>
 
 using namespace pe;
 
@@ -113,26 +115,27 @@ const char * nodeTypeToStr(pe::node_test_t node) {
 
 const char * invalidLRStep = "Invalid step LR representation";
 
-Step::Step(const scheme_list* lst) : axis(axis_error), nodeTest(nt_error), prefix(), name()
+Step::Step(const scheme_list* lst) : axis(axis_error), test(nt_error, xsd::QNameAny)
 {
     const axis_pair_t * _axis = axis_type_map.get(scmGetSymbol(lst, 0, invalidLRStep));
     const node_test_pair_t * _node_test = node_type_map.get(scmGetSymbol(lst, 1, invalidLRStep));
 
     axis = _axis == NULL ? axis_error : _axis->type;
-    nodeTest = _node_test == NULL ? nt_error : _node_test->type;
+    test.nodeTest = _node_test == NULL ? nt_error : _node_test->type;
 
-    switch (nodeTest) {
+    switch (test.nodeTest) {
         case nt_text:
         case nt_comment:
             break;
         case nt_attribute:
         case nt_pi:
         case nt_element:
-            name = xsd::NCName(scmGetString(lst, 2, invalidLRStep));
+            test.qname = xsd::TemplateQName(xsd::QNameWildcard, scmGetString(lst, 2, invalidLRStep));
             break;
         default:
-            prefix = xsd::NCName(scmGetString(lst, 2, invalidLRStep));
-            name = xsd::NCName(scmGetString(lst, 3, invalidLRStep));
+            test.qname = xsd::TemplateQName(
+              scmGetString(lst, 2, invalidLRStep),
+              scmGetString(lst, 2, invalidLRStep));
     }
 }
 
@@ -156,6 +159,7 @@ xsd::QName Step::getQName(INamespaceMap* _context) const
 {
     U_ASSERT(false);
     return xsd::QName();
+//    return test.qname.toQName(_context);
 }
 
 
@@ -169,35 +173,7 @@ std::string Step::toXPathString() const
         stream << axisTypeToStr(axis) << "::";
     }
 
-    const char * typeName = nodeTypeToStr(nodeTest);
-
-    switch (nodeTest) {
-        case nt_pi:
-            stream << typeName << "(" << name.toString() << ")"; break;
-        case nt_comment :
-        case nt_text :
-        case nt_any_kind :
-            stream << typeName << "()"; break;
-        case nt_element :
-        case nt_attribute :
-            stream << typeName << "(" << (prefix.valid() ? (prefix.toString() + ":") : "") << name.toString() << ")"; break;
-        case nt_document :
-            if (name.valid()) {
-                stream << "document-node(element(" << name.toString() + "))";
-            } else {
-                stream << "document-node()";
-            }; break;
-        case nt_qname :
-            stream << (prefix.valid() ? (prefix.toString() + ":") : "") << name.toString(); break;
-        case nt_wildcard_star :
-            stream << "*"; break;
-        case nt_wildcard_prefix :
-            stream << prefix.toString() << ":*"; break;
-        case nt_wildcard_name :
-            stream << "*:" << name.toString(); break;
-        default :
-            stream << typeName << "()"; break;
-    }
+    stream << nodeTypeToStr(test.nodeTest) << test.qname.getColonizedName();
 
     return stream.str();
 }
@@ -223,21 +199,8 @@ std::string Step::toLRString() const
 
     stream << "("
         << axisTypeToStr(axis) << " "
-        << nodeTypeToStr(nodeTest) << " ";
-
-    if (prefix.valid()) {
-        prefix.toLR(stream);
-    } else {
-        stream << "()";
-    }
-
-    stream << " ";
-
-    if (name.valid()) {
-        name.toLR(stream);
-    } else {
-        stream << "()";
-    }
+        << nodeTypeToStr(test.nodeTest) << " "
+        << test.qname.getColonizedName();
 
     stream << ")";
 
@@ -308,35 +271,76 @@ Path Path::operator+(const pe::Path& x)
     return result;
 }
 
-Path Path::inverse() const
+
+static const axis_t inverseAxis[] = {
+  axis_error, //    axis_error = 0, /* When not used, or implied */
+
+  axis_parent,  // axis_child,
+  axis_ancestor,  // axis_descendant,
+  axis_parent,  // axis_attribute,
+  axis_self,  // axis_self,
+  axis_ancestor_or_self, // axis_descendant_or_self,
+
+  axis_error,
+  axis_error,
+  axis_error,
+  axis_error,
+  axis_error,
+  axis_error,
+  axis_error,
+  axis_error,
+  axis_error,
+  axis_error,
+  axis_error,
+};
+
+
+Path Path::inverse(const StepTest & baseTest) const
 {
+    U_ASSERT(inversable());
+  
     Path result;
 
     if (body.isnull()) {
         return result;
     };
 
+    std::stack<Step> stepStack;
+
+    StepTest previousTest = baseTest;
+    for (PathVector::const_iterator i = body->begin(); i != body->end(); ++i) {
+        axis_t possibleAxis = inverseAxis[i->getAxis()];
+        U_ASSERT(possibleAxis != axis_error);
+        stepStack.push(Step(possibleAxis, previousTest));
+        previousTest = i->getTest();
+    }
+
     result.modify();
     result.body->reserve(this->body->size());
 
-    for (PathVector::const_reverse_iterator i = body->rbegin(); i != body->rend(); ++i) {
-        if (i->getAxis() == axis_child) {
-            result.body->push_back(Step(axis_parent, nt_any_kind, xsd::NCName(), xsd::NCName()));
-        };
-    }
-
+    while (!stepStack.empty()) {
+        result.body->push_back(stepStack.top());
+        stepStack.pop();
+    };
+    
     return result;
 }
 
 bool Path::inversable() const
 {
-    return false;
-//    return forall(StepPredicate::axis(axis_child));
+    return forall(StepPredicate::axis(axis_child) | StepPredicate::axis(axis_descendant) | StepPredicate::axis(axis_descendant_or_self));
 }
 
-Path Path::squeeze() const
+static const StepPredicate 
+  siblingAxes(
+    StepPredicate::axis(axis_following) |
+    StepPredicate::axis(axis_following_sibling) |
+    StepPredicate::axis(axis_preceding) |
+    StepPredicate::axis(axis_preceding_sibling));
+
+bool Path::horizontal() const
 {
-    return *this;
+    return body->size() == 1 && body->at(0).satisfies(siblingAxes);
 }
 
 bool Path::forall(const pe::StepPredicate& sp) const
@@ -365,6 +369,30 @@ bool Path::exist(const pe::StepPredicate& sp) const
     return false;
 }
 
+static const axis_t atomizeAxis[] = {
+  axis_error, //    axis_error = 0, /* When not used, or implied */
+
+  axis_child,  // axis_child,
+  axis_child,  // axis_descendant,
+  axis_attribute,  // axis_attribute,
+  axis_self,  // axis_self,
+  axis_child, // axis_descendant_or_self,
+
+  axis_parent, //  axis_parent,
+  axis_parent, //  axis_ancestor,
+  axis_parent, //  axis_ancestor_or_self,
+  
+  axis_error, //  axis_following,
+  axis_error, //  axis_following_sibling,
+  axis_error, //  axis_preceding,
+  axis_error, //  axis_preceding_sibling,
+
+  axis_error, //  axis_last,
+
+  axis_error, //  axis_child_or_attribute, /* Special axis */
+};
+
+
 AtomizedPath Path::atomize() const
 {
     AtomizedPath path;
@@ -372,31 +400,20 @@ AtomizedPath Path::atomize() const
     for (PathVector::const_iterator i = body->begin(); i != body->end(); ++i) {
         bool closure = false, orSelf = false;
         t_item pnk = ti_dmchildren;
-        axis_t actual_axis = axis_error;
+        const pe::Step & step = *i;
+        axis_t actual_axis = atomizeAxis[step.getAxis()];
 
-        switch (i->getAxis()) {
-          case axis_descendant_or_self :
-          case axis_descendant :
-          case axis_child :
-            actual_axis = axis_child;
-            break;
-          case axis_ancestor_or_self :
-          case axis_ancestor :
-          case axis_parent:
-            actual_axis = axis_parent;
-            break;
-          case axis_attribute :
-            actual_axis = axis_attribute;
-            pnk = attribute;
-          case axis_self :
-            pnk = ti_all_valid;
-            break;
-          default :
-            U_ASSERT(false);
-            break;
+        U_ASSERT(actual_axis != axis_error);
+
+        switch (actual_axis) {
+          case axis_attribute:
+            pnk = attribute; break;
+          case axis_self:
+            pnk = ti_all_valid; break;
+          default: break;
         };
-
-        switch (i->getAxis()) {
+        
+        switch (step.getAxis()) {
           case axis_descendant_or_self :
           case axis_ancestor_or_self :
             orSelf = true;
@@ -414,7 +431,7 @@ AtomizedPath Path::atomize() const
             break;
         };
 
-        switch (i->getTest()) {
+        switch (step.getTest().nodeTest) {
           case nt_document :   pnk = document; break;
           case nt_element :    pnk = element; break;
           case nt_attribute :  pnk = attribute; break;
@@ -424,29 +441,30 @@ AtomizedPath Path::atomize() const
           default : break;
         };
 
-        switch (i->getTest()) {
+        switch (step.getTest().nodeTest) {
           case nt_element :
           case nt_attribute :
             // FIXME : is there really no prefix test so???
-            if (!i->name.valid()) {
+            if (step.getTest().qname.getLocalName() == xsd::QNameWildcard) {
           case nt_document :
           case nt_comment :
           case nt_text :
           case nt_wildcard_star :
                 path.push_back(new TypeTestAtom(pnk));
                 break;
-            } else if (!i->prefix.valid()) {
+            } else if (step.getTest().qname.getUri() == xsd::QNameWildcard) {
           case nt_pi :
           case nt_wildcard_name :
-                path.push_back(new NameTestAtom(pnk, i->getQName(NULL), nt_wildcard_name));
+                // TRICKY : do not try to optimize!!!
+                path.push_back(new NameTestAtom(pnk, step.getTest().qname, nt_wildcard_name));
                 break;
             } else {
           case nt_qname :
-                path.push_back(new NameTestAtom(pnk, i->getQName(NULL), nt_qname));
+                path.push_back(new NameTestAtom(pnk, step.getTest().qname, nt_qname));
                 break;
             };
           case nt_wildcard_prefix :
-            path.push_back(new NameTestAtom(pnk, i->getQName(NULL), nt_wildcard_prefix));
+            path.push_back(new NameTestAtom(pnk, step.getTest().qname, nt_wildcard_prefix));
             break;
 
           case nt_any_kind :
@@ -468,17 +486,19 @@ AtomizedPath AtomizedPath::reverse() const
 
     result._list->reserve(size());
 
-    ATOMPATH_FOR_EACH_CONST(*this, i) {
+    for (AtomizedPathVector::const_iterator i = this->end()-1; i != this->begin()-1; --i) {
         AxisPathAtom * apa = dynamic_cast<AxisPathAtom *>(*i);
 
         if (apa != NULL) {
             result.push_back(new AxisPathAtom(apa->inverse()));
         } else {
-            result.push_back(*i);
+            result.push_back((*i)->clone());
         };
     };
 
     result.setImmutable();
+
+    return result;
 }
 
 AtomizedPath::~AtomizedPath()
@@ -503,5 +523,57 @@ PathAtom* NameTestAtom::clone()
 PathAtom* TypeTestAtom::clone()
 {
     return new TypeTestAtom(*this);
+}
+
+std::ostream & AxisPathAtom::__toString(std::ostream& stream) const
+{
+    switch(axis) {
+      case axis_child:
+        stream << "C";
+        break;
+      case axis_child_or_attribute:
+        stream << "D";
+        break;
+      case axis_attribute:
+        stream << "A";
+        break;
+      case axis_parent:
+        stream << "P";
+        break;
+      default:
+        U_ASSERT(false);
+        break;
+    };
+
+    if (orSelf) {
+        stream << "+";
+    } else if (closure) {
+        stream << "*";
+    };
+
+    return stream;
+}
+
+std::ostream & NameTestAtom::__toString(std::ostream& stream) const
+{
+    stream << "N{" << std::setbase(2) << itemType << " " << qname.getColonizedName() << "}";
+    return stream;
+}
+
+std::ostream & TypeTestAtom::__toString(std::ostream& stream) const
+{
+    stream << "T{" << std::setbase(2) << itemType << "}";
+    return stream;
+}
+
+std::string AtomizedPath::__toString() const
+{
+    std::stringstream ss;
+
+    ATOMPATH_FOR_EACH_CONST(*this, it) {
+        (*it)->__toString(ss);
+    };
+
+    return ss.str();
 }
 

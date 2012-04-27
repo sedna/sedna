@@ -36,7 +36,7 @@ struct TupleValueInfo {
     enum order_t {
         none = 0, node_unique, node_ddo, value
     };
-
+    
     order_t order;
     
     DataNode * node;
@@ -50,6 +50,7 @@ public:
     explicit TupleChrysalis(const TupleChrysalis * parent);
 
     std::vector<TupleValueInfo> tuples;
+    std::vector<unsigned> sortOrder;
 
     unsigned _width;
 

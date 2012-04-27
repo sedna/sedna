@@ -12,6 +12,7 @@
 #include "tr/executor/base/xs_names.h"
 #include "tr/structures/nodeinterface.h"
 #include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/xpath/SchemaTests.h"
 
 using namespace xsd;
 
@@ -67,13 +68,6 @@ NCName NCName::check(const char* name, bool quietly)
 AnyURI AnyURI::check(const char* uri)
 {
     return AnyURI(nameStorage.intern(uri));
-}
-
-QName::QName() : ns(NULL_XMLNS), localName(NULL) { }
-
-QName::QName(const xsd::QName& from) : ns(from.ns)
-{
-    this->localName = from.localName;
 }
 
 QName::QName(xmlns_ptr ns, const char* aLocalName) : ns(ns), localName(NULL)
@@ -300,6 +294,45 @@ QName QName::createResolve(const char* prefixAndLocal, INamespaceMap* namespaces
         return QName(ns, cn.second.getValue());
     }
 }
+
+#define IS_WILDCARD(x) ((x) == NULL || (x) == QNameWildcard || strcmp((x), QNameWildcard) == 0)
+
+TemplateQName::TemplateQName(const char* _uri, const char* _localName)
+  : uri(NULL), localName(NULL)
+{
+    if (IS_WILDCARD(_uri)) {
+        uri = QNameWildcard;
+    } else {
+        uri = nameStorage.intern(_uri);
+    };
+
+    if (IS_WILDCARD(_localName) || _localName[0] == '\0') {
+        localName = QNameWildcard;
+    } else {
+        localName = nameStorage.intern(_localName);
+    };
+}
+
+std::string TemplateQName::getColonizedName() const
+{
+    std::stringstream ss;
+
+    if (uri == QNameWildcard) {
+      ss << "*";
+    } else {
+      ss << "{" << uri << "}";
+    }
+
+    ss << ":" << localName;
+    return ss.str();
+}
+
+SchemaTestData* TemplateQName::getTestData(SchemaTestData* _td) const
+{
+    _td->m_uri = uri;
+    _td->m_local = localName;
+}
+
 
 QName QName::bulkloadParse(const char* triplet)
 {

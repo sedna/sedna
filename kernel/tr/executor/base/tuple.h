@@ -253,16 +253,17 @@ public:
         case tc_safenode : return get_safenode();
         case tc_node : return get_smartnode();
         case tc_unsafenode : return get_unsafenode();
-        default: return XNULL;
+        default: return get_xptr();
       }
     }
 
     xptr get_node_inderection() const {
       switch (t & TC_TYPE_MASK) {
-        case tc_safenode : return get_xptr();
+        case tc_safenode : return get_xptr(); 
         case tc_node : return get_smartnode_indir();
         case tc_unsafenode : return getIndirectionSafeCP(checkp(get_xptr()));
-        default: return XNULL;
+        // TODO: fixthis
+        default: return get_xptr();
       }
     }
 

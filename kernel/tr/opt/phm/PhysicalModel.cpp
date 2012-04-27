@@ -227,80 +227,91 @@ void* PhysicalModel::compile(SPredicate* pred)
         evaluate_Left_then_join,
     };
 
-    strategy_t strategy = impossible_to_evaluate;
-
-    POProtIn leftOp = plan->getRef(pred->left()->absoluteIndex);
-    POProtIn rightOp = plan->getRef(pred->right()->absoluteIndex);
-
-    POProtIn leftCandidate, rightCandidate;
-
     result = NULL;
+    
+    if (pred->path.horizontal()) {
+        POProtIn leftOp = materialize(plan->getRef(pred->left()->absoluteIndex));
+        POProtIn rightOp = materialize(plan->getRef(pred->right()->absoluteIndex));
 
-    do {
         if (leftOp.op != NULL && rightOp.op != NULL) {
-            strategy = join;
-        } else if (leftOp.op != NULL) {
-            strategy = evaluate_Right;
-        } else {
-            bool pathInversable = pred->path.inversable();
-            leftCandidate = doMaterialize(leftOp.index, false);
-
-            if (rightOp.op != NULL) {
-                if (pathInversable) {
-                    strategy = evaluate_Left;
-                } else {
-                    strategy = evaluate_Left_then_join;
-                };
-            } else {
-                U_ASSERT(leftOp.op == NULL && rightOp.op == NULL);
-                rightCandidate = doMaterialize(rightOp.index, false);
-
-                if (!pathInversable || rightCandidate.op == NULL) {
-                    strategy = evaluate_Left_then_Right;
-                } else if (leftCandidate.op == NULL) {
-                    strategy = evaluate_Right_then_Left;
-                } else {
-                    strategy = magic_join;
-                };
-            };
-        }
-    } while (false);
-
-
-
-    switch(strategy) {
-        case evaluate_Left_then_join:
-            U_ASSERT(leftCandidate.op != NULL);
-            plan->opList.push_back(leftCandidate.op);
-            leftOp = leftCandidate;
-        case join:
             result = new StructuralJoinPrototype(this, leftOp, rightOp, pred->path);
-            break;
-        case magic_join:
-/*
-            U_ASSERT(leftCandidate.op != NULL && rightCandidate.op != NULL);
-            result = new MagicJoinPrototype(this, initialRef(leftOp.index), initialRef(rightOp.index), pred->path);
-            break;
-*/
-        case evaluate_Left_then_Right:
-            U_ASSERT(leftCandidate.op != NULL);
-            plan->opList.push_back(leftCandidate.op);
-            leftOp = leftCandidate;
-        case evaluate_Right:
-            result = new PathEvaluationPrototype(this, leftOp, initialRef(rightOp.index), pred->path);
-            break;
-        case evaluate_Right_then_Left:
-            U_ASSERT(pred->path.inversable());
-            U_ASSERT(rightCandidate.op != NULL);
-            plan->opList.push_back(rightCandidate.op);
-            rightOp = rightCandidate;
-        case evaluate_Left:
-            U_ASSERT(pred->path.inversable());
-            result = new PathEvaluationPrototype(this, rightOp, initialRef(leftOp.index), pred->path.inverse().squeeze());
-            break;
-        case impossible_to_evaluate:
-            break;
-    };
+        } else {
+            return NULL;
+        }
+    } else {
+        strategy_t strategy = impossible_to_evaluate;
+
+        POProtIn leftOp = plan->getRef(pred->left()->absoluteIndex);
+        POProtIn rightOp = plan->getRef(pred->right()->absoluteIndex);
+
+        POProtIn leftCandidate, rightCandidate;
+
+        do {
+            if (leftOp.op != NULL && rightOp.op != NULL) {
+                strategy = join;
+            } else if (leftOp.op != NULL) {
+                strategy = evaluate_Right;
+            } else {
+                bool pathInversable = pred->path.inversable();
+                leftCandidate = doMaterialize(leftOp.index, false);
+
+                if (rightOp.op != NULL) {
+                    if (pathInversable) {
+                        strategy = evaluate_Left;
+                    } else {
+                        strategy = evaluate_Left_then_join;
+                    };
+                } else {
+                    U_ASSERT(leftOp.op == NULL && rightOp.op == NULL);
+                    rightCandidate = doMaterialize(rightOp.index, false);
+
+                    if (!pathInversable || rightCandidate.op == NULL) {
+                        strategy = evaluate_Left_then_Right;
+                    } else if (leftCandidate.op == NULL) {
+                        strategy = evaluate_Right_then_Left;
+                    } else {
+                        strategy = magic_join;
+                    };
+                };
+            }
+        } while (false);
+
+        switch(strategy) {
+            case evaluate_Left_then_join:
+                U_ASSERT(leftCandidate.op != NULL);
+                plan->opList.push_back(leftCandidate.op);
+                leftOp = leftCandidate;
+            case join:
+                result = new StructuralJoinPrototype(this, leftOp, rightOp, pred->path);
+                break;
+            case magic_join:
+    /*
+                U_ASSERT(leftCandidate.op != NULL && rightCandidate.op != NULL);
+                result = new MagicJoinPrototype(this, initialRef(leftOp.index), initialRef(rightOp.index), pred->path);
+                break;
+    */
+            case evaluate_Left_then_Right:
+                U_ASSERT(leftCandidate.op != NULL);
+                plan->opList.push_back(leftCandidate.op);
+                leftOp = leftCandidate;
+            case evaluate_Right:
+                result = new PathEvaluationPrototype(this, leftOp, initialRef(rightOp.index), pred->path);
+                break;
+            case evaluate_Right_then_Left:
+                U_ASSERT(pred->path.inversable());
+                U_ASSERT(rightCandidate.op != NULL);
+                plan->opList.push_back(rightCandidate.op);
+                rightOp = rightCandidate;
+            case evaluate_Left:
+                U_ASSERT(pred->path.inversable());
+                U_ASSERT(false);
+//                result = new PathEvaluationPrototype(this, rightOp, initialRef(leftOp.index), pred->path.inverse());
+                break;
+            case impossible_to_evaluate:
+                return NULL;
+//                break;
+        };
+    }
 
     updateBranch(result);
     plan->opList.push_back(result);

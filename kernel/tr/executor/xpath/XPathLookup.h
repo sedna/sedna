@@ -34,7 +34,7 @@ public:
     AtomizedPath atomizedPath;
     AtomizedPath reversePath;
 
-    SchemaLookup(const Path & path);
+    SchemaLookup(const pe::Path& _path);
     ~SchemaLookup();
 
     SchemaLookup & compile();

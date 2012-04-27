@@ -25,6 +25,7 @@ namespace pe {
 }
 
 class DataGraphMaster {
+  friend class DataGraph;
   public:
     DataGraphMaster();
     ~DataGraphMaster();
@@ -54,6 +55,8 @@ class DataGraphMaster {
     DataGraph * createPath(DataGraph* dg, TupleId left, TupleId right, const pe::Path& _path, bool outer = false);
     DataGraph * createComparison(DataGraph * dg, TupleId left, TupleId right, const Comparison & cmp);
 
+    Predicate * replacePredicate(DataGraph* dg, Predicate* predicate, Predicate* withPredicate);
+    
     DataNode * getVarNode(TupleId var) const { return variableMap.at(var); };
 
     PPIterator* compile(DataGraph* dg);

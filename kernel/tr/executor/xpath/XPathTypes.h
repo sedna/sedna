@@ -76,31 +76,39 @@ static const uint32_t CDPAAxisTest =
 static const uint32_t selfAxisTest = StepPredicate::axis(axis_self);
   
 static const uint32_t nidComparableAxisTest = CDPAAxisTest | selfAxisTest;
-  
+
+struct StepTest {
+    node_test_t nodeTest;
+    xsd::TemplateQName qname;
+
+    StepTest(node_test_t _nodeTest, const xsd::TemplateQName &_qname)
+     : nodeTest(_nodeTest), qname(_qname) {};
+};
+
 class Step {
 private:
     axis_t axis;
-    node_test_t nodeTest;
 public:
-    xsd::NCName prefix;
-    xsd::NCName name;
+    StepTest test;
+  
+    Step() : axis(axis_error), test(nt_error, xsd::QNameAny) {};
 
-    Step() : axis(axis_error), nodeTest(nt_error) {};
     Step(const scheme_list * lst);
-    Step(axis_t _axis, node_test_t _nodeTest, const xsd::NCName &_prefix, const xsd::NCName &_name)
-        : axis(_axis), nodeTest(_nodeTest), prefix(_prefix), name(_name) {};
 
-//    Step(const std::string & s);
-//    Step(const ASTAxisStep * s, sedna::lr2rqp * context);
+    Step(axis_t _axis, const StepTest& _test)
+        : axis(_axis), test(_test) {};
 
-    Step(const Step& x)
-        : axis(x.axis), nodeTest(x.nodeTest), prefix(x.prefix), name(x.name) {};
+    Step(axis_t _axis, node_test_t _nodeTest, const xsd::TemplateQName &_qname)
+        : axis(_axis), test(_nodeTest, _qname) {};
+
+    Step(axis_t _axis, node_test_t _nodeTest, const char * _prefix, const char * _name)
+        : axis(_axis), test(_nodeTest, xsd::TemplateQName(_prefix, _name)) {};
+
+    Step(const Step& x) : axis(x.axis), test(x.test) {};
 
     Step& operator=(const Step& x) {
         axis = x.axis;
-        nodeTest = x.nodeTest;
-        name = x.name;
-        prefix = x.prefix;
+        test = x.test;
 
         return *this;
     };
@@ -114,7 +122,7 @@ public:
     xsd::QName getQName(INamespaceMap * _context) const;
 
     axis_t getAxis() const { return axis; };
-    node_test_t getTest() const { return nodeTest; }
+    StepTest getTest() const { return test; }
 
     std::string toXPathString() const;
     std::string toLRString() const;
@@ -128,6 +136,7 @@ public:
     virtual ~PathAtom() {};
     int cost() const { return _cost; };
     virtual PathAtom * clone() = 0;
+    virtual std::ostream & __toString(std::ostream & stream) const = 0;    
 };
 
 typedef std::vector<PathAtom *> AtomizedPathVector;
@@ -181,6 +190,8 @@ public:
 
         return __result;
     };
+
+    std::string __toString() const;
 };
 
 typedef std::vector<Step> PathVector;
@@ -204,27 +215,27 @@ public:
     Path(const Step & x);
     Path(const Path & x) : body(x.body), hash(x.hash) {};
 
-//    Path(const std::string & s);
-
     Path & operator = (const Path & x) {
         body = x.body;
         return *this;
     };
 
-    Path operator + (const Path & x);
-    Path & append(const Step & _step);
-
-    Path inverse() const;
-    Path squeeze() const;
-
-    AtomizedPath atomize() const;
-
-    bool inversable() const;
-
     bool forall(const StepPredicate & sp) const;
     bool exist(const StepPredicate & sp) const;
 
+    bool valid() const;
+    bool inversable() const;
+    bool horizontal() const;
+
+    Path inverse(const StepTest & baseTest) const;
+    
+    Path operator + (const Path & x);
+    Path & append(const Step & _step);
+
+    AtomizedPath atomize() const;
+
     PathVectorPtr getBody() const { return body; };
+
     std::string toXPathString() const;
     std::string toLRString() const;
 };
@@ -272,6 +283,8 @@ class AxisPathAtom : public PathAtom { public:
         
         return result;
     };
+
+    virtual std::ostream & __toString(std::ostream& stream) const;
 };
 
 class TypeTestAtom : public PathAtom {
@@ -282,13 +295,17 @@ public:
     node_test_t nt;
     
     TypeTestAtom(t_item _itemType) : PathAtom(1), itemType(_itemType), nt(nt_type_test) {};
+
     virtual PathAtom* clone();
+    virtual std::ostream & __toString(std::ostream& stream) const;
 };
 
 class NameTestAtom : public TypeTestAtom { public:
-    xsd::QName qname;
-    NameTestAtom(t_item _itemType, const xsd::QName & _qname, node_test_t _nt) : TypeTestAtom(1, _itemType, _nt), qname(_qname) {};
+    xsd::TemplateQName qname;
+
+    NameTestAtom(t_item _itemType, const xsd::TemplateQName & _qname, node_test_t _nt) : TypeTestAtom(1, _itemType, _nt), qname(_qname) {};
     virtual PathAtom* clone();
+    virtual std::ostream & __toString(std::ostream& stream) const;
 };
 
 };

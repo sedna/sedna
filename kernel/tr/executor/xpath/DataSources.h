@@ -26,7 +26,7 @@ public:
     DataRoot(const scheme_list * x);
 
     inline schema_node_cptr getSchemaNode() const {
-        if (snode != XNULL) {
+        if (snode == XNULL) {
             snode = _getSchemaNode();
         };
 

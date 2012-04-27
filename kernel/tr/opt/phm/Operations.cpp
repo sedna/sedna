@@ -109,11 +109,6 @@ ValueScanPrototype::ValueScanPrototype(PhysicalModel* model, const POProtIn& _le
 }
 
 
-
-
-
-
-
 struct XLogXOp { double operator() (double x) { return x*log(1+x); } };
 
 void AbsPathScanPrototype::evaluateCost(CostModel* model)
@@ -130,9 +125,17 @@ void AbsPathScanPrototype::evaluateCost(CostModel* model)
     cost->firstCost = costInfo->schemaTraverseCost;
 
     Range evalCost = costInfo->blockCount * model->getIOCost() + costInfo->card * model->getCPUCost();
-    Range heapSortCost = wantSort ? costInfo->card.map<XLogXOp>() * model->getCPUCost() : 0;
 
-    cost->nextCost = (evalCost + heapSortCost) / stats->distinctValues;
+    wantSort = true;
+    Range heapSortCost = (wantSort ? (costInfo->card.map<XLogXOp>() * model->getCPUCost()) : Range(0.0));
+
+    if (stats->distinctValues.upper == 0) {
+        cost->nextCost = 0;
+    } else if (stats->distinctValues.lower == 0) {
+        cost->nextCost = (evalCost + heapSortCost) / stats->distinctValues.upper;
+    } else {
+        cost->nextCost = (evalCost + heapSortCost) / stats->distinctValues;
+    }
 
     U_ASSERT(cost->nextCost.lower > 0);
     cost->fullCost = cost->firstCost + evalCost + heapSortCost;
@@ -168,7 +171,10 @@ void SortMergeJoinPrototype::evaluateCost(CostModel* model)
 
     cost->firstCost =
         in.at(0).op->getCost()->fullCost +
-        in.at(1).op->getCost()->fullCost +
+        in.at(1).op->getCost()->fullCost;
+
+    // TODO if sorted, update sorted information
+    cost->firstCost +=
         leftSeq->sortCost + rightSeq->sortCost;
 
     Range mergeCost =
@@ -179,6 +185,8 @@ void SortMergeJoinPrototype::evaluateCost(CostModel* model)
 
     cost->nextCost = mergeCost / result->rowCount;
     cost->fullCost = cost->firstCost + mergeCost;
+
+    // Update sort information
 }
 
 void ValueScanPrototype::evaluateCost(CostModel* model)

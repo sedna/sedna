@@ -37,7 +37,7 @@ bool fit;
 PPTest::PPTest(dynamic_context *_cxt_,
                operation_info _info_,
                PPOpIn _seq_) : PPIterator(_cxt_, _info_, "PPTest"),
-                               seq(_seq_)
+                               seq(_seq_), data(NULL)
 {
 	this->test_fun=&PPTest::checkTreeConsistency;
 }
@@ -63,122 +63,142 @@ void PPTest::do_close()
 {
     seq.op->close();
 }
+
+struct __test_tmp {
+    std::vector<schema_node_xptr> x;
+    std::vector<schema_node_xptr>::size_type i;
+};
+
+#include <sstream>
+#include "tr/executor/xpath/XPathLookup.h"
+
+std::string schemaPath(schema_node_cptr snode) {
+    std::stringstream path;
+    std::stack<schema_node_cptr> path_sn;
+
+    while (snode.found()) {
+        path_sn.push(snode);
+        snode = snode->parent;
+    };
+
+    while (!path_sn.empty()) {
+        path << path_sn.top()->get_qname().getColonizedName().c_str() << "/";
+        path_sn.pop();
+    }
+
+    return path.str();
+};
+
 void PPTest::do_next (tuple &t)
 {
-	tuple t1(seq.ts);
-	seq.op->next(t1);
-	//Preliminary node analysis
-	if (t1.is_eos())
-	{
-		t.set_eos();
-		return;
-	}
-	tuple_cell& tc= t1.cells[0];
-	if (!tc.is_node())
-	{
-		throw XQUERY_EXCEPTION(SE2031);
-	}
-	xptr node=tc.get_node();
-	CHECKP(node);
-	std::ostringstream strg;
-	strg<< "checking the node: xptr=(" << node.layer<< ",0x"<< hex << node.getOffs() <<")\n";
-	try
-	{
-		test_fun(node);
-		strg<<"true";
+    __test_tmp * snodes = NULL;
 
-	}
-	catch(SednaException &e)
-	{
-       strg << e.getMsg() << endl;
-	   throw ;
+    if (data != NULL) {
+        snodes = (__test_tmp *) data;
+    } else {
+        seq.op->next(t);
+
+        if (t.eos) {
+            return;
+        }
+
+        DataRoot root(DataRoot::drt_document, "auction");
+        TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
+        reader.read();
+        std::string list(reader.buffer, reader.size);
+        AutoSchemeList scml(list.c_str());
+        pe::Path path(scml.get());
+        pe::SchemaLookup sclkp(path);
+        snodes = new __test_tmp();
+
+        sclkp.compile();
+        sclkp.findSomething(root, &snodes->x, 0);;
+
+        snodes->i = 0;
+        data = snodes;
+    };
+
+    if (snodes->i == snodes->x.size()) {
+        delete snodes;
+        data = NULL;
+        return do_next(t);
+    };
+
+    schema_node_cptr snode = snodes->x.at(snodes->i);
+
+    t.cells[0] = tuple_cell::atomic_deep(xs_string, schemaPath(snode).c_str());
+    t.eos = false;
+    snodes->i++;
+
+/*
+
+// Path parsing
+   
+    seq.op->next(t);
+
+    if (t.eos) {
+        return;
     }
-	t.copy(tuple_cell::atomic_deep(xs_string,strg.str().c_str())) ;
 
-	/*while (true)
-	{
-		seq.op->next(t);
-		//Preliminary node analysis
-		if (t.is_eos())
-		{
-			//t.set_eos();
-			return;
-		}
-		tuple_cell& tc= t.cells[0];
-		if (!tc.is_node())
-		{
-			//throw USER_EXCEPTION(SE2031);
-			req_buf.set(tc);
-		}
-		else
-		{
-			xptr node=tc.get_node();
-			CHECKP(node);
-			if (checkFT(node)) return;
-		}
-	}*/
-	/*if (fit)
-	{
-		seq.op->next(t);
-		//Preliminary node analysis
-		if (t.is_eos())
-		{
-			//t.set_eos();
-			return;
-		}
-		tuple_cell& tc= t.cells[0];
-		int command;
-		if (!tc.is_node())
-		{
-			//throw USER_EXCEPTION(SE2031);
-			command=tc.get_xs_integer();
-		}
-		seq.op->next(t);
-		//Preliminary node analysis
-		if (t.is_eos())
-		{
-			//t.set_eos();
-			return;
-		}
-		tc= t.cells[0];
-		if (!tc.is_node())
-		{
-			//throw USER_EXCEPTION(SE2031);
-			if (command==1)
-			{
-				req_buf.set(tc);
-				sj=se_new SednaSearchJob(&seq);
-				sj->set_request(tc);
-			}
-			else if (command==2)
-			{
-				req_buf.set(tc);
-				sj=se_new SednaSearchJob();
-				sj->set_request(tc);
-				seq.op->next(t);
-				tc= t.cells[0];
-				sj->set_index(tc);
-			}
-			else
-			{
-				req_buf.set(tc);
-				SednaIndexJob si(&seq);
-				si.set_index_name(tc);
-				si.create_index();
-				si.SetActionCompress();
-				si.Execute();
-				t.set_eos();
-				return;
-			}
-		}
-		fit=false;
-	}
-	sj->get_next_result(t);
-	if (t.is_eos())
-		fit=true;
-	//int res= checkFT(seq);
-	//t.copy(tuple_cell::atomic(res));
-	*/
+    TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
+    reader.read();
+    std::string list(reader.buffer, reader.size);
+    AutoSchemeList scml(list.c_str());
+    pe::Path path(scml.get());
+    pe::AtomizedPath ap = path.atomize();
+
+    t.cells[0] = tuple_cell::atomic_deep(xs_string, ap.reverse().__toString().c_str());
+    t.eos = false;
+
+/*
+
+// Schema traverse
+  
+    __test_tmp * snodes = NULL;
+    
+    if (data != NULL) {
+        snodes = (__test_tmp *) data;
+    } else {
+        seq.op->next(t);
+
+        if (t.eos) {
+            return;
+        }
+    
+        DataRoot root(DataRoot::drt_document, "auction");
+        const char * name = t.cells[0].get_str_mem();
+        doc_schema_node_cptr dataroot_snode(root.getSchemaNode().ptr());
+        snodes = new __test_tmp();
+        dataroot_snode->find_descendant(name, element, &snodes->x);
+        snodes->i = 0;
+        data = snodes;
+    };
+
+    if (snodes->i == snodes->x.size()) {
+        delete snodes;
+        data = NULL;
+        return do_next(t);
+    };
+
+    schema_node_cptr snode = snodes->x.at(snodes->i);
+
+    std::stringstream path;
+    std::stack<schema_node_cptr> path_sn;
+
+    while (snode.found()) {
+        path_sn.push(snode);
+        snode = snode->parent;
+    };
+
+    while (!path_sn.empty()) {
+        path << path_sn.top()->get_qname().getColonizedName().c_str() << "/";
+        path_sn.pop();
+    }
+
+    t.cells[0] = tuple_cell::atomic_deep(xs_string, path.str().c_str());
+    t.eos = false;
+    snodes->i++;
+*/    
 }
 
 PPIterator* PPTest::do_copy(dynamic_context *_cxt_)

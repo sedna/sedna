@@ -180,7 +180,6 @@ Predicate * SPredicate::replace(DataNode* n1, DataNode* n2)
 
 /* Static optimization phase */
 
-
 void DataGraph::precompile()
 {
     DataNodeList list1, list2;
@@ -190,6 +189,29 @@ void DataGraph::precompile()
     RemovalList removalCandidates;
 
     updateIndex();
+
+// Replace document order comparisons with path expressions
+    
+    for (PredicateList::iterator p = predicates.begin(); p != predicates.end(); ++p) {
+        VPredicate * pred = dynamic_cast<VPredicate*>(*p);
+
+        if (pred != NULL && (pred->cmp.op == Comparison::do_after || pred->cmp.op == Comparison::do_before)) {
+            pe::Step step;
+
+            if (pred->cmp.op == Comparison::do_after) {
+                step = pe::Step(pe::axis_following, nt_any_kind, xsd::QNameAny);
+            } else {
+                step = pe::Step(pe::axis_preceding, nt_any_kind, xsd::QNameAny);
+            };
+
+            SPredicate * rep = new SPredicate();
+
+            rep->path = pe::Path(step);
+            rep->outer = false;
+
+            owner->replacePredicate(this, pred, rep);
+        };
+    }
 
 // Find all root vertices
 
@@ -212,10 +234,11 @@ void DataGraph::precompile()
             while (-1 != (i = it.next())) {
                 SPredicate * pred = dynamic_cast<SPredicate*>(this->predicates.at(i));
 
+                // TODO : not every path can be concatinated, some should be broken
                 if (NULL != pred && pred->left() == dn &&
                   pred->right()->type == DataNode::dnFreeNode)
                 {
-                    pe::Path path = (pred->left()->path + pred->path).squeeze();
+                    pe::Path path = pred->left()->path + pred->path;
 
 /*
                     if (!path.evaluatable()) {

@@ -16,6 +16,7 @@
 #include "tr/structures/xmlns.h"
 #include "tr/executor/por2qep/scheme_tree.h"
 
+struct SchemaTestData;
 class INamespaceMap;
 class dynamic_context;
 
@@ -131,26 +132,24 @@ class QName {
     QName(xmlns_ptr ns, const char * localName);
     QName(xmlns_ptr ns, const char * localName, size_t len);
   public:
-    QName(); // invalid!
-    QName(const QName & from);
+    QName() : ns(NULL_XMLNS), localName(NULL) { }; // invalid!
+    QName(const QName & from) : ns(from.ns), localName(from.localName) {};
 
     explicit QName(const const_qname_t & x) : ns(x.ns), localName(x.localName) {};
-    
     const_qname_t toConst() { const_qname_t result = {ns, localName}; return result; };
 
+    static void toLR(std::ostream& os, const AnyURI uri, const NCName prefix, const NCName local);
     void toLR(std::ostream& os) const;
     std::string toLRString() const;
 
     /* Serializes qname, allocates memory cat_malloc */
     const char * serialize(void * parent) const;
-
     char * serializeTo(char * tmp) const;
+
     size_t getLen() const { return strlen(localName) + 2 * sizeof(uintptr_t) + 1; };
 
     std::string getColonizedName() const;
-
     static std::string getColonizedName(NCName prefix, NCName local);
-    static void toLR(std::ostream& os, const AnyURI uri, const NCName prefix, const NCName local);
 
     inline xmlns_ptr getXmlNs() const { return ns; };
     inline const char * getUri() const { return ns == NULL_XMLNS ? NULL : ns->get_uri(); };
@@ -209,6 +208,7 @@ class QName {
 
     static QName fromLR(scheme_list* lst);
 
+// TODO: replace all exceptions with std::exception
     static QName createNsN(xmlns_ptr ns, const char * local, bool quietly = false);
     static QName createUCn(const char * uri, const char * prefixAndLocal, bool quietly = false);
     static QName createUPL(const char * uri, const char * prefix, const char * localName, bool quietly = false);
@@ -232,6 +232,34 @@ class QName {
         }
     };
 };
+
+static const char * QNameWildcard = "*";
+
+class TemplateQName {
+  private:
+    const char * uri;
+    const char * localName;
+
+  public:
+    TemplateQName() : uri(NULL), localName(NULL) {}; // invalid;
+    TemplateQName(const TemplateQName & _from) : uri(_from.uri), localName(_from.localName) {};
+
+    TemplateQName(const char * _uri, const char * localName);
+
+    inline const char * getUri() const { return uri; };
+    inline const char * getLocalName() const { return localName; };
+
+    std::string getColonizedName() const;
+
+    QName toQName(INamespaceMap * namespaces) const;
+
+    SchemaTestData * getTestData(SchemaTestData *) const;
+
+    struct __const_wildcard {};
+    explicit TemplateQName(const __const_wildcard & cwldr) : uri(QNameWildcard), localName(QNameWildcard) {}; // invalid;
+};
+
+static const TemplateQName QNameAny = TemplateQName(TemplateQName::__const_wildcard());
 
 }
 

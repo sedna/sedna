@@ -38,6 +38,7 @@ bool executePathEx(schema_node_cptr base, const AtomizedPath & path, std::set<sc
     do {
         const ExecutionStackItem & step = toTraverse.top();
         PathAtom * item = *step.first;
+        base = step.second;
         toTraverse.pop();
 
         if (step.first == path.end()) {
@@ -125,7 +126,7 @@ bool executePathEx(schema_node_cptr base, const AtomizedPath & path, std::set<sc
         };
     } while (!toTraverse.empty());
 
-    return !output->empty();
+    return !(output == NULL || output->empty());
 }
 
 void SchemaLookup::findSomething(const DataRoot& root, std::vector< schema_node_xptr >* output, int limit)
@@ -170,17 +171,17 @@ void SchemaLookup::findSomething(const DataRoot& root, std::vector< schema_node_
         };
     }
 
-    std::copy(nodeCandidates.begin(), nodeCandidates.end(), output->end());
+    std::copy(nodeCandidates.begin(), nodeCandidates.end(), std::back_inserter(*output));
 }
 
 void SchemaLookup::execute(schema_node_cptr base, std::vector< schema_node_xptr >* output)
 {
     std::set<schema_node_xptr> goalSet;
     executePathEx(base.ptr(), atomizedPath, &goalSet);
-    std::copy(goalSet.begin(), goalSet.end(), output->end());
+    std::copy(goalSet.begin(), goalSet.end(), std::back_inserter(*output));
 }
 
-SchemaLookup::SchemaLookup(const pe::Path& _path) : atomizedPath(), path(_path)
+SchemaLookup::SchemaLookup(const pe::Path& _path) : path(_path), atomizedPath()
 {
     
 }
@@ -189,155 +190,4 @@ SchemaLookup::~SchemaLookup()
 {
 
 }
-
-
-/*
-class DumbIterator : public IPathIterator {
-  public:
-    virtual Node next();
-};
-
-class ReusableIterator : public IPathIterator {
-  public:
-    virtual void init(Node node) = 0;
-};
-
-class StateIterator : public ReusableIterator {
-  public:
-    TestNodeProc test;
-    Node currentNode;
-
-    void init(Node node, Node currentNode);
-};
-
-class StepByStepLookup : public PathLookup {
-  private:
-//    AxisHints * evaluationInfo;
-    pe::Step step;
-    StateIterator * currentIterator;
-    NextNodeProc resolve;
-  public:
-    StepByStepLookup(const Path & path);
-    virtual ~StepByStepLookup();
-
-    virtual void compile();
-    virtual NodeIterator execute(const Node& node);
-};
-
-class PathIndexLookup : public PathLookup {
-  private:
-    LookupInfo * lookupInfo;
-    ReusableIterator * currentIterator;
-  public:
-    PathIndexLookup(const Path & _path);
-    virtual ~PathIndexLookup();
-
-    void compile();
-
-    virtual NodeIterator execute(const Node& node);
-};
-
-class ParentIterator : public StateIterator {
-  public:
-    NodeHeapStorage nodeHeap;
-};
-
-class MergeIterator : public StateIterator {
-  public:
-    NodeHeapStorage nodeHeap;
-};
-
-class SiblingMergeIterator : public MergeIterator {
-  public:
-    virtual Node next();
-};
-
-class DescendantMergeIterator : public MergeIterator {
-  public:
-    Node baseNode;
-
-    virtual Node next();
-};
-
-class TraverseAll : public StateIterator {
-  public:
-    Node baseNode;
-
-    virtual Node next();
-};
-
-PathLookup::PathLookup(const pe::Path& _path)
-  : path(_path) { }
-
-StepByStepLookup::StepByStepLookup(const pe::Path& path)
-  : PathLookup(path), currentIterator(NULL)
-{
-    if (path.getBody()->size() != 1) {
-        throw USER_EXCEPTION_FNERROR("Optimizer error", "StepByStepLookup not possible with given path");
-    };
-
-    step = path.getBody()->at(0);
-}
-
-StepByStepLookup::~StepByStepLookup()
-{
-    delete currentIterator;
-}
-
-void StepByStepLookup::compile()
-{
-/*
-    switch (step.getAxis()) {
-      case axis_child : {
-        resolve = resolveAxis_ChildAny();
-      } break;
-      case axis_descendant : {
-        resolve = resolve
-      } break;
-      case axis_descendant_or_self : {
-      } break;
-      
-      case axis_ancestor : {
-        resolve = nextNode_Parent();
-        currentIterator = new ParentIterator();
-      } break;
-
-      case axis_parent : {
-        resolve = nextNode_Parent();
-        currentIterator = new DumbIterator();
-      } break;
-    }
-
-    currentIterator =
-}
-
-NodeIterator StepByStepLookup::execute(const Node& node)
-{
-    return currentIterator;
-//    currentIterator->init(node, resolve(node, NULL));
-}
-
-
-
-
-// StepByStepLookup
-
-
-
-
-/*
-Node nextNode_traverseAll(Node node, AxisHints * hint);
-Node nextNode_Parent(Node node, AxisHints * hint);
-Node nextNode_Null(Node node, AxisHints * hint);
-
-Node nextNode_RightSiblingSame(Node node, AxisHints * hint);
-Node nextNode_RightSiblingAny(Node node, AxisHints * hint);
-Node nextNode_LeftSiblingSame(Node node, AxisHints * hint);
-Node nextNode_LeftSiblingAny(Node node, AxisHints * hint);
-Node nextNode_RightSiblingType(Node node, AxisHints * hint);
-
-Node nextNode_following(Node node, AxisHints * hint);
-Node nextNode_preceding(Node node, AxisHints * hint);
-*/
-
 

@@ -233,6 +233,24 @@ DataGraph* DataGraphMaster::createPath(DataGraph* dg, TupleId left, TupleId righ
     return dg;
 }
 
+Predicate* DataGraphMaster::replacePredicate(DataGraph* dg, Predicate* predicate, Predicate* withPredicate)
+{
+    if (withPredicate != NULL) {
+        withPredicate->index = predicate->index;
+        withPredicate->dataNodeList = predicate->dataNodeList;
+        withPredicate->dataNodeMask = predicate->dataNodeMask;
+        withPredicate->indexBit = predicate->indexBit;
+        withPredicate->neighbours = predicate->neighbours;
+
+        allPredicates.push_back(withPredicate);
+    }
+
+    dg->predicates[predicate->index] = withPredicate;
+    
+    return withPredicate;
+}
+
+
 DataGraph* DataGraphMaster::createComparison(DataGraph* dg, TupleId left, TupleId right, const Comparison& cmp)
 {
     VPredicate * p = new VPredicate();

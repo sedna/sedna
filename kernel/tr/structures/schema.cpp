@@ -564,7 +564,8 @@ void doc_schema_node_object::find_descendant(const char * localName, t_item type
 
     if (schema_node_name_index != XNULL) {
         scoped_ptr<idx::KeyValueMultimap> index = NameIndexTree::openIndex(schema_node_name_index);
-        scoped_ptr<idx::KeyValueIterator> iterator = index->find_equal(tuple_cell::atomic_deep(xs_string, toMagicName(get_name(), type)));
+        scoped_ptr<idx::KeyValueIterator> iterator = index->find_equal(
+          tuple_cell::atomic_deep(xs_string, toMagicName(localName, type)));
 
         if (!iterator->isnull()) do {
             result->push_back(iterator->getValue().get_xptr());
