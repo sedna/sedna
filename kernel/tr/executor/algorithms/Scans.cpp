@@ -7,27 +7,6 @@
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/executor/base/PPUtils.h"
 
-struct AbsPath : public AbstractSequence {
-    xpe::XPathLookup path;
-    xpe::NodeIterator iterator;
-    bool docOrder;
-
-    AbsPath(const xpe::Path * pe, bool _docOrder = false) : AbstractSequence(1), path(pe), docOrder(_docOrder) {};
-
-    virtual bool open() {
-        iterator = path.execute(XNULL);
-    }
-
-    virtual bool next() {
-        Node result;
-
-        result = iterator.next();
-
-        if (result.isNull()) {
-            body.set_eos();
-        }
-    };
-};
 
 struct PathStep : public AbstractSequence {
     SequenceElement inSequence;

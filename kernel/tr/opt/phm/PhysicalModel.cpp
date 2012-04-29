@@ -235,6 +235,8 @@ void* PhysicalModel::compile(SPredicate* pred)
 
         if (leftOp.op != NULL && rightOp.op != NULL) {
             result = new StructuralJoinPrototype(this, leftOp, rightOp, pred->path);
+//        } else
+        // TODO: if free node available, make horizontal scan
         } else {
             return NULL;
         }
@@ -285,27 +287,35 @@ void* PhysicalModel::compile(SPredicate* pred)
                 result = new StructuralJoinPrototype(this, leftOp, rightOp, pred->path);
                 break;
             case magic_join:
-    /*
+/*              
                 U_ASSERT(leftCandidate.op != NULL && rightCandidate.op != NULL);
                 result = new MagicJoinPrototype(this, initialRef(leftOp.index), initialRef(rightOp.index), pred->path);
                 break;
-    */
+*/
             case evaluate_Left_then_Right:
                 U_ASSERT(leftCandidate.op != NULL);
                 plan->opList.push_back(leftCandidate.op);
                 leftOp = leftCandidate;
             case evaluate_Right:
                 result = new PathEvaluationPrototype(this, leftOp, initialRef(rightOp.index), pred->path);
+
+                if (initialRef(rightOp.index)->node->producedFrom != pred) {
+                    updateBranch(result);
+                    plan->opList.push_back(result);
+                    result = new ValidatePathPrototype(this, POProtIn(result, rightOp.index));
+                }
+
                 break;
             case evaluate_Right_then_Left:
-                U_ASSERT(pred->path.inversable());
                 U_ASSERT(rightCandidate.op != NULL);
                 plan->opList.push_back(rightCandidate.op);
                 rightOp = rightCandidate;
             case evaluate_Left:
                 U_ASSERT(pred->path.inversable());
-                U_ASSERT(false);
-//                result = new PathEvaluationPrototype(this, rightOp, initialRef(leftOp.index), pred->path.inverse());
+                result = new PathEvaluationPrototype(this, rightOp, initialRef(leftOp.index), pred->path.inverse(pe::StepTest(pe::nt_any_kind, xsd::QNameAny)));
+                updateBranch(result);
+                plan->opList.push_back(result);
+                result = new ValidatePathPrototype(this, POProtIn(result, leftOp.index));
                 break;
             case impossible_to_evaluate:
                 return NULL;
@@ -359,8 +369,23 @@ IElementProducer* POProt::__commonToXML(IElementProducer* element) const
     return element;
 }
 
+IElementProducer* resultToXml(TupleChrysalis * result, IElementProducer* element)
+{
+    element = element->addElement(CDGQNAME("tuple"));
+
+    element->addAttributeValue(CDGQNAME("count"), tuple_cell::atomic(result->rowCount.avg()));
+    element->addAttributeValue(CDGQNAME("size"), tuple_cell::atomic(result->rowSize.avg()));
+    element->addAttributeValue(CDGQNAME("width"), tuple_cell::atomic_int(result->width()));
+
+    element->close();
+    
+    return element;
+};
+
 IElementProducer* POProt::__toXML(IElementProducer* element) const
 {
+    resultToXml(this->result, element);
+
     return element;
 }
 

@@ -16,6 +16,8 @@
 
 using namespace xsd;
 
+const char * xsd::QNameWildcard = "*";
+
 /* Storage of strings, used as QName
   WARNING: name storage's main goal is to save char array even after qname is destroyed
 */
@@ -318,7 +320,7 @@ std::string TemplateQName::getColonizedName() const
     std::stringstream ss;
 
     if (uri == QNameWildcard) {
-      ss << "*";
+      ss << QNameWildcard;
     } else {
       ss << "{" << uri << "}";
     }
@@ -327,10 +329,29 @@ std::string TemplateQName::getColonizedName() const
     return ss.str();
 }
 
+std::string TemplateQName::getXPathName() const
+{
+    std::stringstream ss;
+
+    ss << "(";
+    
+    if (uri == QNameWildcard) {
+      ss << QNameWildcard << ":";
+    } else if (uri[0] == '\0') {
+    } else {
+      ss << "{" << uri << "}" << ":";
+    }
+
+    ss << localName << ")";
+
+    return ss.str();
+}
+
 SchemaTestData* TemplateQName::getTestData(SchemaTestData* _td) const
 {
     _td->m_uri = uri;
     _td->m_local = localName;
+    return _td;
 }
 
 

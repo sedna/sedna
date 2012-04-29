@@ -135,7 +135,7 @@ Step::Step(const scheme_list* lst) : axis(axis_error), test(nt_error, xsd::QName
         default:
             test.qname = xsd::TemplateQName(
               scmGetString(lst, 2, invalidLRStep),
-              scmGetString(lst, 2, invalidLRStep));
+              scmGetString(lst, 3, invalidLRStep));
     }
 }
 
@@ -173,7 +173,7 @@ std::string Step::toXPathString() const
         stream << axisTypeToStr(axis) << "::";
     }
 
-    stream << nodeTypeToStr(test.nodeTest) << test.qname.getColonizedName();
+    stream << nodeTypeToStr(test.nodeTest) << test.qname.getXPathName();
 
     return stream.str();
 }

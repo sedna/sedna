@@ -11,6 +11,16 @@ OPINFO(PathEvaluationPrototype)
 OPINFO(SortMergeJoinPrototype)
 OPINFO(StructuralJoinPrototype)
 OPINFO(ValueScanPrototype)
+OPINFO(ValidatePathPrototype)
+
+IElementProducer* elementValue(IElementProducer* element, const char * name, tuple_cell value)
+{
+    element = element->addElement(CDGQNAME(name));
+    element->addText(text_source_tuple_cell(value));
+    element->close();
+
+    return element;
+}
 
 AbsPathScanPrototype::AbsPathScanPrototype(PhysicalModel* model, const TupleRef& tref)
   : POProt(OPREF(AbsPathScanPrototype)), dataRoot(), path()
@@ -108,6 +118,67 @@ ValueScanPrototype::ValueScanPrototype(PhysicalModel* model, const POProtIn& _le
     evaluateCost(publicCostModel);
 }
 
+ValidatePathPrototype::ValidatePathPrototype(PhysicalModel* model, const POProtIn& _tuple)
+  : POProt(OPREF(ValidatePathPrototype))
+{
+    in.push_back(_tuple);
+    
+    result = model->updateOne(_tuple.op->result, POProtIn(this, _tuple.index));
+    resultSet.push_back(_tuple.index);
+
+    DataNode * dn = _tuple.op->result->get(_tuple.index)->node;
+
+    if (dn != NULL) {
+        path = dn->path;
+        dataRoot = dn->root;
+    }
+
+    evaluateCost(publicCostModel);
+}
+
+IElementProducer* ValidatePathPrototype::__toXML(IElementProducer* element) const
+{
+    POProt::__toXML(element);
+
+    IElementProducer * child;
+    
+    child = element->addElement(CDGQNAME("root"));
+    child->addText(text_source_cstr(dataRoot.toLRString().c_str()));
+    child->close();
+    
+    child = element->addElement(CDGQNAME("path"));
+    child->addText(text_source_cstr(path.toXPathString().c_str()));
+    child->close();
+
+    return element;
+}
+
+
+/*
+
+MagicJoinPrototype::MagicJoinPrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, const pe::Path& _path)
+  : BinaryOpPrototype(model, _left, _right), path(_path)
+{
+    U_ASSERT(_left.op == NULL || _right.op == NULL);
+  
+    result = model->updateTwo(_left.op->result, _right.op->result, this, _left.index, _right.index);
+    resultSet.push_back(_left.index);
+    resultSet.push_back(_right.index);
+
+    evaluateCost(publicCostModel);
+}
+
+IElementProducer* MagicJoinPrototype::__toXML(IElementProducer* ) const
+{
+    POProt::__toXML(element);
+
+    IElementProducer * child = element->addElement(CDGQNAME("path"));
+    child->addText(text_source_cstr(path.toXPathString().c_str()));
+    child->close();
+
+    return element;
+}
+*/
 
 struct XLogXOp { double operator() (double x) { return x*log(1+x); } };
 
@@ -280,7 +351,17 @@ void StructuralJoinPrototype::evaluateCost(CostModel* model)
     cost->fullCost = cost->firstCost + mergeCost;
 }
 
+void ValidatePathPrototype::evaluateCost(CostModel* model)
+{
+    POProt * opIn = in.at(0).op;
 
+    cost = new OperationCost();
+    *cost = *opIn->getCost();
+
+    if (!path.getBody().isnull()) {
+        cost->nextCost += model->getAbsPathCost(dataRoot, path, NULL)->iterationCost;
+    }
+}
 
 
 
@@ -320,3 +401,7 @@ PPIterator* ValueScanPrototype::compile()
     return NULL;
 }
 
+PPIterator* ValidatePathPrototype::compile()
+{
+    return NULL;
+}

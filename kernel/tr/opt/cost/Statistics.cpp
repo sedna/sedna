@@ -40,11 +40,7 @@ PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path&
 
     scmLookup->findSomething(root, &modelData->snodes, 0);
 
-    if (modelData->snodes.empty()) {
-        result->blockCount = 0;
-        result->card = 0;
-        result->nidSize = 0;
-    } else {
+    if (!modelData->snodes.empty()) {
         std::vector<schema_node_xptr>::const_iterator it = modelData->snodes.begin();
         schema_node_cptr sn = *it;
 
@@ -158,13 +154,8 @@ ComparisonInfo* CostModel::getDocOrderInfo(PathCostModel* m1, PathCostModel* m2,
 {
     ComparisonInfo* result = new ComparisonInfo;
 
-    if (path.forall(pe::StepPredicate(pe::nidComparableAxisTest))) {
-        result->opCost = path.getBody().get()->size() * getCPUCost();
-        result->selectivity = 1.0;
-    } else {
-        U_ASSERT(false);
-        return NULL;
-    };
+    result->opCost = path.getBody().get()->size() * getCPUCost();
+    result->selectivity = 1.0;
 
     return result;
 }

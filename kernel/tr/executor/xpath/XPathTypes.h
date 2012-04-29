@@ -74,8 +74,6 @@ static const uint32_t CDPAAxisTest =
   StepPredicate::axis(axis_child) | StepPredicate::axis(axis_parent) | StepPredicate::axis(axis_descendant) | StepPredicate::axis(axis_ancestor) | StepPredicate::axis(axis_descendant_or_self) | StepPredicate::axis(axis_ancestor_or_self);
 
 static const uint32_t selfAxisTest = StepPredicate::axis(axis_self);
-  
-static const uint32_t nidComparableAxisTest = CDPAAxisTest | selfAxisTest;
 
 struct StepTest {
     node_test_t nodeTest;

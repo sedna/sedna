@@ -6,30 +6,19 @@
 #ifndef SEQUENCE_MODEL_H
 #define SEQUENCE_MODEL_H
 
-struct tuple;
-struct AbstractSequence;
+#include "tr/executor/base/tuple.h"
 
-struct SequenceElement {
-    AbstractSequence * seq;
-    int pos;
-
-    bool sorted();
-
-    SequenceElement(AbstractSequence * _seq,  int _pos) : seq(_seq), pos(_pos) {};
-    SequenceElement(const SequenceElement & from) : seq(from.seq), pos(from.pos) {};
-    SequenceElement & operator =(SequenceElement & to) { seq = to.seq; pos = to.pos; };
-};
-
-struct AbstractSequence {
+class ITupleOperator {
 protected:
-    tuple body;
+    tuple value;
 public:
-    AbstractSequence(int size) : body(size) {};
+    ITupleOperator(int size) : value(size) {};
+    virtual ~ITupleOperator() {};
 
-    virtual bool open() = 0;
+    virtual bool rewind() = 0;
     virtual bool next() = 0;
 
-    const tuple& get() const { return body; };
+    const tuple& get() const { return value; };
 };
 
 #endif /* SEQUENCE_MODEL_H */

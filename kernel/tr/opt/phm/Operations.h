@@ -71,4 +71,33 @@ public:
     virtual PPIterator* compile();
 };
 
+/*
+ * This operation should decide how to join its operands in the best way possible
+ */
+
+class MagicJoinPrototype : public BinaryOpPrototype {
+    pe::Path path;
+protected:
+    virtual IElementProducer* __toXML(IElementProducer* ) const;
+public:
+    MagicJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, const pe::Path& _path);
+
+    virtual void evaluateCost(CostModel* model);
+    virtual PPIterator* compile();
+};
+
+
+class ValidatePathPrototype : public POProt {
+    DataRoot dataRoot;
+    pe::Path path;
+protected:
+    virtual IElementProducer* __toXML(IElementProducer* ) const;
+public:
+    ValidatePathPrototype(PhysicalModel * model, const POProtIn & _tuple);
+
+    virtual void evaluateCost(CostModel* model);
+    virtual PPIterator* compile();
+};
+
+
 #endif /* _OPERATIONS_H */

@@ -240,14 +240,14 @@ void DataGraph::precompile()
                 {
                     pe::Path path = pred->left()->path + pred->path;
 
-/*
-                    if (!path.evaluatable()) {
+                    if (!path.inversable()) {
                         continue;
                     }
-*/
+
                     pred->right()->type = DataNode::dnDatabase;
                     pred->right()->root = pred->left()->root;
                     pred->right()->path = path;
+                    pred->right()->producedFrom = pred;
 
                     pred->disposable = true;
 

@@ -31,11 +31,11 @@ typedef counted_ptr<IPathIterator> NodeIterator;
 class SchemaLookup {
     Path path;
 public:
-    AtomizedPath atomizedPath;
-    AtomizedPath reversePath;
-
     SchemaLookup(const pe::Path& _path);
     ~SchemaLookup();
+
+    AtomizedPath atomizedPath;
+    AtomizedPath reversePath;
 
     SchemaLookup & compile();
 
@@ -44,11 +44,7 @@ public:
 
     /** This method tries to find schema nodes in entity, that satisfies the condition */
     void findSomething(const DataRoot& root, std::vector<schema_node_xptr> * output, int limit);
-
-    bool check(schema_node_cptr a, schema_node_cptr b);
 };
-
-struct LookupInfo;
 
 /*
 class PathLookup {
@@ -64,8 +60,13 @@ public:
     static PathLookup * createPathLookup(const pe::Path &path);
     static PathLookup * createStepLookup(const pe::Path &path);
 };
-*/
+
+class AbsPathLookup {
+};
+
+struct LookupInfo;
 
 };
+*/
 
 #endif /* XPATHLOOKUP_H */

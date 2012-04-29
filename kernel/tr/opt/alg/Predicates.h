@@ -155,6 +155,9 @@ struct DataNode {
     pe::Path path;
     DataNode * source;
 
+    // FIXME: Uninitialized!
+    SPredicate * producedFrom;
+
     counted_ptr<MemoryTupleSequence> sequence; // Actually, we assume, that this is the ONLY pointer to this array
 
     std::string getName() const;

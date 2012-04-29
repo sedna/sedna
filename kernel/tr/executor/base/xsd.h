@@ -233,7 +233,7 @@ class QName {
     };
 };
 
-static const char * QNameWildcard = "*";
+extern const char * QNameWildcard;
 
 class TemplateQName {
   private:
@@ -250,6 +250,7 @@ class TemplateQName {
     inline const char * getLocalName() const { return localName; };
 
     std::string getColonizedName() const;
+    std::string getXPathName() const;
 
     QName toQName(INamespaceMap * namespaces) const;
 
