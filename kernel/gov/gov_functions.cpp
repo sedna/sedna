@@ -32,7 +32,7 @@ using namespace std;
 /****************************************************************************
                          UGC functions
 *****************************************************************************/
-
+/*
 void clean_resources(gov_config_struct& cfg, bool background_off_from_background_on)
 {
 //gov global names already set
@@ -48,26 +48,7 @@ void clean_resources(gov_config_struct& cfg, bool background_off_from_background
         sm_ugc(background_off_from_background_on, i, cfg.gov_vars.os_primitives_id_min_bound); 
      }
   }
-}
-
-
-
-bool is_first_start_of_gov(int ping_port)
-{
-//   try
-//   {
-//     pping_client ppc(ping_port, EL_GOV);
-// 
-//     SednaUserException e = USER_EXCEPTION(SE4400);
-//     ppc.startup(e);
-//     ppc.shutdown();
-//     return false;
-// 
-//   } catch (ANY_SE_EXCEPTION) {
-//     return true;//cannot connect to pping server
-//   }
-    return true;
-}
+}*/
 
 void log_out_system_information()
 {

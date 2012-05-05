@@ -5,20 +5,17 @@
 
 #include "common/sedna.h"
 #include "gov/gov_globals.h"
+#include "aux/argtable2/argtable2.h"
 
 /*
  * NOTE! If you want to add some new sednaconf.xml global parameter
  * make sure that you also change linux_install.sh script appropriately.
  */
 
-info_table *gov_table;
 
 int background_mode = 0;
 int gov_help_s = 0;
 int gov_help_l = 0;
-int gov_version = 0;
-
-const int narg = 10;
 
 /*
  * -1 means that parameter was not defined through command line
@@ -26,15 +23,18 @@ const int narg = 10;
  */
 namespace gov_globals
 {
-    int  cl_el_level                     = -1;      // Event log severity level
-    char cl_lstnr_addr[U_MAX_HOSTNAME]   = {"\0",}; // Governor listen address
-    int  cl_lstnr_port                   = -1;      // Governor listen port
-    int  cl_ping_port                    = -1;      // Process ping port
-    int  cl_ka_timeout                   = -1;      // Session keep alive timeout
-    int  cl_pp_stack_depth               = -1;
+    /* TODO: make gov able to listen multiple addresses and define a max ifaces constant */
+    struct arg_lit * help               = arg_lit0("h","help",                    "print this help and exit");
+    struct arg_str * cl_install_dir     = arg_file0("i","installation-directory", "<path>", "Path to the directory containing data and cfg directories");
+    struct arg_str * cl_lstnr_addr      = arg_strn("l","listen-addresses","\"address1\"<,\"address2\",..",0,10, 
+                                                   "local address (or addresses) Sedna listens for client connections (default localhost)" ); // Governor listen address (or addresses)
+    struct arg_int * cl_lstnr_port      = arg_int0("p","port-to-listen", "<int>", "socket listening port");
+    struct arg_int * cl_el_level        = arg_int0("d","event-logging-verbosity-level", NULL, "event log verbosity level: 0 - event logging is off, 1 - log only fatal errors, 2 - log all errors, 3 - system operational messages");
+    struct arg_int * cl_ka_timeout      = arg_int0("a","keep-alive-timeout", "<int>", "session keep alive timeout (default 0 - infinite timeout)");
+    struct arg_int * cl_pp_stack_depth  = arg_int0("d","stack-depth", "<int>", "session keep alive timeout (default 0 - infinite timeout)");
 }
 
-
+/*
 arg_rec gov_argtable[] =
 {
 {"--help",              NULL,        arg_lit,  &gov_help_l,                    "0",   "\t\t\t display this help and exit"},
@@ -50,4 +50,7 @@ arg_rec gov_argtable[] =
 {"-alive-timeout",      " timeout",  arg_int,  &gov_globals::cl_ka_timeout,    "-1",  "\t session keep alive timeout\n\t\t\t\t (default 0 - infinite timeout)"},
 {"-stack-depth",        " depth",    arg_int,  &gov_globals::cl_pp_stack_depth,"-1",  "\t\t maximum executor stack depth\n\t\t\t\t (default 4000)"}
 };
+*/
 
+void * gov_argtable[] = {gov_globals::cl_install_dir, gov_globals::cl_lstnr_addr, gov_globals::cl_lstnr_port, gov_globals::cl_el_level,
+                         gov_globals::cl_ka_timeout, gov_globals::cl_pp_stack_depth};

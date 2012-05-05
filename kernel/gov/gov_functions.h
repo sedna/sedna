@@ -6,13 +6,11 @@
 #ifndef _GOV_FUNCTIONS_H_
 #define _GOV_FUNCTIONS_H_
 
-void clean_resources(gov_config_struct& cfg, bool background_off_from_background_on);
+// void clean_resources(gov_config_struct& cfg, bool background_off_from_background_on);
 
 void check_data_folder_existence();
 
 void log_out_system_information();
-
-bool is_first_start_of_gov(int ping_port);
 
 void RenameLastSoftFaultDir();
 

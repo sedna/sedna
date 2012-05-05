@@ -3,39 +3,16 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include <stdio.h>
-#include <iostream>
-#include <string>
-
-#include "common/sedna.h"
-
-#include "common/u/usem.h"
-#include "common/u/uprocess.h"
-#include "common/SSMMsg.h"
-#include "common/base.h"
 #include "common/errdbg/d_printf.h"
-// #include "common/pping.h"
-#include "common/version.h"
-#include "common/ugc.h"
-#include "common/gmm.h"
-#include "common/ipc_ops.h"
-#include "common/config.h"
 
+
+#include "gov/cpool.h"
 #include "gov/gov_globals.h"
 #include "gov/gov_functions.h"
 #include "gov/gov_table.h"
-// #include "gov/listener.h"
-#include "gov/config_utils.h"
 
 
 
-/*new listener part
- * 
- */
-#include "gov/cpool.h"
-
-#define GOV_BACKGROUND_MODE_TIMEOUT                                     15000
-#define GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON           "SEDNA_GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON"
 
 using namespace std;
 
@@ -58,10 +35,10 @@ BOOL GOVCtrlHandler(DWORD fdwCtrlType)
         case CTRL_SHUTDOWN_EVENT:
         {
              // Beep(1000, 1000);
-             open_gov_shm();
-             GOV_HEADER_GLOBAL_PTR -> is_server_stop = SE_STOP_SOFT;
-             send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, GOV_HEADER_GLOBAL_PTR -> lstnr_addr, se_Stop);
-             close_gov_shm();
+//              open_gov_shm();
+//              GOV_HEADER_GLOBAL_PTR -> is_server_stop = SE_STOP_SOFT;
+//              send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, GOV_HEADER_GLOBAL_PTR -> lstnr_addr, se_Stop);
+//              close_gov_shm();
 
              return TRUE;
         }
