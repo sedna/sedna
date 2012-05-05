@@ -3,20 +3,21 @@
 
 #include "SequenceModel.h"
 
+#include "tr/nid/nidstring.h"
+
 class SortedSequence;
 class ITupleSerializer;
 
 namespace phop {
 
 typedef std::vector<MappedTupleIn> TupleList;
-
-typedef std::vector< std::pair<std::string, TupleList::size_type> > NumberingSchemeMergeHeap;
+typedef std::vector< std::pair<NidString, TupleList::size_type> > NIDMergeHeap;
 
 class DocOrderMerge : public ITupleOperator {
 private:
     bool initialized;
     TupleList tin;
-    NumberingSchemeMergeHeap mergeHeap;
+    NIDMergeHeap mergeHeap;
 protected:
     virtual void do_next();
 public:

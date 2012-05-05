@@ -9,7 +9,7 @@
 
 namespace phop {
 
-class SchemaScan : public ITupleOperator {
+class SchemaScan : public IValueOperator {
 private:
     std::vector<xptr> _cache;
     std::vector<xptr>::const_iterator _cachePtr;
@@ -20,32 +20,30 @@ protected:
     void scan();
     virtual void do_next();
 public:
-    SchemaScan(schema_node_cptr _snode) : _cachePtr(_cache.begin()), snode(_snode), currentBlock(XNULL) {  };
+    SchemaScan(schema_node_cptr _snode)
+      : IValueOperator(), _cachePtr(_cache.begin()), snode(_snode), currentBlock(XNULL)
+    {  };
+
     virtual void reset();
 };
 
-class SchemaValueScan : public SchemaScan {
+class TupleFilter : public UnaryTupleOperator {
 protected:
     TupleComparison * tcmpop;
-    counted_ptr<MemoryTupleSequence> sequence;
-
-    virtual void do_next();
-public:
-    SchemaValueScan(schema_node_cptr _snode, counted_ptr<MemoryTupleSequence> _sequence, TupleComparison * _tcmpop)
-        : SchemaScan(_snode), sequence(_sequence), tcmpop(_tcmpop) {};
-
-    virtual void reset();
 };
 
-class BogusConstSequence : public ITupleOperator {
+class ItemFilter : public ItemOperator {
+protected:
+    TupleValueComparison * tcmpop;
+};
+
+class BogusConstSequence : public IValueOperator {
 protected:
     counted_ptr<MemoryTupleSequence> sequence;
-    MemoryTupleSequence::const_iterator _seq_ptr;
-
+    
     virtual void do_next();
 public:
-    BogusConstSequence(counted_ptr<MemoryTupleSequence> _sequence) : sequence(_sequence), _seq_ptr(sequence->begin()) {};
-    virtual void reset();
+    BogusConstSequence(counted_ptr<MemoryTupleSequence> _sequence);
 };
 
 class CachedNestedLoop : public BinaryTupleOperator {
@@ -57,6 +55,7 @@ protected:
     flags_t flags;
 
     std::vector<tuple_cell> nestedSequenceCache;
+    std::vector<tuple_cell>::size_type nestedIdx;
 
     virtual void do_next();
 public:
@@ -64,9 +63,6 @@ public:
         : BinaryTupleOperator(_left, _right), tcmpop(_tcmpop), flags(_flags) { };
 
     virtual void reset();
-};
-
-class Filter : public UnaryTupleOperator {
 };
 
 class VPath : public UnaryTupleOperator {
@@ -80,7 +76,6 @@ public:
 
     virtual void reset();
 };
-
 
 }
 

@@ -11,45 +11,15 @@
 
 using namespace phop;
 
-static
-std::string getNid(const Node node)
-{
-    t_prefix prefix = nid_get_prefix(nid_get_nid(node.getPtr()));
-    std::string result(prefix.prefix, prefix.size);
-    nid_free(prefix.prefix);
-    return result;
-};
-
-static
-int nidCompare(const std::string & a, const std::string & b) {
-    int result = memcmp(a.data(), b.data(), std::min(a.size(), b.size()));
-
-    if (result == 0) {
-        if (a.size() == b.size()) {
-            return 0;
-        } else if (a.size() > b.size()) {
-            return (a[b.size()] == ALPHABET_SIZE) ? 1 : 2;
-        } else {
-            return (b[a.size()] == ALPHABET_SIZE) ? -1 : -2;
-        }
-    }
-
-    return sign(result);
-};
-
 struct NidStringCmp {
-    bool operator()(const NumberingSchemeMergeHeap::value_type & x, const NumberingSchemeMergeHeap::value_type& y) const
-        { return nidCompare(x.first, x.second) > 0; }
+    bool operator()(const NIDMergeHeap::value_type & x, const NIDMergeHeap::value_type& y) const
+        { return x.first.compare(y.first) > 0; }
 };
 
 static
-NumberingSchemeMergeHeap::value_type getMergeValue(const MappedTupleIn & t, TupleList::size_type i) {
-    return NumberingSchemeMergeHeap::value_type(getNid(t.get().node()), i);
+phop::NIDMergeHeap::value_type getMergeValue(const MappedTupleIn & t, TupleList::size_type i) {
+    return NIDMergeHeap::value_type(t.get().get_node(), i);
 };
-
-
-
-
 
 void DocOrderMerge::do_next()
 {
@@ -73,7 +43,6 @@ void DocOrderMerge::do_next()
 
     TupleList::size_type idx = mergeHeap.front().second;
     const MappedTupleIn & t = tin.at(idx);
-    push();
     t.assignTo(value());
 
     std::pop_heap(mergeHeap.begin(), mergeHeap.end(), NidStringCmp());

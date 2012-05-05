@@ -9,10 +9,29 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include "tr/executor/base/xsd.h"
 
 /* Namespace pe stands for PathEvaluator. */
+
+typedef std::set<schema_node_xptr> SchemaNodePtrSet;
+typedef std::vector<schema_node_xptr> SchemaNodePtrList;
+typedef std::vector<schema_node_cptr> SchemaNodeList;
+
+static
+SchemaNodeList toNodeSet(const SchemaNodePtrList & nptrset)
+{
+    SchemaNodeList result;
+
+    result.reserve(nptrset.size());
+
+    for (SchemaNodePtrList::const_iterator it = nptrset.begin(); it != nptrset.end(); ++it) {
+        result.push_back(*it);
+    };
+    
+    return result;
+};
 
 namespace pe {
 
@@ -173,7 +192,7 @@ public:
 
     bool empty() const { return _list.isnull() || _sliceEnd <= _sliceStart; };
 
-    PathAtom * at(AtomizedPathVector::size_type i) const { return _list[i]; };
+    PathAtom * at(std::size_t i) const { return _list->at(_sliceStart + i); };
 
     inline AtomizedPathVector::size_type size() const { return _sliceEnd - _sliceStart; };
 

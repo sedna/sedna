@@ -8,7 +8,6 @@
 
 #include "SequenceHelpers.h"
 
-#include "tr/executor/types/xmltuple.h"
 #include "tr/opt/OptTypes.h"
 
 #include <deque>
@@ -17,43 +16,84 @@ namespace phop {
 
 class ExecutionContext;
 
-class ITupleOperator {
-public:
-    unsigned tupleSize;
-    std::deque<tuple> _values;
+class IValueOperator {
+    std::deque<tuple_cell> valueCache;
 protected:
     ExecutionContext * _context;
+    
+    void seteos() { valueCache.push_back(tuple_cell()); };
+    void push(const tuple_cell & tc) { valueCache.push_back(tc); };
 
     virtual void do_next() = 0;
 
-    int _cacheSize;
-
-    void seteos() { _values.back().set_eos(); };
-    void push() { _values.push_back(tuple(tupleSize)); };
-    tuple & value() { return _values.back(); };
+    IValueOperator();
 public:
-    ITupleOperator(unsigned _size) : tupleSize(_size), _context(NULL), _cacheSize(1) {};
-    virtual ~ITupleOperator() {};
+    virtual ~IValueOperator() {};
 
-    virtual void reset() { _values.clear(); };
-
+    virtual void reset() { valueCache.clear(); };
+    
     inline bool next(ExecutionContext * context) {
         if (get().is_eos()) {
             return false;
         };
 
-        if (_values.empty()) {
+        if (valueCache.empty()) {
             _context = context;
             do_next();
         } else {
-            _values.pop_front();
+            valueCache.pop_front();
         };
 
         return true;
     };
+    
+    const tuple_cell& get() const { return valueCache.front(); };
+};
 
-    const tuple& get() const { return _values.front(); };
-    unsigned _tsize() const { return tupleSize; };
+class ITupleOperator {
+    tuple _value;
+    IValueOperator * _convert_op;
+protected:
+    ExecutionContext * _context;
+
+    void seteos() { _value.set_eos(); };
+    tuple & value() { return _value; };
+
+    virtual void do_next() = 0;
+    
+    ITupleOperator(IValueOperator * __convert_op)
+      : _value(1), _convert_op(__convert_op)
+    {
+    };
+
+    ITupleOperator(unsigned _size)
+      : _value(_size), _convert_op(NULL), _context(NULL)
+    {
+        _value.eos = false;
+    };
+public:
+    virtual ~ITupleOperator() {};
+
+    virtual void reset() { _value.eos = false; };
+
+    inline bool next(ExecutionContext * context) {
+        if (_convert_op != NULL) {
+            _convert_op->next(context);
+            _value.copy(_convert_op->get());
+        };
+
+        if (get().is_eos()) {
+            return false;
+        };
+
+        _context = context;
+        do_next();
+
+        return true;
+    };
+
+    const tuple& get() const { return _value; };
+    unsigned _tsize() const { return _value.size(); };
 };
 
 struct TupleIn {
@@ -92,7 +132,15 @@ struct MappedTupleIn : public TupleIn {
     explicit MappedTupleIn(ITupleOperator * _op, unsigned _offs)
         : TupleIn(_op, _offs), tmap() { };
 
-    void assignTo(tuple & result) { assignTo(result, tmap); }
+    void assignTo(tuple & result) { TupleIn::assignTo(result, tmap); }
+};
+
+class TupleFromItemOperator : public ITupleOperator {
+protected:
+    virtual void do_next() { U_ASSERT(false); };
+public:
+    TupleFromItemOperator(IValueOperator* convert_op)
+      : ITupleOperator(convert_op) {};
 };
 
 class BinaryTupleOperator : public ITupleOperator {
@@ -114,6 +162,14 @@ public:
     virtual void reset() { in.op->reset(); };
 };
 
+class ItemOperator : public IValueOperator {
+protected:
+    IValueOperator * in;
+public:
+    ItemOperator(IValueOperator * _in) : IValueOperator(), in(_in) {};
+
+    virtual void reset() { in->reset(); };
+};
 
 }
 

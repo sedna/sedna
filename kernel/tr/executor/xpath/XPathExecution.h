@@ -2,21 +2,135 @@
 #define _XPATHEXECUTION_H_
 
 #include "tr/structures/nodeinterface.h"
+#include "tr/nid/nidstring.h"
+
+#include "SchemaTests.h"
 
 #include <algorithm>
 #include <queue>
 #include <map>
 
-#include "XPathTypes.h"
+typedef std::vector<int> SchemaPath;
+typedef std::vector<SchemaPath> SchemaPathList;
+
+struct PathSchemaMerge;
+
+struct NodeIterator {
+public:
+typedef void (NodeIterator::*NextNodeProc)();
+protected:
+    counted_ptr<NidString> baseNID;
+    Node node;
+    NextNodeProc _next;
+public:
+    scoped_ptr<PathSchemaMerge> merge;
+
+    explicit NodeIterator(Node _node, NextNodeProc __next = NULL, counted_ptr<NidString> _baseNID = NULL)
+      : baseNID(_baseNID), node(_node), _next(__next), merge(NULL) {};
+
+    Node get() const { return node; };
+
+    inline
+    bool next() {
+        if (_next != NULL) {
+            (this ->* _next)();
+            return !node.isNull();
+        } else {
+            node = XNULL;
+            return false;
+        }
+    }
+
+    void nextNodeCommonAncestor();
+    void nextNodeSibling();
+    void nextNodeParent();
+    void nextMerge();
+
+    explicit NodeIterator(PathSchemaMerge * ms)
+      : baseNID(NULL), node(), _next(&NodeIterator::nextMerge), merge(ms) {};
+};
+
+struct PathStepIterator : NodeIterator {
+    schema_node_cptr snode;
+    pe::AtomizedPath path;
+
+    PathStepIterator(const NodeIterator & nit, const pe::AtomizedPath &_path)
+      : NodeIterator(nit), path(_path) {};
+};
+
+typedef std::vector< std::pair<NidString, NodeIterator> > NIDMergeHeap;
+
+struct NIDMergeHeapCompare {
+    bool operator()(
+        const NIDMergeHeap::value_type & a,
+        const NIDMergeHeap::value_type & b)
+    {
+        return a.first.compare(b.first) > 0;
+    };
+};
+
+typedef std::deque< PathStepIterator > PathStepList;
+
+struct PathTraverse {
+private:
+    PathStepList mergelist;
+    pe::AtomizedPath path;
+    bool _eos;
+public:
+    bool eos() const { return _eos; };
+    void clear();
+
+    void push(const Node & node) {
+        U_ASSERT(!node.get().isNull());
+        mergelist.push_back(PathStepIterator(NodeIterator(node, NULL, NULL), path));
+    };
+    
+    Node next();
+};
+
+struct PathSchemaMerge {
+private:
+    bool _eos;
+    NIDMergeHeap mergeheap;
+public:  
+    void pushAll(Node, schema_node_cptr, const SchemaNodeList &);
+
+    void push(const NodeIterator & node) {
+        U_ASSERT(!node.get().isNull());
+        mergeheap.push_back(NIDMergeHeap::value_type(node.get().getPtr(), node));
+        std::push_heap(mergeheap.begin(), mergeheap.end(), NIDMergeHeapCompare());
+    };
+
+    bool eos() const { return _eos; };
+
+    void clear();
+
+    Node next() {
+        if (mergeheap.empty()) {
+            return Node();
+        };
+
+        Node result = mergeheap.front().second.get();
+
+        std::pop_heap(mergeheap.begin(), mergeheap.end(), NIDMergeHeapCompare());
+
+        if (!mergeheap.back().second.next()) {
+            mergeheap.pop_back();
+            _eos = mergeheap.empty();
+        } else {
+            mergeheap.back().first = NidString(mergeheap.back().second.get().getPtr());
+            std::push_heap(mergeheap.begin(), mergeheap.end(), NIDMergeHeapCompare());
+        }
+
+        return result;
+    };
+};
+
 
 /*
 
-
 typedef Node (*NextNodeProc)(Node node, AxisHints * hint);
 typedef bool (*TestNodeProc)(Node node, AxisHints * hint);
-
-typedef std::vector<int> SchemaPath;
-typedef std::vector<SchemaPath> SchemaPathList;
 
 typedef std::map<schema_node_xptr, SchemaPathList> DescendantMap;
 

@@ -44,22 +44,21 @@ void SchemaScan::do_next()
         scan();
     }
 
-    unsigned i = _cacheSize;
-    while (i > 0 && _cachePtr != _cache.end()) {
-        push(); value() = *_cachePtr++; --i;
+    while (_cachePtr != _cache.end()) {
+        push(*(_cachePtr++));
     }
 }
+
+BogusConstSequence::BogusConstSequence(counted_ptr< MemoryTupleSequence > _sequence)
+  : IValueOperator(), sequence(_sequence)
+{ }
 
 void BogusConstSequence::do_next() {
-    unsigned i = _cacheSize;
-    while (i > 0 && _seq_ptr != sequence->end()) {
-        push(); value() = *_seq_ptr++; --i;
-    }
-}
+    for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
+        push(*it);
+    };
 
-void BogusConstSequence::reset()
-{
-    _seq_ptr = sequence->begin();
+    push(tuple_cell());
 }
 
 void CachedNestedLoop::do_next()
@@ -70,29 +69,50 @@ void CachedNestedLoop::do_next()
             right.op->next(_context);
         };
 
+        nestedIdx = nestedSequenceCache.size();
         cacheFilled = true;
+
+        if (nestedSequenceCache.size() == 0) {
+            seteos();
+        };
     };
 
-    left->next(_context);
-    tuple_cell lTuple = left.get();
+    do {
+        if (nestedIdx >= nestedSequenceCache.size()) {
+            left->next(_context);
 
-    for (std::vector<tuple_cell>::const_iterator it = nestedSequenceCache.begin(); it != nestedSequenceCache.end(); it++) {
-        if ((*tcmpop)(lTuple, *it)) {
-            push();
-            left.assignTo(value());
-            right.assignTo(value());
-
-            if (flags & strict_output == 0) {
-                break;
+            if (left.eos()) {
+                seteos();
+                return;
             };
-        }
-    };
+
+            nestedIdx = 0;
+        };
+
+        tuple_cell lTuple = left.get();
+
+        while (nestedIdx < nestedSequenceCache.size()) {
+            nestedIdx++;
+
+            if ((*tcmpop)(lTuple, nestedSequenceCache.at(nestedIdx-1))) {
+                left.assignTo(value());
+                right.assignTo(value());
+
+                if ((flags & strict_output) == 0) {
+                    nestedIdx = nestedSequenceCache.size();
+                };
+                
+                return;
+            }
+        };
+    } while (!left.eos());
 }
 
 void CachedNestedLoop::reset()
 {
     BinaryTupleOperator::reset();
     cacheFilled = false;
+    nestedIdx = nestedSequenceCache.size();
 }
 
 void VPath::do_next()

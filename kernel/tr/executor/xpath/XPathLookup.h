@@ -23,49 +23,28 @@ namespace pe {
 
 struct Path;
 
-class IPathIterator {
-  public:
-    virtual ~IPathIterator() {};
-    virtual Node next() = 0;
-};
-
-typedef counted_ptr<IPathIterator> NodeIterator;
+bool executeSchemaPathTest(schema_node_cptr base, const AtomizedPath & path, SchemaNodePtrSet * output, bool _fast = false);
 
 class SchemaLookup {
     Path path;
 public:
-    SchemaLookup(const pe::Path& _path);
-    ~SchemaLookup();
+    SchemaLookup(const pe::Path& _path) : path(_path) {};
+    ~SchemaLookup() {};
 
     AtomizedPath atomizedPath;
     AtomizedPath reversePath;
 
+    SchemaLookup(const AtomizedPath& _path) : atomizedPath(_path) {};
+
     SchemaLookup & compile();
 
-    void execute(schema_node_cptr base, std::vector<schema_node_xptr> * output);
-    void executeLimited(schema_node_cptr base, std::vector<schema_node_xptr> * output, int limit);
+    bool exists(schema_node_cptr base);
+    void execute(schema_node_cptr base, SchemaNodePtrList * output);
+    void executeLimited(schema_node_cptr base, SchemaNodePtrList * output, int limit);
 
     /** This method tries to find schema nodes in entity, that satisfies the condition */
-    void findSomething(const DataRoot& root, std::vector<schema_node_xptr> * output, int limit);
+    void findSomething(const DataRoot& root, SchemaNodePtrList * output, int limit);
 };
-
-class VPathLookup {
-protected:
-    AtomizedPath path;
-    PathExecutionEvironment * env;
-public:
-    VPathLookup(const AtomizedPath & _path);
-    ~VPathLookup();
-
-    void compile();
-    void execute(const Node& node);
-
-    Node next();
-};
-
-// class AbsPathLookup {
-// };
-
 
 /*
 class PathLookup {
@@ -85,6 +64,7 @@ public:
 struct LookupInfo;
 */
 
-/* namespace pe */ };
+/* namespace pe */
+};
 
 #endif /* XPATHLOOKUP_H */

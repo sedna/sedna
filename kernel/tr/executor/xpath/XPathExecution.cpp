@@ -1,33 +1,16 @@
 #include "XPathExecution.h"
 #include "XPathTypes.h"
-#include <tr_functions.h>
 
 /**
  *  Evaluates node path, following path from \node to \goal
  */
 
-#ifdef __COMMOUT
-
-static
-void getNodePath(schema_node_cptr from, schema_node_cptr to, SchemaPath& path) {
-    schema_node_cptr i = to;
-
-    while (i.ptr() != from.ptr()) {
-        path.push_back(i->getIndex());
-
-        if (i->parent == XNULL) {
-            U_ASSERT(false);
-        }
-
-        i = i->parent;
-    }
-}
-
+/*
 static
 Node getRightBrother(Node node, Node commonAncestor) {
     Node n = getNextDescriptorOfSameSort(node.getPtr());
     
-    /* Check if this node still is a descendant of the base one */
+     Check if this node still is a descendant of the base one
     if (!n.isNull()) {
         int relation = nid_cmp_effective(n.getPtr(), commonAncestor.getPtr());
 
@@ -38,9 +21,26 @@ Node getRightBrother(Node node, Node commonAncestor) {
     
     return n;
 };
+*/
+    
+static
+Node getRightBrother(Node node, const NidString & nstr) {
+    Node n = getNextDescriptorOfSameSort(node.getPtr());
+
+    /* Check if this node still is a descendant of the base one */
+    if (!n.isNull()) {
+        int relation = NidString(n.getPtr()).compare(nstr);
+
+        if (relation != 2 && relation != 0) {
+            return XNULL;
+        }
+    }
+
+    return n;
+};
 
 static
-xptr getFirstNodeByPath(Node node, const SchemaPath & path, Node commonAncestor) {
+xptr getFirstNodeByPath(Node node, const SchemaPath & path, const NidString & commonAncestorNid) {
     xptr nodeI = node.getPtr();
 
     for (std::vector<int>::const_iterator i = path.begin(); i != path.end(); ++i) {
@@ -51,7 +51,7 @@ xptr getFirstNodeByPath(Node node, const SchemaPath & path, Node commonAncestor)
          * requested grandchild for the next step */
 
         while (nodeJ == XNULL) {
-            nodeI = getRightBrother(nodeI, commonAncestor).getPtr();
+            nodeI = getRightBrother(nodeI, commonAncestorNid).getPtr();
 
             if (nodeI == XNULL) {
                 return XNULL;
@@ -69,6 +69,159 @@ xptr getFirstNodeByPath(Node node, const SchemaPath & path, Node commonAncestor)
 
     return nodeI;
 }
+
+static
+void getNodePath(schema_node_cptr from, schema_node_cptr to, SchemaPath& path) {
+    schema_node_cptr i = to;
+
+    while (i.ptr() != from.ptr()) {
+        path.push_back(i->getIndex());
+
+        if (i->parent == XNULL) {
+            U_ASSERT(false);
+        }
+
+        i = i->parent;
+    }
+}
+
+void NodeIterator::nextNodeCommonAncestor()
+{
+    node = getRightBrother(node, *baseNID);
+}
+
+void NodeIterator::nextNodeParent()
+{
+
+}
+
+void NodeIterator::nextNodeSibling()
+{
+
+}
+
+void PathTraverse::clear()
+{
+    mergelist.clear();
+    _eos = true;
+}
+
+using namespace pe;
+
+Node PathTraverse::next()
+{
+    do {
+        PathStepList::iterator start = mergelist.begin();
+        PathStepIterator & step = *start;
+        Node node = step.get().checkp();
+        
+        if (start->path.empty()) {
+            if (!step.next()) {
+                mergelist.erase(start);
+            } else {
+                U_ASSERT(false);
+            };
+
+            return node;
+        } else if (dynamic_cast<AxisPathAtom *>(start->path.at(0)) != NULL) {
+            AxisPathAtom * axisStep = dynamic_cast<AxisPathAtom *>(item);
+            t_item childMask = (t_item) 0;
+            Node parent;
+
+            if (axisStep->orSelf) {
+                start = mergelist.insert(start + 1, PathStepIterator(NodeIterator(node), path + 1));
+            };
+
+            switch (axisStep->axis) {
+              case axis_parent:
+                parent = node.getActualParent();
+                
+                if (parent != XNULL) {
+                    start = mergelist.insert(start + 1, PathStepIterator(NodeIterator(parent), path + 1));
+
+                    if (axisStep->closure) {
+                        start = mergelist.insert(start + 1, PathStepIterator(NodeIterator(parent), path));
+                    }
+                }
+
+                continue;
+              case axis_child_or_attribute:
+                childMask = (t_item) (ti_dmchildren | attribute);
+                break;
+              case axis_child:
+                childMask = ti_dmchildren;
+                break;
+              case axis_attribute:
+                childMask = attribute;
+                break;
+              default :
+                break;
+            };
+
+            CAT_FOR_EACH(sc_ref, i, (base->children)) {
+                if ((i->object.type & childMask) != 0) {
+                    toTraverse.push(ExecutionStackItem(step.first + 1, i->object.snode));
+
+                    if (axisStep->closure && ((i->object.type & ti_with_children) > 0)) {
+                        /* In fast mode we do not traverse child closures (descendants) */
+
+                        if (_fast) { return true; }
+                        toTraverse.push(ExecutionStackItem(step.first, i->object.snode));
+                    }
+                };
+            };
+        } else if (dynamic_cast<NameTestAtom *>(item) != NULL) {
+            NameTestAtom * nameTest =  dynamic_cast<NameTestAtom *>(item);
+
+            if (schemaNodeTest(base, nameTest->nt, SchemaTestData(nameTest->itemType, nameTest->qname.getUri(), nameTest->qname.getLocalName()))) {
+                toTraverse.push(ExecutionStackItem(step.first + 1, base));
+            };
+        } else if (dynamic_cast<TypeTestAtom *>(item) != NULL) {
+            TypeTestAtom * typeTest =  dynamic_cast<TypeTestAtom *>(item);
+
+            if ((base->type & typeTest->itemType) > 0) {
+                toTraverse.push(ExecutionStackItem(step.first + 1, base));
+            };
+        } else {
+        }
+
+        if (!step.next()) {
+            
+        };
+    } while (!mergelist.empty());
+}
+
+void PathSchemaMerge::clear()
+{
+    mergeheap.clear();
+    _eos = true;
+}
+
+void PathSchemaMerge::pushAll(Node node, schema_node_cptr base, const SchemaNodeList& nodeList)
+{
+    SchemaPath path;
+    path.reserve(64);
+    counted_ptr<NidString> commonAncestorNid = new NidString(node.getPtr());
+
+    for (std::vector< schema_node_xptr >::const_iterator it = nodeList.begin(); it != nodeList.end(); ++it) {
+        path.clear();
+        getNodePath(base, *it, path);
+
+        mergeheap.push_back(NIDMergeHeap::value_type(
+          NidString(node.getPtr()),
+          NodeIterator(
+              getFirstNodeByPath(node, path, *commonAncestorNid),
+              &NodeIterator::nextNodeCommonAncestor,
+              commonAncestorNid)));
+    };
+
+    std::make_heap(mergeheap.begin(), mergeheap.end(), NIDMergeHeapCompare());
+}
+
+
+
+#ifdef __COMMOUT
+
 
 static
 void traverseSchemaPathList(Node node, const SchemaPathList * list, AxisHints * hint) {

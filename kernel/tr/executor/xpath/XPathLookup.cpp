@@ -4,11 +4,14 @@
  */
 
 
-#include "XPathLookup.h"
-#include "DataSources.h"
-#include "SchemaTests.h"
-
 #include "common/errdbg/exceptions.h"
+
+#include "DataSources.h"
+
+#include "XPathLookup.h"
+#include "XPathExecution.h"
+
+#include "tr/executor/algorithms/SequenceModel.h"
 
 #include <bits/stl_algo.h>
 #include <typeinfo>
@@ -20,7 +23,10 @@ using namespace pe;
 
 SchemaLookup& SchemaLookup::compile()
 {
-    atomizedPath = path.atomize();
+    if (atomizedPath.empty()) {
+        atomizedPath = path.atomize();
+    }
+
     reversePath = atomizedPath.reverse();
 
     return *this;
@@ -31,7 +37,7 @@ SchemaLookup& SchemaLookup::compile()
 typedef std::pair<const AtomizedPathVector::const_iterator &, schema_node_cptr> ExecutionStackItem;
 typedef std::stack<ExecutionStackItem> ExecutionStack;
 
-bool executePathEx(schema_node_cptr base, const AtomizedPath & path, std::set<schema_node_xptr>* output, bool _fast = false)
+bool executeSchemaPathTest(schema_node_cptr base, const AtomizedPath & path, SchemaNodePtrSet * output, bool _fast = false)
 {
     ExecutionStack toTraverse;
     toTraverse.push(ExecutionStackItem(path.begin(), base));
@@ -95,30 +101,13 @@ bool executePathEx(schema_node_cptr base, const AtomizedPath & path, std::set<sc
             };
         } else if (dynamic_cast<NameTestAtom *>(item) != NULL) {
             NameTestAtom * nameTest =  dynamic_cast<NameTestAtom *>(item);
-            SchemaTestData data(nameTest->itemType, nameTest->qname.getUri(), nameTest->qname.getLocalName());
 
-            switch (nameTest->nt) {
-              case pe::nt_wildcard_name: ;
-                if (SchemaTestOperatorLocalType::test(base, &data)) {
-                    toTraverse.push(ExecutionStackItem(step.first + 1, base));
-                };
-                break;
-              case pe::nt_wildcard_prefix: ;
-                if (SchemaTestOperatorUriType::test(base, &data)) {
-                    toTraverse.push(ExecutionStackItem(step.first + 1, base));
-                };
-                break;
-              case pe::nt_qname: ;
-                if (SchemaTestOperatorQNameType::test(base, &data)) {
-                    toTraverse.push(ExecutionStackItem(step.first + 1, base));
-                };
-                break;
-              default:
-                U_ASSERT(false);
-                break;
+            if (schemaNodeTest(base, nameTest->nt, SchemaTestData(nameTest->itemType, nameTest->qname.getUri(), nameTest->qname.getLocalName()))) {
+                toTraverse.push(ExecutionStackItem(step.first + 1, base));
             };
         } else if (dynamic_cast<TypeTestAtom *>(item) != NULL) {
             TypeTestAtom * typeTest =  dynamic_cast<TypeTestAtom *>(item);
+
             if ((base->type & typeTest->itemType) > 0) {
                 toTraverse.push(ExecutionStackItem(step.first + 1, base));
             };
@@ -130,11 +119,11 @@ bool executePathEx(schema_node_cptr base, const AtomizedPath & path, std::set<sc
     return !(output == NULL || output->empty());
 }
 
-void SchemaLookup::findSomething(const DataRoot& root, std::vector< schema_node_xptr >* output, int limit)
+void SchemaLookup::findSomething(const DataRoot& root, SchemaNodePtrList* output, int limit)
 {
     AtomizedPath path = atomizedPath;
 
-    if (atomizedPath.cost() > reversePath.cost()) {
+    if (!reversePath.empty() && atomizedPath.cost() > reversePath.cost()) {
         path = reversePath;
     };
     
@@ -164,7 +153,7 @@ void SchemaLookup::findSomething(const DataRoot& root, std::vector< schema_node_
         std::vector<schema_node_xptr>::iterator it = nodeCandidates.begin();
 
         while (it != nodeCandidates.end()) {
-            if (!executePathEx(*it, checkPath, NULL, true)) {
+            if (!executeSchemaPathTest(*it, checkPath, NULL, true)) {
                 it = nodeCandidates.erase(it);
             } else {
                 ++it;
@@ -175,70 +164,238 @@ void SchemaLookup::findSomething(const DataRoot& root, std::vector< schema_node_
     std::copy(nodeCandidates.begin(), nodeCandidates.end(), std::back_inserter(*output));
 }
 
-void SchemaLookup::execute(schema_node_cptr base, std::vector< schema_node_xptr >* output)
+bool SchemaLookup::exists(schema_node_cptr base)
 {
-    std::set<schema_node_xptr> goalSet;
-    executePathEx(base.ptr(), atomizedPath, &goalSet);
+    return executeSchemaPathTest(base.ptr(), atomizedPath, NULL);
+}
+
+void SchemaLookup::execute(schema_node_cptr base, SchemaNodePtrList * output)
+{
+    SchemaNodePtrSet goalSet;
+    executeSchemaPathTest(base.ptr(), atomizedPath, &goalSet);
     std::copy(goalSet.begin(), goalSet.end(), std::back_inserter(*output));
 }
 
-SchemaLookup::SchemaLookup(const pe::Path& _path) : path(_path), atomizedPath()
+class PathSchemaCheck : public phop::ItemOperator {
+typedef std::map<schema_node_xptr, bool> SchemaCache;
+    SchemaLookup scnLookup;
+    SchemaCache cache;
+protected:
+    virtual void do_next();
+public:
+    PathSchemaCheck(IValueOperator * _in, const AtomizedPath& apath)
+      : ItemOperator(_in), scnLookup(apath) {};
+
+    virtual void reset();
+};
+
+class PathEvaluateTraverse : public phop::ItemOperator {
+    PathTraverse * traverse;
+protected:
+    virtual void do_next();
+public:
+    virtual void reset();
+};
+
+class PathSchemaResolve : public phop::ItemOperator {
+typedef std::map<schema_node_xptr, SchemaNodeList> SchemaCache;
+    SchemaLookup scnLookup;
+    SchemaCache cache;
+    PathSchemaMerge * env;
+protected:
+    virtual void do_next();
+public:
+    PathSchemaResolve(IValueOperator * _in, const AtomizedPath& apath)
+      : ItemOperator(_in), scnLookup(apath) {};
+
+    virtual void reset();
+};
+
+void PathSchemaCheck::reset()
 {
-    
+    phop::ItemOperator::reset();
+    scnLookup.compile();
+    cache.clear();
 }
 
-SchemaLookup::~SchemaLookup()
+void PathSchemaCheck::do_next()
 {
+    bool satisfy = false;
+    tuple_cell tin;
 
-}
+    do {
+        in->next(_context);
+        tin = in->get();
 
-typedef Node (*PathExecutionEvironment::NextNodeProc)(Node node);
-typedef bool (*PathExecutionEvironment::TestNodeProc)(Node node);
+        if (tin.is_eos()) {
+            seteos();
+            return;
+        };
 
-struct NodeIterator {
-    typedef bool (*NodeIterator::NextNodeProc)();
+        U_ASSERT(tin.is_node());
 
-    Node node;
-    NextNodeProc _next;
-    AtomizedPath path;
+        schema_node_cptr snode = Node(tin.get_node()).checkp().getSchemaNode();
+        SchemaCache::const_iterator it = cache.find(snode.ptr());
 
-    NodeIterator(Node _node, NextNodeProc __next, const AtomizedPath &_path)
-    : node(_node), _next(__next), path(_path) {};
-
-    Node get() const { return node; };
-
-    inline bool next() {
-        if (_next != NULL) {
-            return this->*_next();
+        if (it == cache.end()) {
+            satisfy = scnLookup.exists(snode);
+            cache.insert(SchemaCache::value_type(snode.ptr(), satisfy));
         } else {
-            node = NULL; return false;
+            satisfy = it->second;
+        };
+    } while (!satisfy);
+
+    push(tin);
+}
+
+void PathSchemaResolve::do_next()
+{
+    tuple_cell tin;
+
+    do {
+        if (!env->eos()) {
+            push(tuple_cell::node(env->next()));
+            return;
+        };
+
+        in->next(_context);
+        tin = in->get();
+
+        if (tin.is_eos()) {
+            seteos();
+            return;
+        };
+
+        U_ASSERT(tin.is_node());
+
+        schema_node_cptr snode = Node(tin.get_node()).checkp().getSchemaNode();
+        SchemaCache::const_iterator it = cache.find(snode.ptr());
+
+        if (it == cache.end()) {
+            SchemaNodePtrList nodePtrSet;
+            scnLookup.execute(snode, &nodePtrSet);
+            cache.insert(SchemaCache::value_type(snode.ptr(), toNodeSet(nodePtrSet)));
+              
+            env->pushAll(tin.get_node(), snode, cache.at(snode.ptr()));
+        } else {
+            env->pushAll(tin.get_node(), snode, it->second);
+        };
+    } while (!tin.is_eos());
+
+    seteos();
+}
+
+void PathSchemaResolve::reset()
+{
+    phop::ItemOperator::reset();
+    env->clear();
+    scnLookup.compile();
+    cache.clear();
+}
+
+
+void PathEvaluateTraverse::do_next()
+{
+    tuple_cell tin;
+
+    do {
+        if (traverse->eos()) {
+            in->next(_context);
+            tin = in->get();
+
+            if (tin.is_eos()) {
+                seteos();
+                return;
+            };
+
+            traverse->push(tin.get_node());
+        };
+
+        traverse->next();
+
+    } while (true);
+}
+
+void PathEvaluateTraverse::reset()
+{
+    phop::ItemOperator::reset();
+}
+
+
+
+
+#ifdef HUIHUIHUI
+
+
+class AncestorSequence : public ExecutablePathAtom {
+    std::string sequence;
+    // P - parent, A - parent closure, S parent closure or self, D - document test, N - name test
+public:
+};
+
+
+class ExecutablePathAtom : public PathAtom {
+public:
+    virtual void eval(PathExecutionEvironment * env);
+};
+
+template <typename SchemaTestOperator>
+class ExecutableNodeTest : public ExecutablePathAtom {
+};
+
+class AncestorSequenceSchemaCheck : public AncestorSequence {
+    std::vector<NameTestAtom> testList;
+};
+
+class AncestorSequenceEval : public AncestorSequence {
+};
+
+class ChildBySchemaEval : public ExecutablePathAtom {
+};
+
+class DescendantBySchemaEval : public ExecutablePathAtom {
+};
+
+class DescendantTraverse : public ExecutablePathAtom {
+};
+
+
+void PathLookup::compile()
+{
+    for (AtomizedPathVector::const_iterator it = path.begin(); it != path.end(); ++it) {
+        PathAtom * item = *it;
+
+        if (dynamic_cast<AxisPathAtom *>(item) != NULL) {
+            AxisPathAtom * axisStep = dynamic_cast<AxisPathAtom *>(item);
+            t_item childMask = (t_item) 0;
+
+            if (axisStep->orSelf) {
+                nodeset.push(NodeIterator(node, NULL, path + 1));
+            };
+
+            switch (axisStep->axis) {
+                case axis_parent:
+            if ()
+            }
         }
-    }
+    };
+}
 
-    bool nextParent();
-};
 
-struct PathExecutionEvironment {
-    std::queue<NodeIterator> nodeset;
-    Node eval(Node node, const AtomizedPath & path);
-};
 
-VPathLookup::VPathLookup(const pe::AtomizedPath& _path)
-    : path(_path) { }
-
-VPathLookup::~VPathLookup()
+AncestorAxisLookup::AncestorAxisLookup(const pe::AtomizedPath& _path)
+  : PathLookup(_path)
 {
 
 }
 
-void VPathLookup::compile()
+void AncestorAxisLookup::execute(const Node& node)
 {
-    
-}
+    env->nodeset.push();
+  
+    NodeIterator result;
 
-void VPathLookup::execute(const Node& node)
-{
-    
+    const AtomizedPath & path = env->nodeset.front().path;
 }
 
 Node PathExecutionEvironment::eval(Node node) {
@@ -398,3 +555,5 @@ Node VPathLookup::next()
 
     return node;
 }
+
+#endif 
