@@ -76,7 +76,7 @@ typedef std::map<std::string, DataNode *> VariableNameMap;
 typedef std::set<Predicate *> PredicateSet;
 typedef std::set<TupleId> TupleScheme;
 typedef std::map<TupleId, int> LogicalToPhysicalTupleMap;
-typedef std::vector<int> TupleMap;
+typedef std::vector< std::pair<unsigned, unsigned> > TupleMap;
 
 class OptimizationSpace {};
 

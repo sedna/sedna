@@ -704,26 +704,56 @@ public:
 
 struct tuple
 {
-    int cells_number;	// number of cells in the array
-    tuple_cell *cells;	// array of cells
-    bool eos;			// is eos?
+private:
+    int cells_number;   // number of cells in the array
+public:
+    scoped_ptr<tuple_cell, de_delete_array<tuple_cell> > cells; // array of cells
+    bool eos;       // is eos?
 
     tuple() : cells_number(0), cells(NULL), eos(true) {}
-    tuple(int _n_) : cells_number(_n_), eos(false) { cells = se_new tuple_cell[_n_]; }
-    tuple(const tuple &t);
-
-    explicit tuple(const tuple_cell tc) : cells_number(1), eos(false) {
-        cells = se_new tuple_cell[1];
-        this->copy(tc);
-    }
-
-    tuple &operator=(const tuple& t);
+    tuple(int _n_) : cells_number(_n_), eos(false) { cells = new tuple_cell[_n_]; }
 
     void copy(const tuple &t)
     {
         eos = t.eos;
         if (!eos) for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
     }
+
+    tuple(const tuple &t) : cells_number(t.cells_number), cells(NULL), eos(t.eos) {
+        if (!t.cells.isnull()) {
+            cells = new tuple_cell[cells_number];
+            copy(t);
+        };
+    };
+
+    explicit tuple(const tuple_cell tc) : cells_number(1), eos(false) {
+        cells = new tuple_cell[1];
+        this->copy(tc);
+    }
+
+    int size() const { return cells_number; }
+
+    tuple & reinit(int new_size) {
+        cells.clear();
+        cells_number = new_size;
+        cells = new tuple_cell[cells_number];
+
+        return *this;
+    };
+
+    tuple &operator=(const tuple& t) {
+        U_ASSERT(cells_number == t.cells_number);
+
+        if (this != &t) {
+            copy(t);
+        }
+
+        return *this;
+    };
+
+    tuple_cell & operator[](int i) { return cells.get()[i]; };
+    const tuple_cell & operator[](int i) const { return cells.get()[i]; };
+
     void copy(const tuple_cell &tc)
     {
         if (cells_number != 1) throw USER_EXCEPTION2(SE1003, "Cannot construct tuple from tuple cell (size mismatch)");
@@ -762,11 +792,7 @@ struct tuple
         const tuple* arr[2] = {&s1, &s2};
         for (int i = 0; i < cells_number; i++) cells[i] = arr[order[i].first - 1]->cells[order[i].second - 1];
     }
-    ~tuple() { clear(); }
-    void clear()
-    {
-		if (cells != NULL) delete [] cells;
-    }
+
     bool is_eos() const { return eos; }
     void set_eos() { eos = true; }
 

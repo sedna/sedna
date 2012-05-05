@@ -12,6 +12,9 @@
 
 #include <string>
 #include <map>
+#include <stack>
+
+struct PathExecutionEvironment;
 
 class AxisHints;
 class DataRoot;
@@ -46,6 +49,24 @@ public:
     void findSomething(const DataRoot& root, std::vector<schema_node_xptr> * output, int limit);
 };
 
+class VPathLookup {
+protected:
+    AtomizedPath path;
+    PathExecutionEvironment * env;
+public:
+    VPathLookup(const AtomizedPath & _path);
+    ~VPathLookup();
+
+    void compile();
+    void execute(const Node& node);
+
+    Node next();
+};
+
+// class AbsPathLookup {
+// };
+
+
 /*
 class PathLookup {
 protected:
@@ -61,12 +82,9 @@ public:
     static PathLookup * createStepLookup(const pe::Path &path);
 };
 
-class AbsPathLookup {
-};
-
 struct LookupInfo;
-
-};
 */
+
+/* namespace pe */ };
 
 #endif /* XPATHLOOKUP_H */

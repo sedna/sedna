@@ -110,7 +110,7 @@ int sequence::add(const tuple &t)
         blk_arr.push_back(new_blk);
 
         CHECKP(eblk);
-		VMM_SIGNAL_MODIFICATION(eblk);
+        VMM_SIGNAL_MODIFICATION(eblk);
         SEQ_BLK_HDR(eblk)->nblk = new_blk;
 
         eblk = new_blk;
@@ -122,7 +122,7 @@ int sequence::add(const tuple &t)
     for (int i = 0; i < tuple_size; i++)
     {
         VMM_SIGNAL_MODIFICATION(eblk);
-        memcpy(dest_addr + i, t.cells + i, sizeof(tuple_cell));
+        memcpy(dest_addr + i, &t.cells[i], sizeof(tuple_cell));
 
         if (t.cells[i].get_type() == tc_light_atomic_var_size ||
             (copy_vmm_strings && t.cells[i].is_atomic() && !is_fixed_size_type(t.cells[i].get_atomic_type())))
@@ -133,7 +133,8 @@ int sequence::add(const tuple &t)
             (dest_addr + i)->_adjust_serialized_tc(txt_ptr);
         }
     }
-	VMM_SIGNAL_MODIFICATION(eblk);
+
+    VMM_SIGNAL_MODIFICATION(eblk);
     SEQ_BLK_HDR(eblk)->cursor += tuple_sizeof;
 
     return 0;
@@ -150,14 +151,11 @@ void sequence::get(tuple &t, int pos)
     t.eos = false;
     bool cleared = false;
 
-    U_ASSERT(pos < seq_size);
+    if (t.size() != tuple_size)
 
-    if (t.cells_number != tuple_size)
     {
         cleared = true;
-        t.clear();
-        t.cells = se_new tuple_cell[tuple_size];
-        t.cells_number = tuple_size;
+        t.reinit(tuple_size);
     }
 
     if (pos < tuples_in_memory)
@@ -180,7 +178,7 @@ void sequence::get(tuple &t, int pos)
 
     CHECKP(p);
 
-    memcpy(t.cells, XADDR(p), tuple_sizeof);
+    memcpy(t.cells.get(), XADDR(p), tuple_sizeof);
 
     for (int i = 0; i < tuple_size; i++)
     {

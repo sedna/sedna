@@ -35,7 +35,7 @@ size_t TupleSerializer::serialize(const tuple& t, void* buf)
     bit_set bs(header -> size());
     memcpy((char *)buf, init_pos, sizeof(int64_t));
     size_t offset = sizeof(int64_t); //Offset to write to buffer
-    for (int i = 0; i < t.cells_number; i++)
+    for (int i = 0; i < t.size(); i++)
     {
         orb_common_type &ct = header -> at(i);
         if (!ct.initialized) continue;              //if ct.initialized == false we have a column of eos values

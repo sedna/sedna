@@ -31,7 +31,7 @@ PPRange::getIntFromOp(PPOpIn & op)
         return 0;
     }
 
-    if ( t.cells_number != 1 ) 
+    if ( t.size() != 1 ) 
         throw XQUERY_EXCEPTION2(XPTY0004, "range expression argument is not a single atomic value");
 
     tuple_cell res = atomize(t.cells[0]);

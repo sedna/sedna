@@ -354,7 +354,7 @@ static void ss_serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const
 static void ss_deserialize (tuple& t, xptr& v1, const void *_data)
 {
 	ss_data *data = (ss_data*)_data;
-	U_ASSERT(t.cells_number == data->n);
+	U_ASSERT(t.size() == data->n);
 	for (int i = 0; i < data->n; i++)
 		data->sort_types[i]->deserialize_tc(t.cells[i], &v1, data);
 }

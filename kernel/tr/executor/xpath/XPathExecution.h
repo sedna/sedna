@@ -18,33 +18,8 @@ typedef bool (*TestNodeProc)(Node node, AxisHints * hint);
 typedef std::vector<int> SchemaPath;
 typedef std::vector<SchemaPath> SchemaPathList;
 
-struct NodeDocumentOrderCmp {
-    bool operator()(const Node & x, const Node& y) const
-    { return !(x < y); }
-};
-
 typedef std::map<schema_node_xptr, SchemaPathList> DescendantMap;
 
-class NodeHeapStorage {
-  public:
-    std::vector<Node> heap;
-    
-    Node pop() {
-        if (heap.empty()) {
-            return Node();
-        } else {
-            Node result = heap.front();
-            std::pop_heap(heap.begin(), heap.end(), NodeDocumentOrderCmp());
-            heap.pop_back();
-            return result;
-        }
-    };
-
-    void push(const Node & node) {
-        heap.push_back(node);
-        std::push_heap(heap.begin(), heap.end(), NodeDocumentOrderCmp());
-    };
-};
 
 /**
  *  AxisHints stores data, needed to effectively evaluate path expressions

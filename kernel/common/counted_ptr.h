@@ -30,14 +30,13 @@ class scoped_ptr {
   public:
     T& operator*() const throw() { return *p; }
     T* operator->() const throw() { return p; }
+    T& operator[](int i) const throw() { return p[i]; }
+    T* get() const { return p; };
 
     scoped_ptr(T * _p = NULL) : p(_p) {}
 
     /* Recall: delete operator have no effect on NULL anyway, so this is safe. */
     ~scoped_ptr() { Deallocator::deallocate(p); }
-
-    inline
-    T* get() const { return p; };
 
     // Scoped pointer MUST NOT be neither copied nor assigned to any other scoped pointer!
     // scoped_ptr (const scoped_ptr<T> &ptr) throw() { U_ASSERT(false); }
@@ -46,7 +45,7 @@ class scoped_ptr {
     bool isnull() const { return NULL == p; };
 
     /* This implementation of scoped pointer does DELETE old object on assignment  */
-    scoped_ptr<T>& operator= (T* ptr) throw() {
+    scoped_ptr<T, Deallocator>& operator= (T* ptr) throw() {
         U_ASSERT(p != ptr);
         Deallocator::deallocate(p);
         p = ptr;

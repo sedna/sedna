@@ -167,8 +167,14 @@ public:
         _sliceEnd++;
     };
 
+    AtomizedPath operator+(AtomizedPathVector::size_type i) { return AtomizedPath(*this, i, size()); }
+
     AtomizedPath reverse() const;
-    
+
+    bool empty() const { return _list.isnull() || _sliceEnd <= _sliceStart; };
+
+    PathAtom * at(AtomizedPathVector::size_type i) const { return _list[i]; };
+
     inline AtomizedPathVector::size_type size() const { return _sliceEnd - _sliceStart; };
 
     inline AtomizedPathVector::iterator begin() { return _list->begin() + _sliceStart; };

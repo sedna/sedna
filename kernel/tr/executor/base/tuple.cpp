@@ -209,42 +209,6 @@ char* tuple_cell::copy_string(char *buf, size_t n) const
 }
 
 
-tuple::tuple(const tuple& t)
-{
-    //d_printf1("tuple::tuple(const tuple &t) begin\n");
-
-    eos = t.eos;
-    cells_number = t.cells_number;
-    if (t.cells == NULL) cells = NULL;
-    else
-    {
-        cells = se_new tuple_cell[cells_number];
-        for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
-    }
-
-    //d_printf1("tuple::tuple(const tuple &t) end\n");
-}
-
-tuple& tuple::operator=(const tuple& t)
-{
-    //d_printf1("tuple::operator=(const tuple& t) begin\n");
-
-    clear();
-
-    eos = t.eos;
-    cells_number = t.cells_number;
-    if (t.cells == NULL) cells = NULL;
-    else
-    {
-        cells = se_new tuple_cell[cells_number];
-        for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
-    }
-
-    //d_printf1("tuple::operator=(const tuple& t) end\n");
-
-    return *this;
-}
-
 void tuple::print() const
 {
     d_printf3("Tuple: eos = %d; cells_number = %d\n", eos, cells_number);

@@ -44,7 +44,7 @@ tuple_cell getNameTuple(const PPOpIn &qname, bool quietly)
     tuple name(qname.ts);
 
     qname.op->next(name);
-    if (name.is_eos() || name.cells_number != 1)
+    if (name.is_eos() || name.size() != 1)
         throw XQUERY_EXCEPTION2(XPTY0004, "single atomic value is expected in the name expression of an attribute/element constructor");
 
     tuple_cell res = atomize(name.cells[0]);
@@ -95,7 +95,7 @@ void getAtomicSequence(const char * direct_content, PPOpIn content, sequence * a
         content.op->next(value);
 
         while (!value.is_eos()) {
-            if (value.cells_number != 1) {
+            if (value.size() != 1) {
                 throw USER_EXCEPTION2(SE1003, "in PPConstructor");
             }
 

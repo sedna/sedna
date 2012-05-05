@@ -91,7 +91,7 @@ bool PPQueryRoot::do_next()
 
     if (data.is_eos()) return false;
 
-    if(data.cells_number != 1)
+    if(data.size() != 1)
         throw XQUERY_EXCEPTION2(SE1003, "Result of the query contains nested sequences");
 
     tuple_cell tc = data.cells[0];
@@ -245,7 +245,7 @@ bool PPSubQuery::do_next()
     if (data.is_eos())
         return false;
 
-    if (data.cells_number != 1)
+    if (data.size() != 1)
         throw XQUERY_EXCEPTION2(SE1003, "Result of a subquery contains nested sequences");
 
     return true;
