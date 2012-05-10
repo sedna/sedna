@@ -355,7 +355,7 @@ void PPDataGraph::do_next(tuple& t)
 {
     static DataGraphMaster dgm;
 
-    graphString.op->next(t);
+    inputString.op->next(t);
 
     if (!t.eos) {
         TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
@@ -373,48 +373,73 @@ void PPDataGraph::do_next(tuple& t)
 
         IElementProducer * rootProducer = SCElementProducer::getVirtualRoot(XNULL);
         IElementProducer * dgElement = dg->toXML(rootProducer);
-        
+
         t.cells[0] = dgElement->close();
 
         PPOpIn op(dgm.compile(dg), 1);
     }
 }
 
-void PPDataGraph::do_accept(PPVisitor& v)
-{
-    //   v.visit(this);
-}
+PPDataGraph::PPDataGraph(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)
+: PPInternalFunction(_cxt_, _info_, _seq_) {}
 
-void PPDataGraph::do_close()
-{
-    graphString.op->close();
-}
 
 PPIterator* PPDataGraph::do_copy(dynamic_context* _cxt_)
 {
-    return new PPDataGraph(_cxt_, info, PPOpIn(graphString.op->copy(_cxt_), 1));
+    return new PPDataGraph(_cxt_, info, PPOpIn(inputString.op->copy(_cxt_), 1));
 }
 
-void PPDataGraph::do_open()
+
+PPInternalFunction::PPInternalFunction(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)
+    : PPIterator(_cxt_, _info_, "InternalFunction"), inputString(_seq_) { }
+
+PPInternalFunction::~PPInternalFunction()
 {
-    graphString.op->open();
+    delete inputString.op;
+    inputString.op = NULL;
 }
 
-void PPDataGraph::do_reopen()
+void PPInternalFunction::do_open()
 {
-    graphString.op->reopen();
+    inputString.op->open();
 }
 
-PPDataGraph::PPDataGraph(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)
-    : PPIterator(_cxt_, _info_, "PPDataGraph"), graphString(_seq_)
+void PPInternalFunction::do_reopen()
+{
+    inputString.op->reopen();
+}
+
+void PPInternalFunction::do_accept(PPVisitor& v)
+{
+    // inputString.op->
+}
+
+void PPInternalFunction::do_close()
+{
+    inputString.op->close();
+}
+
+
+
+PPAbsPathExec::PPAbsPathExec(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)
+    : PPInternalFunction(_cxt_, _info_, _seq_) { }
+
+PPIterator* PPAbsPathExec::do_copy(dynamic_context* _cxt_)
 {
 }
 
-PPDataGraph::~PPDataGraph()
+void PPAbsPathExec::do_next(tuple& t)
 {
-    delete graphString.op;
-    graphString.op = NULL;
+    inputString.op->next(t);
+
+    if (!t.eos) {
+        TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
+        reader.read();
+
+        std::string list(reader.buffer, reader.size);
+        AutoSchemeList scml(list.c_str());
+
+        pe::Path path(scml);
+
+    }
 }
-
-
-

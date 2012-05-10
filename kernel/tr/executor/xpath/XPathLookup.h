@@ -8,12 +8,16 @@
 #define XPATHLOOKUP_H
 
 #include "XPathTypes.h"
+#include "AtomizedPath.h"
+#include "tr/executor/algorithms/SequenceModel.h"
 #include "tr/structures/nodeinterface.h"
 
 #include <string>
 #include <map>
 #include <stack>
 
+class PathSchemaMerge;
+struct PathTraverse;
 struct PathExecutionEvironment;
 
 class AxisHints;
@@ -22,8 +26,6 @@ class DataRoot;
 namespace pe {
 
 struct Path;
-
-bool executeSchemaPathTest(schema_node_cptr base, const AtomizedPath & path, SchemaNodePtrSet * output, bool _fast = false);
 
 class SchemaLookup {
     Path path;
@@ -46,23 +48,43 @@ public:
     void findSomething(const DataRoot& root, SchemaNodePtrList * output, int limit);
 };
 
-/*
-class PathLookup {
+
+class PathSchemaCheck : public phop::ItemOperator {
+    typedef std::map<schema_node_xptr, bool> SchemaCache;
+    SchemaLookup scnLookup;
+    SchemaCache cache;
 protected:
-    Path path;
+    virtual void do_next();
 public:
-    PathLookup(const Path & path);
-    virtual ~PathLookup() {};
-
-    virtual void compile() = 0;
-    virtual NodeIterator execute(const Node& node) = 0;
-
-    static PathLookup * createPathLookup(const pe::Path &path);
-    static PathLookup * createStepLookup(const pe::Path &path);
+    PathSchemaCheck(IValueOperator * _in, const AtomizedPath& apath)
+        : ItemOperator(_in), scnLookup(apath) {};
+    virtual ~PathSchemaCheck();
+    virtual void reset();
 };
 
-struct LookupInfo;
-*/
+class PathEvaluateTraverse : public phop::ItemOperator {
+    PathTraverse * traverse;
+protected:
+    virtual void do_next();
+public:
+    PathEvaluateTraverse(IValueOperator * _in, const AtomizedPath& apath);
+    virtual ~PathEvaluateTraverse();
+    virtual void reset();
+};
+
+class PathSchemaResolve : public phop::ItemOperator {
+    typedef std::map<schema_node_xptr, SchemaNodeList> SchemaCache;
+    SchemaLookup scnLookup;
+    SchemaCache cache;
+    PathSchemaMerge * merge;
+protected:
+    virtual void do_next();
+public:
+    PathSchemaResolve(IValueOperator * _in, const AtomizedPath& apath);
+
+    virtual ~PathSchemaResolve();
+    virtual void reset();
+};
 
 /* namespace pe */
 };

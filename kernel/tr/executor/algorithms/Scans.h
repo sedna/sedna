@@ -40,7 +40,7 @@ protected:
 class BogusConstSequence : public IValueOperator {
 protected:
     counted_ptr<MemoryTupleSequence> sequence;
-    
+
     virtual void do_next();
 public:
     BogusConstSequence(counted_ptr<MemoryTupleSequence> _sequence);

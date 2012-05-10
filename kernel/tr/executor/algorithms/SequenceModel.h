@@ -7,7 +7,6 @@
 #define SEQUENCE_MODEL_H
 
 #include "SequenceHelpers.h"
-
 #include "tr/opt/OptTypes.h"
 
 #include <deque>

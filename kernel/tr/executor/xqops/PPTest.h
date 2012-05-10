@@ -16,22 +16,42 @@
 /// PPTest
 ///////////////////////////////////////////////////////////////////////////////
 
-class PPDataGraph : public PPIterator {
+class PPInternalFunction : public PPIterator {
 protected:
-    PPOpIn graphString;
+    PPOpIn inputString;
 public:
     virtual void do_accept(PPVisitor& v);
     virtual void do_close();
-    virtual PPIterator* do_copy(dynamic_context* _cxt_);
-    virtual void do_next(tuple& t);
     virtual void do_open();
     virtual void do_reopen();
 
-    PPDataGraph(dynamic_context *_cxt_,
-                operation_info _info_,
-                PPOpIn _seq_);
+    PPInternalFunction(dynamic_context *_cxt_, operation_info _info_, PPOpIn _seq_);
+    virtual ~PPInternalFunction();
+};
 
-    virtual ~PPDataGraph();
+class PPAbsPathExec : public PPInternalFunction {
+protected:
+    virtual void do_next(tuple& t);
+    virtual PPIterator* do_copy(dynamic_context* _cxt_);
+public:
+    PPAbsPathExec(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_);
+};
+
+class PPSchemaScan : public PPInternalFunction {
+protected:
+    virtual void do_next(tuple& t);
+    virtual PPIterator* do_copy(dynamic_context* _cxt_);
+public:
+    PPSchemaScan(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_);
+};
+
+
+class PPDataGraph : public PPInternalFunction {
+public:
+    virtual PPIterator* do_copy(dynamic_context* _cxt_);
+    virtual void do_next(tuple& t);
+
+    PPDataGraph(dynamic_context *_cxt_, operation_info _info_, PPOpIn _seq_);
 };
 
 class PPTest : public PPIterator

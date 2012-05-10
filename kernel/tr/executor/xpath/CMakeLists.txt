@@ -1,1 +1,1 @@
-set(xpath_SRC XPathLookup.cpp XPathTypes.cpp DataSources.cpp)
+set(xpath_SRC XPathLookup.cpp XPathTypes.cpp XPathExecution.cpp DataSources.cpp AtomizedPath.cpp)

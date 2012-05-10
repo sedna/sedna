@@ -1589,10 +1589,21 @@ PPOpIn l2pFnSeGetProperty(dynamic_context *dyn_cxt, const operation_info &opi, a
 PPOpIn l2pFnSeDatagraph(dynamic_context* dyn_cxt, const operation_info& opi, arr_of_PPOpIn& params)
 {
     PPOpIn res;
-
     res = PPOpIn(new PPDataGraph(dyn_cxt, opi, params[0]), 1);
-
     return res;
 }
 
+PPOpIn l2pFnSeAbsPath(dynamic_context* dyn_cxt, const operation_info& opi, arr_of_PPOpIn& params)
+{
+    PPOpIn res;
+    res = PPOpIn(new PPAbsPathExec(dyn_cxt, opi, params[0]), 1);
+    return res;
+}
+
+PPOpIn l2pFnSeSchemaScan(dynamic_context* dyn_cxt, const operation_info& opi, arr_of_PPOpIn& params)
+{
+    PPOpIn res;
+    res = PPOpIn(new PPSchemaScan(dyn_cxt, opi, params[0]), 1);
+    return res;
+}
 
