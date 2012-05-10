@@ -122,7 +122,7 @@ ComparisonInfo* CostModel::getCmpInfo(TupleStatistics* m1, TupleStatistics* m2, 
 
     switch (cmp.op) {
       case Comparison::g_eq :
-        result->selectivity = Range(0.1, 0.5);
+        result->selectivity = Range(0.01, 0.2);
         result->opCost = getCPUCost();
         break;
       case Comparison::do_after :

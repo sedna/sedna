@@ -117,8 +117,8 @@ struct PPOpIn
     PPOpIn(PPIterator *_op_, int _ts_) : op(_op_), ts(_ts_) {}
     PPOpIn() : op(NULL), ts(0) {}
 
-    tuple_cell &get(tuple &t) { return t[ts]; }
-    const tuple_cell & get(tuple &t) const { return t[ts]; }
+    tuple_cell &get(tuple &t) { return t[0]; }
+    const tuple_cell & get(tuple &t) const { return t[0]; }
 };
 
 /* Array of PPOpIn */

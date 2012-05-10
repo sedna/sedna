@@ -10,34 +10,109 @@
 #include "tr/opt/OptTypes.h"
 
 #include <deque>
+#include <stack>
+
+class POProt;
 
 namespace phop {
 
 class ExecutionContext;
+class IOperator;
+class ITupleOperator;
 
-class IValueOperator {
-    std::deque<tuple_cell> valueCache;
+class ExecutionBlock {
+    static std::stack<ExecutionBlock * > blockStack;
+public:
+    static ExecutionBlock * current()
+    {
+        return blockStack.top();
+    };
+
+    static ExecutionBlock * push(ExecutionBlock * executionBlock)
+    {
+        ExecutionBlock * result = blockStack.empty() ? NULL : blockStack.top();
+        blockStack.push(executionBlock);
+        return result;
+    };
+
+    static ExecutionBlock * pop()
+    {
+        ExecutionBlock * result = blockStack.top();
+        blockStack.pop();
+        return result;
+    };
+private:
+    friend class IOperator;
+
+    std::vector<IOperator *> body;
+public:
+    POProt * source;
+
+    ExecutionBlock();
+    ~ExecutionBlock();
+
+    ExecutionBlock * copy();
+
+    ITupleOperator * top()
+    {
+        return (ITupleOperator *)(body.back());
+    };
+};
+
+struct operation_info_t {
+    const char * name;
+    int id;
+};
+
+#define OPINFO_T const phop::operation_info_t * 
+#define OPINFO_DECL(ID) \
+  static const struct phop::operation_info_t op_info; \
+  static const int opid = ID; \
+  virtual phop::IOperator * clone() const;
+
+#define OPINFO_DEF(TT) \
+  const struct phop::operation_info_t TT::op_info = {#TT, TT::opid}; \
+  phop::IOperator * TT::clone() const { return new TT(*this); };
+
+#define OPINFO_REF &op_info
+
+class IOperator {
+private:
+    const operation_info_t * opinfo;
 protected:
     ExecutionContext * _context;
-    
+
+    IOperator(OPINFO_T _opinfo);
+
+    virtual void do_next() = 0;
+public:
+    virtual ~IOperator();
+    virtual void reset() = 0;
+    virtual IOperator * clone() const = 0;
+    virtual void setContext(ExecutionContext * __context)
+      { _context = __context; };
+
+    const operation_info_t * info() const { return opinfo; };
+};
+
+class IValueOperator : public IOperator {
+    std::deque<tuple_cell> valueCache;
+protected:
     void seteos() { valueCache.push_back(tuple_cell()); };
     void push(const tuple_cell & tc) { valueCache.push_back(tc); };
 
-    virtual void do_next() = 0;
-
-    IValueOperator();
+    IValueOperator(OPINFO_T _opinfo) : IOperator(_opinfo) {};
 public:
-    virtual ~IValueOperator() {};
+    virtual void reset()
+      { valueCache.clear(); };
 
-    virtual void reset() { valueCache.clear(); };
-    
-    inline bool next(ExecutionContext * context) {
+    inline bool next()
+    {
         if (get().is_eos()) {
             return false;
         };
 
         if (valueCache.empty()) {
-            _context = context;
             do_next();
         } else {
             valueCache.pop_front();
@@ -49,35 +124,27 @@ public:
     const tuple_cell& get() const { return valueCache.front(); };
 };
 
-class ITupleOperator {
+class ITupleOperator : public IOperator {
     tuple _value;
-    IValueOperator * _convert_op;
 protected:
-    ExecutionContext * _context;
+    IValueOperator * _convert_op;
 
     void seteos() { _value.set_eos(); };
     tuple & value() { return _value; };
 
     virtual void do_next() = 0;
     
-    ITupleOperator(IValueOperator * __convert_op)
-      : _value(1), _convert_op(__convert_op)
-    {
-    };
+    ITupleOperator(OPINFO_T _opinfo, IValueOperator * __convert_op);
 
-    ITupleOperator(unsigned _size)
-      : _value(_size), _convert_op(NULL), _context(NULL)
-    {
-        _value.eos = false;
-    };
+    ITupleOperator(OPINFO_T _opinfo, unsigned _size) :
+      IOperator(_opinfo), _value(_size), _convert_op(NULL) {};
 public:
-    virtual ~ITupleOperator() {};
+    virtual void reset()
+      { _value.eos = false; };
 
-    virtual void reset() { _value.eos = false; };
-
-    inline bool next(ExecutionContext * context) {
+    inline bool next() {
         if (_convert_op != NULL) {
-            _convert_op->next(context);
+            _convert_op->next();
             _value.copy(_convert_op->get());
         };
 
@@ -85,7 +152,6 @@ public:
             return false;
         };
 
-        _context = context;
         do_next();
 
         return true;
@@ -106,12 +172,16 @@ struct TupleIn {
     bool eos() const { return op->get().is_eos(); };
     tuple_cell get() const { return op->get().cells[offs]; };
 
-    void assignTo(tuple & result, const TupleMap & tmap) {
+    void assignTo(tuple & result, const TupleMap & tmap) const {
         if (tmap.size() > 0) {
             for (TupleMap::const_iterator it = tmap.begin(); it != tmap.end(); ++it) {
                 result.cells[it->second] = op->get().cells[it->first];
             };
         }
+    };
+
+    void copyTo(tuple & result) const {
+        result.copy(op->get());
     };
 };
 
@@ -131,43 +201,66 @@ struct MappedTupleIn : public TupleIn {
     explicit MappedTupleIn(ITupleOperator * _op, unsigned _offs)
         : TupleIn(_op, _offs), tmap() { };
 
-    void assignTo(tuple & result) { TupleIn::assignTo(result, tmap); }
+    void assignTo(tuple & result) const { TupleIn::assignTo(result, tmap); }
 };
 
 class TupleFromItemOperator : public ITupleOperator {
 protected:
-    virtual void do_next() { U_ASSERT(false); };
+    virtual void do_next();
 public:
-    TupleFromItemOperator(IValueOperator* convert_op)
-      : ITupleOperator(convert_op) {};
+    OPINFO_DECL(0x001)
+
+    TupleFromItemOperator(IValueOperator* convert_op);
+
+    virtual void reset();
+    virtual void setContext(ExecutionContext* __context);
+};
+
+class ReduceToItemOperator : public IValueOperator {
+protected:
+    TupleIn in;
+
+    virtual void do_next();
+public:
+    OPINFO_DECL(0x002)
+
+    ReduceToItemOperator(const TupleIn & op);
+
+    virtual void reset();
+    virtual void setContext(ExecutionContext* __context);
 };
 
 class BinaryTupleOperator : public ITupleOperator {
 protected:
     MappedTupleIn left, right;
-public:
-    BinaryTupleOperator(unsigned _size, MappedTupleIn _left, MappedTupleIn _right)
-        : ITupleOperator(_size), left(_left), right(_right) {};
 
-    virtual void reset() { left.op->reset(); right.op->reset(); }; // TODO : move to implementation
+    BinaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right)
+        : ITupleOperator(_opinfo, _size), left(_left), right(_right) {};
+public:
+    virtual void reset();
+    virtual void setContext(ExecutionContext* __context);
 };
 
 class UnaryTupleOperator : public ITupleOperator {
 protected:
     MappedTupleIn in;
-public:
-    UnaryTupleOperator(unsigned _size, MappedTupleIn _in) : ITupleOperator(_size), in(_in) {};
 
-    virtual void reset() { in.op->reset(); };
+    UnaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _in)
+        : ITupleOperator(_opinfo, _size), in(_in) {};
+public:
+    virtual void reset();
+    virtual void setContext(ExecutionContext* __context);
 };
 
 class ItemOperator : public IValueOperator {
 protected:
     IValueOperator * in;
-public:
-    ItemOperator(IValueOperator * _in) : IValueOperator(), in(_in) {};
 
-    virtual void reset() { in->reset(); };
+    ItemOperator(OPINFO_T _opinfo, IValueOperator * _in)
+      : IValueOperator(_opinfo), in(_in) {};
+public:
+    virtual void reset();
+    virtual void setContext(ExecutionContext* __context);
 };
 
 }

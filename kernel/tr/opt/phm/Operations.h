@@ -20,7 +20,7 @@ public:
     SortMergeJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, const Comparison& _cmp);
 
     virtual void evaluateCost(CostModel* model);
-    virtual PPIterator* compile();
+    virtual phop::IOperator * compile();
 };
 
 class StructuralJoinPrototype : public BinaryOpPrototype {
@@ -31,14 +31,12 @@ public:
     StructuralJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, const pe::Path& _path);
 
     virtual void evaluateCost(CostModel* model);
-    virtual PPIterator* compile();
+    virtual phop::IOperator * compile();
 };
 
 class AbsPathScanPrototype : public POProt {
     DataRoot dataRoot;
     pe::Path path;
-
-    bool heapMergeTraverse;
 protected:
     virtual IElementProducer* __toXML(IElementProducer* ) const;
 public:
@@ -47,7 +45,7 @@ public:
     AbsPathScanPrototype(PhysicalModel * model, const TupleRef & tref);
 
     virtual void evaluateCost(CostModel* model);
-    virtual PPIterator* compile();
+    virtual phop::IOperator * compile();
 };
 
 class PathEvaluationPrototype : public POProt {
@@ -58,7 +56,7 @@ public:
     PathEvaluationPrototype(PhysicalModel * model, const POProtIn & _left, const TupleRef & _right, const pe::Path& _path);
 
     virtual void evaluateCost(CostModel* model);
-    virtual PPIterator* compile();
+    virtual phop::IOperator * compile();
 };
 
 class ValueScanPrototype : public POProt {
@@ -68,7 +66,7 @@ public:
     ValueScanPrototype(PhysicalModel * model, const POProtIn & _left, const TupleRef & _right, const Comparison& _cmp);
 
     virtual void evaluateCost(CostModel* model);
-    virtual PPIterator* compile();
+    virtual phop::IOperator * compile();
 };
 
 /*
@@ -83,7 +81,7 @@ public:
     MagicJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, const pe::Path& _path);
 
     virtual void evaluateCost(CostModel* model);
-    virtual PPIterator* compile();
+    virtual phop::IOperator * compile();
 };
 
 
@@ -96,7 +94,7 @@ public:
     ValidatePathPrototype(PhysicalModel * model, const POProtIn & _tuple);
 
     virtual void evaluateCost(CostModel* model);
-    virtual PPIterator* compile();
+    virtual phop::IOperator * compile();
 };
 
 

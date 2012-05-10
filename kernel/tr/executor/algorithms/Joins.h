@@ -21,12 +21,9 @@ private:
 protected:
     virtual void do_next();
 public:
-    DocOrderMerge(unsigned int _size, const TupleList & _tin)
-        : ITupleOperator(_size), tin(_tin)
-    {
-        mergeHeap.reserve(_tin.size());
-    };
-
+    OPINFO_DECL(0x301)
+  
+    DocOrderMerge(unsigned int _size, const TupleList & _tin);
     virtual void reset();
 };
 
@@ -39,8 +36,9 @@ protected:
 
     virtual void do_next();
 public:
-    ValueSort(unsigned int _size, MappedTupleIn _in, ITupleSerializer * _order)
-        : UnaryTupleOperator(_size, _in), order(_order), _sorted_sequence(NULL) {};
+    OPINFO_DECL(0x302)
+    
+    ValueSort(unsigned int _size, MappedTupleIn _in, ITupleSerializer * _order);
 
     virtual ~ValueSort();
 

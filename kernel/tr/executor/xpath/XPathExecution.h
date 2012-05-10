@@ -30,7 +30,8 @@ public:
     Node get() const { return node; };
 
     inline
-    bool next() {
+    bool next()
+    {
         if (_next != NULL) {
             (this ->* _next)();
             return !node.isNull();
@@ -49,16 +50,16 @@ struct NextChildNode {
     Node _node;
     schema_node_cptr _snode;
     const pe::AtomizedPath &_path;
-    t_item _mask;
+    typemask_t _mask;
 
-    NextChildNode(const Node & node, const pe::AtomizedPath & path, t_item mask)
+    NextChildNode(const Node & node, const pe::AtomizedPath & path, typemask_t mask)
         : _node(node), _path(path), _mask(mask) { _snode = node.checkp().getSchemaNode(); };
 };
 
 struct PathStepIterator : NodeIterator {
     schema_node_cptr snode;
     pe::AtomizedPath path;
-    t_item mask;
+    typemask_t mask;
 
     void nextSiblingSchema();
 
@@ -109,13 +110,16 @@ struct PathSchemaMerge {
 private:
     bool _eos;
     NIDMergeHeap mergeheap;
-public:  
+public:
+    PathSchemaMerge() : _eos(true) {};
+  
     void pushAll(Node, schema_node_cptr, const SchemaNodeList &);
 
     void push(const NodeIterator & node) {
         U_ASSERT(!node.get().isNull());
         mergeheap.push_back(NIDMergeHeap::value_type(node.get().getPtr(), node));
         std::push_heap(mergeheap.begin(), mergeheap.end(), NIDMergeHeapCompare());
+        _eos = false;
     };
 
     bool eos() const { return _eos; };

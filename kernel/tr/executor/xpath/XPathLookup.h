@@ -9,8 +9,9 @@
 
 #include "XPathTypes.h"
 #include "AtomizedPath.h"
-#include "tr/executor/algorithms/SequenceModel.h"
 #include "tr/structures/nodeinterface.h"
+
+#include "tr/executor/algorithms/SequenceModel.h"
 
 #include <string>
 #include <map>
@@ -56,9 +57,8 @@ class PathSchemaCheck : public phop::ItemOperator {
 protected:
     virtual void do_next();
 public:
-    PathSchemaCheck(IValueOperator * _in, const AtomizedPath& apath)
-        : ItemOperator(_in), scnLookup(apath) {};
-    virtual ~PathSchemaCheck();
+    OPINFO_DECL(0x101)
+    PathSchemaCheck(IValueOperator * _in, const AtomizedPath& apath);
     virtual void reset();
 };
 
@@ -67,6 +67,7 @@ class PathEvaluateTraverse : public phop::ItemOperator {
 protected:
     virtual void do_next();
 public:
+    OPINFO_DECL(0x102)
     PathEvaluateTraverse(IValueOperator * _in, const AtomizedPath& apath);
     virtual ~PathEvaluateTraverse();
     virtual void reset();
@@ -80,8 +81,8 @@ class PathSchemaResolve : public phop::ItemOperator {
 protected:
     virtual void do_next();
 public:
+    OPINFO_DECL(0x103)
     PathSchemaResolve(IValueOperator * _in, const AtomizedPath& apath);
-
     virtual ~PathSchemaResolve();
     virtual void reset();
 };

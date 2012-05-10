@@ -23,6 +23,10 @@ struct SPredicate;
 
 class POProt;
 
+namespace phop {
+    class IOperator;
+}
+
 struct TupleValueInfo {
     enum element_status_t {
         empty = 0,
@@ -97,7 +101,7 @@ public:
     POProt(const prot_info_t * pinfo) : protInfo(pinfo), cost(NULL), result(NULL) {};
 
     virtual void evaluateCost(CostModel * model) = 0;
-    virtual PPIterator * compile() = 0;
+    virtual phop::IOperator * compile() = 0;
     virtual IElementProducer * toXML(IElementProducer *) const;
 };
 

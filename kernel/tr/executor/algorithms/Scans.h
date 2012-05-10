@@ -20,12 +20,28 @@ protected:
     void scan();
     virtual void do_next();
 public:
-    SchemaScan(schema_node_cptr _snode)
-      : IValueOperator(), _cachePtr(_cache.begin()), snode(_snode), currentBlock(XNULL)
-    {  };
+    OPINFO_DECL(0x201)
+    
+    SchemaScan(schema_node_cptr _snode);
 
     virtual void reset();
 };
+
+class NestedEvaluation : public ITupleOperator {
+protected:
+    phop::TupleIn in;
+    IValueOperator * nestedOperator;
+    
+    virtual void do_next();
+public:
+    OPINFO_DECL(0x204)
+
+    NestedEvaluation(const phop::TupleIn& _in, IValueOperator * _op);
+    
+    virtual void reset();
+    virtual void setContext(ExecutionContext* __context);
+};
+
 
 class TupleFilter : public UnaryTupleOperator {
 protected:
@@ -43,6 +59,8 @@ protected:
 
     virtual void do_next();
 public:
+    OPINFO_DECL(0x210)
+
     BogusConstSequence(counted_ptr<MemoryTupleSequence> _sequence);
 };
 
@@ -50,7 +68,7 @@ class CachedNestedLoop : public BinaryTupleOperator {
 public:
     enum flags_t { strict_output = 0x01, };
 protected:
-    TupleComparison * tcmpop;
+    TupleValueComparison * tcmpop;
     bool cacheFilled;
     flags_t flags;
 
@@ -59,55 +77,15 @@ protected:
 
     virtual void do_next();
 public:
-    CachedNestedLoop(TupleIn _left, TupleIn _right, TupleComparison * _tcmpop, flags_t _flags)
-        : BinaryTupleOperator(_left, _right), tcmpop(_tcmpop), flags(_flags) { };
+    OPINFO_DECL(0x212)
+
+    CachedNestedLoop(unsigned _size, const MappedTupleIn & _left,  const MappedTupleIn & _right, TupleValueComparison * _tcmpop, flags_t _flags);
 
     virtual void reset();
 };
 
-class VPath : public UnaryTupleOperator {
-protected:
-    pe::AtomizedPath path;
 
-    virtual void do_next();
-public:
-    VPath(unsigned int _size, MappedTupleIn _in, const pe::AtomizedPath & _path)
-        : UnaryTupleOperator(_size, _in), path(_path) {};
-
-    virtual void reset();
-};
 
 }
-
-/*
-struct NodeTraverse : public ITupleOperator {
-};
-
-*/
-
-
-/*
-
-struct AbsPath : public ITupleOperator {
-    pe::NodeIterator iterator;
-    bool docOrder;
-
-    AbsPath(const pe::Path& path, bool _docOrder = false) : ITupleOperator(1), path(pe), docOrder(_docOrder) {};
-
-    virtual bool open() {
-        iterator = path.execute(XNULL);
-    }
-
-    virtual bool next() {
-        Node result;
-
-        result = iterator.next();
-
-        if (result.isNull()) {
-            body.set_eos();
-        }
-    };
-};
-*/
 
 #endif /* SCANS_H */

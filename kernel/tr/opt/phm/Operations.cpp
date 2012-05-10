@@ -1,6 +1,11 @@
 #include "Operations.h"
 #include "tr/opt/cost/Statistics.h"
 #include "tr/structures/producer.h"
+#include "tr/executor/xpath/XPathExecution.h"
+#include "tr/executor/algorithms/SequenceModel.h"
+#include "tr/executor/algorithms/Scans.h"
+#include "tr/executor/algorithms/Joins.h"
+#include "tr/executor/xpath/XPathLookup.h"
 
 #define OPINFO(OP) static const prot_info_t OP##_info = {#OP, };
 #define OPREF(OP) (&(OP##_info))
@@ -374,34 +379,111 @@ void ValidatePathPrototype::evaluateCost(CostModel* model)
 
 
 
+struct ExecutionBlockWarden {
+    ExecutionBlockWarden(POProt * opin)
+    {
+        phop::ExecutionBlock::current()->source = opin;
+    };
+    
+    ~ExecutionBlockWarden()
+    {
+        phop::ExecutionBlock::current()->source = NULL;
+    };
+};
 
-
-PPIterator* AbsPathScanPrototype::compile()
+phop::IOperator * AbsPathScanPrototype::compile()
 {
+    ExecutionBlockWarden(this);
+
+    SchemaNodePtrSet schemaNodes;
+    phop::TupleList inTuples;
+
+    executeSchemaPathTest(dataRoot.getSchemaNode(), pe::AtomizedPath(path.getBody()->begin(), path.getBody()->end()), &schemaNodes, false);
+
+    for (SchemaNodePtrSet::const_iterator it = schemaNodes.begin(); it != schemaNodes.end(); ++it) {
+        inTuples.push_back(
+            phop::MappedTupleIn(
+                new phop::TupleFromItemOperator(
+                    new phop::SchemaScan(schema_node_cptr(*it))), 0, 0));
+    };
+
+    return new phop::DocOrderMerge(1, inTuples);
+}
+
+phop::IOperator * PathEvaluationPrototype::compile()
+{
+    ExecutionBlockWarden(this);
+    // TODO : make effective evaluation
+
+    phop::ITupleOperator * opin = dynamic_cast<phop::ITupleOperator *>(in.at(0).op->compile());
+    phop::TupleIn aopin(opin, in.at(0).index);
+
+    U_ASSERT(opin != NULL);
+
+    phop::IValueOperator * ain = new phop::ReduceToItemOperator(aopin);
+
+    pe::PathVectorPtr pathBody = path.getBody();
+    pe::PathVector::const_iterator it = pathBody->begin();
+
+    while (it != pathBody->end()) {
+        pe::PathVector::const_iterator pstart = it;
+        
+        while (it != pathBody->end() && it->satisfies(pe::StepPredicate(pe::ParentAxisTest))) {
+            ++it;
+        };
+
+        if (pstart != it) {
+            ain = new pe::PathEvaluateTraverse(ain, pe::AtomizedPath(pstart, it));
+        }
+
+        pe::PathVector::const_iterator cstart = it;
+
+        while (it != pathBody->end() &&
+                it->satisfies(pe::StepPredicate(pe::ChildAxisTest))) {
+            ++it;
+        };
+
+        if (cstart != it) {
+            ain = new pe::PathSchemaResolve(ain, pe::AtomizedPath(cstart, it));
+        }
+
+        if (pstart == it) {
+            U_ASSERT(false);
+            break;
+        };
+        
+        ++it;
+    };
+
+    ain = new pe::PathEvaluateTraverse(ain, pe::AtomizedPath(it, pathBody->end()));
+
+    return new phop::NestedEvaluation(aopin, ain);
+}
+
+phop::IOperator * SortMergeJoinPrototype::compile()
+{
+    ExecutionBlockWarden(this);
+
     return NULL;
 }
 
-PPIterator* PathEvaluationPrototype::compile()
+phop::IOperator * StructuralJoinPrototype::compile()
 {
+    ExecutionBlockWarden(this);
+
     return NULL;
 }
 
-PPIterator* SortMergeJoinPrototype::compile()
+phop::IOperator * ValueScanPrototype::compile()
 {
+    ExecutionBlockWarden(this);
+
     return NULL;
 }
 
-PPIterator* StructuralJoinPrototype::compile()
+phop::IOperator * ValidatePathPrototype::compile()
 {
-    return NULL;
-}
+    ExecutionBlockWarden(this);
 
-PPIterator* ValueScanPrototype::compile()
-{
-    return NULL;
-}
-
-PPIterator* ValidatePathPrototype::compile()
-{
     return NULL;
 }

@@ -39,7 +39,7 @@ public:
     inline AtomizedPath(const AtomizedPath & parent)
     : isMutable(false), _list(parent._list), _sliceStart(parent._sliceStart), _sliceEnd(parent._sliceEnd) {};
 
-    explicit AtomizedPath(const pe::Path & parent);
+    explicit AtomizedPath(pe::PathVector::const_iterator begin, pe::PathVector::const_iterator end);
 
     inline explicit AtomizedPath(const AtomizedPath & parent, AtomizedPathVector::size_type _start, AtomizedPathVector::size_type _end)
     : isMutable(false), _list(parent._list), _sliceStart(parent._sliceStart + _start), _sliceEnd(parent._sliceStart + _end) {};
@@ -168,9 +168,9 @@ struct ParentAtom : public CommonAxisAtom {
 };
 
 struct ChildAtom : public CommonAxisAtom {
-    t_item childMask;
+    typemask_t childMask;
 
-    ChildAtom(t_item _childMask, bool _closure, bool _orSelf) 
+    ChildAtom(typemask_t _childMask, bool _closure, bool _orSelf) 
         : CommonAxisAtom(CHILD_INITIAL_COST, _closure, _orSelf), childMask(_childMask) {
             if (_closure) { _cost *= CLOSURE_INITIAL_COST; }
         };

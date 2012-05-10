@@ -11,6 +11,9 @@
 
 using namespace phop;
 
+OPINFO_DEF(DocOrderMerge)
+OPINFO_DEF(ValueSort)
+
 struct NidStringCmp {
     bool operator()(const NIDMergeHeap::value_type & x, const NIDMergeHeap::value_type& y) const
         { return x.first.compare(y.first) > 0; }
@@ -21,12 +24,18 @@ phop::NIDMergeHeap::value_type getMergeValue(const MappedTupleIn & t, TupleList:
     return NIDMergeHeap::value_type(t.get().get_node(), i);
 };
 
+DocOrderMerge::DocOrderMerge(unsigned int _size, const phop::TupleList& _tin)
+    : ITupleOperator(OPINFO_REF, _size), tin(_tin)
+{
+    mergeHeap.reserve(_tin.size());
+};
+
 void DocOrderMerge::do_next()
 {
     if (!initialized) {
         for (TupleList::size_type i = 0; i < tin.size(); ++i) {
             const MappedTupleIn & t = tin.at(i);
-            t->next(_context);
+            t->next();
 
             if (!t.eos()) {
                 mergeHeap.push_back(getMergeValue(t, i));
@@ -48,7 +57,7 @@ void DocOrderMerge::do_next()
     std::pop_heap(mergeHeap.begin(), mergeHeap.end(), NidStringCmp());
     mergeHeap.pop_back();
 
-    t->next(_context);
+    t->next();
 
     if (!t.eos()) {
         mergeHeap.push_back(getMergeValue(t, idx));
@@ -65,6 +74,14 @@ void DocOrderMerge::reset()
     mergeHeap.clear();
     initialized = false;
 }
+
+ValueSort::ValueSort(unsigned int _size, MappedTupleIn _in, ITupleSerializer* _order)
+    : UnaryTupleOperator(OPINFO_REF, _size, _in),
+        initialized(false), order(_order), _sorted_sequence(NULL)
+{
+
+}
+
 
 ValueSort::~ValueSort()
 {
@@ -91,7 +108,6 @@ void ValueSort::do_next()
     };
 
     if (!value().eos) {
-        push();
         _sorted_sequence->next(value());
     }
 }

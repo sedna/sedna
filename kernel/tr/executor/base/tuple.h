@@ -205,10 +205,11 @@ private:
             data = tc.data;
         }
     }
+
     void release()
     {
         if (t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) {
-            ((str_counted_ptr*)(&data))->~str_counted_ptr();
+            (*(str_counted_ptr*)(&data)) = NULL;
             data.x = data.y = (int64_t) 0;
         }
     }
@@ -711,7 +712,8 @@ public:
     bool eos;       // is eos?
 
     tuple() : cells_number(0), cells(NULL), eos(true) {}
-    tuple(int _n_) : cells_number(_n_), eos(false) { cells = new tuple_cell[_n_]; }
+    tuple(int _n_) : cells_number(_n_), cells(NULL), eos(false) { cells = new tuple_cell[_n_]; }
+    ~tuple() { };
 
     void copy(const tuple &t)
     {

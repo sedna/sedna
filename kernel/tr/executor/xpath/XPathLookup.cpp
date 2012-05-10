@@ -15,11 +15,14 @@
 
 using namespace pe;
 
+OPINFO_DEF(PathSchemaCheck)
+OPINFO_DEF(PathEvaluateTraverse)
+OPINFO_DEF(PathSchemaResolve)
 
 SchemaLookup& SchemaLookup::compile()
 {
     if (atomizedPath.empty()) {
-        atomizedPath = AtomizedPath(path);
+        atomizedPath = AtomizedPath(path.getBody()->begin(), path.getBody()->end());
     }
 
     reversePath = atomizedPath.reverse();
@@ -85,6 +88,9 @@ void SchemaLookup::execute(schema_node_cptr base, SchemaNodePtrList * output)
     std::copy(goalSet.begin(), goalSet.end(), std::back_inserter(*output));
 }
 
+PathSchemaCheck::PathSchemaCheck(phop::IValueOperator* _in, const pe::AtomizedPath& apath)
+    : ItemOperator(OPINFO_REF, _in), scnLookup(apath) { }
+
 void PathSchemaCheck::reset()
 {
     phop::ItemOperator::reset();
@@ -98,7 +104,7 @@ void PathSchemaCheck::do_next()
     tuple_cell tin;
 
     do {
-        in->next(_context);
+        in->next();
         tin = in->get();
 
         if (tin.is_eos()) {
@@ -122,15 +128,15 @@ void PathSchemaCheck::do_next()
     push(tin);
 }
 
-PathSchemaCheck::~PathSchemaCheck()
+PathSchemaResolve::PathSchemaResolve(phop::IValueOperator* _in, const pe::AtomizedPath& apath)
+    : ItemOperator(OPINFO_REF, _in), scnLookup(apath)
 {
-
+    merge = new PathSchemaMerge();
 }
 
-PathSchemaResolve::PathSchemaResolve(phop::IValueOperator* _in, const pe::AtomizedPath& apath)
-    : ItemOperator(_in), scnLookup(apath)
+PathSchemaResolve::~PathSchemaResolve()
 {
-
+    delete merge;
 }
 
 
@@ -140,11 +146,11 @@ void PathSchemaResolve::do_next()
 
     do {
         if (!merge->eos()) {
-            push(tuple_cell::node(env->next()));
+            push(tuple_cell::node(merge->next()));
             return;
         };
 
-        in->next(_context);
+        in->next();
         tin = in->get();
 
         if (tin.is_eos()) {
@@ -162,9 +168,9 @@ void PathSchemaResolve::do_next()
             scnLookup.execute(snode, &nodePtrSet);
             cache.insert(SchemaCache::value_type(snode.ptr(), toNodeSet(nodePtrSet)));
 
-            env->pushAll(tin.get_node(), snode, cache.at(snode.ptr()));
+            merge->pushAll(tin.get_node(), snode, cache.at(snode.ptr()));
         } else {
-            env->pushAll(tin.get_node(), snode, it->second);
+            merge->pushAll(tin.get_node(), snode, it->second);
         };
     } while (!tin.is_eos());
 
@@ -174,9 +180,20 @@ void PathSchemaResolve::do_next()
 void PathSchemaResolve::reset()
 {
     phop::ItemOperator::reset();
-    env->clear();
+    merge->clear();
     scnLookup.compile();
     cache.clear();
+}
+
+PathEvaluateTraverse::PathEvaluateTraverse(phop::IValueOperator* _in, const pe::AtomizedPath& apath)
+    : ItemOperator(OPINFO_REF, _in), traverse(NULL)
+{
+    traverse = new PathTraverse(apath);
+}
+
+PathEvaluateTraverse::~PathEvaluateTraverse()
+{
+    delete traverse;
 }
 
 void PathEvaluateTraverse::do_next()
@@ -185,7 +202,7 @@ void PathEvaluateTraverse::do_next()
 
     do {
         if (traverse->eos()) {
-            in->next(_context);
+            in->next();
             tin = in->get();
 
             if (tin.is_eos()) {

@@ -38,6 +38,7 @@ public:
 };
 
 class PPSchemaScan : public PPInternalFunction {
+    void * data;
 protected:
     virtual void do_next(tuple& t);
     virtual PPIterator* do_copy(dynamic_context* _cxt_);

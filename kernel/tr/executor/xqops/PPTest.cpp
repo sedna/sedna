@@ -64,11 +64,6 @@ void PPTest::do_close()
     seq.op->close();
 }
 
-struct __test_tmp {
-    std::vector<schema_node_xptr> x;
-    std::vector<schema_node_xptr>::size_type i;
-};
-
 #include <sstream>
 #include "tr/executor/xpath/XPathLookup.h"
 
@@ -91,45 +86,6 @@ std::string schemaPath(schema_node_cptr snode) {
 
 void PPTest::do_next (tuple &t)
 {
-    __test_tmp * snodes = NULL;
-
-    if (data != NULL) {
-        snodes = (__test_tmp *) data;
-    } else {
-        seq.op->next(t);
-
-        if (t.eos) {
-            return;
-        }
-
-        DataRoot root(DataRoot::drt_document, "auction");
-        TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
-        reader.read();
-        std::string list(reader.buffer, reader.size);
-        AutoSchemeList scml(list.c_str());
-        pe::Path path(scml.get());
-        pe::SchemaLookup sclkp(path);
-        snodes = new __test_tmp();
-
-        sclkp.compile();
-        sclkp.findSomething(root, &snodes->x, 0);;
-
-        snodes->i = 0;
-        data = snodes;
-    };
-
-    if (snodes->i == snodes->x.size()) {
-        delete snodes;
-        data = NULL;
-        return do_next(t);
-    };
-
-    schema_node_cptr snode = snodes->x.at(snodes->i);
-
-    t.cells[0] = tuple_cell::atomic_deep(xs_string, schemaPath(snode).c_str());
-    t.eos = false;
-    snodes->i++;
-
 /*
 
 // Path parsing
@@ -149,8 +105,6 @@ void PPTest::do_next (tuple &t)
 
     t.cells[0] = tuple_cell::atomic_deep(xs_string, ap.reverse().__toString().c_str());
     t.eos = false;
-
-/*
 
 // Schema traverse
   
@@ -426,6 +380,7 @@ PPAbsPathExec::PPAbsPathExec(dynamic_context* _cxt_, operation_info _info_, PPOp
 
 PPIterator* PPAbsPathExec::do_copy(dynamic_context* _cxt_)
 {
+    return new PPAbsPathExec(_cxt_, info, inputString);
 }
 
 void PPAbsPathExec::do_next(tuple& t)
@@ -439,7 +394,63 @@ void PPAbsPathExec::do_next(tuple& t)
         std::string list(reader.buffer, reader.size);
         AutoSchemeList scml(list.c_str());
 
-        pe::Path path(scml);
+        pe::Path path(scml.get());
 
     }
 }
+
+PPSchemaScan::PPSchemaScan(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)
+    : PPInternalFunction(_cxt_, _info_, _seq_), data(NULL) { }
+
+PPIterator* PPSchemaScan::do_copy(dynamic_context* _cxt_)
+{
+    return new PPSchemaScan(_cxt_, info, inputString);
+}
+
+struct __test_tmp {
+    std::vector<schema_node_xptr> x;
+    std::vector<schema_node_xptr>::size_type i;
+};
+
+void PPSchemaScan::do_next(tuple& t)
+{
+    __test_tmp * snodes = NULL;
+
+    if (data != NULL) {
+        snodes = (__test_tmp *) data;
+    } else {
+        inputString.op->next(t);
+
+        if (t.eos) {
+            return;
+        }
+
+        DataRoot root(DataRoot::drt_document, "auction");
+        TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
+        reader.read();
+        std::string list(reader.buffer, reader.size);
+        AutoSchemeList scml(list.c_str());
+        pe::Path path(scml.get());
+        pe::SchemaLookup sclkp(path);
+        snodes = new __test_tmp();
+
+        sclkp.compile();
+        sclkp.findSomething(root, &snodes->x, 0);;
+
+        snodes->i = 0;
+        data = snodes;
+    };
+
+    if (snodes->i == snodes->x.size()) {
+        delete snodes;
+        data = NULL;
+        return do_next(t);
+    };
+
+    schema_node_cptr snode = snodes->x.at(snodes->i);
+
+    t.cells[0] = tuple_cell::atomic_deep(xs_string, schemaPath(snode).c_str());
+    t.eos = false;
+    snodes->i++;
+}
+

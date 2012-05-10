@@ -88,6 +88,12 @@ struct StepPredicate {
 
 static const uint32_t childParentAxisTest =
   StepPredicate::axis(axis_child) | StepPredicate::axis(axis_parent);
+
+static const uint32_t ParentAxisTest =
+  StepPredicate::axis(axis_parent) | StepPredicate::axis(axis_ancestor) | StepPredicate::axis(axis_ancestor_or_self);
+
+static const uint32_t ChildAxisTest =
+  StepPredicate::axis(axis_child) | StepPredicate::axis(axis_attribute) | StepPredicate::axis(axis_descendant) | StepPredicate::axis(axis_descendant_or_self);
   
 static const uint32_t CDPAAxisTest =
   StepPredicate::axis(axis_child) | StepPredicate::axis(axis_parent) | StepPredicate::axis(axis_descendant) | StepPredicate::axis(axis_ancestor) | StepPredicate::axis(axis_descendant_or_self) | StepPredicate::axis(axis_ancestor_or_self);

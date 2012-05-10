@@ -9,6 +9,18 @@
 
 using namespace phop;
 
+OPINFO_DEF(SchemaScan)
+OPINFO_DEF(BogusConstSequence)
+OPINFO_DEF(CachedNestedLoop)
+OPINFO_DEF(NestedEvaluation)
+
+SchemaScan::SchemaScan(schema_node_cptr _snode)
+    : IValueOperator(OPINFO_REF),
+        _cachePtr(_cache.begin()), snode(_snode), currentBlock(XNULL)
+{
+
+}
+
 void SchemaScan::reset()
 {
     currentBlock = snode->bblk;
@@ -32,7 +44,7 @@ void SchemaScan::scan()
             node = node.getNext();
         }
 
-        currentBlock = hdr.;
+        currentBlock = hdr.getNextBlock();
     };
 
     _cachePtr = _cache.begin();
@@ -45,15 +57,18 @@ void SchemaScan::do_next()
     }
 
     while (_cachePtr != _cache.end()) {
-        push(*(_cachePtr++));
+        push(tuple_cell::node(*(_cachePtr++)));
     }
 }
 
 BogusConstSequence::BogusConstSequence(counted_ptr< MemoryTupleSequence > _sequence)
-  : IValueOperator(), sequence(_sequence)
-{ }
+  : IValueOperator(OPINFO_REF), sequence(_sequence)
+{
+  
+}
 
-void BogusConstSequence::do_next() {
+void BogusConstSequence::do_next()
+{
     for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
         push(*it);
     };
@@ -61,12 +76,20 @@ void BogusConstSequence::do_next() {
     push(tuple_cell());
 }
 
+CachedNestedLoop::CachedNestedLoop(unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right, TupleValueComparison* _tcmpop, CachedNestedLoop::flags_t _flags)
+  : BinaryTupleOperator(OPINFO_REF, _size, _left, _right),
+    tcmpop(_tcmpop), cacheFilled(false), flags(_flags)
+{
+  
+}
+
+
 void CachedNestedLoop::do_next()
 {
     if (!cacheFilled) {
         while (!right.eos()) {
             nestedSequenceCache.push_back(right.get());
-            right.op->next(_context);
+            right.op->next();
         };
 
         nestedIdx = nestedSequenceCache.size();
@@ -79,7 +102,7 @@ void CachedNestedLoop::do_next()
 
     do {
         if (nestedIdx >= nestedSequenceCache.size()) {
-            left->next(_context);
+            left->next();
 
             if (left.eos()) {
                 seteos();
@@ -115,76 +138,33 @@ void CachedNestedLoop::reset()
     nestedIdx = nestedSequenceCache.size();
 }
 
-void VPath::do_next()
+
+NestedEvaluation::NestedEvaluation(const phop::TupleIn& _in, IValueOperator* _op)
+  : ITupleOperator(OPINFO_REF, _in.op->_tsize()), in(_in), nestedOperator(_op)
 {
-    path.begin();
 }
 
-void VPath::reset()
+void NestedEvaluation::do_next()
 {
-    phop::UnaryTupleOperator::reset();
+    nestedOperator->next();
+
+    if (nestedOperator->get().is_eos()) {
+        seteos();
+        return;
+    };
+
+    in.copyTo(value());
+    value().cells[in.offs] = nestedOperator->get();
 }
 
+void NestedEvaluation::reset()
+{
+    phop::ITupleOperator::reset();
+    nestedOperator->reset();
+}
 
-/*
-struct PathStep : public AbstractSequence {
-    SequenceElement inSequence;
-    int outTuple;
-    xpe::XPathLookup path;
-    int state;
-    xpe::NodeIterator iterator;
-
-    PathStep(SequenceElement in, const xpe::Path * pe)
-    : AbstractSequence(in.seq->body.cells_number + 1), inSequence(in), path(pe), state(0)
-    {
-        outTuple = in.seq->body.cells_number;
-        path.compile();
-    };
-
-    virtual bool open() {
-        state = 0;
-    }
-
-    virtual bool next() {
-        tuple_cell node;
-        Node result;
-
-        do {
-            switch(state) {
-                case 0:
-                    inSequence.seq->next();
-                    copy_tuple(body, inSequence.seq->get(), 0);
-
-                    if (body.is_eos()) {
-                        return false;
-                    }
-
-                    node = body.cells[inSequence.pos];
-
-                    if (!node.is_node()) {
-                        U_ASSERT(false);
-                        // throw error
-                    }
-
-                    iterator = path.execute(node.get_node());
-
-                    ++state;
-                case 1:
-                    result = iterator.next();
-
-                    if (result.isNull()) {
-                        state = 0;
-                        continue;
-                    }
-
-                    body.cells[outTuple].set_node(result.getPtr());
-
-                    return true;
-                default:
-                    U_ASSERT(false);
-                    state = 0;
-            };
-        } while (true);
-    };
-};
-*/
+void NestedEvaluation::setContext(ExecutionContext* __context)
+{
+    phop::IOperator::setContext(__context);
+    nestedOperator->setContext(__context);
+}

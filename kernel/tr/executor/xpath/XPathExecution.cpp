@@ -4,6 +4,8 @@
 
 #include <stack>
 
+using namespace pe;
+
 /**
  *  Evaluates node path, following path from \node to \goal
  */
@@ -121,10 +123,6 @@ void PathTraverse::clear()
     _eos = true;
 }
 
-using namespace pe;
-
-
-
 Node PathTraverse::next()
 {
     while (!mergelist.empty()) {
@@ -171,12 +169,12 @@ Node PathTraverse::next()
                 pos = mergelist.insert(pos, step.passStep());
             };
 
-            Node child = getFirstChildByTypeMask(node, axisStep->childMask);
+            Node child = getFirstChildByTypeMask(node.getPtr(), axisStep->childMask);
 
-            pos = mergelist.insert(pos, NextChildNode(child, path + 1));
+            pos = mergelist.insert(pos, NextChildNode(child, path + 1, axisStep->childMask));
 
             if (axisStep->closure && step.snode->has_children()) {
-                pos = mergelist.insert(pos, NextChildNode(child, path));
+                pos = mergelist.insert(pos, NextChildNode(child, path, axisStep->childMask));
             }
         } else if (dynamic_cast<SchemaTestAtom *>(item) != NULL) {
             SchemaTestAtom * test = dynamic_cast<SchemaTestAtom *>(item);
@@ -206,7 +204,7 @@ void PathSchemaMerge::pushAll(Node node, schema_node_cptr base, const SchemaNode
     path.reserve(64);
     counted_ptr<NidString> commonAncestorNid = new NidString(node.getPtr());
 
-    for (std::vector< schema_node_xptr >::const_iterator it = nodeList.begin(); it != nodeList.end(); ++it) {
+    for (SchemaNodeList::const_iterator it = nodeList.begin(); it != nodeList.end(); ++it) {
         path.clear();
         getNodePath(base, *it, path);
 
@@ -219,6 +217,45 @@ void PathSchemaMerge::pushAll(Node node, schema_node_cptr base, const SchemaNode
     };
 
     std::make_heap(mergeheap.begin(), mergeheap.end(), NIDMergeHeapCompare());
+
+    _eos = mergeheap.empty();
+}
+
+PathTraverse::PathTraverse(const pe::AtomizedPath& _path)
+  : _eos(true)
+{
+    for (pe::AtomizedPathVector::const_iterator it = _path.begin(); it != _path.end(); ++it) {
+        PathAtom * newAtom = NULL;
+
+        if (dynamic_cast<AxisPathAtom *>(*it) == NULL) {
+            newAtom = (*it)->clone();
+        } else {
+            AxisPathAtom * atom = dynamic_cast<AxisPathAtom *>(*it);
+
+            switch (atom->axis) {
+                case axis_child:
+                    newAtom = new ChildAtom(ti_dmchildren, atom->closure, atom->orSelf);
+                    break;
+                case axis_child_or_attribute:
+                    newAtom = new ChildAtom(ti_all_valid, atom->closure, atom->orSelf);
+                    break;
+                case axis_attribute:
+                    newAtom = new ChildAtom(ti_first_children, atom->closure, atom->orSelf);
+                    break;
+                case axis_parent:
+                    newAtom = new ParentAtom(atom->closure, atom->orSelf);
+                    break;
+                default:
+                    U_ASSERT(false);
+                    newAtom = atom->clone();
+                    break;
+            };
+        };
+
+        path.push_back(newAtom);
+    };
+
+    path.setImmutable();
 }
 
 

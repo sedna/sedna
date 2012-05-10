@@ -28,13 +28,11 @@ static const axis_t atomizeAxis[] = {
     axis_error, //  axis_child_or_attribute, /* Special axis */
 };
 
-
-AtomizedPath::AtomizedPath(const pe::Path& parent)
-    : isMutable(true), _list(NULL), _sliceStart(0), _sliceEnd(0)
+AtomizedPath::AtomizedPath(PathVector::const_iterator begin, PathVector::const_iterator end)
 {
     _list = new AtomizedPathVector;
 
-    for (PathVector::const_iterator i = parent.getBody()->begin(); i != parent.getBody()->end(); ++i) {
+    for (PathVector::const_iterator i = begin; i != end; ++i) {
         bool closure = false, orSelf = false;
         t_item pnk = ti_dmchildren;
         const pe::Step & step = *i;
@@ -49,7 +47,7 @@ AtomizedPath::AtomizedPath(const pe::Path& parent)
                 pnk = ti_all_valid; break;
             default: break;
         };
-        
+
         switch (step.getAxis()) {
             case axis_descendant_or_self :
             case axis_ancestor_or_self :
@@ -67,7 +65,7 @@ AtomizedPath::AtomizedPath(const pe::Path& parent)
                 U_ASSERT(false);
                 break;
         };
-        
+
         switch (step.getTest().nodeTest) {
             case nt_document :   pnk = document; break;
             case nt_element :    pnk = element; break;
@@ -77,7 +75,7 @@ AtomizedPath::AtomizedPath(const pe::Path& parent)
             case nt_text :       pnk = text; break;
             default : break;
         };
-        
+
         switch (step.getTest().nodeTest) {
             case nt_element :
             case nt_attribute :
@@ -155,6 +153,17 @@ PathAtom* SchemaTestAtom::clone() const
     return new SchemaTestAtom(*this);
 }
 
+PathAtom* ChildAtom::clone() const
+{
+    return new ChildAtom(*this);
+}
+
+PathAtom* ParentAtom::clone() const
+{
+    return new ParentAtom(*this);
+}
+
+
 std::ostream & AxisPathAtom::__toString(std::ostream& stream) const
 {
     switch(axis) {
@@ -174,7 +183,7 @@ std::ostream & AxisPathAtom::__toString(std::ostream& stream) const
             U_ASSERT(false);
             break;
     };
-    
+
     if (orSelf) {
         stream << "+";
     } else if (closure) {
@@ -201,3 +210,28 @@ std::string AtomizedPath::__toString() const
     return ss.str();
 }
 
+std::ostream& ChildAtom::__toString(std::ostream& stream) const
+{
+    stream << "D{" << std::setbase(2) << childMask << "}";
+
+    if (orSelf) {
+        stream << "+";
+    } else if (closure) {
+        stream << "*";
+    };
+
+    return stream;
+}
+
+std::ostream& ParentAtom::__toString(std::ostream& stream) const
+{
+    stream << "P";
+
+    if (orSelf) {
+        stream << "+";
+    } else if (closure) {
+        stream << "*";
+    };
+
+    return stream;
+}
