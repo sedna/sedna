@@ -761,8 +761,7 @@ void PPNamespaceConstructor::do_next (tuple &t)
         first_time = false;
 
         text_source_t content_value = getTextContent(at_value, content);
-        xsd::AnyURI uri = xsd::AnyURI::check(content_value.u.cstr);
-        xmlns_ptr ns = xmlns_touch(at_name, uri.getValue());
+        xmlns_ptr ns = xmlns_touch(at_name, content_value.u.cstr);
 
         tuple_cell result = constructorContext.getParent(deep_copy)->addNS(ns);
 
