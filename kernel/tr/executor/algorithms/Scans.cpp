@@ -7,9 +7,12 @@
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/executor/base/PPUtils.h"
 
+#include "tr/structures/producer.h"
+
 using namespace phop;
 
 OPINFO_DEF(SchemaScan)
+OPINFO_DEF(SchemaValueScan)
 OPINFO_DEF(BogusConstSequence)
 OPINFO_DEF(CachedNestedLoop)
 OPINFO_DEF(NestedEvaluation)
@@ -61,6 +64,56 @@ void SchemaScan::do_next()
     }
 }
 
+SchemaValueScan::SchemaValueScan(
+    schema_node_cptr _snode,
+    const TupleCellComparison& _tcmpop,
+    counted_ptr< MemoryTupleSequence > _sequence,
+    unsigned int _size, unsigned int _left, unsigned int _right)
+
+    : ITupleOperator(OPINFO_REF, _size),
+      currentNode(XNULL), snode(_snode),
+      tcmpop(_tcmpop), sequence(_sequence),
+      left(_left), right(_right)
+{
+
+}
+
+
+void SchemaValueScan::do_next()
+{
+    if (currentNode == XNULL) {
+        currentNode = NodeBlockHeader(checkp(snode->bblk)).getFirstDescriptor();
+    }
+
+    do {
+        for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
+            tuple_cell leftNode = tuple_cell::node(currentNode.getPtr());
+
+            if (tcmpop.satisfy(leftNode, *it)) {
+                value().cells[left] = leftNode;
+
+                if (right < _tsize()) {
+                    value().cells[right] = *it;
+                }
+
+                return;
+            }
+        };
+
+        currentNode = NodeIteratorForeward::nextNode(currentNode.getPtr());
+    } while (!currentNode.isNull());
+
+    seteos();
+}
+
+void SchemaValueScan::reset()
+{
+    phop::ITupleOperator::reset();
+    currentNode = XNULL;
+}
+
+
+
 BogusConstSequence::BogusConstSequence(counted_ptr< MemoryTupleSequence > _sequence)
   : IValueOperator(OPINFO_REF), sequence(_sequence)
 {
@@ -76,7 +129,7 @@ void BogusConstSequence::do_next()
     push(tuple_cell());
 }
 
-CachedNestedLoop::CachedNestedLoop(unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right, TupleValueComparison* _tcmpop, CachedNestedLoop::flags_t _flags)
+CachedNestedLoop::CachedNestedLoop(unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right, const TupleCellComparison & _tcmpop, CachedNestedLoop::flags_t _flags)
   : BinaryTupleOperator(OPINFO_REF, _size, _left, _right),
     tcmpop(_tcmpop), cacheFilled(false), flags(_flags)
 {
@@ -117,7 +170,7 @@ void CachedNestedLoop::do_next()
         while (nestedIdx < nestedSequenceCache.size()) {
             nestedIdx++;
 
-            if ((*tcmpop)(lTuple, nestedSequenceCache.at(nestedIdx-1))) {
+            if (tcmpop.satisfy(lTuple, nestedSequenceCache.at(nestedIdx-1))) {
                 left.assignTo(value());
                 right.assignTo(value());
 
@@ -138,9 +191,8 @@ void CachedNestedLoop::reset()
     nestedIdx = nestedSequenceCache.size();
 }
 
-
-NestedEvaluation::NestedEvaluation(const phop::TupleIn& _in, IValueOperator* _op)
-  : ITupleOperator(OPINFO_REF, _in.op->_tsize()), in(_in), nestedOperator(_op)
+NestedEvaluation::NestedEvaluation(const phop::TupleIn& _in, IValueOperator* _op, unsigned int _size, unsigned int _resultIdx)
+  : ITupleOperator(OPINFO_REF, _size), in(_in), nestedOperator(_op), resultIdx(_resultIdx)
 {
 }
 
@@ -154,7 +206,7 @@ void NestedEvaluation::do_next()
     };
 
     in.copyTo(value());
-    value().cells[in.offs] = nestedOperator->get();
+    value().cells[resultIdx] = nestedOperator->get();
 }
 
 void NestedEvaluation::reset()
@@ -168,3 +220,77 @@ void NestedEvaluation::setContext(ExecutionContext* __context)
     phop::IOperator::setContext(__context);
     nestedOperator->setContext(__context);
 }
+
+#include <sstream>
+#include "tr/executor/xpath/XPathLookup.h"
+
+static
+std::string schemaPath(schema_node_cptr snode) {
+    std::stringstream path;
+    std::stack<schema_node_cptr> path_sn;
+
+    while (snode.found()) {
+        path_sn.push(snode);
+        snode = snode->parent;
+    };
+
+    while (!path_sn.empty()) {
+        path << path_sn.top()->get_qname().getColonizedName().c_str() << "/";
+        path_sn.pop();
+    }
+
+    return path.str();
+};
+
+static
+IElementProducer * valueElement(IElementProducer * producer, const char * name, const tuple_cell & value) {
+    producer = producer->addElement(PHOPQNAME(name));
+    producer->addText(text_source_tuple_cell(atomize(value)));
+    producer->close(); 
+    return producer;
+}
+
+IElementProducer * SchemaScan::__toXML(IElementProducer * producer) const
+{
+    valueElement(producer,
+        "path", tuple_cell::atomic_deep(xs_string, schemaPath(snode).c_str()));
+    
+    return producer;
+};
+
+IElementProducer * SchemaValueScan::__toXML(IElementProducer * producer) const
+{
+    valueElement(producer,
+        "path", tuple_cell::atomic_deep(xs_string, schemaPath(snode).c_str()));
+
+    for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
+        valueElement(producer, "value", *it);
+    };
+    
+    return producer;
+};
+
+IElementProducer * BogusConstSequence::__toXML(IElementProducer * producer) const
+{
+    for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
+        valueElement(producer, "value", *it);
+    };
+    
+    return producer;
+};
+
+IElementProducer * CachedNestedLoop::__toXML(IElementProducer * producer) const
+{
+    return producer;
+};
+
+
+IElementProducer * NestedEvaluation::__toXML(IElementProducer * producer) const
+{
+    nestedOperator->toXML(producer);
+    in.op->toXML(producer);
+    return producer;
+};
+
+
+

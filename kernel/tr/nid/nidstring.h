@@ -31,6 +31,9 @@ public:
             }
         }
     };
+
+    size_t size() const { return this->size(); };
+    const unsigned char * data() const { return this->data(); };
 };
 
 #endif /* _NID_STRING_H_ */

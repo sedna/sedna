@@ -8,6 +8,7 @@
 #include "tr/opt/phm/Operations.h"
 #include "tr/structures/producer.h"
 #include "tr/strings/strings.h"
+#include "tr/executor/algorithms/SequenceModel.h"
 
 PlanInfo::PlanInfo(size_t initialTupleSetSize)
   : desc(0), parent(0), totalCost(0)
@@ -117,6 +118,10 @@ PlanInfo* PlanInfo::extend(Predicate* what) const
 
     what->compile(&phm);
 
+    if (phm.result == NULL) {
+        return NULL;
+    };
+
     return phm.plan;
 }
 
@@ -133,6 +138,7 @@ POProtIn PhysicalModel::doMaterialize(TupleId t, bool addToTree)
 
             switch (node->type) {
     //        case DataNode::dnExternal : return new PPAdapter(el);
+            case DataNode::dnFreeNode :
             case DataNode::dnConst : /* return new TSCache(el); */
                 return POProtIn(NULL, t);
             case DataNode::dnDatabase :
@@ -186,6 +192,10 @@ void* PhysicalModel::compile(VPredicate* pred)
 
     result = NULL;
 
+    if (leftOp.op == NULL && rightOp.op == NULL) {
+        return NULL;
+    };
+    
     if (leftOp.op != NULL && rightOp.op != NULL) {
         result = new SortMergeJoinPrototype(this, leftOp, rightOp, pred->cmp);
 /*
@@ -205,6 +215,8 @@ void* PhysicalModel::compile(VPredicate* pred)
         result = new ValueScanPrototype(this, leftOp, initialRef(rightOp.index), pred->cmp);
     } else if (isConst(initialRef(leftOp.index)) && pred->cmp.inversable()) {
         result = new ValueScanPrototype(this, rightOp, initialRef(leftOp.index), pred->cmp.inverse());
+    } else {
+        return NULL;
     };
 
     updateBranch(result);
@@ -330,9 +342,9 @@ void* PhysicalModel::compile(SPredicate* pred)
 }
 
 
-PPIterator* PlanInfo::compile()
+phop::ITupleOperator* PlanInfo::compile()
 {
-    return NULL;
+    return dynamic_cast<phop::ITupleOperator*>(opList.back()->compile());
 }
 
 #define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)

@@ -4,6 +4,7 @@
 #include "SequenceModel.h"
 
 #include "tr/nid/nidstring.h"
+#include "tr/executor/algorithms/Comparison.h"
 
 class SortedSequence;
 class ITupleSerializer;
@@ -43,7 +44,20 @@ public:
     virtual void reset();
 };
 
-class TupleComparisonFilter : public ITupleOperator {
+class TupleJoinFilter : public BinaryTupleOperator {
+private:
+    bool initialized;
+    TupleCellComparison tcc;
+    sequence * seq;
+    size_t seq_pos;
+
+    virtual void do_next();
+public:
+    OPINFO_DECL(0x304)
+
+    TupleJoinFilter(unsigned int _size, const phop::MappedTupleIn& _left, const phop::MappedTupleIn& _right, const TupleCellComparison & tcc);
+    virtual ~TupleJoinFilter();
+    virtual void reset();
 };
 
 }

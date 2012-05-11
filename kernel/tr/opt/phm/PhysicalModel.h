@@ -25,6 +25,7 @@ class POProt;
 
 namespace phop {
     class IOperator;
+    class ITupleOperator;
 }
 
 struct TupleValueInfo {
@@ -89,7 +90,7 @@ protected:
 public:
     std::vector<POProtIn> in;
     TupleChrysalis * result;
-    std::vector<int> resultSet;
+    std::vector<TupleId> resultSet;
 
     const prot_info_t * getProtInfo() const { return protInfo; };
 
@@ -156,7 +157,7 @@ public:
 
     PlanDesc getDesc() const { return desc; };
     PlanInfo * extend(Predicate * what) const;
-    PPIterator * compile();
+    phop::ITupleOperator * compile();
 
     IElementProducer * toXML(IElementProducer *) const;
 };

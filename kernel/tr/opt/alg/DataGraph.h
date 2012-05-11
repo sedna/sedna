@@ -14,6 +14,10 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/executor/por2qep/scheme_tree.h"
 
+namespace phop {
+    class ITupleOperator;
+}
+
 struct Comparison;
 
 class PPIterator;
@@ -59,7 +63,7 @@ class DataGraphMaster {
     
     DataNode * getVarNode(TupleId var) const { return variableMap.at(var); };
 
-    PPIterator* compile(DataGraph* dg);
+    phop::ITupleOperator* compile(DataGraph* dg);
 };
 
 /*

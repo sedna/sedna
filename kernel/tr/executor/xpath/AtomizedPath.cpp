@@ -29,6 +29,7 @@ static const axis_t atomizeAxis[] = {
 };
 
 AtomizedPath::AtomizedPath(PathVector::const_iterator begin, PathVector::const_iterator end)
+    : isMutable(true), _list(NULL), _sliceStart(0), _sliceEnd(0)
 {
     _list = new AtomizedPathVector;
 

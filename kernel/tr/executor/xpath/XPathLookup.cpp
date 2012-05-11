@@ -9,6 +9,8 @@
 #include "DataSources.h"
 #include "XPathLookup.h"
 #include "XPathExecution.h"
+#include "tr/strings/strings.h"
+#include "tr/structures/producer.h"
 
 #include <stack>
 #include <queue>
@@ -225,3 +227,27 @@ void PathEvaluateTraverse::reset()
     phop::ItemOperator::reset();
 }
 
+static
+IElementProducer * valueElement(IElementProducer * producer, const char * name, const std::string & value) {
+    producer = producer->addElement(PHOPQNAME(name));
+    producer->addText(text_source_cstr(value.c_str()));
+    producer->close();
+    return producer;
+}
+
+IElementProducer * PathSchemaCheck::__toXML(IElementProducer * element) const
+{
+    return element;
+};
+
+IElementProducer * PathEvaluateTraverse::__toXML(IElementProducer * element) const
+{
+    valueElement(element, "path", traverse->getPath().__toString());
+    return element;
+};
+
+IElementProducer * PathSchemaResolve::__toXML(IElementProducer * element) const
+{
+    valueElement(element, "path", scnLookup.atomizedPath.__toString());
+    return element;
+};

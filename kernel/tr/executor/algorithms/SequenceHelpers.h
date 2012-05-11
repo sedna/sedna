@@ -11,19 +11,4 @@
 
 #include <queue>
 
-class TupleComparison {
-public:
-    virtual bool operator()(const tuple & a, const tuple & b) = 0;
-};
-
-class TupleValueComparison {
-public:
-    virtual bool operator()(const tuple_cell & a, const tuple_cell & b) = 0;
-};
-
-class TuplePredicate {
-public:
-    virtual bool operator()(const tuple & a) = 0;
-};
-
 #endif /* SEQUENCE_HELPERS_H */

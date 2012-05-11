@@ -327,7 +327,7 @@ Path Path::inverse(const StepTest & baseTest) const
 
 bool Path::inversable() const
 {
-    return forall(StepPredicate::axis(axis_child) | StepPredicate::axis(axis_descendant) | StepPredicate::axis(axis_descendant_or_self));
+    return forall(StepPredicate(ChildAttrAxisTest));
 }
 
 static const StepPredicate 

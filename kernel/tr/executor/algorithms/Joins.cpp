@@ -3,6 +3,9 @@
 #include "tr/executor/base/tuple.h"
 #include "tr/executor/base/ITupleSerializer.h"
 #include "tr/executor/base/SortedSequence.h"
+#include "tr/executor/base/sequence.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/structures/producer.h"
 
 #include "tr/nid/nidalloc.h"
 #include "tr/nid/nid.h"
@@ -13,6 +16,7 @@ using namespace phop;
 
 OPINFO_DEF(DocOrderMerge)
 OPINFO_DEF(TupleSort)
+OPINFO_DEF(TupleJoinFilter)
 
 struct NidStringCmp {
     bool operator()(const NIDMergeHeap::value_type & x, const NIDMergeHeap::value_type& y) const
@@ -117,83 +121,89 @@ void TupleSort::reset()
     initialized = false;
 }
 
+TupleJoinFilter::TupleJoinFilter(unsigned int _size, const phop::MappedTupleIn& _left, const phop::MappedTupleIn& _right, const TupleCellComparison& _tcc)
+    : BinaryTupleOperator(OPINFO_REF, _size, _left, _right),
+      initialized(false), tcc(_tcc), seq(NULL), seq_pos(0)
+{
+    seq = new sequence(_right->_tsize());
+}
 
+TupleJoinFilter::~TupleJoinFilter()
+{
+    delete seq;
+}
 
+void TupleJoinFilter::do_next()
+{
+    if (!initialized) {
+        left->next();
+        right->next();
 
-/*
-struct GeneralizedHashJoin : public AbstractSequence {
-//    
-};
-
-struct GeneralizedSortMergeJoin : public AbstractSequence {
-    int leftCells, rightCells;
-    SequenceElement leftIn, rightIn;
-    SortedSequence leftSeq, rightSeq;
-
-    scoped_ptr<GSMJMergeComparator> comparator;
-
-    GeneralizedSortMergeJoin(
-        SequenceElement left,
-        SequenceElement right,
-        ITupleSerializer * leftSorter,
-        ITupleSerializer * rightSorter,
-        GSMJMergeComparator * _comparator)
-
-      : AbstractSequence(leftIn.seq->body.cells_number + rightIn.seq->body.cells_number),
-        leftCells(leftIn.seq->body.cells_number), rightCells(rightIn.seq->body.cells_number),
-        leftIn(left),
-        rightIn(right),
-        leftSeq(leftSorter),
-        rightSeq(rightSorter),
-        comparator(_comparator)
-    {
-    }
-
-    ~GeneralizedSortMergeJoin() {
-
-    }
-
-    virtual void next() {
-        // !!! TODO: If inputs are already sorted, no need to use sorted sequences
-
-        while (leftIn.seq->next()) {
-            leftSeq.add(leftIn.seq->get());
-        }
-
-        while (rightIn.seq->next()) {
-            rightSeq.add(rightIn.seq->get());
-        }
-
-        leftSeq.sort();
-        rightSeq.sort();
-
-        tuple leftTuple(leftCells);
-        tuple rightTuple(rightCells);
-
-        leftSeq.next(leftTuple);
-        rightSeq.next(rightTuple);
-
-        while (!leftTuple.is_eos() || !rightTuple.is_eos()) {
-            // FIXME: This is unfair!
-            bool result = comparator->compare(leftTuple, rightTuple);
-
-            if (result) {
-                copy_tuple(body, leftTuple, 0);
-                copy_tuple(body, rightTuple, leftCells);
-            }
-
-            if (comparator->stepLeft) {
-                leftSeq.next(leftTuple);
-            }
-
-            if (comparator->stepRight) {
-                rightSeq.next(rightTuple);
-            }
-        };
+        initialized = true;
     };
+
+    if (left.eos()) {
+        seteos();
+        return;
+    };
+
+    if (right.eos()) {
+        seteos();
+        return;
+    };
+
+    bool found = false;
+
+    // TODO: FIXME: nested loop with equality case!
+    do {
+/*      
+        if (seq_pos == seq->size()) {
+            seq->add(right->get());
+            right->next();
+        };
+*/
+
+        if (tcc.satisfy(left.get(), right.get())) {
+            left.assignTo(value());
+            right.assignTo(value());
+            found = true;
+        }
+
+        if (tcc.less(left.get(), right.get())) {
+            left->next();
+        } else {
+            right->next();
+        };
+    } while (!found);
+}
+
+void TupleJoinFilter::reset()
+{
+    phop::BinaryTupleOperator::reset();
+
+    initialized = false;
+    seq->clear();
+    seq_pos = 0;
+}
+
+IElementProducer * TupleJoinFilter::__toXML(IElementProducer * producer) const
+{
+    producer->addAttributeValue(PHOPQNAME("atomized"), tuple_cell::atomic(tcc.atomized));
+    
+    return producer;
 };
 
-struct ValueJoin : public AbstractSequence {
-    virtual void next();
+IElementProducer * TupleSort::__toXML(IElementProducer * producer) const
+{
+    return producer;
 };
-*/
+
+IElementProducer * DocOrderMerge::__toXML(IElementProducer * producer) const
+{
+    for (TupleList::size_type i = 0; i < tin.size(); ++i) {
+        tin.at(i)->toXML(producer);
+    };
+
+    return producer;
+};
+

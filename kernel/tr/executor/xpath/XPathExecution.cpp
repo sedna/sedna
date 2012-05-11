@@ -260,7 +260,7 @@ PathTraverse::PathTraverse(const pe::AtomizedPath& _path)
 
 
 
-typedef std::pair<const AtomizedPathVector::const_iterator &, schema_node_cptr> ExecutionStackItem;
+typedef std::pair<AtomizedPathVector::const_iterator, schema_node_cptr> ExecutionStackItem;
 typedef std::stack<ExecutionStackItem> ExecutionStack;
 
 bool executeSchemaPathTest(schema_node_cptr base, const AtomizedPath & path, SchemaNodePtrSet * output, bool _fast)
@@ -269,11 +269,9 @@ bool executeSchemaPathTest(schema_node_cptr base, const AtomizedPath & path, Sch
     toTraverse.push(ExecutionStackItem(path.begin(), base));
     
     do {
-        const ExecutionStackItem & step = toTraverse.top();
-        PathAtom * item = *step.first;
-        base = step.second;
+        ExecutionStackItem step = toTraverse.top();
         toTraverse.pop();
-        
+
         if (step.first == path.end()) {
             if (output == NULL) {
                 /* In this case function just return true (it found satisfied node) */
@@ -281,7 +279,14 @@ bool executeSchemaPathTest(schema_node_cptr base, const AtomizedPath & path, Sch
             };
             
             output->insert(step.second.ptr());
-        } else if (dynamic_cast<AxisPathAtom *>(item) != NULL) {
+
+            continue;
+        }
+
+        PathAtom * item = *step.first;
+        base = step.second;
+        
+        if (dynamic_cast<AxisPathAtom *>(item) != NULL) {
             AxisPathAtom * axisStep = dynamic_cast<AxisPathAtom *>(item);
             t_item childMask = (t_item) 0;
             

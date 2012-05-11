@@ -67,6 +67,7 @@ void PPTest::do_close()
 #include <sstream>
 #include "tr/executor/xpath/XPathLookup.h"
 
+static
 std::string schemaPath(schema_node_cptr snode) {
     std::stringstream path;
     std::stack<schema_node_cptr> path_sn;
@@ -326,11 +327,15 @@ void PPDataGraph::do_next(tuple& t)
         dg->precompile();
 
         IElementProducer * rootProducer = SCElementProducer::getVirtualRoot(XNULL);
-        IElementProducer * dgElement = dg->toXML(rootProducer);
+//        IElementProducer * dgElement = dg->toXML(rootProducer);
 
-        t.cells[0] = dgElement->close();
+        phop::ExecutionBlock::push(new phop::ExecutionBlock());
 
-        PPOpIn op(dgm.compile(dg), 1);
+        phop::ITupleOperator * op = dgm.compile(dg);
+
+        t.cells[0] = op->toXML(rootProducer)->close();
+
+//        PPOpIn op(dgm.compile(dg), 1);
     }
 }
 
@@ -408,7 +413,7 @@ PPIterator* PPSchemaScan::do_copy(dynamic_context* _cxt_)
 }
 
 struct __test_tmp {
-    std::vector<schema_node_xptr> x;
+    SchemaNodePtrList x;
     std::vector<schema_node_xptr>::size_type i;
 };
 
@@ -435,7 +440,8 @@ void PPSchemaScan::do_next(tuple& t)
         snodes = new __test_tmp();
 
         sclkp.compile();
-        sclkp.findSomething(root, &snodes->x, 0);;
+//        sclkp.findSomething(root, &snodes->x);
+        sclkp.execute(root.getSchemaNode(), &snodes->x);
 
         snodes->i = 0;
         data = snodes;

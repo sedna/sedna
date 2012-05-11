@@ -12,6 +12,7 @@
 #include <deque>
 #include <stack>
 
+class IElementProducer;
 class POProt;
 
 namespace phop {
@@ -47,9 +48,10 @@ private:
     std::vector<IOperator *> body;
 public:
     std::stack<POProt *> sourceStack;
+    std::map<TupleId, unsigned> resultMap;
 
-    ExecutionBlock();
-    ~ExecutionBlock();
+    ExecutionBlock() {};
+    ~ExecutionBlock() {};
 
     ExecutionBlock * copy();
 
@@ -64,11 +66,14 @@ struct operation_info_t {
     int id;
 };
 
+#define PHOPQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
+
 #define OPINFO_T const phop::operation_info_t * 
 #define OPINFO_DECL(ID) \
   static const struct phop::operation_info_t op_info; \
   static const int opid = ID; \
-  virtual phop::IOperator * clone() const;
+  virtual phop::IOperator * clone() const; \
+  virtual IElementProducer * __toXML(IElementProducer *) const;
 
 #define OPINFO_DEF(TT) \
   const struct phop::operation_info_t TT::op_info = {#TT, TT::opid}; \
@@ -85,6 +90,8 @@ protected:
     IOperator(OPINFO_T _opinfo);
 
     virtual void do_next() = 0;
+    virtual IElementProducer * __toXML(IElementProducer *) const = 0;
+    
 public:
     virtual ~IOperator();
     virtual void reset() = 0;
@@ -93,6 +100,8 @@ public:
       { _context = __context; };
 
     const operation_info_t * info() const { return opinfo; };
+
+    virtual IElementProducer * toXML(IElementProducer *) const;
 };
 
 class IValueOperator : public IOperator {
@@ -172,12 +181,16 @@ struct TupleIn {
     bool eos() const { return op->get().is_eos(); };
     tuple_cell get() const { return op->get().cells[offs]; };
 
-    void assignTo(tuple & result, const TupleMap & tmap) const {
+    static void tupleAssignTo(tuple & result, const tuple & from, const TupleMap & tmap) {
         if (tmap.size() > 0) {
             for (TupleMap::const_iterator it = tmap.begin(); it != tmap.end(); ++it) {
-                result.cells[it->second] = op->get().cells[it->first];
+                result.cells[it->second] = from.cells[it->first];
             };
         }
+    };
+    
+    void assignTo(tuple & result, const TupleMap & tmap) const {
+        tupleAssignTo(result, op->get(), tmap);
     };
 
     void copyTo(tuple & result) const {
@@ -221,20 +234,23 @@ public:
 
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
+    virtual IElementProducer * toXML(IElementProducer *) const;
 };
 
 class ReduceToItemOperator : public IValueOperator {
 protected:
     TupleIn in;
+    bool nested;
 
     virtual void do_next();
 public:
     OPINFO_DECL(0x002)
 
-    ReduceToItemOperator(const TupleIn & op);
+    ReduceToItemOperator(const TupleIn & op, bool nested);
 
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
+    virtual IElementProducer * toXML(IElementProducer *) const;
 };
 
 class BinaryTupleOperator : public ITupleOperator {
@@ -246,6 +262,7 @@ protected:
 public:
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
+    virtual IElementProducer * toXML(IElementProducer *) const;
 };
 
 class UnaryTupleOperator : public ITupleOperator {
@@ -257,6 +274,7 @@ protected:
 public:
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
+    virtual IElementProducer * toXML(IElementProducer *) const;
 };
 
 class ItemOperator : public IValueOperator {
@@ -268,6 +286,7 @@ protected:
 public:
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
+    virtual IElementProducer * toXML(IElementProducer *) const;
 };
 
 }

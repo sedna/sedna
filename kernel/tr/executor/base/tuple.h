@@ -23,6 +23,7 @@
 class sequence;
 
 /// Array of int pairs
+typedef std::vector< std::pair<unsigned, unsigned> > TupleMap;
 typedef std::pair<int, int>			int_pair;
 typedef std::vector<int_pair>		arr_of_int_pairs;
 
@@ -217,6 +218,9 @@ private:
     void set_size(int64_t _size_) { *(int64_t*)((char*)(&data) + sizeof(xptr)) = _size_; }
 
 public:
+    uint32_t __type() const { return t; };
+    const tcdata & __data() const { return data; };
+  
     ////////////////////////////////////////////////////////////////////////////
     /// SET AND GET FUNCTIONS (SOME OF THEM ARE VERY DANGEROUS)
     ////////////////////////////////////////////////////////////////////////////
@@ -322,6 +326,13 @@ public:
     }
     // all fields constructor
     explicit tuple_cell(uint32_t _t_, const tcdata &_data_) : t(_t_), data(_data_) {}
+
+    explicit tuple_cell(uint32_t _t_, char * str, int x, int y) : t(_t_) {
+        U_ASSERT((_t_ & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) > 0);
+        data.x = data.y = (int64_t)0;
+        *(str_counted_ptr*)(&data) = str;
+    }
+    
     // copy constructor
     tuple_cell(const tuple_cell& tc)
     {

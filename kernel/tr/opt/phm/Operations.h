@@ -48,6 +48,9 @@ protected:
 public:
     bool wantSort;
 
+    const DataRoot & getRoot() const { return dataRoot; };
+    const pe::Path & getPath() const { return path; };
+    
     AbsPathScanPrototype(PhysicalModel * model, const TupleRef & tref);
 
     virtual void evaluateCost(CostModel* model);

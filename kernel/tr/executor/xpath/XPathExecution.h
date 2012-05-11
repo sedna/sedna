@@ -92,6 +92,8 @@ private:
     pe::AtomizedPath path;
     bool _eos;
 public:
+    const pe::AtomizedPath & getPath() const { return path; };
+  
     PathTraverse(const pe::AtomizedPath & _path);
 
     bool eos() const { return _eos; };

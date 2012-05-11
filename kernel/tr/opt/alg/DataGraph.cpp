@@ -282,13 +282,15 @@ public:
 
         if (i == planInfoMap.end()) {
             planInfoMap.insert(PlanInfoMap::value_type(desc, _plan));
-            return _plan;
+            last = _plan;
         } else if (i->second->getTotalCost() > _plan->getTotalCost()) {
             i->second = _plan;
-            return _plan;
+            last = _plan;
         } else {
-            return i->second;
+            last = i->second;
         }
+
+        return last;
     };
 };
 
@@ -300,7 +302,7 @@ public:
 #include "tr/crmutils/serialization.h"
 #include "tr/crmutils/exec_output.h"
 
-PPIterator* DataGraphMaster::compile(DataGraph* dg)
+phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
 {
     std::ofstream F("/tmp/datagraph.log");
     se_stdlib_ostream Fstream(F);
@@ -385,9 +387,7 @@ PPIterator* DataGraphMaster::compile(DataGraph* dg)
         nextStepSet = swapset;
     };
 
-    PPIterator * result = planMap->getLastPlan()->compile();
-
-    return result;
+    return planMap->getLastPlan()->compile();
 }
 
 
