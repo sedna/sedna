@@ -27,7 +27,7 @@ public:
     virtual void reset();
 };
 
-class ValueSort : public UnaryTupleOperator {
+class TupleSort : public UnaryTupleOperator {
 private:
     bool initialized;
 protected:
@@ -37,11 +37,9 @@ protected:
     virtual void do_next();
 public:
     OPINFO_DECL(0x302)
-    
-    ValueSort(unsigned int _size, MappedTupleIn _in, ITupleSerializer * _order);
 
-    virtual ~ValueSort();
-
+    TupleSort(unsigned int _size, MappedTupleIn _in, ITupleSerializer * _order);
+    virtual ~TupleSort();
     virtual void reset();
 };
 

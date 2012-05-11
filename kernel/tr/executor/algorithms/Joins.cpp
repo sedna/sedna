@@ -12,7 +12,7 @@
 using namespace phop;
 
 OPINFO_DEF(DocOrderMerge)
-OPINFO_DEF(ValueSort)
+OPINFO_DEF(TupleSort)
 
 struct NidStringCmp {
     bool operator()(const NIDMergeHeap::value_type & x, const NIDMergeHeap::value_type& y) const
@@ -75,21 +75,20 @@ void DocOrderMerge::reset()
     initialized = false;
 }
 
-ValueSort::ValueSort(unsigned int _size, MappedTupleIn _in, ITupleSerializer* _order)
+TupleSort::TupleSort(unsigned int _size, MappedTupleIn _in, ITupleSerializer* _order)
     : UnaryTupleOperator(OPINFO_REF, _size, _in),
         initialized(false), order(_order), _sorted_sequence(NULL)
 {
 
 }
 
-
-ValueSort::~ValueSort()
+TupleSort::~TupleSort()
 {
     delete order;
     delete _sorted_sequence;
 }
 
-void ValueSort::do_next()
+void TupleSort::do_next()
 {
     if (!initialized) {
         if (_sorted_sequence == NULL) {
@@ -112,7 +111,7 @@ void ValueSort::do_next()
     }
 }
 
-void ValueSort::reset()
+void TupleSort::reset()
 {
     phop::UnaryTupleOperator::reset();
     initialized = false;

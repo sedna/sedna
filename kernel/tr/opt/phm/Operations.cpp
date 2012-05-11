@@ -1,11 +1,13 @@
 #include "Operations.h"
 #include "tr/opt/cost/Statistics.h"
 #include "tr/structures/producer.h"
+
 #include "tr/executor/xpath/XPathExecution.h"
 #include "tr/executor/algorithms/SequenceModel.h"
 #include "tr/executor/algorithms/Scans.h"
 #include "tr/executor/algorithms/Joins.h"
 #include "tr/executor/xpath/XPathLookup.h"
+#include "tr/executor/base/ITupleSerializer.h"
 
 #define OPINFO(OP) static const prot_info_t OP##_info = {#OP, };
 #define OPREF(OP) (&(OP##_info))
@@ -157,6 +159,7 @@ IElementProducer* ValidatePathPrototype::__toXML(IElementProducer* element) cons
 
     return element;
 }
+
 
 
 /*
@@ -377,17 +380,18 @@ void ValidatePathPrototype::evaluateCost(CostModel* model)
 
 
 
-
+using namespace phop;
+using namespace pe;
 
 struct ExecutionBlockWarden {
     ExecutionBlockWarden(POProt * opin)
     {
-        phop::ExecutionBlock::current()->source = opin;
+        phop::ExecutionBlock::current()->sourceStack.push(opin);
     };
-    
+
     ~ExecutionBlockWarden()
     {
-        phop::ExecutionBlock::current()->source = NULL;
+        phop::ExecutionBlock::current()->sourceStack.pop();
     };
 };
 
@@ -415,19 +419,19 @@ phop::IOperator * PathEvaluationPrototype::compile()
     ExecutionBlockWarden(this);
     // TODO : make effective evaluation
 
-    phop::ITupleOperator * opin = dynamic_cast<phop::ITupleOperator *>(in.at(0).op->compile());
-    phop::TupleIn aopin(opin, in.at(0).index);
+    ITupleOperator * opin = dynamic_cast<ITupleOperator *>(in.at(0).op->compile());
+    TupleIn aopin(opin, in.at(0).index);
 
     U_ASSERT(opin != NULL);
 
-    phop::IValueOperator * ain = new phop::ReduceToItemOperator(aopin);
+    IValueOperator * ain = new phop::ReduceToItemOperator(aopin);
 
     pe::PathVectorPtr pathBody = path.getBody();
     pe::PathVector::const_iterator it = pathBody->begin();
 
     while (it != pathBody->end()) {
         pe::PathVector::const_iterator pstart = it;
-        
+
         while (it != pathBody->end() && it->satisfies(pe::StepPredicate(pe::ParentAxisTest))) {
             ++it;
         };
@@ -451,39 +455,77 @@ phop::IOperator * PathEvaluationPrototype::compile()
             U_ASSERT(false);
             break;
         };
-        
+
         ++it;
     };
 
-    ain = new pe::PathEvaluateTraverse(ain, pe::AtomizedPath(it, pathBody->end()));
+    if (it != pathBody->end()) {
+        ain = new pe::PathEvaluateTraverse(ain, pe::AtomizedPath(it, pathBody->end()));
+    }
 
     return new phop::NestedEvaluation(aopin, ain);
 }
+
+class GeneralCollationSerializer : public ITupleSerializer {
+
+};
 
 phop::IOperator * SortMergeJoinPrototype::compile()
 {
     ExecutionBlockWarden(this);
 
-    return NULL;
+    POProtIn left(in[0]), right(in[1]);
+
+    TupleIn leftOp(left.op->compile(), left.index);
+    TupleIn rightOp(right.op->compile(), right.index);
+
+    if (needLeftSort) {
+        leftOp.op = new TupleSort(leftOp->_tsize(), MappedTupleIn(leftOp), new GeneralCollationSerializer(leftOp.offs));
+    }
+
+    if (needRightSort) {
+        rightOp.op = new TupleSort(rightOp->_tsize(), MappedTupleIn(rightOp), new GeneralCollationSerializer(rightOp.offs));
+    }
+
+    return new TupleJoinFilter(result->width(), leftOp, rightOp, new TupleValueComparison());
 }
 
 phop::IOperator * StructuralJoinPrototype::compile()
 {
     ExecutionBlockWarden(this);
 
-    return NULL;
+    POProtIn left(in[0]), right(in[1]);
+
+    TupleIn leftOp(left.op->compile(), left.index);
+    TupleIn rightOp(right.op->compile(), right.index);
+
+    if (needLeftSort) {
+        leftOp.op = new TupleSort(leftOp->_tsize(), MappedTupleIn(leftOp), new DocOrderSerializer(leftOp.offs));
+    }
+
+    if (needRightSort) {
+        rightOp.op = new TupleSort(rightOp->_tsize(), MappedTupleIn(rightOp), new DocOrderSerializer(rightOp.offs));
+    }
+
+    return new TupleJoinFilter(result->width(), leftOp, rightOp, new DocOrderJoinComparison());
 }
 
 phop::IOperator * ValueScanPrototype::compile()
 {
     ExecutionBlockWarden(this);
 
-    return NULL;
+    TupleIn leftOp(in.at(0).op->compile(), in.at(0).index);
+
+    return new CachedNestedLoop(result->width(), leftOp,
+                new TupleFromItemOperator(
+                    new BogusConstSequence(value)),
+                new TupleValueComparison(),
+                CachedNestedLoop::strict_output);
 }
 
 phop::IOperator * ValidatePathPrototype::compile()
 {
     ExecutionBlockWarden(this);
 
-    return NULL;
+    return in.at(0).op->compile();
 }

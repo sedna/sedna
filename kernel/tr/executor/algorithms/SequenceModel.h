@@ -46,7 +46,7 @@ private:
 
     std::vector<IOperator *> body;
 public:
-    POProt * source;
+    std::stack<POProt *> sourceStack;
 
     ExecutionBlock();
     ~ExecutionBlock();
@@ -187,6 +187,13 @@ struct TupleIn {
 
 struct MappedTupleIn : public TupleIn {
     TupleMap tmap;
+
+    explicit MappedTupleIn(const TupleIn & tin)
+        : TupleIn(tin)
+    {
+        tmap.reserve(op->_tsize());
+        for(unsigned i = 0; i < op->_tsize(); ++i) { tmap.push_back(TupleMap::value_type(i, i)); }
+    };
 
     explicit MappedTupleIn(ITupleOperator * _op, unsigned _offs, const TupleMap & _tmap)
         : TupleIn(_op, _offs), tmap(_tmap) { };

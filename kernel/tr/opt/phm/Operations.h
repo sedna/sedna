@@ -16,6 +16,9 @@ public:
 class SortMergeJoinPrototype : public BinaryOpPrototype {
 protected:
     const Comparison cmp;
+
+    bool needLeftSort;
+    bool needRightSort;
 public:
     SortMergeJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, const Comparison& _cmp);
 
@@ -25,6 +28,9 @@ public:
 
 class StructuralJoinPrototype : public BinaryOpPrototype {
     pe::Path path;
+
+    bool needLeftSort;
+    bool needRightSort;
 protected:
     virtual IElementProducer* __toXML(IElementProducer* ) const;
 public:
