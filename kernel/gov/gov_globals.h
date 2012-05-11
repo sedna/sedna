@@ -6,30 +6,31 @@
 #ifndef _GOV_GLOBALS_H_
 #define _GOV_GLOBALS_H_
 
-#include "common/argtable.h"
-#include "gov/gov_table.h"
+#include "aux/argtable2/argtable2.h"
 
 
 extern info_table *gov_table;
-
-extern arg_rec gov_argtable[];
 
 extern int background_mode;
 extern int gov_help_l;
 extern int gov_help_s;
 extern int gov_version;
-extern const int narg;
 
-namespace gov_globals 
+namespace gov_globals
 {
-    extern int  cl_el_level;
-    extern char cl_lstnr_addr[U_MAX_HOSTNAME];
-    extern int  cl_lstnr_port;
-    extern int  cl_ping_port;
-    extern int  cl_ka_timeout;
-    extern int  cl_pp_stack_depth;
+    /* TODO: make gov able to listen multiple addresses and define a max ifaces constant */
+    struct arg_lit * help;
+    struct arg_str * cl_data_dir;
+    struct arg_str * cl_lstnr_addr;
+                                                   
+    struct arg_int * cl_lstnr_port;
+    struct arg_int * cl_el_level;
+    struct arg_int * cl_ka_timeout;
+    struct arg_int * cl_pp_stack_depth;
 }
 
+void * gov_argtable[] = {gov_globals::cl_install_dir, gov_globals::cl_lstnr_addr, gov_globals::cl_lstnr_port, gov_globals::cl_el_level,
+                         gov_globals::cl_ka_timeout, gov_globals::cl_pp_stack_depth};
 
 #endif
 

@@ -5,22 +5,15 @@
 
 #include "common/errdbg/d_printf.h"
 
-
 #include "gov/cpool.h"
 #include "gov/gov_globals.h"
 #include "gov/gov_functions.h"
-#include "gov/gov_table.h"
-
-
-
-
-using namespace std;
 
 
 static void print_gov_usage()
 {
     fprintf(stdout, "Usage: se_gov [options]\n\n");
-    fprintf(stdout, "options:\n%s\n", arg_glossary(gov_argtable, narg, "  "));
+    arg_print_glossary_gnu(stdout, gov_argtable);
 }
 
 #ifdef _WIN32
@@ -34,12 +27,6 @@ BOOL GOVCtrlHandler(DWORD fdwCtrlType)
         case CTRL_LOGOFF_EVENT  :
         case CTRL_SHUTDOWN_EVENT:
         {
-             // Beep(1000, 1000);
-//              open_gov_shm();
-//              GOV_HEADER_GLOBAL_PTR -> is_server_stop = SE_STOP_SOFT;
-//              send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, GOV_HEADER_GLOBAL_PTR -> lstnr_addr, se_Stop);
-//              close_gov_shm();
-
              return TRUE;
         }
         default : return FALSE;
@@ -55,10 +42,6 @@ void GOVCtrlHandler(int signo)
         || signo == SIGTERM)
      {
          // beep();
-         open_gov_shm();
-         GOV_HEADER_GLOBAL_PTR -> is_server_stop = SE_STOP_SOFT;
-         send_command_to_gov(GOV_HEADER_GLOBAL_PTR -> lstnr_port_number, GOV_HEADER_GLOBAL_PTR -> lstnr_addr, se_Stop);
-         close_gov_shm();
      }
 }
 #endif /* _WIN32 */
@@ -67,8 +50,6 @@ void GOVCtrlHandler(int signo)
 int main(int argc, char** argv)
 {
     program_name_argv_0 = argv[0];
-//     pping_server *pps = NULL;
-    gov_config_struct cfg;
     bool is_pps_close = true;
     int arg_scan_ret_val = 0;
     char buf[1024];
@@ -82,7 +63,7 @@ int main(int argc, char** argv)
 
     try {
         /* Parse command line */
-        arg_scan_ret_val = arg_scanargv(argc, argv, gov_argtable, narg, NULL, buf, NULL);
+        arg_scan_ret_val = arg_parse(argc, argv, gov_argtable);
 
         if (arg_scan_ret_val == 0)
             throw USER_EXCEPTION2(SE4601, buf);
@@ -99,11 +80,11 @@ int main(int argc, char** argv)
            print_version_and_copyright("Sedna Governor");
            return 0;
         }
-
-        fulfill_config_parameters(&cfg);
-
-        SEDNA_DATA = cfg.gov_vars.SEDNA_DATA;
-
+	
+	
+	/* TODO: fill there merged data dir option, not cl_data_dir */
+	SEDNA_DATA = gov_globals::cl_data_dir;
+	
         check_data_folder_existence();
 
         RenameLastSoftFaultDir();
