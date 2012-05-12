@@ -83,10 +83,13 @@ struct prot_info_t
 
 class POProt : public IPlanDisposable {
     const prot_info_t * protInfo;
+    phop::IOperator * op;
 protected:
     OperationCost * cost;
     IElementProducer * __commonToXML(IElementProducer *) const;
+
     virtual IElementProducer * __toXML(IElementProducer *) const;
+    virtual phop::IOperator * compile() = 0;
 public:
     std::vector<POProtIn> in;
     TupleChrysalis * result;
@@ -99,10 +102,21 @@ public:
         return cost;
     }
 
-    POProt(const prot_info_t * pinfo) : protInfo(pinfo), cost(NULL), result(NULL) {};
+    phop::IOperator * recompile() { op = compile(); return op; };
+    
+    phop::IOperator * getStatement() {
+        U_ASSERT(op == NULL);
+      
+        if (op == NULL) {
+            op = compile();
+        };
+
+        return op;
+    };
+
+    POProt(const prot_info_t * pinfo) : protInfo(pinfo), op(NULL), cost(NULL), result(NULL) {};
 
     virtual void evaluateCost(CostModel * model) = 0;
-    virtual phop::IOperator * compile() = 0;
     virtual IElementProducer * toXML(IElementProducer *) const;
 };
 

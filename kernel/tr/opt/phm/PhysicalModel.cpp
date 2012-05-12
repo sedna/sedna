@@ -9,6 +9,7 @@
 #include "tr/structures/producer.h"
 #include "tr/strings/strings.h"
 #include "tr/executor/algorithms/SequenceModel.h"
+#include "tr/opt/phm/ComparisonModels.h"
 
 PlanInfo::PlanInfo(size_t initialTupleSetSize)
   : desc(0), parent(0), totalCost(0)
@@ -195,9 +196,13 @@ void* PhysicalModel::compile(VPredicate* pred)
     if (leftOp.op == NULL && rightOp.op == NULL) {
         return NULL;
     };
-    
+
     if (leftOp.op != NULL && rightOp.op != NULL) {
-        result = new SortMergeJoinPrototype(this, leftOp, rightOp, pred->cmp);
+        if (leftOp.op == rightOp.op) {
+            result = new FilterTuplePrototype(this, leftOp, rightOp, new GeneralComparisonPrototype(pred->cmp));
+        } else {
+            result = new MergeJoinPrototype(this, leftOp, rightOp, new GeneralComparisonPrototype(pred->cmp));
+        };
 /*
         if (isCacheReasonable(left->statistics->nodeMass)) {
             result = new CachedNestedLoop(left->source, right->source, pred->Path);
@@ -225,7 +230,6 @@ void* PhysicalModel::compile(VPredicate* pred)
     return result;
 }
 
-
 void* PhysicalModel::compile(SPredicate* pred)
 {
     enum strategy_t {
@@ -246,7 +250,11 @@ void* PhysicalModel::compile(SPredicate* pred)
         POProtIn rightOp = materialize(plan->getRef(pred->right()->absoluteIndex));
 
         if (leftOp.op != NULL && rightOp.op != NULL) {
-            result = new StructuralJoinPrototype(this, leftOp, rightOp, pred->path);
+            if (leftOp.op == rightOp.op) {
+                result = new FilterTuplePrototype(this, leftOp, rightOp, new PathComparisonPrototype(pred->path));
+            } else {
+                result = new MergeJoinPrototype(this, leftOp, rightOp, new PathComparisonPrototype(pred->path));
+            };
 //        } else
         // TODO: if free node available, make horizontal scan
         } else {
@@ -296,7 +304,11 @@ void* PhysicalModel::compile(SPredicate* pred)
                 plan->opList.push_back(leftCandidate.op);
                 leftOp = leftCandidate;
             case join:
-                result = new StructuralJoinPrototype(this, leftOp, rightOp, pred->path);
+                if (leftOp.op == rightOp.op) {
+                    result = new FilterTuplePrototype(this, leftOp, rightOp, new PathComparisonPrototype(pred->path));
+                } else {
+                    result = new MergeJoinPrototype(this, leftOp, rightOp, new PathComparisonPrototype(pred->path));
+                };
                 break;
             case magic_join:
 /*              
@@ -344,7 +356,7 @@ void* PhysicalModel::compile(SPredicate* pred)
 
 phop::ITupleOperator* PlanInfo::compile()
 {
-    return dynamic_cast<phop::ITupleOperator*>(opList.back()->compile());
+    return dynamic_cast<phop::ITupleOperator*>(opList.back()->getStatement());
 }
 
 #define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)

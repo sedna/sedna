@@ -32,7 +32,7 @@ SchemaLookup& SchemaLookup::compile()
     return *this;
 }
 
-void SchemaLookup::findSomething(const DataRoot& root, SchemaNodePtrList* output, int limit)
+int SchemaLookup::findSomething(const DataRoot& root, SchemaNodePtrList* output, int limit)
 {
     AtomizedPath path = atomizedPath;
 
@@ -76,6 +76,8 @@ void SchemaLookup::findSomething(const DataRoot& root, SchemaNodePtrList* output
     }
 
     std::copy(nodeCandidates.begin(), nodeCandidates.end(), std::back_inserter(*output));
+
+    return path.size() - i - 1;
 }
 
 bool SchemaLookup::exists(schema_node_cptr base)

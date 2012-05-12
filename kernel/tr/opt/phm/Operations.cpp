@@ -1,5 +1,8 @@
 #include "Operations.h"
+
 #include "tr/opt/cost/Statistics.h"
+#include "tr/opt/phm/ComparisonModels.h"
+
 #include "tr/structures/producer.h"
 
 #include "tr/executor/xpath/XPathExecution.h"
@@ -8,7 +11,6 @@
 #include "tr/executor/algorithms/Joins.h"
 #include "tr/executor/xpath/XPathLookup.h"
 #include "tr/executor/base/ITupleSerializer.h"
-
 #include "tr/executor/algorithms/Comparison.h"
 
 #define OPINFO(OP) static const prot_info_t OP##_info = {#OP, };
@@ -17,7 +19,7 @@
 
 OPINFO(AbsPathScanPrototype)
 OPINFO(PathEvaluationPrototype)
-OPINFO(SortMergeJoinPrototype)
+OPINFO(MergeJoinPrototype)
 OPINFO(StructuralJoinPrototype)
 OPINFO(ValueScanPrototype)
 OPINFO(ValidatePathPrototype)
@@ -84,37 +86,47 @@ IElementProducer* PathEvaluationPrototype::__toXML(IElementProducer* element) co
     return element;
 }
 
-SortMergeJoinPrototype::SortMergeJoinPrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, const Comparison& _cmp)
-  : BinaryOpPrototype(OPREF(SortMergeJoinPrototype), _left, _right), cmp(_cmp)
+MergeJoinPrototype::MergeJoinPrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, ComparisonPrototype * _comparison)
+  : BinaryOpPrototype(OPREF(MergeJoinPrototype), _left, _right), comparison(_comparison)
 {
     result = model->updateTwo(_left.op->result, _right.op->result, this, _left.index, _right.index);
     resultSet.push_back(_left.index);
     resultSet.push_back(_right.index);
 
-    evaluateCost(publicCostModel);
-}
-
-StructuralJoinPrototype::StructuralJoinPrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, const pe::Path& _path)
-  : BinaryOpPrototype(OPREF(StructuralJoinPrototype), _left, _right), path(_path)
-{
-    result = model->updateTwo(_left.op->result, _right.op->result, this, _left.index, _right.index);
-    resultSet.push_back(_left.index);
-    resultSet.push_back(_right.index);
+    if (dynamic_cast<GeneralComparisonPrototype *>(comparison) != NULL) {
+        needLeftSort = true;
+        needRightSort = true;
+    } else {
+        needLeftSort = false;
+        needRightSort = false;
+    };
 
     evaluateCost(publicCostModel);
 }
 
-IElementProducer* StructuralJoinPrototype::__toXML(IElementProducer* element) const
+IElementProducer* MergeJoinPrototype::__toXML(IElementProducer* element) const
 {
     POProt::__toXML(element);
-
-    IElementProducer * child = element->addElement(CDGQNAME("path"));
-    child->addText(text_source_cstr(path.toXPathString().c_str()));
-    child->close();
-
+    comparison->__toXML(element);
     return element;
 }
 
+FilterTuplePrototype::FilterTuplePrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, ComparisonPrototype* _comparison)
+  : BinaryOpPrototype(OPREF(MergeJoinPrototype), _left, _right), comparison(_comparison)
+{
+    result = model->updateTwo(_left.op->result, _right.op->result, this, _left.index, _right.index);
+    resultSet.push_back(_left.index);
+    resultSet.push_back(_right.index);
+
+    evaluateCost(publicCostModel);
+}
+
+IElementProducer* FilterTuplePrototype::__toXML(IElementProducer* element) const
+{
+    POProt::__toXML(element);
+    comparison->__toXML(element);
+    return element;
+}
 
 ValueScanPrototype::ValueScanPrototype(PhysicalModel* model, const POProtIn& _left, const TupleRef& _right, const Comparison& _cmp)
   : POProt(OPREF(ValueScanPrototype)), cmp(_cmp)
@@ -224,7 +236,7 @@ void AbsPathScanPrototype::evaluateCost(CostModel* model)
     cost->fullCost = cost->firstCost + evalCost + heapSortCost;
 }
 
-void SortMergeJoinPrototype::evaluateCost(CostModel* model)
+void MergeJoinPrototype::evaluateCost(CostModel* model)
 {
     TupleRef leftIn(in[0], NULL), rightIn(in[1], NULL);
     TupleRef leftResult(result, resultSet[0]), rightResult(result, resultSet[1]);
@@ -236,16 +248,10 @@ void SortMergeJoinPrototype::evaluateCost(CostModel* model)
 
     cost = new OperationCost();
 
-    model->getValueCost(leftIn->statistics->pathInfo, leftIn->statistics);
-    model->getValueCost(rightIn->statistics->pathInfo, rightIn->statistics);
+    SequenceInfo * leftSeq = comparison->getSequenceCost(model, leftIn);
+    SequenceInfo * rightSeq = comparison->getSequenceCost(model, rightIn);
 
-    leftResult->statistics = new TupleStatistics(leftIn->statistics);
-    rightResult->statistics = new TupleStatistics(rightIn->statistics);
-
-    SequenceInfo * leftSeq = model->getValueSequenceCost(leftIn);
-    SequenceInfo * rightSeq = model->getValueSequenceCost(rightIn);
-
-    ComparisonInfo * cmpInfo = model->getCmpInfo(leftIn->statistics, rightIn->statistics, cmp);
+    ComparisonInfo * cmpInfo = comparison->getComparisonCost(model, leftIn, rightIn); ;
 
     leftResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
     rightResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
@@ -257,6 +263,7 @@ void SortMergeJoinPrototype::evaluateCost(CostModel* model)
         in.at(1).op->getCost()->fullCost;
 
     // TODO if sorted, update sorted information
+
     cost->firstCost +=
         leftSeq->sortCost + rightSeq->sortCost;
 
@@ -268,6 +275,34 @@ void SortMergeJoinPrototype::evaluateCost(CostModel* model)
 
     cost->nextCost = mergeCost / result->rowCount;
     cost->fullCost = cost->firstCost + mergeCost;
+
+    // Update sort information
+}
+
+void FilterTuplePrototype::evaluateCost(CostModel* model)
+{
+    TupleRef leftIn(in[0], NULL), rightIn(in[1], NULL);
+    TupleRef leftResult(result, resultSet[0]), rightResult(result, resultSet[1]);
+
+    if (leftIn->statistics == NULL || rightIn->statistics == NULL) {
+        U_ASSERT(false);
+        return;
+    };
+
+    cost = new OperationCost();
+
+    ComparisonInfo * cmpInfo = comparison->getComparisonCost(model, leftIn, rightIn);
+
+    leftResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
+    rightResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
+
+    result->rowCount = leftIn.tupleDesc->rowCount * cmpInfo->selectivity;
+
+    OperationCost * initialCost = in[0].op->getCost();
+    
+    cost->firstCost = initialCost->firstCost;
+    cost->fullCost = initialCost->fullCost + leftIn.tupleDesc->rowCount * cmpInfo->opCost;
+    cost->nextCost = (cost->fullCost - cost->firstCost) / result->rowCount;
 
     // Update sort information
 }
@@ -309,58 +344,12 @@ void PathEvaluationPrototype::evaluateCost(CostModel* model)
     outRef->statistics = new TupleStatistics();
     model->getPathCost(inRef, path, outRef->statistics);
 
-    result->rowCount = outRef->statistics->distinctValues;
+    result->rowCount = inRef.tupleDesc->rowCount * outRef->statistics->distinctValues / inRef->statistics->distinctValues;
     result->rowSize = inRef.tupleDesc->rowSize + model->getNodeSize();
 
     cost->firstCost = inCost->firstCost;
     cost->fullCost  = inCost->fullCost + inRef->statistics->distinctValues * outRef->statistics->pathInfo->iterationCost;
     cost->nextCost  = (cost->fullCost - cost->firstCost) / result->rowCount;
-}
-
-void StructuralJoinPrototype::evaluateCost(CostModel* model)
-{
-    TupleRef leftIn(in[0], NULL), rightIn(in[1], NULL);
-    TupleRef leftResult(result, resultSet[0]), rightResult(result, resultSet[1]);
-
-    if (leftIn->statistics == NULL || rightIn->statistics == NULL) {
-        U_ASSERT(false);
-        return;
-    };
-
-    cost = new OperationCost();
-
-    leftResult->statistics = new TupleStatistics(leftIn->statistics);
-    rightResult->statistics = new TupleStatistics(rightIn->statistics);
-
-    SequenceInfo * leftSeq = model->getDocOrderSequenceCost(leftIn);
-    SequenceInfo * rightSeq = model->getDocOrderSequenceCost(rightIn);
-
-    ComparisonInfo * cmpInfo = model->getDocOrderInfo(leftIn->statistics->pathInfo, rightIn->statistics->pathInfo, path);
-
-    leftResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
-    rightResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
-
-    result->rowCount = std::min(leftIn.tupleDesc->rowCount, rightIn.tupleDesc->rowCount) * cmpInfo->selectivity;
-
-    // This operation may be implemented in two different ways with completely different costs
-    
-    Range bestFirstCost = in.at(0).op->getCost()->firstCost + in.at(1).op->getCost()->firstCost;
-    Range worseFirstCost = in.at(0).op->getCost()->fullCost + in.at(1).op->getCost()->fullCost +
-        leftSeq->sortCost + rightSeq->sortCost;
-
-    Range bestMergeCost = cmpInfo->opCost * std::max(leftIn.tupleDesc->rowCount, rightIn.tupleDesc->rowCount);
-
-    Range worseMergeCost =
-        leftSeq->card * cmpInfo->opCost +
-        rightSeq->card * cmpInfo->opCost +
-        leftSeq->blockCount * model->getIOCost() +
-        rightSeq->blockCount * model->getIOCost();
-
-    Range mergeCost = Range(bestMergeCost.lower, worseMergeCost.upper).normalize();
-        
-    cost->firstCost = Range(bestFirstCost.lower, worseFirstCost.upper).normalize();
-    cost->nextCost = mergeCost / result->rowCount;
-    cost->fullCost = cost->firstCost + mergeCost;
 }
 
 void ValidatePathPrototype::evaluateCost(CostModel* model)
@@ -425,7 +414,7 @@ phop::IOperator * PathEvaluationPrototype::compile()
     ExecutionBlockWarden(this);
     // TODO : make effective evaluation
 
-    ITupleOperator * opin = dynamic_cast<ITupleOperator *>(in.at(0).op->compile());
+    ITupleOperator * opin = dynamic_cast<ITupleOperator *>(in.at(0).op->getStatement());
     TupleIn aopin(opin, ExecutionBlock::current()->resultMap[in.at(0).index]);
 
     U_ASSERT(opin != NULL);
@@ -472,38 +461,27 @@ phop::IOperator * PathEvaluationPrototype::compile()
     return new phop::NestedEvaluation(aopin, ain, aopin->_tsize() + 1, aopin->_tsize());
 }
 
-inline
-TupleCellComparison tccFromCmp(const Comparison & cmp) {
-    switch (cmp.op) {
-      case Comparison::g_eq :
-        return TupleCellComparison(op_lt, op_eq, true);
-      default :
-        U_ASSERT(false);
-        return TupleCellComparison(NULL, NULL, false);
-    };
-};
-
-phop::IOperator * SortMergeJoinPrototype::compile()
+phop::IOperator * MergeJoinPrototype::compile()
 {
     ExecutionBlockWarden(this);
 
     POProtIn left(in[0]), right(in[1]);
 
-    ITupleOperator * leftPtr = dynamic_cast<ITupleOperator *>(left.op->compile());
+    ITupleOperator * leftPtr = dynamic_cast<ITupleOperator *>(left.op->getStatement());
     unsigned leftIdx = ExecutionBlock::current()->resultMap[left.index];
 
-    ITupleOperator * rightPtr = dynamic_cast<ITupleOperator *>(right.op->compile());
+    ITupleOperator * rightPtr = dynamic_cast<ITupleOperator *>(right.op->getStatement());
     unsigned rightIdx = ExecutionBlock::current()->resultMap[right.index];
 
     TupleIn leftOp(leftPtr, leftIdx);
     TupleIn rightOp(rightPtr, rightIdx);
 
     if (needLeftSort) {
-        leftOp.op = new TupleSort(leftOp->_tsize(), MappedTupleIn(leftOp), new GeneralCollationSerializer(leftOp.offs));
+        leftOp.op = new TupleSort(leftOp->_tsize(), MappedTupleIn(leftOp), comparison->createTupleSerializer(leftOp.offs));
     }
 
     if (needRightSort) {
-        rightOp.op = new TupleSort(rightOp->_tsize(), MappedTupleIn(rightOp), new GeneralCollationSerializer(rightOp.offs));
+        rightOp.op = new TupleSort(rightOp->_tsize(), MappedTupleIn(rightOp), comparison->createTupleSerializer(rightOp.offs));
     }
 
     TupleChrysalis * rightScheme = right.op->result;
@@ -518,73 +496,22 @@ phop::IOperator * SortMergeJoinPrototype::compile()
         leftOp->_tsize() + rightOp->_tsize(),
         MappedTupleIn(leftOp),
         MappedTupleIn(rightOp.op, rightOp.offs, leftOp->_tsize()),
-        tccFromCmp(cmp));
+        comparison->getTupleCellComparison());
 }
 
-phop::IOperator * StructuralJoinPrototype::compile()
+IOperator* FilterTuplePrototype::compile()
 {
     ExecutionBlockWarden(this);
 
     POProtIn left(in[0]), right(in[1]);
-    
-    ITupleOperator * leftPtr = dynamic_cast<ITupleOperator *>(left.op->compile());
-    unsigned leftIdx = ExecutionBlock::current()->resultMap[left.index];
-    
-    ITupleOperator * rightPtr = dynamic_cast<ITupleOperator *>(right.op->compile());
-    unsigned rightIdx = ExecutionBlock::current()->resultMap[right.index];
 
-    TupleIn leftOp(leftPtr, leftIdx);
-    TupleIn rightOp(rightPtr, rightIdx);
+    ITupleOperator * opPtr = dynamic_cast<ITupleOperator *>(left.op->getStatement());
 
-    if (needLeftSort) {
-        leftOp.op = new TupleSort(leftOp->_tsize(), MappedTupleIn(leftOp), new DocOrderSerializer(leftOp.offs));
-    }
-
-    if (needRightSort) {
-        rightOp.op = new TupleSort(rightOp->_tsize(), MappedTupleIn(rightOp), new DocOrderSerializer(rightOp.offs));
-    }
-
-    pe::Step step = path.getBody()->at(0);
-
-    TupleCellComparison tcc(op_doc_order_lt, op_doc_order_lt, false);
-
-    // TODO : implement all possible axes
-
-    switch (step.getAxis()) {
-      case pe::axis_preceding :
-        tcc = TupleCellComparison(op_doc_order_lt, op_doc_order_lt, false);
-        break;
-      case pe::axis_following :
-        tcc = TupleCellComparison(op_doc_order_lt, op_doc_order_gt, false);
-        break;
-      case pe::axis_child :
-      case pe::axis_descendant :
-      case pe::axis_attribute :
-        tcc = TupleCellComparison(op_doc_order_lt, op_doc_order_descendant, false);
-        break;
-      case pe::axis_ancestor :
-      case pe::axis_parent :
-        tcc = TupleCellComparison(op_doc_order_lt, op_doc_order_ancestor, false);
-        break;
-      default:
-        U_ASSERT(false);
-        break;
-    }
-
-    TupleChrysalis * rightScheme = right.op->result;
-    
-    for (unsigned i = 0; i < rightScheme->width(); ++i) {
-        if (rightScheme->tuples[i].status == TupleValueInfo::evaluated) {
-            ExecutionBlock::current()->resultMap[i] += leftOp->_tsize();
-        };
-    };
-    
-    return new TupleJoinFilter(
-        leftOp->_tsize() + rightOp->_tsize(),
-        MappedTupleIn(leftOp),
-        MappedTupleIn(rightOp.op, rightOp.offs, leftOp->_tsize()),
-        tcc);
+    return new TuplePredicateFilter(
+        MappedTupleIn(opPtr, 0, 0),
+        comparison->getValueFunction(left.index, right.index));
 }
+
 
 phop::IOperator * ValueScanPrototype::compile()
 {
@@ -603,14 +530,14 @@ phop::IOperator * ValueScanPrototype::compile()
             inTuples.push_back(
                 MappedTupleIn(
                     new phop::SchemaValueScan(schema_node_cptr(*it),
-                        tccFromCmp(cmp), value, 1, 0, 1), 0, 0));
+                        GeneralComparisonPrototype(cmp).getTupleCellComparison(), value, 1, 0, 1), 0, 0));
         };
 
         ExecutionBlock::current()->resultMap[pathScan->resultSet.at(0)] = 0;
         
         return new phop::DocOrderMerge(1, inTuples);
     } else {
-        ITupleOperator * leftOpPtr = dynamic_cast<ITupleOperator *>(in.at(0).op->compile());
+        ITupleOperator * leftOpPtr = dynamic_cast<ITupleOperator *>(in.at(0).op->getStatement());
         
         // WARNING: Result is mapped after compile()
         unsigned leftIdx = ExecutionBlock::current()->resultMap[in.at(0).index] = 0;
@@ -620,7 +547,7 @@ phop::IOperator * ValueScanPrototype::compile()
             MappedTupleIn(
                 new TupleFromItemOperator(
                     new BogusConstSequence(value)), 0, TupleMap()),
-            tccFromCmp(cmp),
+            GeneralComparisonPrototype(cmp).getTupleCellComparison(),
             CachedNestedLoop::strict_output);
     }
 }
@@ -629,5 +556,5 @@ phop::IOperator * ValidatePathPrototype::compile()
 {
     ExecutionBlockWarden(this);
 
-    return in.at(0).op->compile();
+    return in.at(0).op->getStatement();
 }

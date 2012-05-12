@@ -32,35 +32,34 @@ PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path&
 
     scmLookup->compile();
 
-    result->schemaTraverseCost = 0;
-    result->nidSize = 0;
+    result->nidSize = 1;
 
     result->iterationCost = scmLookup->atomizedPath.cost();
     result->schemaTraverseCost = scmLookup->atomizedPath.cost();
 
-    scmLookup->findSomething(root, &modelData->snodes, 0);
-
-    if (!modelData->snodes.empty()) {
-        std::vector<schema_node_xptr>::const_iterator it = modelData->snodes.begin();
-        schema_node_cptr sn = *it;
-
-        result->blockCount = sn->blockcnt;
-        result->card = sn->nodecnt;
-        result->nidSize = sn->extnids;
-
-        for (++it; it != modelData->snodes.end(); ++it) {
+    if (path.getBody()->rbegin()->getAxis() != pe::axis_parent) {
+        if (!modelData->snodes.empty()) {
+            std::vector<schema_node_xptr>::const_iterator it = modelData->snodes.begin();
             schema_node_cptr sn = *it;
 
-            result->blockCount.lower = std::min(result->blockCount.lower, (double) sn->blockcnt);
-            result->blockCount.upper += (double) sn->blockcnt;
+            result->blockCount = sn->blockcnt;
+            result->card = sn->nodecnt;
+            result->nidSize = sn->extnids;
 
-            result->card.lower = std::min(result->card.lower, (double) sn->nodecnt);
-            result->card.upper += (double) sn->nodecnt;
+            for (++it; it != modelData->snodes.end(); ++it) {
+                schema_node_cptr sn = *it;
 
-            result->nidSize.lower = std::min(result->card.lower, (double) sn->extnids);
-            result->nidSize.upper += (double) sn->extnids;
+                result->blockCount.lower = std::min(result->blockCount.lower, (double) sn->blockcnt);
+                result->blockCount.upper += (double) sn->blockcnt;
+
+                result->card.lower = std::min(result->card.lower, (double) sn->nodecnt);
+                result->card.upper += (double) sn->nodecnt;
+
+                result->nidSize.lower = std::min(result->card.lower, (double) sn->extnids);
+                result->nidSize.upper += (double) sn->extnids;
+            };
         };
-    };
+    }
 
     result->schemaTraverseCost *= getCPUCost();
     result->iterationCost *= getIOCost();

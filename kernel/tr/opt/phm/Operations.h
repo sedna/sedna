@@ -5,6 +5,7 @@
 #include "tr/opt/phm/PhysicalModel.h"
 #include "tr/opt/alg/Predicates.h"
 
+struct ComparisonPrototype;
 struct Statistics;
 
 class BinaryOpPrototype : public POProt {
@@ -13,31 +14,31 @@ public:
       : POProt(pinfo) { in.push_back(_left); in.push_back(_right); };
 };
 
-class SortMergeJoinPrototype : public BinaryOpPrototype {
+class MergeJoinPrototype : public BinaryOpPrototype {
 protected:
-    const Comparison cmp;
+    ComparisonPrototype * comparison;
 
     bool needLeftSort;
     bool needRightSort;
+
+    virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual phop::IOperator * compile();
 public:
-    SortMergeJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, const Comparison& _cmp);
+    MergeJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, ComparisonPrototype * _comparison);
 
     virtual void evaluateCost(CostModel* model);
-    virtual phop::IOperator * compile();
 };
 
-class StructuralJoinPrototype : public BinaryOpPrototype {
-    pe::Path path;
-
-    bool needLeftSort;
-    bool needRightSort;
+class FilterTuplePrototype : public BinaryOpPrototype {
 protected:
+    ComparisonPrototype * comparison;
+
     virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual phop::IOperator * compile();
 public:
-    StructuralJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, const pe::Path& _path);
+    FilterTuplePrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, ComparisonPrototype * _comparison);
 
     virtual void evaluateCost(CostModel* model);
-    virtual phop::IOperator * compile();
 };
 
 class AbsPathScanPrototype : public POProt {
@@ -45,6 +46,7 @@ class AbsPathScanPrototype : public POProt {
     pe::Path path;
 protected:
     virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual phop::IOperator * compile();
 public:
     bool wantSort;
 
@@ -54,34 +56,34 @@ public:
     AbsPathScanPrototype(PhysicalModel * model, const TupleRef & tref);
 
     virtual void evaluateCost(CostModel* model);
-    virtual phop::IOperator * compile();
 };
 
 class PathEvaluationPrototype : public POProt {
     pe::Path path;
 protected:
     virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual phop::IOperator * compile();
 public:
     PathEvaluationPrototype(PhysicalModel * model, const POProtIn & _left, const TupleRef & _right, const pe::Path& _path);
 
     virtual void evaluateCost(CostModel* model);
-    virtual phop::IOperator * compile();
 };
 
 class ValueScanPrototype : public POProt {
     const Comparison cmp;
     counted_ptr<MemoryTupleSequence> value;
+protected:
+    virtual phop::IOperator * compile();
 public:
     ValueScanPrototype(PhysicalModel * model, const POProtIn & _left, const TupleRef & _right, const Comparison& _cmp);
 
     virtual void evaluateCost(CostModel* model);
-    virtual phop::IOperator * compile();
 };
 
 /*
  * This operation should decide how to join its operands in the best way possible
  */
-
+/*
 class MagicJoinPrototype : public BinaryOpPrototype {
     pe::Path path;
 protected:
@@ -92,7 +94,7 @@ public:
     virtual void evaluateCost(CostModel* model);
     virtual phop::IOperator * compile();
 };
-
+*/
 
 class ValidatePathPrototype : public POProt {
     DataRoot dataRoot;

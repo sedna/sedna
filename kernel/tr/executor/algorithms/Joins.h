@@ -5,6 +5,7 @@
 
 #include "tr/nid/nidstring.h"
 #include "tr/executor/algorithms/Comparison.h"
+#include "tr/executor/algorithms/ValueFunction.h"
 
 class SortedSequence;
 class ITupleSerializer;
@@ -58,6 +59,16 @@ public:
     TupleJoinFilter(unsigned int _size, const phop::MappedTupleIn& _left, const phop::MappedTupleIn& _right, const TupleCellComparison & tcc);
     virtual ~TupleJoinFilter();
     virtual void reset();
+};
+
+class TuplePredicateFilter : public UnaryTupleOperator {
+private:
+    ValueFunction vcc;
+    virtual void do_next();
+public:
+    OPINFO_DECL(0x305)
+
+    TuplePredicateFilter(const phop::MappedTupleIn& _in, const ValueFunction& _vcc);
 };
 
 }

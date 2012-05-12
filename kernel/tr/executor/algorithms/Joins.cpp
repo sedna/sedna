@@ -17,6 +17,7 @@ using namespace phop;
 OPINFO_DEF(DocOrderMerge)
 OPINFO_DEF(TupleSort)
 OPINFO_DEF(TupleJoinFilter)
+OPINFO_DEF(TuplePredicateFilter)
 
 struct NidStringCmp {
     bool operator()(const NIDMergeHeap::value_type & x, const NIDMergeHeap::value_type& y) const
@@ -186,10 +187,36 @@ void TupleJoinFilter::reset()
     seq_pos = 0;
 }
 
+TuplePredicateFilter::TuplePredicateFilter(const phop::MappedTupleIn& _in, const ValueFunction& _vcc)
+    : UnaryTupleOperator(OPINFO_REF, _in.tmap.size(), _in), vcc(_vcc)
+{
+}
+
+void TuplePredicateFilter::do_next()
+{
+    do {
+        in->next();
+
+        if (in.eos()) {
+            seteos();
+            return;
+        };
+
+        if (vcc.evaluate(in->get()).get_xs_boolean()) {
+            in.assignTo(value());
+            return;
+        };
+    } while (!in.eos());
+}
+
+
 IElementProducer * TupleJoinFilter::__toXML(IElementProducer * producer) const
 {
-    producer->addAttributeValue(PHOPQNAME("atomized"), tuple_cell::atomic(tcc.atomized));
-    
+    return producer;
+};
+
+IElementProducer * TuplePredicateFilter::__toXML(IElementProducer * producer) const
+{
     return producer;
 };
 

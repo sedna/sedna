@@ -16,20 +16,21 @@ tuple_cell op_doc_order_ancestor (const tuple_cell &a1, const tuple_cell &a2, Co
 struct TupleCellComparison {
     bin_op_tuple_cell_tuple_cell_collation lessop;
     bin_op_tuple_cell_tuple_cell_collation predop;
-    un_op_tuple_cell transform;
-    bool atomized;
+
+    // TODO : delete this
+    bool generalComparison;
 
     CollationHandler * handler;
 
     TupleCellComparison(
         bin_op_tuple_cell_tuple_cell_collation _lessop,
         bin_op_tuple_cell_tuple_cell_collation _predop,
-        bool _atomized)
-      : lessop(_lessop), predop(_predop),
-        atomized(_atomized), handler(NULL) {};
-   
+        bool gcmp
+    )
+      : lessop(_lessop), predop(_predop), generalComparison(gcmp), handler(NULL) {};
+
     bool less(const tuple_cell & a, const tuple_cell & b) {
-        if (atomized) {
+        if (generalComparison) {
             return lessop(atomize(a), atomize(b), handler).get_xs_boolean();
         } else {
             return lessop(a, b, handler).get_xs_boolean();
@@ -37,7 +38,7 @@ struct TupleCellComparison {
     };
 
     bool satisfy(const tuple_cell & a, const tuple_cell & b) {
-        if (atomized) {
+        if (generalComparison) {
             return predop(atomize(a), atomize(b), handler).get_xs_boolean();
         } else {
             return predop(a, b, handler).get_xs_boolean();
@@ -45,20 +46,24 @@ struct TupleCellComparison {
     };
 };
 
-class GeneralCollationSerializer : public ITupleSerializer {
-    unsigned idx;
+class ICollationTupleSerializer : public ITupleSerializer {
+protected:
     CollationHandler * collation;
 public:
-    GeneralCollationSerializer(unsigned _idx) : idx(_idx) {};
-
     void setCollationHandler(CollationHandler * _collation) { collation = _collation; } ;
+};
+
+class GeneralCollationSerializer : public ICollationTupleSerializer {
+    unsigned idx;
+public:
+    GeneralCollationSerializer(unsigned _idx) : idx(_idx) {};
 
     virtual size_t serialize(const tuple& t, void* buf);
     virtual void deserialize(tuple& t, void* buf, size_t size);
     virtual int compare(void* buf1, size_t size1, void* buf2, size_t size2);
 };
 
-class DocOrderSerializer : public ITupleSerializer {
+class DocOrderSerializer : public ICollationTupleSerializer {
     unsigned idx;
 public:
     DocOrderSerializer(unsigned _idx) : idx(_idx) {};

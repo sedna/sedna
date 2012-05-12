@@ -46,7 +46,7 @@ public:
     void executeLimited(schema_node_cptr base, SchemaNodePtrList * output, int limit);
 
     /** This method tries to find schema nodes in entity, that satisfies the condition */
-    void findSomething(const DataRoot& root, SchemaNodePtrList * output, int limit);
+    int findSomething(const DataRoot& root, SchemaNodePtrList * output, int limit);
 };
 
 

@@ -1,1 +1,1 @@
-set(phm_SRC PhysicalModel.cpp Operations.cpp)
+set(phm_SRC PhysicalModel.cpp Operations.cpp ComparisonModels.cpp)
