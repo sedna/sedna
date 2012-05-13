@@ -22,7 +22,7 @@ struct PathCostModelData : public IPlanDisposable {
     scoped_ptr<pe::SchemaLookup> lookup;
 };
 
-PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path& path, TupleStatistics * copyStats, PathCostModel * result)
+PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path& path, TupleStatistics * copyStats, PathCostModel * result, TupleStatistics * baseStats)
 {
     PathCostModelData * modelData = new PathCostModelData;
     pe::SchemaLookup * scmLookup = new pe::SchemaLookup(path);
@@ -32,34 +32,60 @@ PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path&
 
     scmLookup->compile();
 
-    result->nidSize = 1;
+    if (path.getBody()->rbegin()->getAxis() == pe::axis_parent) {
+        if (baseStats != NULL) {
+            result->card = baseStats->distinctValues;
+            result->blockCount = baseStats->pathInfo->blockCount;
+            result->nidSize = baseStats->pathInfo->nidSize;
+            result->schemaTraverseCost = path.getBody()->size() * getCPUCost();
+            result->iterationCost = path.getBody()->size() * getIOCost();
+            scmLookup->executeAll(&((PathCostModelData*) baseStats->pathInfo->data)->snodes, &modelData->snodes);
+
+            if (copyStats != NULL) {
+                copyStats->pathInfo = result;
+                copyStats->distinctValues = result->card;
+            };
+        }
+
+        return result;
+    }
+    
+    result->nidSize = 0;
 
     result->iterationCost = scmLookup->atomizedPath.cost();
     result->schemaTraverseCost = scmLookup->atomizedPath.cost();
 
-    if (path.getBody()->rbegin()->getAxis() != pe::axis_parent) {
-        if (!modelData->snodes.empty()) {
-            std::vector<schema_node_xptr>::const_iterator it = modelData->snodes.begin();
+    if (baseStats == NULL) {
+        scmLookup->execute(root.getSchemaNode(), &modelData->snodes);
+    } else if (baseStats->pathInfo->data == NULL) {
+        if (path.getBody()->rbegin()->getAxis() != pe::axis_parent) {
+            double error = scmLookup->findSomething(root, &modelData->snodes, 0) * 100;
+        }
+    } else {
+        scmLookup->executeAll(&((PathCostModelData*) baseStats->pathInfo->data)->snodes, &modelData->snodes);
+    }
+
+    if (!modelData->snodes.empty()) {
+        std::vector<schema_node_xptr>::const_iterator it = modelData->snodes.begin();
+        schema_node_cptr sn = *it;
+
+        result->blockCount = sn->blockcnt;
+        result->card = sn->nodecnt;
+        result->nidSize = sn->extnids;
+
+        for (++it; it != modelData->snodes.end(); ++it) {
             schema_node_cptr sn = *it;
 
-            result->blockCount = sn->blockcnt;
-            result->card = sn->nodecnt;
-            result->nidSize = sn->extnids;
+            result->blockCount.lower = std::min(result->blockCount.lower, (double) sn->blockcnt);
+            result->blockCount.upper += (double) sn->blockcnt;
 
-            for (++it; it != modelData->snodes.end(); ++it) {
-                schema_node_cptr sn = *it;
+            result->card.lower = std::min(result->card.lower, (double) sn->nodecnt);
+            result->card.upper += (double) sn->nodecnt;
 
-                result->blockCount.lower = std::min(result->blockCount.lower, (double) sn->blockcnt);
-                result->blockCount.upper += (double) sn->blockcnt;
-
-                result->card.lower = std::min(result->card.lower, (double) sn->nodecnt);
-                result->card.upper += (double) sn->nodecnt;
-
-                result->nidSize.lower = std::min(result->card.lower, (double) sn->extnids);
-                result->nidSize.upper += (double) sn->extnids;
-            };
+            result->nidSize.lower = std::min(result->card.lower, (double) sn->extnids);
+            result->nidSize.upper += (double) sn->extnids;
         };
-    }
+    };
 
     result->schemaTraverseCost *= getCPUCost();
     result->iterationCost *= getIOCost();
@@ -79,7 +105,7 @@ PathCostModel* CostModel::getAbsPathCost(const DataRoot& root, const pe::Path& p
     cm->card = 1;
     cm->blockCount = 1;
 
-    return evaluatePathCost(root, path, result, cm);
+    return evaluatePathCost(root, path, result, cm, NULL);
 }
 
 PathCostModel* CostModel::getPathCost(const TupleRef& base, const pe::Path& path, TupleStatistics * _result)
@@ -92,12 +118,13 @@ PathCostModel* CostModel::getPathCost(const TupleRef& base, const pe::Path& path
         cm->card = base->statistics->distinctValues;
         U_ASSERT(base->statistics->pathInfo != NULL);
         cm->blockCount = base->statistics->pathInfo->blockCount;
+        cm->nidSize = base->statistics->pathInfo->nidSize;
     } else {
         cm->card = 1;
         cm->blockCount = 1;
     };
 
-    return evaluatePathCost(base->node->root, path, _result, cm);
+    return evaluatePathCost(base->node->root, path, _result, cm, base->statistics);
 }
 
 ValueCostModel* CostModel::getValueCost(PathCostModel* m, TupleStatistics * _result)
@@ -119,9 +146,13 @@ ComparisonInfo* CostModel::getCmpInfo(TupleStatistics* m1, TupleStatistics* m2, 
 {
     ComparisonInfo* result = new ComparisonInfo;
 
+    Range values1 = std::min(m1->distinctValues, m2->distinctValues);
+    Range values2 = std::max(m1->distinctValues, m2->distinctValues);
+
     switch (cmp.op) {
       case Comparison::g_eq :
-        result->selectivity = Range(0.01, 0.2);
+        result->selectivity = values1 / values2;
+        result->selectivity.upper *= 10;
         result->opCost = getCPUCost();
         break;
       case Comparison::do_after :
@@ -142,6 +173,7 @@ TupleStatistics* CostModel::getConstInfo(const MemoryTupleSequence* cnst)
     TupleStatistics* result = new TupleStatistics;
 
     result->pathInfo = NULL;
+    result->distinctValues = cnst->size();
     result->valueInfo = new ValueCostModel();
     result->valueInfo->atomizationCost = 0;
     result->valueInfo->size = (double) (sizeof(tuple_cell));

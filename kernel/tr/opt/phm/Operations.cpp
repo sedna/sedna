@@ -342,13 +342,16 @@ void PathEvaluationPrototype::evaluateCost(CostModel* model)
     cost = new OperationCost();
 
     outRef->statistics = new TupleStatistics();
-    model->getPathCost(inRef, path, outRef->statistics);
+    
+    PathCostModel * costInfo = model->getPathCost(inRef, path, outRef->statistics);
 
     result->rowCount = inRef.tupleDesc->rowCount * outRef->statistics->distinctValues / inRef->statistics->distinctValues;
     result->rowSize = inRef.tupleDesc->rowSize + model->getNodeSize();
 
     cost->firstCost = inCost->firstCost;
-    cost->fullCost  = inCost->fullCost + inRef->statistics->distinctValues * outRef->statistics->pathInfo->iterationCost;
+    cost->fullCost  =
+        inCost->fullCost + inRef->statistics->distinctValues * outRef->statistics->pathInfo->iterationCost +
+        costInfo->blockCount * model->getIOCost();
     cost->nextCost  = (cost->fullCost - cost->firstCost) / result->rowCount;
 }
 

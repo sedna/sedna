@@ -327,7 +327,7 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
 
     PlanInfo * nullPlan = new PlanInfo(dg->nodeCount);
 
-    int branchLimit = 2;
+    int branchLimit = 4;
 
     for (DataNodeList::iterator i = dg->dataNodes.begin(); i != dg->dataNodes.end(); ++i) {
         if (*i != NULL) {
@@ -357,7 +357,8 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
             PlanInfo * info = planMap->get(*it);
             PlanDesc dsc = dg->getNeighbours(info->getDesc());
 
-            if (dsc == 0 && branchLimit > 0) {
+//            if (dsc == 0 && branchLimit > 0) {
+            if (branchLimit > 0) {
                 branchLimit--;
                 dsc = dg->allPredicates & ~info->getDesc();
             };
@@ -387,6 +388,8 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
         nextStepSet = swapset;
     };
 
+    serializer->serialize(tuple(planMap->getLastPlan()->toXML(vrt)->close()));
+    
     return planMap->getLastPlan()->compile();
 }
 

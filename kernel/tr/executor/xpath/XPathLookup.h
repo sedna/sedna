@@ -43,6 +43,7 @@ public:
 
     bool exists(schema_node_cptr base);
     void execute(schema_node_cptr base, SchemaNodePtrList * output);
+    void executeAll(const SchemaNodePtrList * in, SchemaNodePtrList * output);
     void executeLimited(schema_node_cptr base, SchemaNodePtrList * output, int limit);
 
     /** This method tries to find schema nodes in entity, that satisfies the condition */

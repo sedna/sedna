@@ -92,6 +92,18 @@ void SchemaLookup::execute(schema_node_cptr base, SchemaNodePtrList * output)
     std::copy(goalSet.begin(), goalSet.end(), std::back_inserter(*output));
 }
 
+void SchemaLookup::executeAll(const SchemaNodePtrList* in, SchemaNodePtrList* output)
+{
+    SchemaNodePtrSet goalSet;
+
+    for (SchemaNodePtrList::const_iterator it = in->begin(); it != in->end(); ++it) {
+        executeSchemaPathTest(*it, atomizedPath, &goalSet);
+    };
+
+    std::copy(goalSet.begin(), goalSet.end(), std::back_inserter(*output));
+}
+
+
 PathSchemaCheck::PathSchemaCheck(phop::IValueOperator* _in, const pe::AtomizedPath& apath)
     : ItemOperator(OPINFO_REF, _in), scnLookup(apath) { }
 

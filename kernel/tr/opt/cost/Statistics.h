@@ -67,7 +67,7 @@ extern const double C_IO_Cost;
 extern const double C_CPU_Cost;
 
 class CostModel {
-    PathCostModel* evaluatePathCost(const DataRoot& root, const pe::Path& path, TupleStatistics* copyStats, PathCostModel* result);
+    PathCostModel* evaluatePathCost(const DataRoot& root, const pe::Path& path, TupleStatistics* copyStats, PathCostModel* result, TupleStatistics* baseStats);
 public:
     PathCostModel * getAbsPathCost(const DataRoot& root, const pe::Path & path, TupleStatistics * result);
     PathCostModel * getPathCost(const TupleRef & base, const pe::Path & path, TupleStatistics * result);
