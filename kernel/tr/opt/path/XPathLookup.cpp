@@ -226,12 +226,15 @@ void PathEvaluateTraverse::do_next()
                 return;
             };
 
+            U_ASSERT(tin.is_node());
             traverse->push(tin.get_node());
         };
 
         Node node = traverse->next();
 
         if (!node.isNull()) {
+            push(tuple_cell::node(node.getPtr()));
+            return;
         };
     } while (true);
 }

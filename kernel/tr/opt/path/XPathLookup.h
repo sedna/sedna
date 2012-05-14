@@ -11,7 +11,7 @@
 #include "AtomizedPath.h"
 #include "tr/structures/nodeinterface.h"
 
-#include "tr/executor/algorithms/SequenceModel.h"
+#include "tr/opt/SequenceModel.h"
 
 #include <string>
 #include <map>

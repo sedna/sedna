@@ -3,7 +3,9 @@
 
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/phm/PhysicalModel.h"
-#include "tr/opt/alg/Predicates.h"
+#include "tr/opt/algebra/Predicates.h"
+
+namespace opt {
 
 struct ComparisonPrototype;
 struct Statistics;
@@ -106,6 +108,8 @@ public:
 
     virtual void evaluateCost(CostModel* model);
     virtual phop::IOperator * compile();
+};
+
 };
 
 

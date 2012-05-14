@@ -25,7 +25,9 @@ protected:
     NextNodeProc _next;
 public:
     explicit NodeIterator(Node _node, NextNodeProc __next = NULL, counted_ptr<NidString> _baseNID = NULL)
-      : baseNID(_baseNID), node(_node), _next(__next) {};
+      : baseNID(_baseNID), node(_node), _next(__next) {
+        U_ASSERT(!_node.isNull());
+      };
 
     Node get() const { return node; };
 

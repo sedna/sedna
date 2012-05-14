@@ -2,13 +2,15 @@
 #define _COMPARISON_MODELS_H_
 
 #include "tr/opt/OptTypes.h"
-#include "tr/opt/alg/Predicates.h"
+#include "tr/opt/algebra/Predicates.h"
 #include "tr/opt/phm/PhysicalModel.h"
 
 #include "tr/structures/producer.h"
 
-#include "tr/executor/algorithms/ValueFunction.h"
-#include "tr/executor/algorithms/Comparison.h"
+#include "tr/opt/algorithms/ValueFunction.h"
+#include "tr/opt/algorithms/Comparison.h"
+
+namespace opt {
 
 class CostModel;
 struct SequenceInfo;
@@ -55,5 +57,6 @@ struct PathComparisonPrototype : public ComparisonPrototype {
     virtual IElementProducer* __toXML(IElementProducer* ) const;
 };
 
+};
 
 #endif /* _COMPARISON_MODELS_H_ */

@@ -15,9 +15,9 @@
 
 #include "tr/structures/xmlns.h"
 
-#include "tr/opt/alg/PlanOperations.h"
-#include "tr/opt/alg/TupleScheme.h"
-#include "tr/opt/alg/DataGraph.h"
+#include "tr/opt/algebra/PlanOperations.h"
+#include "tr/opt/algebra/TupleScheme.h"
+#include "tr/opt/algebra/DataGraph.h"
 
 /* Look PlanOperationTypes for description of all operators */
 

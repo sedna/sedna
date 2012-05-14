@@ -2,14 +2,16 @@
 
 #include <stdint.h>
 
-#include "tr/opt/alg/Predicates.h"
-#include "tr/executor/xpath/XPathTypes.h"
+#include "tr/opt/algebra/Predicates.h"
+#include "tr/opt/path/XPathTypes.h"
 #include "tr/opt/cost/Statistics.h"
 #include "tr/opt/phm/Operations.h"
 #include "tr/structures/producer.h"
 #include "tr/strings/strings.h"
-#include "tr/executor/algorithms/SequenceModel.h"
+#include "tr/opt/SequenceModel.h"
 #include "tr/opt/phm/ComparisonModels.h"
+
+using namespace opt;
 
 PlanInfo::PlanInfo(size_t initialTupleSetSize)
   : desc(0), parent(0), totalCost(0)

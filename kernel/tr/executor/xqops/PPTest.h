@@ -48,6 +48,10 @@ public:
 
 
 class PPDataGraph : public PPInternalFunction {
+    void * data;
+    unsigned idx;
+
+    u_timeb t_start, t_opt, t_end;
 public:
     virtual PPIterator* do_copy(dynamic_context* _cxt_);
     virtual void do_next(tuple& t);

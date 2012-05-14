@@ -6,14 +6,33 @@
 #ifndef SEQUENCE_MODEL_H
 #define SEQUENCE_MODEL_H
 
-#include "SequenceHelpers.h"
+#include "tr/executor/base/tuple.h"
 #include "tr/opt/OptTypes.h"
 
 #include <deque>
 #include <stack>
 
+
+#define PHOPQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
+
+#define OPINFO_T const phop::operation_info_t *
+#define OPINFO_DECL(ID) \
+  static const struct phop::operation_info_t op_info; \
+  static const int opid = ID; \
+  virtual phop::IOperator * clone() const; \
+  virtual IElementProducer * __toXML(IElementProducer *) const;
+
+#define OPINFO_DEF(TT) \
+  const struct phop::operation_info_t TT::op_info = {#TT, TT::opid}; \
+  phop::IOperator * TT::clone() const { return new TT(*this); };
+
+#define OPINFO_REF &op_info
+
 class IElementProducer;
+
+namespace opt {
 class POProt;
+}
 
 namespace phop {
 
@@ -47,8 +66,8 @@ private:
 
     std::vector<IOperator *> body;
 public:
-    std::stack<POProt *> sourceStack;
-    std::map<TupleId, unsigned> resultMap;
+    std::stack<opt::POProt *> sourceStack;
+    std::map<opt::TupleId, unsigned> resultMap;
 
     ExecutionBlock() {};
     ~ExecutionBlock() {};
@@ -65,21 +84,6 @@ struct operation_info_t {
     const char * name;
     int id;
 };
-
-#define PHOPQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
-
-#define OPINFO_T const phop::operation_info_t * 
-#define OPINFO_DECL(ID) \
-  static const struct phop::operation_info_t op_info; \
-  static const int opid = ID; \
-  virtual phop::IOperator * clone() const; \
-  virtual IElementProducer * __toXML(IElementProducer *) const;
-
-#define OPINFO_DEF(TT) \
-  const struct phop::operation_info_t TT::op_info = {#TT, TT::opid}; \
-  phop::IOperator * TT::clone() const { return new TT(*this); };
-
-#define OPINFO_REF &op_info
 
 class IOperator {
 private:
@@ -117,14 +121,16 @@ public:
 
     inline bool next()
     {
-        if (get().is_eos()) {
-            return false;
-        };
+        if (!valueCache.empty()) {
+            if (get().is_eos()) {
+                return false;
+            };
+
+            valueCache.pop_front();
+        }
 
         if (valueCache.empty()) {
             do_next();
-        } else {
-            valueCache.pop_front();
         };
 
         return true;
@@ -143,10 +149,11 @@ protected:
 
     virtual void do_next() = 0;
     
-    ITupleOperator(OPINFO_T _opinfo, IValueOperator * __convert_op);
+    ITupleOperator(OPINFO_T _opinfo, IValueOperator * __convert_op, unsigned _size)
+      : IOperator(_opinfo), _value(_size), _convert_op(__convert_op) {};
 
-    ITupleOperator(OPINFO_T _opinfo, unsigned _size) :
-      IOperator(_opinfo), _value(_size), _convert_op(NULL) {};
+    ITupleOperator(OPINFO_T _opinfo, unsigned _size)
+      : IOperator(_opinfo), _value(_size), _convert_op(NULL) {};
 public:
     virtual void reset()
       { _value.eos = false; };
@@ -155,6 +162,7 @@ public:
         if (_convert_op != NULL) {
             _convert_op->next();
             _value.copy(_convert_op->get());
+            return true;
         };
 
         if (get().is_eos()) {
@@ -221,6 +229,10 @@ struct MappedTupleIn : public TupleIn {
     explicit MappedTupleIn(ITupleOperator * _op, unsigned _offs)
         : TupleIn(_op, _offs), tmap() { };
 
+    void tupleAssignTo(tuple & result, const tuple & from) const {
+        TupleIn::tupleAssignTo(result, from, tmap);
+    }
+
     void assignTo(tuple & result) const { TupleIn::assignTo(result, tmap); }
 };
 
@@ -230,7 +242,7 @@ protected:
 public:
     OPINFO_DECL(0x001)
 
-    TupleFromItemOperator(IValueOperator* convert_op);
+    TupleFromItemOperator(IValueOperator* convert_op, unsigned _size = 1);
 
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
@@ -260,6 +272,9 @@ protected:
     BinaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right)
         : ITupleOperator(_opinfo, _size), left(_left), right(_right) {};
 public:
+    const MappedTupleIn & __left() const { return left; }
+    const MappedTupleIn & __right() const { return right; }
+  
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
     virtual IElementProducer * toXML(IElementProducer *) const;
@@ -272,6 +287,8 @@ protected:
     UnaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _in)
         : ITupleOperator(_opinfo, _size), in(_in) {};
 public:
+    const MappedTupleIn & __in() const { return in; }
+    
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
     virtual IElementProducer * toXML(IElementProducer *) const;
@@ -280,7 +297,7 @@ public:
 class ItemOperator : public IValueOperator {
 protected:
     IValueOperator * in;
-
+    
     ItemOperator(OPINFO_T _opinfo, IValueOperator * _in)
       : IValueOperator(_opinfo), in(_in) {};
 public:

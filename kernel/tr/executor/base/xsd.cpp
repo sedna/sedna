@@ -12,7 +12,7 @@
 #include "tr/executor/base/xs_names.h"
 #include "tr/structures/nodeinterface.h"
 #include "tr/executor/base/dm_accessors.h"
-#include "tr/executor/xpath/SchemaTests.h"
+#include "tr/opt/path/SchemaTests.h"
 
 using namespace xsd;
 

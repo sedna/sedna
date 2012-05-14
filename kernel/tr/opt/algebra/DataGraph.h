@@ -18,15 +18,16 @@ namespace phop {
     class ITupleOperator;
 }
 
-struct Comparison;
-
-class PPIterator;
-class DataRoot;
 class tuple_cell;
+class DataRoot;
 
 namespace pe {
   class Path;
 }
+
+namespace opt {
+
+struct Comparison;
 
 class DataGraphMaster {
   friend class DataGraph;
@@ -66,35 +67,6 @@ class DataGraphMaster {
     phop::ITupleOperator* compile(DataGraph* dg);
 };
 
-/*
-class DataGraphIterator {
-  private:
-    DataGraph * m_datagraph;
-    std::vector<int> m_elements;
-    tuple m_tuple;
-  public:
-    DataGraphIterator(DataGraph* datagraph, const TupleScheme& scheme);
-    ~DataGraphIterator();
-
-    const tuple & next();
-    const tuple & get() const { return m_tuple; };
-    bool eos() const { return m_tuple.is_eos(); };
-};
-
-class PPDataGraphAdapter : public PPIterator {
-  private:
-    DataGraph * m_datagraph;
-  public:
-    virtual void do_accept(PPVisitor& v);
-    virtual void do_close();
-    virtual PPIterator* do_copy(dynamic_context* _cxt_);
-    virtual void do_next(tuple& t);
-    virtual void do_open();
-    virtual void do_reopen();
-
-    PPDataGraphAdapter(dynamic_context* _cxt_, operation_info _info_, const char* _name_, DataGraph * datagraph, rqp::TupleId tid);
-    virtual ~PPDataGraphAdapter();
-};
-*/
+}
 
 #endif /* DATAGRAPH_H */

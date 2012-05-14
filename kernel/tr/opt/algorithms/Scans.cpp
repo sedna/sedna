@@ -1,15 +1,16 @@
 #include "Scans.h"
-#include "SequenceHelpers.h"
 
-#include "tr/executor/xpath/XPathLookup.h"
+#include "tr/opt/path/XPathLookup.h"
 
 #include "tr/executor/base/XPath.h"
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/executor/base/PPUtils.h"
 
 #include "tr/structures/producer.h"
+#include "ExecutionContext.h"
 
 using namespace phop;
+using namespace opt;
 
 OPINFO_DEF(SchemaScan)
 OPINFO_DEF(SchemaValueScan)
@@ -82,8 +83,11 @@ SchemaValueScan::SchemaValueScan(
 void SchemaValueScan::do_next()
 {
     if (currentNode == XNULL) {
-        currentNode = NodeBlockHeader(checkp(snode->bblk)).getFirstDescriptor();
-    }
+        NodeBlockHeader header(checkp(snode->bblk));
+        currentNode = header.getFirstDescriptor();
+    } else {
+        currentNode = NodeIteratorForeward::nextNode(currentNode.getPtr());
+    };
 
     do {
         for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
@@ -110,6 +114,12 @@ void SchemaValueScan::reset()
 {
     phop::ITupleOperator::reset();
     currentNode = XNULL;
+}
+
+void SchemaValueScan::setContext ( ExecutionContext* __context )
+{
+    phop::IOperator::setContext ( __context );
+    tcmpop.handler = __context->collation;
 }
 
 
@@ -140,6 +150,7 @@ CachedNestedLoop::CachedNestedLoop(unsigned _size, const MappedTupleIn & _left, 
 void CachedNestedLoop::do_next()
 {
     if (!cacheFilled) {
+        right.op->next();
         while (!right.eos()) {
             nestedSequenceCache.push_back(right.get());
             right.op->next();
@@ -191,6 +202,13 @@ void CachedNestedLoop::reset()
     nestedIdx = nestedSequenceCache.size();
 }
 
+void CachedNestedLoop::setContext ( ExecutionContext* __context )
+{
+    phop::BinaryTupleOperator::setContext ( __context );
+    tcmpop.handler = __context->collation;
+}
+
+
 NestedEvaluation::NestedEvaluation(const phop::TupleIn& _in, IValueOperator* _op, unsigned int _size, unsigned int _resultIdx)
   : ITupleOperator(OPINFO_REF, _size), in(_in), nestedOperator(_op), resultIdx(_resultIdx)
 {
@@ -222,7 +240,7 @@ void NestedEvaluation::setContext(ExecutionContext* __context)
 }
 
 #include <sstream>
-#include "tr/executor/xpath/XPathLookup.h"
+#include "tr/opt/path/XPathLookup.h"
 
 static
 std::string schemaPath(schema_node_cptr snode) {

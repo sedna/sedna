@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "common/sedna.h"
-#include "tr/executor/xpath/XPathTypes.h"
+#include "tr/opt/path/XPathTypes.h"
 
 class DataRoot {
 public:

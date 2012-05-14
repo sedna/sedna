@@ -339,7 +339,7 @@ static const StepPredicate
 
 bool Path::horizontal() const
 {
-    return body->size() == 1 && body->at(0).satisfies(siblingAxes);
+    return exist(siblingAxes);
 }
 
 bool Path::forall(const pe::StepPredicate& sp) const

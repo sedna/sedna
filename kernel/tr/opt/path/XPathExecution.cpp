@@ -88,6 +88,8 @@ void getNodePath(schema_node_cptr from, schema_node_cptr to, SchemaPath& path) {
 
         i = i->parent;
     }
+
+    std::reverse(path.begin(), path.end());;
 }
 
 void NodeIterator::nextNodeCommonAncestor()
@@ -180,8 +182,7 @@ Node PathTraverse::next()
             SchemaTestAtom * test = dynamic_cast<SchemaTestAtom *>(item);
 
             if (test->test(step.snode)) {
-                step.path = step.path + 1;
-                pos = mergelist.insert(pos, step);
+                pos = mergelist.insert(pos, step.passStep());
             };
         } else {
             U_ASSERT(false);
@@ -208,12 +209,14 @@ void PathSchemaMerge::pushAll(Node node, schema_node_cptr base, const SchemaNode
         path.clear();
         getNodePath(base, *it, path);
 
-        mergeheap.push_back(NIDMergeHeap::value_type(
-          NidString(node.getPtr()),
-          NodeIterator(
-              getFirstNodeByPath(node, path, *commonAncestorNid),
-              &NodeIterator::nextNodeCommonAncestor,
-              commonAncestorNid)));
+        Node firstNode = getFirstNodeByPath(node, path, *commonAncestorNid);
+
+        if (!firstNode.isNull()) {
+            mergeheap.push_back(NIDMergeHeap::value_type(
+              NidString(node.getPtr()),
+              NodeIterator(firstNode, &NodeIterator::nextNodeCommonAncestor,
+                  commonAncestorNid)));
+        };
     };
 
     std::make_heap(mergeheap.begin(), mergeheap.end(), NIDMergeHeapCompare());

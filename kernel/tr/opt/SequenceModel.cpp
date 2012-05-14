@@ -75,14 +75,8 @@ void TupleFromItemOperator::setContext(ExecutionContext* __context)
     _convert_op->setContext(__context);
 }
 
-ITupleOperator::ITupleOperator(OPINFO_T _opinfo, IValueOperator* __convert_op)
-    : IOperator(_opinfo), _convert_op(__convert_op)
-{
-
-}
-
-TupleFromItemOperator::TupleFromItemOperator(IValueOperator* convert_op)
-    : ITupleOperator(OPINFO_REF, convert_op)
+TupleFromItemOperator::TupleFromItemOperator(IValueOperator* convert_op, unsigned _size)
+    : ITupleOperator(OPINFO_REF, convert_op, _size)
 {
     
 }
@@ -96,6 +90,12 @@ ReduceToItemOperator::ReduceToItemOperator(const phop::TupleIn& op, bool _nested
 void ReduceToItemOperator::do_next()
 {
     in->next();
+    
+    if (in->get().is_eos()) {
+        seteos();
+        return;
+    };
+
     push(in.get());
 }
 

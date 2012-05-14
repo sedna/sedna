@@ -755,9 +755,13 @@ public:
     };
 
     tuple &operator=(const tuple& t) {
-        U_ASSERT(cells_number == t.cells_number);
-
         if (this != &t) {
+            if (cells_number != t.cells_number) {
+                cells.clear();
+                cells_number = t.cells_number;
+                cells = new tuple_cell[t.cells_number];
+            };
+
             copy(t);
         }
 

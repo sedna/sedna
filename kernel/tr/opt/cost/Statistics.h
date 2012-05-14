@@ -9,8 +9,10 @@
 
 #include "tr/opt/OptTypes.h"
 #include "tr/cat/catptr.h"
-#include "tr/executor/xpath/XPathTypes.h"
-#include "tr/opt/alg/Predicates.h"
+#include "tr/opt/path/XPathTypes.h"
+#include "tr/opt/algebra/Predicates.h"
+
+namespace opt {
 
 class POProt;
 class TupleRef;
@@ -90,5 +92,7 @@ public:
 };
 
 extern CostModel * publicCostModel;
+
+};
 
 #endif /* COST_MODEL_H */

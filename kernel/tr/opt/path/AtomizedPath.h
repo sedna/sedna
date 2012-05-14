@@ -4,8 +4,8 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/xsd.h"
-#include "tr/executor/xpath/XPathTypes.h"
-#include "tr/executor/xpath/SchemaTests.h"
+#include "tr/opt/path/XPathTypes.h"
+#include "tr/opt/path/SchemaTests.h"
 
 namespace pe {
 

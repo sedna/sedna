@@ -1,12 +1,13 @@
 #include "Statistics.h"
 
 #include "tr/opt/phm/Operations.h"
-#include "tr/executor/xpath/XPathLookup.h"
+#include "tr/opt/path/XPathLookup.h"
 
-CostModel * publicCostModel = NULL;
+using namespace opt;
 
-const double C_CPU_Cost = 0.1;
-const double C_IO_Cost = 10.0;
+CostModel * opt::publicCostModel = NULL;
+const double opt::C_CPU_Cost = 0.1;
+const double opt::C_IO_Cost = 10.0;
 
 #define AXIS_DESC_COST (50.0)
 #define AXIS_CHILD_COST (10.0)
@@ -185,8 +186,16 @@ ComparisonInfo* CostModel::getDocOrderInfo(PathCostModel* m1, PathCostModel* m2,
 {
     ComparisonInfo* result = new ComparisonInfo;
 
-    result->opCost = path.getBody().get()->size() * getCPUCost();
-    result->selectivity = 1.0;
+    if (path.horizontal()) {
+        if (path.forall(pe::StepPredicate::axis(pe::axis_following) | pe::StepPredicate::axis(pe::axis_preceding))) {
+            result->selectivity = 10.0;
+        } else {
+            result->selectivity = 2.0;
+        };
+    } else {
+        result->opCost = path.getBody().get()->size() * getCPUCost();
+        result->selectivity = 0.5;
+    }
 
     return result;
 }

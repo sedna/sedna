@@ -10,7 +10,7 @@
 #include "tr/nid/nidalloc.h"
 #include "tr/nid/nid.h"
 
-#include "SequenceHelpers.h"
+#include "ExecutionContext.h"
 
 using namespace phop;
 
@@ -80,12 +80,29 @@ void DocOrderMerge::reset()
     initialized = false;
 }
 
-TupleSort::TupleSort(unsigned int _size, MappedTupleIn _in, ITupleSerializer* _order)
+void DocOrderMerge::setContext ( ExecutionContext* __context )
+{
+    phop::IOperator::setContext ( __context );
+
+    for (TupleList::const_iterator it = tin.begin(); it != tin.end(); ++it) {
+        (*it)->setContext(__context);
+    };
+}
+
+
+TupleSort::TupleSort( unsigned int _size, MappedTupleIn _in, ICollationTupleSerializer* _order)
     : UnaryTupleOperator(OPINFO_REF, _size, _in),
         initialized(false), order(_order), _sorted_sequence(NULL)
 {
 
 }
+
+void TupleSort::setContext ( ExecutionContext* __context )
+{
+    phop::UnaryTupleOperator::setContext ( __context );
+    order->setCollationHandler(__context->collation);
+}
+
 
 TupleSort::~TupleSort()
 {
@@ -124,56 +141,97 @@ void TupleSort::reset()
 
 TupleJoinFilter::TupleJoinFilter(unsigned int _size, const phop::MappedTupleIn& _left, const phop::MappedTupleIn& _right, const TupleCellComparison& _tcc)
     : BinaryTupleOperator(OPINFO_REF, _size, _left, _right),
-      initialized(false), tcc(_tcc), seq(NULL), seq_pos(0)
+      initialized(false), tcc(_tcc), left_seq(NULL), right_seq(NULL),
+      left_seq_pos(0), right_seq_pos(0),
+      initial_left_seq_pos(0), initial_right_seq_pos(0),
+      initialLeft(_left->_tsize()), initialRight(_right->_tsize()),
+      leftValue(_left->_tsize()), rightValue(_right->_tsize()),
+      step_state(step_both)
 {
-    seq = new sequence(_right->_tsize());
+    left_seq = new sequence(_left->_tsize());
+    right_seq = new sequence(_right->_tsize());
 }
 
 TupleJoinFilter::~TupleJoinFilter()
 {
-    delete seq;
+    delete left_seq;
+    delete right_seq;
 }
+
+inline
+void getValue(const MappedTupleIn & tin, sequence * seq, tuple & value, size_t pos)
+{
+    if (seq->size() <= pos) {
+        tin->next();
+        value.copy(tin->get());
+        seq->add(value);
+    } else {
+        seq->get(value, pos);
+    }
+};
 
 void TupleJoinFilter::do_next()
 {
     if (!initialized) {
-        left->next();
-        right->next();
+        getValue(left, left_seq, initialLeft, initial_left_seq_pos);
+        getValue(right, right_seq, initialRight, initial_right_seq_pos);
 
+        leftValue.copy(initialLeft);
+        rightValue.copy(initialRight);
+        
         initialized = true;
-    };
-
-    if (left.eos()) {
-        seteos();
-        return;
-    };
-
-    if (right.eos()) {
-        seteos();
-        return;
     };
 
     bool found = false;
 
-    // TODO: FIXME: nested loop with equality case!
     do {
-/*      
-        if (seq_pos == seq->size()) {
-            seq->add(right->get());
-            right->next();
+        if (initialLeft.is_eos()) {
+            seteos();
+            return;
         };
-*/
 
-        if (tcc.satisfy(left.get(), right.get())) {
-            left.assignTo(value());
-            right.assignTo(value());
+        if (initialRight.is_eos()) {
+            seteos();
+            return;
+        };
+
+
+        if (leftValue.eos || rightValue.eos) {
+            step_state = step_both;
+        } else
+          if (tcc.satisfy(leftValue[left.offs], rightValue[right.offs]))
+        {
+            left.tupleAssignTo(value(), leftValue);
+            right.tupleAssignTo(value(), rightValue);
+
+            step_state = step_right;
             found = true;
-        }
+        };
 
-        if (tcc.less(left.get(), right.get())) {
-            left->next();
-        } else {
-            right->next();
+        switch (step_state) {
+          case step_right:
+            right_seq_pos++;
+            getValue(right, right_seq, rightValue, right_seq_pos);
+            step_state = step_left;
+            break;
+          case step_left:
+            left_seq_pos++;
+            getValue(left, left_seq, leftValue, left_seq_pos);
+            step_state = step_both;
+            break;
+          case step_both:
+            if (tcc.less(initialLeft[left.offs], initialRight[right.offs])) {
+                initial_left_seq_pos++;
+                getValue(left, left_seq, initialLeft, initial_left_seq_pos);
+            } else {
+                initial_right_seq_pos++;
+                getValue(right, right_seq, initialRight, initial_right_seq_pos);
+            };
+            leftValue.copy(initialLeft);
+            left_seq_pos = initial_left_seq_pos;
+            rightValue.copy(initialRight);
+            right_seq_pos = initial_right_seq_pos;
+            break;
         };
     } while (!found);
 }
@@ -183,9 +241,24 @@ void TupleJoinFilter::reset()
     phop::BinaryTupleOperator::reset();
 
     initialized = false;
-    seq->clear();
-    seq_pos = 0;
+
+    left_seq->clear();
+    right_seq->clear();
+
+    left_seq_pos = 0;
+    initial_left_seq_pos = 0;
+    right_seq_pos = 0;
+    initial_right_seq_pos = 0;
+
+    step_state = step_both;
 }
+
+void TupleJoinFilter::setContext ( ExecutionContext* __context )
+{
+    phop::BinaryTupleOperator::setContext ( __context );
+    tcc.handler = __context->collation;
+}
+
 
 TuplePredicateFilter::TuplePredicateFilter(const phop::MappedTupleIn& _in, const ValueFunction& _vcc)
     : UnaryTupleOperator(OPINFO_REF, _in.tmap.size(), _in), vcc(_vcc)
@@ -207,6 +280,12 @@ void TuplePredicateFilter::do_next()
             return;
         };
     } while (!in.eos());
+}
+
+void TuplePredicateFilter::setContext ( ExecutionContext* __context )
+{
+    phop::UnaryTupleOperator::setContext ( __context );
+    vcc.handler = __context->collation;
 }
 
 
@@ -233,4 +312,5 @@ IElementProducer * DocOrderMerge::__toXML(IElementProducer * producer) const
 
     return producer;
 };
+
 

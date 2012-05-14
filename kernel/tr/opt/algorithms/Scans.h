@@ -1,12 +1,10 @@
 #ifndef SCANS_H
 #define SCANS_H
 
-#include "SequenceModel.h"
-#include "SequenceHelpers.h"
-
 #include "tr/opt/OptTypes.h"
-#include "tr/opt/alg/Predicates.h"
-#include "tr/executor/algorithms/Comparison.h"
+#include "tr/opt/SequenceModel.h"
+#include "tr/opt/algebra/Predicates.h"
+#include "tr/opt/algorithms/Comparison.h"
 
 namespace phop {
 
@@ -32,7 +30,7 @@ class SchemaValueScan : public ITupleOperator {
     Node currentNode;
     schema_node_cptr snode;
     TupleCellComparison tcmpop;
-    counted_ptr<MemoryTupleSequence> sequence;
+    counted_ptr<opt::MemoryTupleSequence> sequence;
 
     unsigned left;
     unsigned right;
@@ -44,10 +42,11 @@ public:
     SchemaValueScan(
         schema_node_cptr _snode,
         const TupleCellComparison & _tcmpop,
-        counted_ptr<MemoryTupleSequence> _sequence,
+        counted_ptr<opt::MemoryTupleSequence> _sequence,
         unsigned size, unsigned left, unsigned right);
 
     virtual void reset();
+    virtual void setContext ( ExecutionContext* __context );
 };
 
 class NestedEvaluation : public ITupleOperator {
@@ -69,13 +68,13 @@ public:
 
 class BogusConstSequence : public IValueOperator {
 protected:
-    counted_ptr<MemoryTupleSequence> sequence;
+    counted_ptr<opt::MemoryTupleSequence> sequence;
 
     virtual void do_next();
 public:
     OPINFO_DECL(0x210)
 
-    BogusConstSequence(counted_ptr<MemoryTupleSequence> _sequence);
+    BogusConstSequence(counted_ptr<opt::MemoryTupleSequence> _sequence);
 };
 
 class CachedNestedLoop : public BinaryTupleOperator {
@@ -98,6 +97,7 @@ public:
         const TupleCellComparison & _tcmpop, flags_t _flags);
 
     virtual void reset();
+    virtual void setContext ( ExecutionContext* __context );
 };
 
 

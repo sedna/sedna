@@ -2,11 +2,13 @@
 #define _PREDICATES_H
 
 #include "tr/opt/OptTypes.h"
-#include "tr/executor/xpath/XPathTypes.h"
-#include "tr/executor/xpath/DataSources.h"
+#include "tr/opt/path/XPathTypes.h"
+#include "tr/opt/path/DataSources.h"
 #include "tr/executor/base/tuple.h"
 
 struct IElementProducer;
+
+namespace opt {
 
 class DataNode;
 class DataGraphMaster;
@@ -25,6 +27,7 @@ struct DataGraph {
     void updateIndex();
     void precompile();
 
+    DataNodeList outputNodes;
     //    DataNodeList groupByNodes;
     //    DataNodeList orderByNodes;
     //    DataNodeList contextNodes;
@@ -163,6 +166,8 @@ struct DataNode {
     std::string getName() const;
     std::string toLRString() const;
     IElementProducer * toXML(IElementProducer * ) const;
+};
+
 };
 
 #endif /* _PREDICATES_H */

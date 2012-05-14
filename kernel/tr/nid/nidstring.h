@@ -32,8 +32,8 @@ public:
         }
     };
 
-    size_t size() const { return this->size(); };
-    const unsigned char * data() const { return this->data(); };
+    size_t size() const { return this->std::basic_string<unsigned char>::size(); };
+    const unsigned char * data() const { return this->std::basic_string<unsigned char>::data(); };
 };
 
 #endif /* _NID_STRING_H_ */

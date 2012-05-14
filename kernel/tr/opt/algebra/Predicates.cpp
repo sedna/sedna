@@ -1,6 +1,6 @@
-#include "tr/opt/alg/Predicates.h"
+#include "tr/opt/algebra/DataGraph.h"
+#include "tr/opt/algebra/Predicates.h"
 #include "tr/opt/phm/PhysicalModel.h"
-#include "tr/opt/alg/DataGraph.h"
 
 #include "tr/structures/producer.h"
 
@@ -8,6 +8,8 @@
 #include <boost/lexical_cast.hpp>
 
 #include <bits/algorithmfwd.h>
+
+using namespace opt;
 
 DataGraph::DataGraph(DataGraphMaster* _owner) : lastIndex(1), owner(_owner), predicates(64, NULL), dataNodes(64, NULL)
 {
@@ -64,11 +66,17 @@ void DataGraph::updateIndex()
     int nodeIndex = 0;
     allPredicates = 0;
 
+    outputNodes.clear();
+    
     for (DataNodeList::iterator d = dataNodes.begin(); d != dataNodes.end(); ++d) {
         DataNode * dd = *d;
         if (dd != NULL) {
             dd->predicates = 0;
             dd->absoluteIndex = nodeIndex++;
+
+            if (dd->output) {
+                outputNodes.push_back(dd);
+            };
         }
     };
 

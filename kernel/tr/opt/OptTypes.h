@@ -11,6 +11,8 @@ namespace pe {
     class Path;
 };
 
+namespace opt {
+
 typedef uint64_t PlanDesc;
 typedef std::set<PlanDesc> PlanDescSet;
 typedef int TupleId;
@@ -135,5 +137,6 @@ public:
 inline static
 PlanDesc singlePlanDesc(uint8_t item) { return 1ULL << item; };
 
+}
 
 #endif /* OPTTYPES_H */

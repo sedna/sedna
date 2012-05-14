@@ -7,11 +7,11 @@
 #ifndef XPATHTYPES_H
 #define XPATHTYPES_H
 
+#include "tr/executor/base/xsd.h"
+
 #include <string>
 #include <vector>
 #include <set>
-
-#include "tr/executor/base/xsd.h"
 
 /* Namespace pe stands for PathEvaluator. */
 
@@ -19,7 +19,7 @@ typedef std::set<schema_node_xptr> SchemaNodePtrSet;
 typedef std::vector<schema_node_xptr> SchemaNodePtrList;
 typedef std::vector<schema_node_cptr> SchemaNodeList;
 
-static
+inline static
 SchemaNodeList toNodeSet(const SchemaNodePtrList & nptrset)
 {
     SchemaNodeList result;

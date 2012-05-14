@@ -2,7 +2,7 @@
 #define _SCHEMA_TEST_H_
 
 #include "tr/structures/schema.h"
-#include "tr/executor/xpath/XPathTypes.h"
+#include "tr/opt/path/XPathTypes.h"
 
 struct SchemaTestData {
     t_item m_type;

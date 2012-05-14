@@ -7,11 +7,12 @@
 
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/phm/PhysicalModel.h"
-#include "tr/opt/alg/Predicates.h"
+#include "tr/opt/algebra/Predicates.h"
 
 #include "tr/structures/nodetypes.h"
 
 using namespace std;
+using namespace opt;
 
 static const char * graphLRError = "Invalid datagraph LR represenation";
 static const char * nodeLRError = "Invalid datagraph node LR represenation";
@@ -304,6 +305,7 @@ public:
 
 phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
 {
+/*
     std::ofstream F("/tmp/datagraph.log");
     se_stdlib_ostream Fstream(F);
 
@@ -317,7 +319,7 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
 
     Serializer * serializer = Serializer::createSerializer(se_output_method_xml);
     serializer->prepare(&Fstream, &opt);
-
+*/
     PlanMap * planMap = new PlanMap();
 
     PlanDescSet set1, set2;
@@ -345,6 +347,7 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
     while (!currentStepSet->empty()) {
         nextStepSet->clear();
 
+/*        
         F << "\n Next set : ";
 
         for (PlanDescSet::const_iterator it = currentStepSet->begin(); it != currentStepSet->end(); ++it) {
@@ -352,6 +355,7 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
         }
 
         F << "\n\n";
+*/
 
         for (PlanDescSet::const_iterator it = currentStepSet->begin(); it != currentStepSet->end(); ++it) {
             PlanInfo * info = planMap->get(*it);
@@ -373,22 +377,24 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
                     candidate = planMap->update(candidate);
                     nextStepSet->insert(candidate->getDesc());
 
+/*                    
                     serializer->serialize(tuple(candidate->toXML(vrt)->close()));
 
                     F << "\n--------------\n";
                     F.flush();
+*/
                 }
             };
         };
 
-        F << "\n============\n";
+//        F << "\n============\n";
 
         PlanDescSet * swapset = currentStepSet;
         currentStepSet = nextStepSet;
         nextStepSet = swapset;
     };
 
-    serializer->serialize(tuple(planMap->getLastPlan()->toXML(vrt)->close()));
+//    serializer->serialize(tuple(planMap->getLastPlan()->toXML(vrt)->close()));
     
     return planMap->getLastPlan()->compile();
 }

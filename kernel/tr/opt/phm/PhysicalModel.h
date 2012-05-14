@@ -11,7 +11,13 @@
 #include "tr/opt/OptTypes.h"
 
 class IElementProducer;
-class PPIterator;
+
+namespace phop {
+    class IOperator;
+    class ITupleOperator;
+}
+
+namespace opt {
 
 class PlanInfo;
 class CostModel;
@@ -22,11 +28,6 @@ struct VPredicate;
 struct SPredicate;
 
 class POProt;
-
-namespace phop {
-    class IOperator;
-    class ITupleOperator;
-}
 
 struct TupleValueInfo {
     enum element_status_t {
@@ -203,5 +204,7 @@ public:
     void * compile(VPredicate * pred);
     void * compile(SPredicate * pred);
 };
+
+}
 
 #endif /* PHYSICAL_MODEL_H */

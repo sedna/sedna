@@ -5,13 +5,15 @@
 
 #include "tr/structures/producer.h"
 
-#include "tr/executor/xpath/XPathExecution.h"
-#include "tr/executor/algorithms/SequenceModel.h"
-#include "tr/executor/algorithms/Scans.h"
-#include "tr/executor/algorithms/Joins.h"
-#include "tr/executor/xpath/XPathLookup.h"
+#include "tr/opt/path/XPathExecution.h"
+#include "tr/opt/SequenceModel.h"
+#include "tr/opt/algorithms/Scans.h"
+#include "tr/opt/algorithms/Joins.h"
+#include "tr/opt/path/XPathLookup.h"
 #include "tr/executor/base/ITupleSerializer.h"
-#include "tr/executor/algorithms/Comparison.h"
+#include "tr/opt/algorithms/Comparison.h"
+
+using namespace opt;
 
 #define OPINFO(OP) static const prot_info_t OP##_info = {#OP, };
 #define OPREF(OP) (&(OP##_info))
@@ -367,17 +369,10 @@ void ValidatePathPrototype::evaluateCost(CostModel* model)
     }
 }
 
-
-
-
-
-
-
-
-
-
 using namespace phop;
 using namespace pe;
+
+
 
 struct ExecutionBlockWarden {
     ExecutionBlockWarden(POProt * opin)
@@ -400,14 +395,23 @@ phop::IOperator * AbsPathScanPrototype::compile()
 
     executeSchemaPathTest(dataRoot.getSchemaNode(), pe::AtomizedPath(path.getBody()->begin(), path.getBody()->end()), &schemaNodes, false);
 
+    ExecutionBlock::current()->resultMap[resultSet.at(0)] = 0;
+    
+    if (schemaNodes.size() == 0) {
+        U_ASSERT(false);
+    };
+
+    if (schemaNodes.size() == 1) {
+        return new phop::TupleFromItemOperator(
+                    new phop::SchemaScan(schema_node_cptr(*schemaNodes.begin())));
+    }
+
     for (SchemaNodePtrSet::const_iterator it = schemaNodes.begin(); it != schemaNodes.end(); ++it) {
         inTuples.push_back(
             phop::MappedTupleIn(
                 new phop::TupleFromItemOperator(
                     new phop::SchemaScan(schema_node_cptr(*it))), 0, 0));
     };
-
-    ExecutionBlock::current()->resultMap[resultSet.at(0)] = 0;
 
     return new phop::DocOrderMerge(1, inTuples);
 }
@@ -489,12 +493,12 @@ phop::IOperator * MergeJoinPrototype::compile()
 
     TupleChrysalis * rightScheme = right.op->result;
 
-    for (unsigned i = 0; i < rightScheme->width(); ++i) {
+    for (unsigned i = 0; i < rightScheme->tuples.size(); ++i) {
         if (rightScheme->tuples[i].status == TupleValueInfo::evaluated) {
             ExecutionBlock::current()->resultMap[i] += leftOp->_tsize();
         };
     };
-    
+
     return new TupleJoinFilter(
         leftOp->_tsize() + rightOp->_tsize(),
         MappedTupleIn(leftOp),
@@ -510,9 +514,12 @@ IOperator* FilterTuplePrototype::compile()
 
     ITupleOperator * opPtr = dynamic_cast<ITupleOperator *>(left.op->getStatement());
 
+    unsigned leftIdx = ExecutionBlock::current()->resultMap[left.index];
+    unsigned rightIdx = ExecutionBlock::current()->resultMap[right.index];
+    
     return new TuplePredicateFilter(
         MappedTupleIn(opPtr, 0, 0),
-        comparison->getValueFunction(left.index, right.index));
+        comparison->getValueFunction(leftIdx, rightIdx));
 }
 
 
@@ -529,6 +536,18 @@ phop::IOperator * ValueScanPrototype::compile()
 
         executeSchemaPathTest(pathScan->getRoot().getSchemaNode(), path, &schemaNodes, false);
 
+        ExecutionBlock::current()->resultMap[pathScan->resultSet.at(0)] = 0;
+        
+        if (schemaNodes.size() == 0) {
+            U_ASSERT(false);
+        };
+
+        if (schemaNodes.size() == 1) {
+            return
+                new phop::SchemaValueScan(*schemaNodes.begin(),
+                    GeneralComparisonPrototype(cmp).getTupleCellComparison(), value, 1, 0, 1);
+        }
+
         for (SchemaNodePtrSet::const_iterator it = schemaNodes.begin(); it != schemaNodes.end(); ++it) {
             inTuples.push_back(
                 MappedTupleIn(
@@ -536,14 +555,11 @@ phop::IOperator * ValueScanPrototype::compile()
                         GeneralComparisonPrototype(cmp).getTupleCellComparison(), value, 1, 0, 1), 0, 0));
         };
 
-        ExecutionBlock::current()->resultMap[pathScan->resultSet.at(0)] = 0;
-        
         return new phop::DocOrderMerge(1, inTuples);
     } else {
         ITupleOperator * leftOpPtr = dynamic_cast<ITupleOperator *>(in.at(0).op->getStatement());
-        
         // WARNING: Result is mapped after compile()
-        unsigned leftIdx = ExecutionBlock::current()->resultMap[in.at(0).index] = 0;
+        unsigned leftIdx = ExecutionBlock::current()->resultMap[in.at(0).index];
         MappedTupleIn leftOp(leftOpPtr, leftIdx, 0);
 
         return new CachedNestedLoop(leftOp->_tsize(), leftOp,

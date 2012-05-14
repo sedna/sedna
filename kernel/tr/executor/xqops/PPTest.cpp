@@ -11,17 +11,22 @@
 #include "tr/executor/xqops/PPTest.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-#include "tr/executor/xpath/XPathTypes.h"
+#include "tr/opt/path/XPathTypes.h"
 
 #include "tr/strings/strings.h"
 #include "tr/pstr/pstr.h"
 
 #include "tr/structures/nodeutils.h"
 #include "tr/mo/nodemoutils.h"
-#include "tr/opt/alg/Predicates.h"
+#include "tr/opt/algebra/Predicates.h"
 
-#include "tr/opt/alg/DataGraph.h"
+#include "tr/opt/algebra/DataGraph.h"
 #include "tr/executor/base/SCElementProducer.h"
+
+#include "tr/opt/path/XPathLookup.h"
+#include "tr/opt/algorithms/ExecutionContext.h"
+
+
 
 using namespace std;
 //#include <atlstr.h>
@@ -63,9 +68,6 @@ void PPTest::do_close()
 {
     seq.op->close();
 }
-
-#include <sstream>
-#include "tr/executor/xpath/XPathLookup.h"
 
 static
 std::string schemaPath(schema_node_cptr snode) {
@@ -308,11 +310,35 @@ void PPTest::do_accept(PPVisitor &v)
 
 void PPDataGraph::do_next(tuple& t)
 {
-    static DataGraphMaster dgm;
+    static opt::DataGraphMaster dgm;
+
+    if (data != NULL) {
+        phop::ITupleOperator * op = (phop::ITupleOperator *) data;
+        
+        op->next();
+        
+        if (op->get().eos) {
+            data = NULL;
+            u_ftime(&t_end);
+
+            t.cells[0] = tuple_cell::atomic_deep(xs_string,
+              (to_string(t_end - t_start) + " " +
+               to_string(t_end - t_opt) + " " +
+               to_string(t_opt - t_start) + " ").c_str());
+
+            return;
+        };
+        
+        t.cells[0] = op->get().cells[idx];
+
+        return;
+    };
 
     inputString.op->next(t);
 
     if (!t.eos) {
+        u_ftime(&t_start);
+      
         TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
         reader.read();
 
@@ -322,7 +348,7 @@ void PPDataGraph::do_next(tuple& t)
 //        DataRoot dr(scml.get()->at(0).internal.list);
 //        pe::Path x(scml.get()->at(1).internal.list);
 
-        DataGraph *dg = dgm.createGraphFromLR(scml.get());
+        opt::DataGraph *dg = dgm.createGraphFromLR(scml.get());
 
         dg->precompile();
 
@@ -333,14 +359,34 @@ void PPDataGraph::do_next(tuple& t)
 
         phop::ITupleOperator * op = dgm.compile(dg);
 
-        t.cells[0] = op->toXML(rootProducer)->close();
+        idx = phop::ExecutionBlock::current()->resultMap[dg->outputNodes.at(0)->absoluteIndex];
 
+        phop::ExecutionContext * contextEx = new phop::ExecutionContext();
+        contextEx->collation = cxt->get_static_context()->get_default_collation();
+
+        op->reset();
+        op->setContext(contextEx);
+
+/*        
+        phop::MappedTupleIn mt = dynamic_cast<phop::BinaryTupleOperator *>(
+            dynamic_cast<phop::UnaryTupleOperator *>(op)->__in().op
+            )->__left();
+        
+        op = mt.op;
+        idx = 4;
+*/
+        data = op;
+
+        u_ftime(&t_opt);
+
+//        do_next(t);
+        t.cells[0] = op->toXML(rootProducer)->close();
 //        PPOpIn op(dgm.compile(dg), 1);
     }
 }
 
 PPDataGraph::PPDataGraph(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)
-: PPInternalFunction(_cxt_, _info_, _seq_) {}
+: PPInternalFunction(_cxt_, _info_, _seq_), data(NULL) {}
 
 
 PPIterator* PPDataGraph::do_copy(dynamic_context* _cxt_)

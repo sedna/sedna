@@ -2,6 +2,8 @@
 #include "tr/opt/cost/Statistics.h"
 #include "tr/opt/phm/PhysicalModel.h"
 
+using namespace opt;
+
 #define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
 
 SequenceInfo* GeneralComparisonPrototype::getSequenceCost(CostModel* model, TupleRef in)
@@ -100,10 +102,10 @@ ValueFunction PathComparisonPrototype::getValueFunction(unsigned int idxL, unsig
       case pe::axis_child :
       case pe::axis_descendant :
       case pe::axis_attribute :
-        return ValueFunction(op_doc_order_descendant, idxL, idxR, false);
+        return ValueFunction(op_doc_order_ancestor, idxL, idxR, false);
       case pe::axis_ancestor :
       case pe::axis_parent :
-        return ValueFunction(op_doc_order_ancestor, idxL, idxR, false);
+        return ValueFunction(op_doc_order_descendant, idxL, idxR, false);
       default:
         U_ASSERT(false);
         return ValueFunction(op_doc_order_lt, idxL, idxR, false);
@@ -130,10 +132,10 @@ TupleCellComparison PathComparisonPrototype::getTupleCellComparison()
       case pe::axis_child :
       case pe::axis_descendant :
       case pe::axis_attribute :
-        return TupleCellComparison(op_doc_order_lt, op_doc_order_descendant, false);
+        return TupleCellComparison(op_doc_order_lt, op_doc_order_ancestor, false);
       case pe::axis_ancestor :
       case pe::axis_parent :
-        return TupleCellComparison(op_doc_order_lt, op_doc_order_ancestor, false);
+        return TupleCellComparison(op_doc_order_lt, op_doc_order_descendant, false);
       default:
         U_ASSERT(false);
         return TupleCellComparison(op_doc_order_lt, op_doc_order_lt, false);
