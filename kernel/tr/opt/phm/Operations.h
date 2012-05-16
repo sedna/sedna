@@ -73,7 +73,7 @@ public:
 
 class ValueScanPrototype : public POProt {
     const Comparison cmp;
-    counted_ptr<MemoryTupleSequence> value;
+    MemoryTupleSequencePtr value;
 protected:
     virtual phop::IOperator * compile();
 public:

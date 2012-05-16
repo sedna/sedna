@@ -9,28 +9,29 @@
 #include "common/sedna.h"
 
 namespace rqp {
-    class PlanContext;
+  
+class PlanContext;
 
-    struct TupleDefinition;
+struct TupleDefinition;
 
-    class RPBase;
+class RPBase;
 
-    class ConstantOperation;
-    class NestedOperation;
-    class ListOperation;
-    class BinaryOperation;
+class ConstantOperation;
+class NestedOperation;
+class ListOperation;
+class BinaryOperation;
 
-    static RPBase * const null_op = (RPBase *)(NULL);
+static RPBase * const null_op = (RPBase *)(NULL);
 
 /**** Logical operations ****/
 
-    class Map;
-    class MapAll;
+//    class Map;
+//    class MapAll;
 
 /**** Physical operations ****/
 
-    class Functional;
-    class Serialize;
+//    class Functional;
+//    class Serialize;
 
 //    class AtomicConstructor;
 //    class GeneralComparison;

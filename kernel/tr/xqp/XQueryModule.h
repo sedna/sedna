@@ -78,6 +78,8 @@ namespace sedna
         std::string getModuleURI();
 
         ASTNode* getTree();
+
+        PPQueryEssence *getOPT(bool is_subquery);
         PPQueryEssence *getQEP(bool is_subquery);
 
         /*

@@ -17,7 +17,6 @@ typedef uint64_t PlanDesc;
 typedef std::set<PlanDesc> PlanDescSet;
 typedef int TupleId;
 
-
 static const int DeBruijnBitPosition[32] =
 {
   0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8,
@@ -78,6 +77,14 @@ typedef std::map<std::string, DataNode *> VariableNameMap;
 typedef std::set<Predicate *> PredicateSet;
 typedef std::set<TupleId> TupleScheme;
 typedef std::map<TupleId, int> LogicalToPhysicalTupleMap;
+
+static inline
+TupleScheme singleTupleScheme(opt::TupleId tid)
+{
+    TupleScheme a;
+    a.insert(tid);
+    return a;
+}
 
 class OptimizationSpace {};
 

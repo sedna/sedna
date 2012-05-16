@@ -6,6 +6,7 @@
 #include "tr/xqp/sema/cycle.h"
 #include "tr/xqp/lreturn/lreturn.h"
 #include "tr/xqp/lr2por/lr2por.h"
+#include "tr/opt/algebra/ASTOpt.h"
 
 namespace sedna
 {
@@ -299,6 +300,35 @@ namespace sedna
         *xqv = lr->getVariableInfo(name);
     }
 
+    PPQueryEssence *XQueryModule::getOPT(bool is_subquery)
+    {
+        U_ASSERT(module_uri == NULL);
+
+        lr2opt *l2p;
+
+        // create module contexts
+        dyn_cxt = new dynamic_context(new static_context());
+
+        // this will resolve ids for all imported functions and vars
+        drv->porLibModules(dyn_cxt);
+
+        // this will resolve ids for our funcs and vars
+        enumerate_vars_funcs();
+
+        l2p = new lr2opt(this->drv, this, dyn_cxt, is_subquery);
+
+//        ast->accept(*l2p);
+
+        delete ast;
+        ast = NULL;
+
+        qep = l2p->getResult();
+
+        delete l2p;
+
+        return qep;
+    }
+    
     PPQueryEssence *XQueryModule::getQEP(bool is_subquery)
     {
         U_ASSERT(module_uri == NULL);

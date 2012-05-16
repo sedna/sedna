@@ -68,7 +68,7 @@ void SchemaScan::do_next()
 SchemaValueScan::SchemaValueScan(
     schema_node_cptr _snode,
     const TupleCellComparison& _tcmpop,
-    counted_ptr< MemoryTupleSequence > _sequence,
+    MemoryTupleSequencePtr _sequence,
     unsigned int _size, unsigned int _left, unsigned int _right)
 
     : ITupleOperator(OPINFO_REF, _size),
@@ -124,7 +124,7 @@ void SchemaValueScan::setContext ( ExecutionContext* __context )
 
 
 
-BogusConstSequence::BogusConstSequence(counted_ptr< MemoryTupleSequence > _sequence)
+BogusConstSequence::BogusConstSequence(MemoryTupleSequencePtr _sequence)
   : IValueOperator(OPINFO_REF), sequence(_sequence)
 {
   

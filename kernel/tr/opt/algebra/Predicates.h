@@ -58,12 +58,19 @@ struct Comparison {
     Comparison(const Comparison & x) : op(x.op) {};
     Comparison(const scheme_list * lst);
 
-    bool inversable() const { return false; };
-    Comparison inverse() const { U_ASSERT(false); return Comparison(invalid); };
+    bool inversable() const { return op == g_eq; };
+
+    Comparison inverse() const {
+        if (op == g_eq) {
+            return *this;
+        };
+        
+        U_ASSERT(false);
+        return Comparison(invalid);
+    };
 
     std::string toLRString() const;
 };
-
 
 struct Predicate {
     PlanDesc indexBit;
@@ -136,6 +143,7 @@ struct SPredicate : public BinaryPredicate {
 };
 
 typedef std::vector<tuple_cell> MemoryTupleSequence;
+typedef counted_ptr< std::vector<tuple_cell> > MemoryTupleSequencePtr;
 
 struct DataNode {
     counted_ptr<std::string> varName;
@@ -161,7 +169,7 @@ struct DataNode {
     // FIXME: Uninitialized!
     SPredicate * producedFrom;
 
-    counted_ptr<MemoryTupleSequence> sequence; // Actually, we assume, that this is the ONLY pointer to this array
+    MemoryTupleSequencePtr sequence; // Actually, we assume, that this is the ONLY pointer to this array
 
     std::string getName() const;
     std::string toLRString() const;

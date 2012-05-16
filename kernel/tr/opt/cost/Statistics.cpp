@@ -169,7 +169,7 @@ ComparisonInfo* CostModel::getCmpInfo(TupleStatistics* m1, TupleStatistics* m2, 
     return result;
 }
 
-TupleStatistics* CostModel::getConstInfo(const MemoryTupleSequence* cnst)
+TupleStatistics* CostModel::getConstInfo(MemoryTupleSequencePtr cnst)
 {
     TupleStatistics* result = new TupleStatistics;
 

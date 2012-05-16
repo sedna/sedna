@@ -82,7 +82,7 @@ public:
     double getCPUCost() const { return C_CPU_Cost; };
     double getNodeSize() const { return sizeof(tuple_cell); };
 
-    TupleStatistics* getConstInfo(const MemoryTupleSequence* cnst);
+    TupleStatistics* getConstInfo(MemoryTupleSequencePtr cnst);
 
     ComparisonInfo * getCmpInfo(TupleStatistics* m1, TupleStatistics* m2, const Comparison& cmp);
     ComparisonInfo * getDocOrderInfo(PathCostModel* m1, PathCostModel* m2, const pe::Path & path);

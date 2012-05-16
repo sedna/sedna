@@ -22,7 +22,7 @@ namespace sedna
 {
     class lr2por : public ASTVisitor
     {
-    private:
+    protected:
 
         struct parentRequest
         {
@@ -39,7 +39,7 @@ namespace sedna
                 copy_constructor = true;
             }
         };
-
+    
         struct childOffer
         {
             PPOpIn opin;      // subtree for the expression
@@ -55,7 +55,7 @@ namespace sedna
                 opin.op = NULL;
             }
         };
-
+        
         struct HintState
         {
             bool virtualizableConstructors;

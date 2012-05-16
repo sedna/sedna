@@ -111,9 +111,8 @@ struct StepTest {
 class Step {
 private:
     axis_t axis;
-public:
     StepTest test;
-  
+public:
     Step() : axis(axis_error), test(nt_error, xsd::QNameAny) {};
 
     Step(const scheme_list * lst);
