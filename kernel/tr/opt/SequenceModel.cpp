@@ -1,5 +1,6 @@
 #include "SequenceModel.h"
-#include "tr/structures/producer.h"
+
+#include "tr/models/XmlConstructor.h"
 
 using namespace phop;
 
@@ -114,39 +115,33 @@ void ReduceToItemOperator::setContext(ExecutionContext* __context)
 
 
 
-IElementProducer* IOperator::toXML(IElementProducer* element) const
+XmlConstructor & IOperator::toXML(XmlConstructor & element) const
 {
-    element = element->addElement(PHOPQNAME(info()->name));
+    element.openElement(PHOPQNAME(info()->name));
     __toXML(element);
-    element->close();
+    element.closeElement();
     return element;
 }
 
-IElementProducer* BinaryTupleOperator::toXML(IElementProducer* element ) const
+XmlConstructor & BinaryTupleOperator::__toXML(XmlConstructor & element ) const
 {
-    element = element->addElement(PHOPQNAME(info()->name));
-    __toXML(element);
     left.op->toXML(element);
     right.op->toXML(element);
-    element->close();
     return element;
 }
 
-IElementProducer* UnaryTupleOperator::toXML(IElementProducer* element ) const
+XmlConstructor & UnaryTupleOperator::__toXML(XmlConstructor & element ) const
 {
-    element = element->addElement(PHOPQNAME(info()->name));
-    __toXML(element);
     in.op->toXML(element);
-    element->close();
     return element;
 }
 
-IElementProducer* TupleFromItemOperator::__toXML(IElementProducer* element ) const
+XmlConstructor & TupleFromItemOperator::__toXML(XmlConstructor & element ) const
 {
     return element;
 }
 
-IElementProducer* TupleFromItemOperator::toXML(IElementProducer* element ) const
+XmlConstructor & TupleFromItemOperator::toXML(XmlConstructor & element ) const
 {
 //    element = element->addElement(PHOPQNAME(info()->name));
     return _convert_op->toXML(element);
@@ -154,12 +149,12 @@ IElementProducer* TupleFromItemOperator::toXML(IElementProducer* element ) const
 //    return element;
 }
 
-IElementProducer* ReduceToItemOperator::__toXML(IElementProducer* element) const
+XmlConstructor & ReduceToItemOperator::__toXML(XmlConstructor & element) const
 {
     return element;
 }
 
-IElementProducer* ReduceToItemOperator::toXML(IElementProducer* element) const
+XmlConstructor & ReduceToItemOperator::toXML(XmlConstructor & element) const
 {
     if (!nested) {
 //        element = element->addElement(PHOPQNAME(info()->name));
@@ -169,11 +164,8 @@ IElementProducer* ReduceToItemOperator::toXML(IElementProducer* element) const
     return element;
 }
 
-IElementProducer* ItemOperator::toXML(IElementProducer* element ) const
+XmlConstructor & ItemOperator::__toXML(XmlConstructor & element ) const
 {
-    element = element->addElement(PHOPQNAME(info()->name));
-    __toXML(element);
     in->toXML(element);
-    element->close();
     return element;
 }

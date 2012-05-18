@@ -299,7 +299,9 @@ public:
 
 #include <iostream>
 #include <fstream>
-#include "tr/executor/base/SCElementProducer.h"
+
+#include "tr/models/XmlConstructor.h"
+
 #include "tr/crmutils/serialization.h"
 #include "tr/crmutils/exec_output.h"
 
@@ -337,9 +339,6 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
             nullPlan->initTupleSet(*i);
         }
     };
-
-
-    IElementProducer * element;
 
     planMap->update(nullPlan);
     currentStepSet->insert(0);

@@ -85,12 +85,6 @@ class PlanContext : public opt::IPlanDisposable {
     PlanContext();
     ~PlanContext();
 
-//        TupleSchemeStorage tupleSchemeStorage;
-//        OperationList subplans;
-
-//        TupleScheme * newMapExtend(TupleScheme * in, const TupleScheme * with);
-//        TupleScheme * newMapExtendSingle(TupleScheme * in, TupleId with);
-
     const TupleDefinition * getVarDef(opt::TupleId tid) const { return &(greatTupleScheme.at(tid)); };
 
     opt::TupleId generateTupleId();
@@ -102,11 +96,6 @@ class PlanContext : public opt::IPlanDisposable {
     void newScope();
     void clearScope();
     void clearScopesToMarker(ScopeMarker marker);
-
-    RPBase * getExpressionResult(RPBase * tree);
-
-    void deleteFromPlan(RPBase * item);
-    void deleteSubtree(RPBase * item);
 };
 
 class RPBase : public opt::IPlanDisposable {
@@ -118,12 +107,16 @@ class RPBase : public opt::IPlanDisposable {
     PlanContext * context;
     static int opids;
     int opid;
+
+    virtual XmlConstructor & __toXML(XmlConstructor &) const = 0;
   public:
     RPBase(_opinfo_t op) : opdesc(op), context(PlanContext::current), opid(opids++) {};
 
     inline const opdesc_t * info() const { return opdesc; };
     inline bool isType(int t) const { return opdesc->opType == t; };
     PlanContext * getContext() const { return context; };
+
+    XmlConstructor & toXML(XmlConstructor &) const;
 };
 
 template<class T> inline static
@@ -137,6 +130,7 @@ bool instanceof(RPBase * op) { return op != null_op && op->info()->opType == &(T
 public:\
   static const opdesc_t sopdesc; \
   enum _opid_t { opid = (ID) }; \
+protected: virtual XmlConstructor& __toXML(XmlConstructor& ) const; \
 private:
 
 #define PROPERTY(name, t, member) t get##name() const { return member; } void set##name(t value) { member = value; }
@@ -148,9 +142,12 @@ private:
 /* 0r-operations */
 class ConstantOperation : public RPBase {
     ABSTRACT_OPERATION
+  protected:
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   public:
     ConstantOperation(_opinfo_t op)
       : RPBase(op) {};
+
 };
 
 /* 1r-operations */
@@ -158,6 +155,7 @@ class ListOperation : public RPBase {
     ABSTRACT_OPERATION
   protected:
     RPBase * list;
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   public:
     ListOperation(_opinfo_t op, RPBase * list_)
       : RPBase(op), list(list_) {};
@@ -170,6 +168,7 @@ class NestedOperation : public ListOperation {
     ABSTRACT_OPERATION
   protected:
     RPBase * subplan;
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   public:
     NestedOperation(_opinfo_t op, RPBase * list_, RPBase * subplan_)
       : ListOperation(op, list_), subplan(subplan_) {};
@@ -183,6 +182,8 @@ class BinaryOperation : public RPBase {
   private:
     RPBase * leftList;
     RPBase * rightList;
+  protected:
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   public:
     BinaryOperation(_opinfo_t op, RPBase * ltItem_, RPBase * rtItem_)
       : RPBase(op), leftList(ltItem_), rightList(rtItem_) {};
@@ -309,6 +310,7 @@ class Let : public ListOperation {
     PROPERTY_RO(Var, TupleId, mapsTo)
 };
 */
+
 /*
 class Map : public NestedOperation {
     OPERATION(0x010)

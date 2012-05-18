@@ -5,7 +5,7 @@
 #include "tr/opt/algebra/Predicates.h"
 #include "tr/opt/phm/PhysicalModel.h"
 
-#include "tr/structures/producer.h"
+#include "tr/models/XmlConstructor.h"
 
 #include "tr/opt/algorithms/ValueFunction.h"
 #include "tr/opt/algorithms/Comparison.h"
@@ -24,7 +24,7 @@ struct ComparisonPrototype : public IPlanDisposable {
     virtual ComparisonInfo * getComparisonCost(CostModel * model, TupleRef left, TupleRef right) = 0;
     virtual SequenceInfo * getSequenceCost(CostModel * model, TupleRef in) = 0;
 
-    virtual IElementProducer* __toXML(IElementProducer* ) const = 0;
+    virtual XmlConstructor & __toXML(XmlConstructor & ) const = 0;
 };
 
 struct GeneralComparisonPrototype : public ComparisonPrototype {
@@ -39,7 +39,7 @@ struct GeneralComparisonPrototype : public ComparisonPrototype {
     virtual ComparisonInfo * getComparisonCost(CostModel* model, TupleRef left, TupleRef right);
     virtual SequenceInfo * getSequenceCost(CostModel* model, TupleRef in);
 
-    virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual XmlConstructor & __toXML(XmlConstructor & ) const;
 };
 
 struct PathComparisonPrototype : public ComparisonPrototype {
@@ -54,7 +54,7 @@ struct PathComparisonPrototype : public ComparisonPrototype {
     virtual ComparisonInfo * getComparisonCost(CostModel* model, TupleRef left, TupleRef right);
     virtual SequenceInfo * getSequenceCost(CostModel* model, TupleRef in);
 
-    virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual XmlConstructor & __toXML(XmlConstructor & ) const;
 };
 
 };

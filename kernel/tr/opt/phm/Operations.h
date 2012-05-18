@@ -23,7 +23,7 @@ protected:
     bool needLeftSort;
     bool needRightSort;
 
-    virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual XmlConstructor & __toXML(XmlConstructor & ) const;
     virtual phop::IOperator * compile();
 public:
     MergeJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, ComparisonPrototype * _comparison);
@@ -35,7 +35,7 @@ class FilterTuplePrototype : public BinaryOpPrototype {
 protected:
     ComparisonPrototype * comparison;
 
-    virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual XmlConstructor & __toXML(XmlConstructor & ) const;
     virtual phop::IOperator * compile();
 public:
     FilterTuplePrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, ComparisonPrototype * _comparison);
@@ -47,7 +47,7 @@ class AbsPathScanPrototype : public POProt {
     DataRoot dataRoot;
     pe::Path path;
 protected:
-    virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual XmlConstructor & __toXML(XmlConstructor & ) const;
     virtual phop::IOperator * compile();
 public:
     bool wantSort;
@@ -63,7 +63,7 @@ public:
 class PathEvaluationPrototype : public POProt {
     pe::Path path;
 protected:
-    virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual XmlConstructor & __toXML(XmlConstructor & ) const;
     virtual phop::IOperator * compile();
 public:
     PathEvaluationPrototype(PhysicalModel * model, const POProtIn & _left, const TupleRef & _right, const pe::Path& _path);
@@ -89,7 +89,7 @@ public:
 class MagicJoinPrototype : public BinaryOpPrototype {
     pe::Path path;
 protected:
-    virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual XmlConstructor & __toXML(XmlConstructor & ) const;
 public:
     MagicJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, const pe::Path& _path);
 
@@ -102,7 +102,7 @@ class ValidatePathPrototype : public POProt {
     DataRoot dataRoot;
     pe::Path path;
 protected:
-    virtual IElementProducer* __toXML(IElementProducer* ) const;
+    virtual XmlConstructor & __toXML(XmlConstructor & ) const;
 public:
     ValidatePathPrototype(PhysicalModel * model, const POProtIn & _tuple);
 

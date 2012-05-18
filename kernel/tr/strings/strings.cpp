@@ -312,6 +312,7 @@ void print_tuple_cell_dummy(se_ostream& crmout,const tuple_cell& tc)
 }
 
 struct text_source_t text_source_tuple_cell(const tuple_cell& cell) {
+    U_ASSERT(cell.get_atomic_type() == xs_string);
     tuple_cell tc = cast(cell, xs_string);
 
     switch (tc.get_type())

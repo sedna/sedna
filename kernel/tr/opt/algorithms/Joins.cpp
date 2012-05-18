@@ -5,7 +5,8 @@
 #include "tr/executor/base/SortedSequence.h"
 #include "tr/executor/base/sequence.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/structures/producer.h"
+
+#include "tr/models/XmlConstructor.h"
 
 #include "tr/nid/nidalloc.h"
 #include "tr/nid/nid.h"
@@ -289,22 +290,22 @@ void TuplePredicateFilter::setContext ( ExecutionContext* __context )
 }
 
 
-IElementProducer * TupleJoinFilter::__toXML(IElementProducer * producer) const
+XmlConstructor & TupleJoinFilter::__toXML(XmlConstructor & producer) const
 {
     return producer;
 };
 
-IElementProducer * TuplePredicateFilter::__toXML(IElementProducer * producer) const
+XmlConstructor & TuplePredicateFilter::__toXML(XmlConstructor & producer) const
 {
     return producer;
 };
 
-IElementProducer * TupleSort::__toXML(IElementProducer * producer) const
+XmlConstructor & TupleSort::__toXML(XmlConstructor & producer) const
 {
     return producer;
 };
 
-IElementProducer * DocOrderMerge::__toXML(IElementProducer * producer) const
+XmlConstructor & DocOrderMerge::__toXML(XmlConstructor & producer) const
 {
     for (TupleList::size_type i = 0; i < tin.size(); ++i) {
         tin.at(i)->toXML(producer);

@@ -24,12 +24,9 @@ ComparisonInfo* GeneralComparisonPrototype::getComparisonCost(CostModel* model, 
     return model->getCmpInfo(left->statistics, right->statistics, cmp);
 }
 
-IElementProducer* GeneralComparisonPrototype::__toXML(IElementProducer* element) const
+XmlConstructor& GeneralComparisonPrototype::__toXML(XmlConstructor& element) const
 {
-    IElementProducer* el = element->addElement(CDGQNAME("path"));
-    el->addText(text_source_cstr(cmp.toLRString().c_str()));
-    el->close();
-
+    element.addElementValue(CDGQNAME("path"), cmp.toLRString());
     return element;
 }
 
@@ -79,12 +76,9 @@ SequenceInfo* PathComparisonPrototype::getSequenceCost(CostModel* model, TupleRe
     return model->getDocOrderSequenceCost(in);
 }
 
-IElementProducer* PathComparisonPrototype::__toXML(IElementProducer* element) const
+XmlConstructor& PathComparisonPrototype::__toXML(XmlConstructor& element) const
 {
-    IElementProducer* el = element->addElement(CDGQNAME("cmp"));
-    el->addText(text_source_cstr(path.toXPathString().c_str()));
-    el->close();
-
+    element.addElementValue(CDGQNAME("path"), path.toLRString());
     return element;
 }
 

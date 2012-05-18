@@ -11,7 +11,6 @@
 #include "tr/executor/base/xsd.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/strings/strings.h"
-#include "tr/executor/fo/casting_operations.h"
 
 class IElementProducer {
   public:
@@ -22,10 +21,6 @@ class IElementProducer {
     virtual tuple_cell addText(const text_source_t value) = 0;
     virtual tuple_cell addPI(const xsd::NCName& name, const text_source_t value) = 0;
     virtual tuple_cell addComment(const text_source_t value) = 0;
-
-    virtual tuple_cell addAttributeValue(const xsd::QName &qname, const tuple_cell value) {
-        return addAttribute(qname, text_source_tuple_cell(cast(value, xs_string)), value.get_atomic_type());
-    };
 
     virtual IElementProducer * addElement(const xsd::QName &qname, xmlscm_type type = xs_anyType) = 0;
 

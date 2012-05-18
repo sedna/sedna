@@ -238,10 +238,16 @@ void lr2opt::visit(ASTBop &n) {
     RPBase * rightSequence = resultStack.top().op;
     resultStack.pop();
     
-    if (n.op >= ASTBop::EQ_G && n.op <= ASTBop::GE_G) {
+    if (n.op >= ASTBop::EQ_G && n.op <= ASTBop::FOLLOW) {
         opt::Comparison cmp;
 
         switch (n.op) {
+          case ASTBop::PREC :
+            cmp.op = opt::Comparison::do_before;
+            break;
+          case ASTBop::FOLLOW :
+            cmp.op = opt::Comparison::do_after;
+            break;
           case ASTBop::GT_G :
             cmp.op = opt::Comparison::g_gt;
             break;

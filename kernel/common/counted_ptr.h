@@ -63,11 +63,11 @@ class counted_ptr {
     };
 
     ptr_with_counter * item;
-
   public:
+    counted_ptr () : item(NULL) {};
+
     // initialize pointer with existing pointer
-    // - requires that the pointer p is a return value of new
-    counted_ptr (T* p = NULL) : item(NULL) {
+    counted_ptr (T* p) : item(NULL) {
         if (NULL != p) {
             item = new ptr_with_counter(p);
         }
@@ -100,7 +100,14 @@ class counted_ptr {
     T* get() const throw() { return item == NULL ? NULL : item->ptr; }
 
     bool unique() const throw() { return item->count == 1; }
-    bool isnull() const  { return item == NULL; }
+    bool isnull() const  { return item == NULL || item->ptr == NULL; }
+
+    void shared_clear() {
+        if (item != NULL) {
+            Deallocator::deallocate(item->ptr);
+            item->ptr = NULL;
+        }
+    };
 
   private:
 

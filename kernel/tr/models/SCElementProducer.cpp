@@ -276,6 +276,10 @@ Node SCElementProducer::getNode()
 
 SCElementProducer::~SCElementProducer()
 {
+    if (this == virtualRootProducer) {
+        virtualRootProducer = NULL;
+    };
+
     delete textAccum;
 }
 

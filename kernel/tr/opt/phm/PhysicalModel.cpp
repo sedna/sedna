@@ -6,7 +6,7 @@
 #include "tr/opt/path/XPathTypes.h"
 #include "tr/opt/cost/Statistics.h"
 #include "tr/opt/phm/Operations.h"
-#include "tr/structures/producer.h"
+#include "tr/models/XmlConstructor.h"
 #include "tr/strings/strings.h"
 #include "tr/opt/SequenceModel.h"
 #include "tr/opt/phm/ComparisonModels.h"
@@ -363,84 +363,89 @@ phop::ITupleOperator* PlanInfo::compile()
 
 #define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
 
-IElementProducer* PlanInfo::toXML(IElementProducer* element) const
+XmlConstructor & PlanInfo::toXML(XmlConstructor & element) const
 {
-    element = element->addElement(CDGQNAME("plan"), xs_anyType);
-    element->addAttributeValue(CDGQNAME("desc"), tuple_cell::atomic_int(desc));
-    element->addAttributeValue(CDGQNAME("parent"), tuple_cell::atomic_int(parent));
+    element.openElement(CDGQNAME("plan"));
+
+    element.addAttributeValue(CDGQNAME("desc"), tuple_cell::atomic_int(desc));
+    element.addAttributeValue(CDGQNAME("parent"), tuple_cell::atomic_int(parent));
     
     for (OperationList::const_iterator i = opList.begin(); i != opList.end(); ++i) {
         (*i)->toXML(element);
     };
 
-    element->close();
-    return element;
-}
-
-IElementProducer* POProt::__commonToXML(IElementProducer* element) const
-{
-    for (std::vector<POProtIn>::const_iterator i = in.begin(); i != in.end(); ++i) {
-        IElementProducer * child = element->addElement(CDGQNAME("in"));
-        child->addAttributeValue(CDGQNAME("ref"), tuple_cell::atomic_int((ptrdiff_t) (i->op)));
-        child->close();
-    };
-
-    for (std::vector<int>::const_iterator i = resultSet.begin(); i != resultSet.end(); ++i) {
-        TupleRef tref(result, *i);
-        IElementProducer * child = element->addElement(CDGQNAME("result"));
-        child->addAttributeValue(CDGQNAME("var"), tuple_cell::atomic_deep(xs_string, tref->node->getName().c_str()));
-        child->close();
-    };
-
-    return element;
-}
-
-IElementProducer* resultToXml(TupleChrysalis * result, IElementProducer* element)
-{
-    element = element->addElement(CDGQNAME("tuple"));
-
-    element->addAttributeValue(CDGQNAME("count"), tuple_cell::atomic(result->rowCount.avg()));
-    element->addAttributeValue(CDGQNAME("size"), tuple_cell::atomic(result->rowSize.avg()));
-    element->addAttributeValue(CDGQNAME("width"), tuple_cell::atomic_int(result->width()));
-
-    element->close();
-    
-    return element;
-};
-
-IElementProducer* POProt::__toXML(IElementProducer* element) const
-{
-    resultToXml(this->result, element);
+    element.closeElement();
 
     return element;
 }
 
 inline static
-IElementProducer* rangeToElement(Range x, IElementProducer* element, const char * name)
+XmlConstructor & rangeToElement(Range x, XmlConstructor & element, const char * name)
 {
-    element = element->addElement(CDGQNAME(name));
-    element->addAttributeValue(CDGQNAME("low"), tuple_cell::atomic(x.lower));
-    element->addAttributeValue(CDGQNAME("up"), tuple_cell::atomic(x.upper));
-    element->addAttributeValue(CDGQNAME("avg"), tuple_cell::atomic(x.avg()));
-    element->close();
+    element.openElement(CDGQNAME(name));
+
+    element.addAttributeValue(CDGQNAME("low"), tuple_cell::atomic(x.lower));
+    element.addAttributeValue(CDGQNAME("up"), tuple_cell::atomic(x.upper));
+    element.addAttributeValue(CDGQNAME("avg"), tuple_cell::atomic(x.avg()));
+
+    element.closeElement();
 
     return element;
 };
 
-IElementProducer* POProt::toXML(IElementProducer* element) const
+XmlConstructor & POProt::__commonToXML(XmlConstructor & element) const
 {
-    element = element->addElement(CDGQNAME(this->getProtInfo()->name));
-    element->addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int((ptrdiff_t) (this)));
+    for (std::vector<POProtIn>::const_iterator i = in.begin(); i != in.end(); ++i) {
+        element.openElement(CDGQNAME("in"));
+        element.addAttributeValue(CDGQNAME("ref"), tuple_cell::atomic_int((ptrdiff_t) (i->op)));
+        element.closeElement();
+    };
+
+    for (std::vector<int>::const_iterator i = resultSet.begin(); i != resultSet.end(); ++i) {
+        TupleRef tref(result, *i);
+        element.openElement(CDGQNAME("result"));
+        element.addAttributeValue(CDGQNAME("var"), tref->node->getName());
+        element.closeElement();
+    };
+
+    return element;
+}
+
+XmlConstructor & TupleChrysalis::__toXML(XmlConstructor & element) const
+{
+    element.openElement(CDGQNAME("tuple"));
+
+    element.addAttributeValue(CDGQNAME("count"), tuple_cell::atomic(rowCount.avg()));
+    element.addAttributeValue(CDGQNAME("size"), tuple_cell::atomic(rowSize.avg()));
+    element.addAttributeValue(CDGQNAME("width"), tuple_cell::atomic_int(_width));
+
+    element.closeElement();
+    
+    return element;
+};
+
+XmlConstructor & POProt::__toXML(XmlConstructor & element) const
+{
+    this->result->__toXML(element);
+
+    return element;
+}
+
+XmlConstructor & POProt::toXML(XmlConstructor & element) const
+{
+    element.openElement(CDGQNAME(this->getProtInfo()->name));
+    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int((ptrdiff_t) (this)));
 
     __commonToXML(element);
     __toXML(element);
 
-    IElementProducer * cost = element->addElement(CDGQNAME("cost"));
-    rangeToElement(this->cost->firstCost, cost, "first");
-    rangeToElement(this->cost->nextCost, cost, "next");
-    rangeToElement(this->cost->fullCost, cost, "total");
-    cost->close();
+    element.openElement(CDGQNAME("cost"));
 
-    element->close();
+    rangeToElement(this->cost->firstCost, element, "first");
+    rangeToElement(this->cost->nextCost, element, "next");
+    rangeToElement(this->cost->fullCost, element, "total");
+    
+    element.closeElement();
+    element.closeElement();
     return element;
 }

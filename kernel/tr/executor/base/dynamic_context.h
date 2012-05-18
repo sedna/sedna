@@ -23,7 +23,7 @@
 
 #include "tr/executor/base/SequenceType.h"
 #include "tr/executor/base/static_context.h"
-#include "tr/executor/base/INamespaceMap.h"
+#include "tr/models/INamespaceMap.h"
 
 /*******************************************************************************
  * List of classes used

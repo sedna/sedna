@@ -17,6 +17,8 @@ typedef uint64_t PlanDesc;
 typedef std::set<PlanDesc> PlanDescSet;
 typedef int TupleId;
 
+#define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
+
 static const int DeBruijnBitPosition[32] =
 {
   0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8,
@@ -29,7 +31,6 @@ inline static int get_bit_position(uint32_t v)
 {
     return DeBruijnBitPosition[((v & -v) * DeBruijnSequence) >> 27];
 }
-
 
 class PlanDescIterator {
   private:

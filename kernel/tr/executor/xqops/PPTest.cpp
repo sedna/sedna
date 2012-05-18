@@ -21,10 +21,11 @@
 #include "tr/opt/algebra/Predicates.h"
 
 #include "tr/opt/algebra/DataGraph.h"
-#include "tr/executor/base/SCElementProducer.h"
+#include "tr/models/SCElementProducer.h"
 
 #include "tr/opt/path/XPathLookup.h"
 #include "tr/opt/algorithms/ExecutionContext.h"
+#include "tr/models/XmlConstructor.h"
 
 
 
@@ -367,7 +368,7 @@ void PPDataGraph::do_next(tuple& t)
         op->reset();
         op->setContext(contextEx);
 
-/*        
+/*
         phop::MappedTupleIn mt = dynamic_cast<phop::BinaryTupleOperator *>(
             dynamic_cast<phop::UnaryTupleOperator *>(op)->__in().op
             )->__left();
@@ -380,7 +381,8 @@ void PPDataGraph::do_next(tuple& t)
         u_ftime(&t_opt);
 
 //        do_next(t);
-        t.cells[0] = op->toXML(rootProducer)->close();
+        XmlConstructor vroot(VirtualRootConstructor(0));
+        t.cells[0] = op->toXML(vroot).getLastChild();
 //        PPOpIn op(dgm.compile(dg), 1);
     }
 }
@@ -446,7 +448,6 @@ void PPAbsPathExec::do_next(tuple& t)
         AutoSchemeList scml(list.c_str());
 
         pe::Path path(scml.get());
-
     }
 }
 

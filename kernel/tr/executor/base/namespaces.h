@@ -8,7 +8,7 @@
 #define NAMESPACES_H
 
 #include "tr/structures/xmlns.h"
-#include "INamespaceMap.h"
+#include "tr/models/INamespaceMap.h"
 
 #include <map>
 #include <vector>

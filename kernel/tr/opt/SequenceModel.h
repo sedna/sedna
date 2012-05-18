@@ -12,27 +12,26 @@
 #include <deque>
 #include <stack>
 
+class XmlConstructor;
+  
+namespace opt {
+class POProt;
+}
 
 #define PHOPQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
 
 #define OPINFO_T const phop::operation_info_t *
 #define OPINFO_DECL(ID) \
-  static const struct phop::operation_info_t op_info; \
+static const struct phop::operation_info_t op_info; \
   static const int opid = ID; \
   virtual phop::IOperator * clone() const; \
-  virtual IElementProducer * __toXML(IElementProducer *) const;
+  virtual XmlConstructor & __toXML(XmlConstructor &) const;
 
 #define OPINFO_DEF(TT) \
   const struct phop::operation_info_t TT::op_info = {#TT, TT::opid}; \
   phop::IOperator * TT::clone() const { return new TT(*this); };
 
 #define OPINFO_REF &op_info
-
-class IElementProducer;
-
-namespace opt {
-class POProt;
-}
 
 namespace phop {
 
@@ -94,7 +93,7 @@ protected:
     IOperator(OPINFO_T _opinfo);
 
     virtual void do_next() = 0;
-    virtual IElementProducer * __toXML(IElementProducer *) const = 0;
+    virtual XmlConstructor & __toXML(XmlConstructor &) const = 0;
     
 public:
     virtual ~IOperator();
@@ -105,7 +104,7 @@ public:
 
     const operation_info_t * info() const { return opinfo; };
 
-    virtual IElementProducer * toXML(IElementProducer *) const;
+    virtual XmlConstructor & toXML(XmlConstructor &) const;
 };
 
 class IValueOperator : public IOperator {
@@ -246,7 +245,7 @@ public:
 
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
-    virtual IElementProducer * toXML(IElementProducer *) const;
+    virtual XmlConstructor & toXML(XmlConstructor &) const;
 };
 
 class ReduceToItemOperator : public IValueOperator {
@@ -262,7 +261,7 @@ public:
 
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
-    virtual IElementProducer * toXML(IElementProducer *) const;
+    virtual XmlConstructor & toXML(XmlConstructor &) const;
 };
 
 class BinaryTupleOperator : public ITupleOperator {
@@ -271,13 +270,14 @@ protected:
 
     BinaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right)
         : ITupleOperator(_opinfo, _size), left(_left), right(_right) {};
+
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
     const MappedTupleIn & __left() const { return left; }
     const MappedTupleIn & __right() const { return right; }
   
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
-    virtual IElementProducer * toXML(IElementProducer *) const;
 };
 
 class UnaryTupleOperator : public ITupleOperator {
@@ -286,12 +286,13 @@ protected:
 
     UnaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _in)
         : ITupleOperator(_opinfo, _size), in(_in) {};
+
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
     const MappedTupleIn & __in() const { return in; }
     
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
-    virtual IElementProducer * toXML(IElementProducer *) const;
 };
 
 class ItemOperator : public IValueOperator {
@@ -300,10 +301,11 @@ protected:
     
     ItemOperator(OPINFO_T _opinfo, IValueOperator * _in)
       : IValueOperator(_opinfo), in(_in) {};
+
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
     virtual void reset();
     virtual void setContext(ExecutionContext* __context);
-    virtual IElementProducer * toXML(IElementProducer *) const;
 };
 
 }

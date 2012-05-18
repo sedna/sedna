@@ -7,7 +7,7 @@
 #ifndef SCELEMENTPRODUCER_H
 #define SCELEMENTPRODUCER_H
 
-#include "tr/structures/producer.h"
+#include "tr/models/IElementProducer.h"
 
 class sequence;
 

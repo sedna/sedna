@@ -10,7 +10,7 @@
 #include "XPathLookup.h"
 #include "XPathExecution.h"
 #include "tr/strings/strings.h"
-#include "tr/structures/producer.h"
+#include "tr/models/XmlConstructor.h"
 
 #include <stack>
 #include <queue>
@@ -244,27 +244,20 @@ void PathEvaluateTraverse::reset()
     phop::ItemOperator::reset();
 }
 
-static
-IElementProducer * valueElement(IElementProducer * producer, const char * name, const std::string & value) {
-    producer = producer->addElement(PHOPQNAME(name));
-    producer->addText(text_source_cstr(value.c_str()));
-    producer->close();
-    return producer;
-}
-
-IElementProducer * PathSchemaCheck::__toXML(IElementProducer * element) const
+XmlConstructor & PathSchemaCheck::__toXML(XmlConstructor & element) const
 {
+    element.addElementValue(PHOPQNAME("path"), scnLookup.atomizedPath.__toString());
     return element;
 };
 
-IElementProducer * PathEvaluateTraverse::__toXML(IElementProducer * element) const
+XmlConstructor & PathEvaluateTraverse::__toXML(XmlConstructor & element) const
 {
-    valueElement(element, "path", traverse->getPath().__toString());
+    element.addElementValue(PHOPQNAME("path"), traverse->getPath().__toString());
     return element;
 };
 
-IElementProducer * PathSchemaResolve::__toXML(IElementProducer * element) const
+XmlConstructor & PathSchemaResolve::__toXML(XmlConstructor & element) const
 {
-    valueElement(element, "path", scnLookup.atomizedPath.__toString());
+    element.addElementValue(PHOPQNAME("path"), scnLookup.atomizedPath.__toString());
     return element;
 };

@@ -10,6 +10,7 @@
 #include "common/sedna.h"
 #include "tr/opt/OptTypes.h"
 
+class XmlConstructor;
 class IElementProducer;
 
 namespace phop {
@@ -66,6 +67,8 @@ public:
     unsigned width() const { return _width; };
 
     TupleValueInfo * get(TupleId i) { return &(tuples.at(i)); };
+
+    XmlConstructor & __toXML(XmlConstructor &) const;
 };
 
 class POProtIn { public:
@@ -87,9 +90,10 @@ class POProt : public IPlanDisposable {
     phop::IOperator * op;
 protected:
     OperationCost * cost;
-    IElementProducer * __commonToXML(IElementProducer *) const;
+    
+    XmlConstructor & __commonToXML(XmlConstructor &) const;
+    virtual XmlConstructor & __toXML(XmlConstructor &) const;
 
-    virtual IElementProducer * __toXML(IElementProducer *) const;
     virtual phop::IOperator * compile() = 0;
 public:
     std::vector<POProtIn> in;
@@ -118,7 +122,8 @@ public:
     POProt(const prot_info_t * pinfo) : protInfo(pinfo), op(NULL), cost(NULL), result(NULL) {};
 
     virtual void evaluateCost(CostModel * model) = 0;
-    virtual IElementProducer * toXML(IElementProducer *) const;
+
+    XmlConstructor & toXML(XmlConstructor &) const;
 };
 
 class TupleRef { public:
@@ -174,7 +179,7 @@ public:
     PlanInfo * extend(Predicate * what) const;
     phop::ITupleOperator * compile();
 
-    IElementProducer * toXML(IElementProducer *) const;
+    XmlConstructor & toXML(XmlConstructor &) const;
 };
 
 class PhysicalModel {

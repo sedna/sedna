@@ -6,7 +6,7 @@
 #include "tr/opt/path/DataSources.h"
 #include "tr/executor/base/tuple.h"
 
-struct IElementProducer;
+class XmlConstructor;
 
 namespace opt {
 
@@ -41,7 +41,7 @@ struct DataGraph {
     PlanDesc getNeighbours(PlanDesc x);
 
     std::string toLRString() const;
-    IElementProducer * toXML(IElementProducer * producer) const;
+    XmlConstructor & toXML(XmlConstructor & producer) const;
 };
 
 extern const int reverseComparisonMap[];
@@ -87,7 +87,7 @@ struct Predicate {
     virtual Predicate * replace(DataNode * n1, DataNode * n2);
 
     virtual std::string toLRString() const = 0;
-    virtual IElementProducer * toXML(IElementProducer * ) const = 0;
+    virtual XmlConstructor & toXML(XmlConstructor & ) const = 0;
 };
 
 struct BinaryPredicate : public Predicate {
@@ -103,7 +103,7 @@ struct VPredicate : public BinaryPredicate {
     virtual void * compile(PhysicalModel * model);
 
     virtual std::string toLRString() const;
-    virtual IElementProducer * toXML(IElementProducer * ) const;
+    virtual XmlConstructor & toXML(XmlConstructor & ) const;
 };
 
 /* TODO:
@@ -139,7 +139,7 @@ struct SPredicate : public BinaryPredicate {
     virtual Predicate * replace(DataNode* n1, DataNode* n2);
 
     virtual std::string toLRString() const;
-    virtual IElementProducer * toXML(IElementProducer * ) const;
+    virtual XmlConstructor & toXML(XmlConstructor & ) const;
 };
 
 typedef std::vector<tuple_cell> MemoryTupleSequence;
@@ -173,7 +173,7 @@ struct DataNode {
 
     std::string getName() const;
     std::string toLRString() const;
-    IElementProducer * toXML(IElementProducer * ) const;
+    XmlConstructor & toXML(XmlConstructor & ) const;
 };
 
 };

@@ -20,8 +20,9 @@
 #endif
 
 #include "tr/updates/updates.h"
-#include "tr/structures/producer.h"
-#include "tr/executor/base/SCElementProducer.h"
+
+#include "tr/models/IElementProducer.h"
+#include "tr/models/SCElementProducer.h"
 
 #define BUFFER_SIZE (16*1024)
 #define MAX_QNAME 1024

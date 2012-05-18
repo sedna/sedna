@@ -27,8 +27,8 @@
 #include "tr/structures/nodeutils.h"
 
 #include "tr/structures/portal.h"
-#include "tr/structures/producer.h"
-#include "tr/executor/base/SCElementProducer.h"
+#include "tr/models/IElementProducer.h"
+#include "tr/models/SCElementProducer.h"
 
 using namespace std;
 

@@ -1,5 +1,7 @@
 #include "IndependentPlan.h"
 
+#include "tr/models/XmlConstructor.h"
+
 #include <set>
 
 using namespace rqp;
@@ -36,6 +38,111 @@ OPERATION_INFO(ComparisonExpression, orTupleCellList)
 OPERATION_INFO(FunCall, orTupleCellList)
 
 
+
+XmlConstructor& RPBase::toXML(XmlConstructor& element) const
+{
+    element.openElement(CDGQNAME(info()->opname));
+    __toXML(element);
+    element.closeElement();
+
+    return element;
+}
+
+XmlConstructor& BinaryOperation::__toXML(XmlConstructor& element) const
+{
+    leftList->toXML(element);
+    rightList->toXML(element);
+    
+    return element;
+}
+
+XmlConstructor& ConstantOperation::__toXML(XmlConstructor& element) const
+{
+    return element;
+}
+
+XmlConstructor& ListOperation::__toXML(XmlConstructor& element) const
+{
+    list->toXML(element);
+
+    return element;
+}
+
+XmlConstructor& NestedOperation::__toXML(XmlConstructor& element) const
+{
+    element.openElement(CDGQNAME("nested"));
+    subplan->toXML(element);
+    element.closeElement();
+
+    return rqp::ListOperation::__toXML(element);
+}
+
+
+XmlConstructor& ItemReduce::__toXML(XmlConstructor& element) const {
+    element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
+    return rqp::ListOperation::__toXML(element);
+};
+
+XmlConstructor& MapConcat::__toXML(XmlConstructor& element) const {
+    element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
+    return rqp::NestedOperation::__toXML(element);
+};
+
+XmlConstructor& SequenceConcat::__toXML(XmlConstructor& element) const {
+    element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
+    return rqp::NestedOperation::__toXML(element);
+};
+
+XmlConstructor& If::__toXML(XmlConstructor& element) const {
+    element.openElement(CDGQNAME("if"));
+    condition->toXML(element);
+    element.closeElement();
+
+    element.openElement(CDGQNAME("then"));
+    thenBranch->toXML(element);
+    element.closeElement();
+
+    element.openElement(CDGQNAME("else"));
+    elseBranch->toXML(element);
+    element.closeElement();
+
+    return element;
+};
+
+XmlConstructor& VarIn::__toXML(XmlConstructor& element) const {
+    element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
+    return rqp::ConstantOperation::__toXML(element);
+};
+
+XmlConstructor& Const::__toXML(XmlConstructor& element) const {
+    for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
+        element.addElementValue(CDGQNAME("value"), *it);
+    };
+
+    return rqp::ConstantOperation::__toXML(element);
+};
+
+XmlConstructor& XPathStep::__toXML(XmlConstructor& element) const {
+    element.addElementValue(CDGQNAME("step"), step.toXPathString());
+    return rqp::ListOperation::__toXML(element);
+};
+
+XmlConstructor& Select::__toXML(XmlConstructor& element) const {
+    return rqp::NestedOperation::__toXML(element);
+};
+
+XmlConstructor& ComparisonExpression::__toXML(XmlConstructor& element) const {
+    element.addElementValue(CDGQNAME("cmp"), cmp.toLRString());
+    return rqp::BinaryOperation::__toXML(element);
+};
+
+XmlConstructor& FunCall::__toXML(XmlConstructor& element) const {
+    element.addElementValue(CDGQNAME("fun"), name);
+    return rqp::ConstantOperation::__toXML(element);
+};
+
+
+
 PlanContext::PlanContext() : lastScopeMarker(0), currentTupleId(worldDataTupleId)
 {
     TupleDefinition td(worldDataTupleId, "WorldData", xs_anyType);
@@ -47,34 +154,6 @@ PlanContext::~PlanContext()
 {
     //
 }
-
-/*
-void PlanContext::deleteFromPlan(RPBase* subj)
-{
-    typedef DependancyBackMap::iterator depmap_iterator;
-    typedef DependancyMap::iterator depforemap_iterator;
-    std::pair<depmap_iterator, depmap_iterator> range = tupleDependencyBackMap.equal_range(subj);
-
-    for (depmap_iterator item = range.first; item != range.second; ++item) {
-        std::pair<depforemap_iterator, depforemap_iterator> frange = tupleDependencyMap.equal_range(item->second);
-        for (depforemap_iterator fitem = frange.first; fitem != frange.second; ++fitem) {
-            if (fitem->second == item->first) {
-                tupleDependencyMap.erase(fitem);
-                break;
-            }
-        }
-    }
-    
-    tupleDependencyBackMap.erase(subj);
-    
-    delete subj;
-}
-
-void PlanContext::deleteSubtree(RPBase* item)
-{
-    deleteFromPlan(item); // TODO
-}
-*/
 
 void PlanContext::newScope() {
     scopeStack.push(invalidTupleId);
@@ -126,24 +205,6 @@ TupleId PlanContext::getVarTupleInScope(const std::string& canonicalName)
     return scope.at(canonicalName);
 }
 
-RPBase* PlanContext::getExpressionResult(RPBase* tree)
-{
-    if (tree != null_op && tree->info()->resultType != orTupleCellList) {
-        TupleId resultId = invalidTupleId;
-
-/*        
-        if (const Map * map = dynamic_cast<Map *>(tree)) {
-            resultId = map->getVar();
-        } else {
-            // exception =)
-        }
-*/
-
-        return new ItemReduce(tree, resultId);
-    } else {
-        return tree;
-    }
-}
 
 /*
 TupleScheme * PlanContext::newMapExtend(TupleScheme * in, const TupleScheme * with) {

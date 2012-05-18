@@ -9,7 +9,7 @@
 
 #include "tr/structures/nodeinterface.h"
 #include "tr/structures/xmlns.h"
-#include "INamespaceMap.h"
+#include "tr/models/INamespaceMap.h"
 #include "tr/executor/base/namespaces.h"
 
 class InscopeNamespaceMap;

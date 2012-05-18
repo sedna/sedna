@@ -6,7 +6,8 @@
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/executor/base/PPUtils.h"
 
-#include "tr/structures/producer.h"
+#include "tr/models/XmlConstructor.h"
+
 #include "ExecutionContext.h"
 
 using namespace phop;
@@ -260,50 +261,39 @@ std::string schemaPath(schema_node_cptr snode) {
     return path.str();
 };
 
-static
-IElementProducer * valueElement(IElementProducer * producer, const char * name, const tuple_cell & value) {
-    producer = producer->addElement(PHOPQNAME(name));
-    producer->addText(text_source_tuple_cell(atomize(value)));
-    producer->close(); 
-    return producer;
-}
-
-IElementProducer * SchemaScan::__toXML(IElementProducer * producer) const
+XmlConstructor & SchemaScan::__toXML(XmlConstructor & producer) const
 {
-    valueElement(producer,
-        "path", tuple_cell::atomic_deep(xs_string, schemaPath(snode).c_str()));
-    
-    return producer;
+    producer.addElementValue(PHOPQNAME("path"), schemaPath(snode));
+    return  producer;
 };
 
-IElementProducer * SchemaValueScan::__toXML(IElementProducer * producer) const
+XmlConstructor & SchemaValueScan::__toXML(XmlConstructor & producer) const
 {
-    valueElement(producer,
-        "path", tuple_cell::atomic_deep(xs_string, schemaPath(snode).c_str()));
+    producer.addElementValue(PHOPQNAME("path"), schemaPath(snode));
 
     for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
-        valueElement(producer, "value", *it);
+        producer.addElementValue(PHOPQNAME("value"), *it);
     };
     
     return producer;
 };
 
-IElementProducer * BogusConstSequence::__toXML(IElementProducer * producer) const
+XmlConstructor & BogusConstSequence::__toXML(XmlConstructor & producer) const
 {
     for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
-        valueElement(producer, "value", *it);
+        producer.addElementValue(PHOPQNAME("value"), *it);
     };
     
-    return producer;
+    return  producer;
 };
 
-IElementProducer * CachedNestedLoop::__toXML(IElementProducer * producer) const
+XmlConstructor & CachedNestedLoop::__toXML(XmlConstructor & producer) const
 {
-    return producer;
+    return BinaryTupleOperator::__toXML(producer);
 };
 
 
-IElementProducer * NestedEvaluation::__toXML(IElementProducer * producer) const
+XmlConstructor & NestedEvaluation::__toXML(XmlConstructor & producer) const
 {
     nestedOperator->toXML(producer);
     in.op->toXML(producer);

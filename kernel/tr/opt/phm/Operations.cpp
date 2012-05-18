@@ -3,7 +3,7 @@
 #include "tr/opt/cost/Statistics.h"
 #include "tr/opt/phm/ComparisonModels.h"
 
-#include "tr/structures/producer.h"
+#include "tr/models/XmlConstructor.h"
 
 #include "tr/opt/path/XPathExecution.h"
 #include "tr/opt/SequenceModel.h"
@@ -26,15 +26,6 @@ OPINFO(StructuralJoinPrototype)
 OPINFO(ValueScanPrototype)
 OPINFO(ValidatePathPrototype)
 
-IElementProducer* elementValue(IElementProducer* element, const char * name, tuple_cell value)
-{
-    element = element->addElement(CDGQNAME(name));
-    element->addText(text_source_tuple_cell(value));
-    element->close();
-
-    return element;
-}
-
 AbsPathScanPrototype::AbsPathScanPrototype(PhysicalModel* model, const TupleRef& tref)
   : POProt(OPREF(AbsPathScanPrototype)), dataRoot(), path()
 {
@@ -49,21 +40,11 @@ AbsPathScanPrototype::AbsPathScanPrototype(PhysicalModel* model, const TupleRef&
     evaluateCost(publicCostModel);
 }
 
-IElementProducer* AbsPathScanPrototype::__toXML(IElementProducer* element) const
+XmlConstructor & AbsPathScanPrototype::__toXML(XmlConstructor & element) const
 {
-    POProt::__toXML(element);
-
-    IElementProducer * child;
-
-    child = element->addElement(CDGQNAME("root"));
-    child->addText(text_source_cstr(dataRoot.toLRString().c_str()));
-    child->close();
-
-    child = element->addElement(CDGQNAME("path"));
-    child->addText(text_source_cstr(path.toXPathString().c_str()));
-    child->close();
-
-    return element;
+    element.addElementValue(CDGQNAME("root"), dataRoot.toLRString());
+    element.addElementValue(CDGQNAME("path"), path.toXPathString());
+    return POProt::__toXML(element);
 }
 
 
@@ -77,15 +58,10 @@ PathEvaluationPrototype::PathEvaluationPrototype(PhysicalModel* model, const POP
     evaluateCost(publicCostModel);
 }
 
-IElementProducer* PathEvaluationPrototype::__toXML(IElementProducer* element) const
+XmlConstructor & PathEvaluationPrototype::__toXML(XmlConstructor & element) const
 {
-    POProt::__toXML(element);
-
-    IElementProducer * child = element->addElement(CDGQNAME("path"));
-    child->addText(text_source_cstr(path.toXPathString().c_str()));
-    child->close();
-
-    return element;
+    element.addElementValue(CDGQNAME("path"), path.toXPathString());
+    return POProt::__toXML(element);
 }
 
 MergeJoinPrototype::MergeJoinPrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, ComparisonPrototype * _comparison)
@@ -106,11 +82,10 @@ MergeJoinPrototype::MergeJoinPrototype(PhysicalModel* model, const POProtIn& _le
     evaluateCost(publicCostModel);
 }
 
-IElementProducer* MergeJoinPrototype::__toXML(IElementProducer* element) const
+XmlConstructor & MergeJoinPrototype::__toXML(XmlConstructor & element) const
 {
-    POProt::__toXML(element);
     comparison->__toXML(element);
-    return element;
+    return POProt::__toXML(element);
 }
 
 FilterTuplePrototype::FilterTuplePrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, ComparisonPrototype* _comparison)
@@ -123,11 +98,10 @@ FilterTuplePrototype::FilterTuplePrototype(PhysicalModel* model, const POProtIn&
     evaluateCost(publicCostModel);
 }
 
-IElementProducer* FilterTuplePrototype::__toXML(IElementProducer* element) const
+XmlConstructor & FilterTuplePrototype::__toXML(XmlConstructor & element) const
 {
-    POProt::__toXML(element);
     comparison->__toXML(element);
-    return element;
+    return POProt::__toXML(element);
 }
 
 ValueScanPrototype::ValueScanPrototype(PhysicalModel* model, const POProtIn& _left, const TupleRef& _right, const Comparison& _cmp)
@@ -161,21 +135,12 @@ ValidatePathPrototype::ValidatePathPrototype(PhysicalModel* model, const POProtI
     evaluateCost(publicCostModel);
 }
 
-IElementProducer* ValidatePathPrototype::__toXML(IElementProducer* element) const
+XmlConstructor & ValidatePathPrototype::__toXML(XmlConstructor & element) const
 {
-    POProt::__toXML(element);
+    element.addElementValue(CDGQNAME("root"), dataRoot.toLRString());
+    element.addElementValue(CDGQNAME("path"), path.toXPathString());
 
-    IElementProducer * child;
-    
-    child = element->addElement(CDGQNAME("root"));
-    child->addText(text_source_cstr(dataRoot.toLRString().c_str()));
-    child->close();
-    
-    child = element->addElement(CDGQNAME("path"));
-    child->addText(text_source_cstr(path.toXPathString().c_str()));
-    child->close();
-
-    return element;
+    return POProt::__toXML(element);
 }
 
 
@@ -194,11 +159,11 @@ MagicJoinPrototype::MagicJoinPrototype(PhysicalModel* model, const POProtIn& _le
     evaluateCost(publicCostModel);
 }
 
-IElementProducer* MagicJoinPrototype::__toXML(IElementProducer* ) const
+XmlConstructor & MagicJoinPrototype::__toXML(XmlConstructor & ) const
 {
     POProt::__toXML(element);
 
-    IElementProducer * child = element->addElement(CDGQNAME("path"));
+    XmlConstructor & child = element->addElement(CDGQNAME("path"));
     child->addText(text_source_cstr(path.toXPathString().c_str()));
     child->close();
 

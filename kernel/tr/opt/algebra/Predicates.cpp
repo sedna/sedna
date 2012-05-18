@@ -2,10 +2,7 @@
 #include "tr/opt/algebra/Predicates.h"
 #include "tr/opt/phm/PhysicalModel.h"
 
-#include "tr/structures/producer.h"
-
-// tmp
-#include <boost/lexical_cast.hpp>
+#include "tr/models/XmlConstructor.h"
 
 #include <bits/algorithmfwd.h>
 
@@ -321,27 +318,25 @@ std::string DataGraph::toLRString() const
     return stream.str();
 }
 
-#define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
-
-IElementProducer* DataGraph::toXML(IElementProducer* producer) const
+XmlConstructor & DataGraph::toXML(XmlConstructor & producer) const
 {
-    IElementProducer* result = producer->addElement(CDGQNAME("datagraph"), xs_anyType);
+    producer.openElement(CDGQNAME("datagraph"));
 
     for (DataNodeList::const_iterator i = dataNodes.begin(); i != dataNodes.end(); ++i) {
         if (*i != NULL) {
-            (*i)->toXML(result);
+            (*i)->toXML(producer);
         }
     };
 
     for (PredicateList::const_iterator i = predicates.begin(); i != predicates.end(); ++i) {
         if (*i != NULL) {
-            (*i)->toXML(result);
+            (*i)->toXML(producer);
         }
     };
 
-    result->close();
+    producer.closeElement();
 
-    return result;
+    return producer;
 }
 
 std::string DataNode::toLRString() const
@@ -376,10 +371,9 @@ std::string DataNode::toLRString() const
     return stream.str();
 }
 
-IElementProducer* DataNode::toXML(IElementProducer* element) const
+XmlConstructor & DataNode::toXML(XmlConstructor & element) const
 {
     const char * nodetype = NULL;
-    IElementProducer* child;
 
     switch(type) {
         case dnDatabase : nodetype = "root"; break;
@@ -388,24 +382,20 @@ IElementProducer* DataNode::toXML(IElementProducer* element) const
         case dnExternal : nodetype = "ext"; break;
     };
 
-    element = element->addElement(CDGQNAME("node"), xs_untyped);
-    element->addAttribute(CDGQNAME("type"), text_source_cstr(nodetype), xs_string);
-    element->addAttribute(CDGQNAME("name"), text_source_cstr(getName().c_str()), xs_string);
-    element->addAttribute(CDGQNAME("id"), text_source_cstr(boost::lexical_cast<std::string, int>(index).c_str()), xs_integer);
+    element.openElement(CDGQNAME("node"));
+    
+    element.addAttributeValue(CDGQNAME("type"), nodetype);
+    element.addAttributeValue(CDGQNAME("name"), getName());
+    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(index));
 
     if (output) {
-        element->addAttribute(CDGQNAME("output"), text_source_cstr("true"), xs_boolean);
+        element.addAttributeValue(CDGQNAME("output"), tuple_cell::atomic(true));
     };
 
     switch(type) {
         case dnDatabase :
-            child = element->addElement(CDGQNAME("root"), xs_untyped);
-            child->addText(text_source_cstr(root.toLRString().c_str()));
-            child->close();
-
-            child = element->addElement(CDGQNAME("path"), xs_untyped);
-            child->addText(text_source_cstr(path.toXPathString().c_str()));
-            child->close();
+            element.addElementValue(CDGQNAME("root"), root.toLRString());
+            element.addElementValue(CDGQNAME("path"), path.toXPathString());
 
             break;
         case dnFreeNode :
@@ -416,7 +406,7 @@ IElementProducer* DataNode::toXML(IElementProducer* element) const
             break;
     };
 
-    element->close();
+    element.closeElement();
 
     return element;
 }
@@ -469,50 +459,30 @@ std::string VPredicate::toLRString() const
     return stream.str();
 }
 
-IElementProducer* SPredicate::toXML(IElementProducer* element) const
+XmlConstructor & SPredicate::toXML(XmlConstructor & element) const
 {
-    IElementProducer* child;
-
-    element = element->addElement(CDGQNAME("SPredicate"), xs_untyped);
-    element->addAttribute(CDGQNAME("id"), text_source_cstr(boost::lexical_cast<std::string, int>(index).c_str()), xs_integer);
-
-    child = element->addElement(CDGQNAME("path"), xs_untyped);
-    child->addText(text_source_cstr(path.toXPathString().c_str()));
-    child->close();
-
-    child = element->addElement(CDGQNAME("left"), xs_untyped);
-    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(left()->index).c_str()), xs_integer);
-    child->close();
-
-    child = element->addElement(CDGQNAME("right"), xs_untyped);
-    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(right()->index).c_str()), xs_integer);
-    child->close();
-
-    element->close();
+    element.openElement(CDGQNAME("SPredicate"));
+  
+    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(index));
+    element.addElementValue(CDGQNAME("path"), path.toXPathString());
+    element.addElementValue(CDGQNAME("left"), tuple_cell::atomic_int(left()->index));
+    element.addElementValue(CDGQNAME("right"), tuple_cell::atomic_int(right()->index));
+    
+    element.closeElement();
 
     return element;
 }
 
-IElementProducer* VPredicate::toXML(IElementProducer* element) const
+XmlConstructor & VPredicate::toXML(XmlConstructor & element) const
 {
-    IElementProducer* child;
+    element.openElement(CDGQNAME("SPredicate"));
 
-    element = element->addElement(CDGQNAME("VPredicate"), xs_untyped);
-    element->addAttribute(CDGQNAME("id"), text_source_cstr(boost::lexical_cast<std::string, int>(index).c_str()), xs_integer);
+    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(index));
+    element.addElementValue(CDGQNAME("cmp"), cmp.toLRString());
+    element.addElementValue(CDGQNAME("left"), tuple_cell::atomic_int(left()->index));
+    element.addElementValue(CDGQNAME("right"), tuple_cell::atomic_int(right()->index));
 
-    child = element->addElement(CDGQNAME("cmp"), xs_untyped);
-    child->addText(text_source_cstr(cmp.toLRString().c_str()));
-    child->close();
-
-    child = element->addElement(CDGQNAME("left"), xs_untyped);
-    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(left()->index).c_str()), xs_integer);
-    child->close();
-
-    child = element->addElement(CDGQNAME("right"), xs_untyped);
-    child->addAttribute(CDGQNAME("node-id"), text_source_cstr(boost::lexical_cast<std::string, int>(right()->index).c_str()), xs_integer);
-    child->close();
-
-    element->close();
+    element.closeElement();
 
     return element;
 }
