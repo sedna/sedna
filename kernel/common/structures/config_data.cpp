@@ -144,7 +144,8 @@ struct SednaOptionsXmlReader : public XmlNodeReader {
         this->readStringValue(EXPANDR(bindAddress));
         this->readIntValue(EXPANDR(osObjectsOffset));
         this->readIntValue(EXPANDR(logLevel));
-
+        this->readIntValue(EXPANDR(stackDepth));
+        this->readIntValue(EXPANDR(keepAlive));
         this->setJealousMode(true);
     }
 };

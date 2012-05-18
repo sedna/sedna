@@ -69,8 +69,9 @@ struct SednaOptions {
 
     int listenPort;
     int osObjectsOffset;
-
+    int stackDepth;
     int logLevel;
+    int keepAlive;
     
     void saveToXml(XMLBuilder * xmlBuilder) const;
     XmlNodeReader * createReader();
