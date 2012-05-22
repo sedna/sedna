@@ -18,6 +18,10 @@
 #include "tr/executor/base/sequence.h"
 #include "tr/tr_globals.h"
 
+namespace rqp {
+  class RPBase;
+}
+
 
 
 /*******************************************************************************
@@ -390,6 +394,9 @@ private:
     virtual void do_accept(PPVisitor &v) = 0;
 
 public:
+    // FIXME: Temporary
+    rqp::RPBase * optimizedPlan;
+  
     inline void open()                   
     { 
         if(executor_globals::profiler_mode || 1 == tr_globals::debug_mode)

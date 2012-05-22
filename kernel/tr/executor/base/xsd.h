@@ -209,10 +209,12 @@ class QName {
     static QName fromLR(scheme_list* lst);
 
 // TODO: replace all exceptions with std::exception
+    static QName createResolve(const char * prefixAndLocal, INamespaceMap * namespaces, bool quietly = false);
+    static QName resolve(const char* prefix, const char* local, INamespaceMap* namespaces);
+
     static QName createNsN(xmlns_ptr ns, const char * local, bool quietly = false);
     static QName createUCn(const char * uri, const char * prefixAndLocal, bool quietly = false);
     static QName createUPL(const char * uri, const char * prefix, const char * localName, bool quietly = false);
-    static QName createResolve(const char * prefixAndLocal, INamespaceMap * namespaces, bool quietly = false);
     static QName createUnchecked(xmlns_ptr ns, const char * local);
 
     static QName bulkloadParse(const char * triplet);
@@ -231,6 +233,12 @@ class QName {
             }
         }
     };
+};
+
+inline
+QName constQName(xmlns_ptr ns, const char * local)
+{
+    return xsd::QName::getConstantQName(ns, local);
 };
 
 extern const char * QNameWildcard;

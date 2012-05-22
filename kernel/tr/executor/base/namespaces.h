@@ -26,6 +26,11 @@ struct PredefinedNamespace
 
 extern PredefinedNamespace predefinedNamespaces[];
 
+enum predefined_namespaces_t {
+    namespace_xml = 0,
+    namespace_ns = 3,
+};
+
 xmlns_ptr generateUniquePrefix(const char * prefix, const char * uri, INamespaceMap * namespaces);
 
 class NamespaceMapIterator : public INamespaceIterator {

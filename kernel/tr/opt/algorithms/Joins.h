@@ -27,7 +27,6 @@ public:
   
     DocOrderMerge(unsigned int _size, const TupleList & _tin);
     virtual void reset();
-    virtual void setContext ( ExecutionContext* __context );
 };
 
 class TupleSort : public UnaryTupleOperator {
@@ -45,7 +44,6 @@ public:
     virtual ~TupleSort();
 
     virtual void reset();
-    virtual void setContext ( ExecutionContext* __context );
 };
 
 class TupleJoinFilter : public BinaryTupleOperator {
@@ -79,7 +77,6 @@ public:
     virtual ~TupleJoinFilter();
 
     virtual void reset();
-    virtual void setContext ( ExecutionContext* __context );
 };
 
 class TuplePredicateFilter : public UnaryTupleOperator {
@@ -90,7 +87,7 @@ public:
     OPINFO_DECL(0x305)
 
     TuplePredicateFilter(const phop::MappedTupleIn& _in, const ValueFunction& _vcc);
-    virtual void setContext ( ExecutionContext* __context );
+    virtual void reset();
 };
 
 }

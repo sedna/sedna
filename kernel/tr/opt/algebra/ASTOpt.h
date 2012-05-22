@@ -20,35 +20,38 @@ namespace sedna
 class lr2opt : public lr2por
 {
   private:
-    struct OpContextInfo {
+
+    enum var_context_t {
+        vvc_none,
+        vvc_get_value,
+        vvc_declare,
+    } varVisitContext;
+    
+    struct ResultInfo {
         rqp::RPBase * op;
         opt::TupleId contextItem;
-
-        ASTNode * astNode;
         int opid;
-        
-        pe::axis_t axis;
-        pe::node_test_t nodeTest;
-        xsd::TemplateQName qname;
-//        sequence_type typeinfo;
         rqp::TupleVarDescriptor * varDesc;
 
-        OpContextInfo(ASTNode * _astNode)
-          : op(rqp::null_op), contextItem(rqp::nullTuple), astNode(_astNode), opid(0) { };
-          
-        OpContextInfo(rqp::RPBase * _op, opt::TupleId _contextItem)
-          : op(_op), contextItem(_contextItem), opid(0) { };
+        explicit ResultInfo(rqp::RPBase * _op)
+          : op(_op), contextItem(0), opid(0), varDesc(NULL) { };
     };
 
-    bool typeVarMode;
+    struct StepInfo {
+        pe::axis_t axis;
+        pe::node_test_t nodeTest;
+        xsd::TemplateQName tqname;
+    };
 
-    std::stack<OpContextInfo> resultStack;
-    std::stack<OpContextInfo> contextStack;
+    std::stack<ResultInfo> resultStack;
+    std::stack<StepInfo> stepStack;
 
+    StaticallyKnownNamespaces * skn;
   public:
     lr2opt(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_, dynamic_context *dyn_cxt_, bool is_subquery_)
-      : lr2por(drv_, mod_, dyn_cxt_, is_subquery_)
+      : lr2por(drv_, mod_, dyn_cxt_, is_subquery_), varVisitContext(vvc_none)
     {
+        skn = dyn_cxt_->get_static_context()->getStaticallyKnownNamespaces();
     }
 
     ~lr2opt() {

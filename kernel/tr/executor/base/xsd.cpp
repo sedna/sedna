@@ -261,6 +261,24 @@ QName QName::createUCn(const char* uri, const char* prefixAndLocal, bool quietly
     return QName(xmlns_touch(cn.first.getValue(), uri), cn.second.getValue());
 }
 
+QName QName::resolve(const char* prefix, const char* local, INamespaceMap* namespaces)
+{
+    NCName name = NCName::check(local, false);
+    
+    if (prefix == NULL || prefix[0] == '\0') {
+        return QName(namespaces->getDefaultNamespace(), name.getValue());
+    } else {
+        xmlns_ptr ns = namespaces->resolvePrefix(prefix);
+
+        if (ns == NULL_XMLNS) {
+            return QName();
+        } else {
+            return QName(ns, name.getValue());
+        }
+    };
+}
+
+
 QName QName::createResolve(const char* prefixAndLocal, INamespaceMap* namespaces, bool quietly)
 {
     ColonizedName cn = resolveColonizedName(prefixAndLocal, quietly);
@@ -277,6 +295,7 @@ QName QName::createResolve(const char* prefixAndLocal, INamespaceMap* namespaces
           We should check for xmlns prefix before resolving it, it's kinda hack.
           The worst thing is that there are different errors for attrbutes and for elements  */
 
+        // TODO : 
         if (strcmp(cn.first.getValue(), "xmlns") == 0) {
             ns = xmlns_touch("xmlns", "http://www.w3.org/2000/xmlns/");
         } else {

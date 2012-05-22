@@ -10,34 +10,29 @@ void lr2opt::visit(ASTMainModule &n)
 {
 //    n.prolog->accept(*this);
     // TODO : remove
+
     if (PlanContext::current == NULL) {
         PlanContext::current = new PlanContext();
     }
 
+    varVisitContext = vvc_get_value;
     n.query->accept(*this);
 }
 
 void lr2opt::visit(ASTQuery &n)
 {
-    typeVarMode = false;
-    contextStack.push(OpContextInfo(null_op, worldDataTupleId));
-    
     if (n.type == ASTQuery::QUERY) {
         n.query->accept(*this);
-        OpContextInfo expressionResult = resultStack.top();
-
-        OpContextInfo result(
-            new ItemReduce(expressionResult.op, expressionResult.contextItem),
-            expressionResult.contextItem
-                      );
     } else {
       //
     }
 }
 
 void lr2opt::visit(ASTAxisStep &n) {
-    contextStack.push(OpContextInfo(&n));
-    OpContextInfo & info = contextStack.top();
+    stepStack.push(StepInfo());
+    StepInfo & info = stepStack.top();
+
+    info.tqname = xsd::QNameAny;
 
     switch (n.axis) {
       case ASTAxisStep::CHILD :
@@ -55,9 +50,13 @@ void lr2opt::visit(ASTAxisStep &n) {
       default:
         throw USER_EXCEPTION(2902);
     }
-    
+
+    RPBase * resultOp = null_op;
+
     if (n.cont != NULL) {
         n.cont->accept(*this);
+        resultOp = resultStack.top().op;
+        resultStack.pop();
     }
 
     if (n.test == NULL) {
@@ -66,31 +65,23 @@ void lr2opt::visit(ASTAxisStep &n) {
         n.test->accept(*this);
     }
 
-    info.op = new XPathStep(resultStack.top().op, pe::Step(info.axis, info.nodeTest, info.qname));
-    resultStack.pop();
+    resultOp = new XPathStep(resultOp, pe::Step(info.axis, info.nodeTest, info.tqname));
+
+    stepStack.pop();
 
     if (n.preds != NULL) {
         for (ASTNodesVector::iterator pred = n.preds->begin(); pred != n.preds->end(); pred++) {
             (*pred)->accept(*this);
-            info.op = new Select(info.op, resultStack.top().op);
+            resultOp = new Select(resultOp, resultStack.top().op);
             resultStack.pop();
-            /* Context item is preserved */
         }
     }
 
-    resultStack.push(contextStack.top());
-    contextStack.pop();
+    resultStack.push(ResultInfo(resultOp));
 }
 
 void lr2opt::visit(ASTFilterStep &n) {
     throw USER_EXCEPTION(2902);
-
-    if (n.cont != NULL) {
-        n.cont->accept(*this);
-
-        contextStack.push(resultStack.top());
-        resultStack.pop();
-    }
 }
 
 void lr2opt::visit(ASTPred &n) {
@@ -104,15 +95,19 @@ void lr2opt::visit(ASTDocTest &n) {
 }
 
 void lr2opt::visit(ASTAttribTest &n) {
-    contextStack.top().nodeTest = pe::nt_attribute;
-    contextStack.top().qname = xsd::QNameAny;
+    U_ASSERT(dynamic_cast<ASTAxisStep*>(*(vis_path.rbegin()+1)) != NULL);
+
+    stepStack.top().nodeTest = pe::nt_attribute;
+    
     n.name->accept(*this);
     // TODO!
 }
 
 void lr2opt::visit(ASTElementTest &n) {
-    contextStack.top().nodeTest = pe::nt_element;
-    contextStack.top().qname = xsd::QNameAny;
+    U_ASSERT(dynamic_cast<ASTAxisStep*>(*(vis_path.rbegin()+1)) != NULL);
+
+    stepStack.top().nodeTest = pe::nt_element;
+    
     n.name->accept(*this);
     // TODO!
 }
@@ -122,7 +117,9 @@ void lr2opt::visit(ASTEmptyTest &n) {
 }
 
 void lr2opt::visit(ASTTextTest &n) {
-    contextStack.top().nodeTest = pe::nt_text;
+    U_ASSERT(dynamic_cast<ASTAxisStep*>(*(vis_path.rbegin()+1)) != NULL);
+
+    stepStack.top().nodeTest = pe::nt_text;
     // TODO!
 }
 
@@ -143,7 +140,23 @@ void lr2opt::visit(ASTSchemaElemTest &n) {
 }
 
 void lr2opt::visit(ASTNameTest &n) {
-    throw USER_EXCEPTION(2902);
+    U_ASSERT(
+       dynamic_cast<ASTAttribTest*>(*(vis_path.rbegin()+1)) != NULL ||
+       dynamic_cast<ASTElementTest*>(*(vis_path.rbegin()+1)) != NULL
+            );
+  
+    xmlns_ptr ns = NULL_XMLNS;
+    const char * local = xsd::QNameWildcard;
+
+    if (n.pref != NULL) {
+        ns = skn->resolvePrefix(n.pref->c_str());
+    };
+
+    if (n.local != NULL) {
+        local = n.local->c_str();
+    };
+
+    stepStack.top().tqname = xsd::TemplateQName(ns == NULL_XMLNS ? NULL : ns->get_uri(), local);
 }
 
 void lr2opt::visit(ASTNodeTest &n) {
@@ -164,8 +177,48 @@ void lr2opt::visit(ASTAttrConst &n) {
     throw USER_EXCEPTION(2902);
 }
 
-void lr2opt::visit(ASTElem &n) {
-    throw USER_EXCEPTION(2902);
+void lr2opt::visit(ASTElem &n)
+{
+    xmlns_ptr ns = NULL_XMLNS;
+    unsigned count = 0;
+
+    U_ASSERT(n.local != NULL);
+
+    int sknMark = skn->mark();
+
+    if (n.attrs)
+    {
+        ASTVisitor::VisitNodesVector(n.attrs, *this);
+        count += n.attrs->size();
+    }
+
+    if (n.cont)
+    {
+        ASTVisitor::VisitNodesVector(n.cont, *this);
+        count += n.cont->size();
+    }
+
+    OperationList oplist;
+    oplist.reserve(count);
+
+    while (count--) {
+        oplist.push_back(resultStack.top().op);
+        resultStack.pop();
+    }
+
+    std::reverse(oplist.begin(), oplist.end());
+
+    xsd::QName qname = xsd::QName::resolve(
+        n.pref != NULL ? n.pref->c_str() : NULL,
+        n.local->c_str(), skn);
+    
+    resultStack.push(ResultInfo(
+        new Construct(element,
+            new Const(tuple_cell::atomic(qname)),
+            new Sequence(oplist)
+        )));
+
+    skn->rollbackToMark(sknMark);
 }
 
 void lr2opt::visit(ASTElemConst &n) {
@@ -198,7 +251,16 @@ void lr2opt::visit(ASTCharCont &n) {
 }
 
 void lr2opt::visit(ASTSpaceSeq &n) {
-    throw USER_EXCEPTION(2902);
+    n.expr->accept(*this);
+
+    Sequence * op = new Sequence(resultStack.top().op);
+    resultStack.top().op = op;
+
+    if (n.atomize) {
+        op->setSpaces(Sequence::all_spaces);
+    } else {
+        op->setSpaces(Sequence::atomic_spaces);
+    };
 }
 
 void lr2opt::visit(ASTNsp &n) {
@@ -216,8 +278,10 @@ void lr2opt::visit(ASTFunCall &n) {
         n.params->at(0)->accept(*this);
         oplist.push_back(resultStack.top().op);
         resultStack.pop();
-        
-        resultStack.push(OpContextInfo(new FunCall(*n.int_name, oplist), invalidTupleId));
+
+        resultStack.push(ResultInfo(
+            new FunCall(xsd::constQName(skn->resolvePrefix(n.pref->c_str()), n.local->c_str()),
+                oplist)));
     } else {
         throw USER_EXCEPTION(2902);
     }
@@ -228,8 +292,6 @@ void lr2opt::visit(ASTUop &n) {
 }
 
 void lr2opt::visit(ASTBop &n) {
-    contextStack.push(OpContextInfo(&n));
-
     n.lop->accept(*this);
     RPBase * leftSequence = resultStack.top().op;
     resultStack.pop();
@@ -238,7 +300,7 @@ void lr2opt::visit(ASTBop &n) {
     RPBase * rightSequence = resultStack.top().op;
     resultStack.pop();
     
-    if (n.op >= ASTBop::EQ_G && n.op <= ASTBop::FOLLOW) {
+    if (n.op >= ASTBop::IS && n.op <= ASTBop::GE_G) {
         opt::Comparison cmp;
 
         switch (n.op) {
@@ -258,12 +320,10 @@ void lr2opt::visit(ASTBop &n) {
            throw USER_EXCEPTION(2902);
         };
 
-        resultStack.push(OpContextInfo(new ComparisonExpression(leftSequence, rightSequence, cmp), invalidTupleId));
+        resultStack.push(ResultInfo(new ComparisonExpression(leftSequence, rightSequence, cmp)));
     } else {
         U_ASSERT(false);
     };
-
-    contextStack.pop();
 }
 
 void lr2opt::visit(ASTCast &n) {
@@ -293,8 +353,47 @@ void lr2opt::visit(ASTIf &n) {
     throw USER_EXCEPTION(2902);
 }
 
-void lr2opt::visit(ASTQuantExpr &n) {
-    throw USER_EXCEPTION(2902);
+void lr2opt::visit(ASTQuantExpr &n)
+{
+    ScopeMarker scopeMarker = PlanContext::current->setScopeMarker();
+
+    n.expr->accept(*this);
+
+    varVisitContext = vvc_declare;
+    n.var->accept(*this);
+    varVisitContext = vvc_get_value;
+
+    // TODO : process type info, important step
+
+    opt::TupleId varBinding = PlanContext::current->generateTupleIdVarScoped(resultStack.top().varDesc);
+    resultStack.pop();
+
+    rqp::RPBase * expression = resultStack.top().op;
+    resultStack.pop();
+
+    n.sat->accept(*this);
+
+    rqp::RPBase * predicate = resultStack.top().op;
+    resultStack.pop();
+
+    xsd::QName aggrFunction;
+    
+    if (n.type == ASTQuantExpr::SOME)
+    {
+        aggrFunction = xsd::constQName(skn->resolvePrefix("fn"), "exists");
+        predicate = new rqp::If(predicate, new rqp::Const(fn_true()), new rqp::Const(EmptySequenceConst()));
+    }
+    else /* EVERY */
+    {
+        aggrFunction = xsd::constQName(skn->resolvePrefix("fn"), "empty");
+        predicate = new rqp::If(predicate, new rqp::Const(EmptySequenceConst()), new rqp::Const(fn_true()));
+    }
+
+    resultStack.push(ResultInfo(
+        new rqp::FunCall(aggrFunction,
+            new rqp::MapConcat(predicate, expression, varBinding))));
+
+    PlanContext::current->clearScopesToMarker(scopeMarker);
 }
 
 void lr2opt::visit(ASTTypeSwitch &n) {
@@ -309,9 +408,7 @@ void lr2opt::visit(ASTSeq &n) {
 /* XQuery language - FLWOR and its parts */
 
 void lr2opt::visit(ASTFLWOR &n) {
-    contextStack.push(OpContextInfo(&n));
-
-    std::stack<OpContextInfo> operationStack;
+    std::stack<ResultInfo> operationStack;
 
     ScopeMarker scopeMarker = PlanContext::current->setScopeMarker();
     
@@ -340,11 +437,14 @@ void lr2opt::visit(ASTFLWOR &n) {
     while (!operationStack.empty()) {
         switch (operationStack.top().opid) {
           case MapConcat::opid :
-            new MapConcat(resultStack.top().op, operationStack.top().op, operationStack.top().contextItem);
+            resultStack.top().op = new MapConcat(resultStack.top().op, operationStack.top().op, operationStack.top().contextItem);
+            break;
           case SequenceConcat::opid :
-            new SequenceConcat(resultStack.top().op, operationStack.top().op, operationStack.top().contextItem);
+            resultStack.top().op = new SequenceConcat(resultStack.top().op, operationStack.top().op, operationStack.top().contextItem);
+            break;
           case If::opid :
-            new If(operationStack.top().op, resultStack.top().op, null_op);
+            resultStack.top().op = new If(operationStack.top().op, resultStack.top().op, null_op);
+            break;
           default:
             U_ASSERT(false);
             throw USER_EXCEPTION(2902);
@@ -354,17 +454,17 @@ void lr2opt::visit(ASTFLWOR &n) {
     };
     
     PlanContext::current->clearScopesToMarker(scopeMarker);
-
-    contextStack.pop();
 }
 
 void lr2opt::visit(ASTFor &n) {
-    contextStack.push(OpContextInfo(&n));
-    
     n.expr->accept(*this);
-    n.tv->accept(*this);
 
-    // TODO : process type info, important step
+    varVisitContext = vvc_declare;
+    n.tv->accept(*this);
+    varVisitContext = vvc_get_value;
+
+    // TODO : process type info, important step, make type assert
+    // TODO : process pos var
 
     opt::TupleId varBinding = PlanContext::current->generateTupleIdVarScoped(resultStack.top().varDesc);
 
@@ -375,24 +475,22 @@ void lr2opt::visit(ASTFor &n) {
     if (n.usesPosVar()) {
         U_ASSERT(false);
     }
-
-    contextStack.pop();
 }
 
 void lr2opt::visit(ASTLet &n) {
-    contextStack.push(OpContextInfo(&n));
-
     n.expr->accept(*this);
-    n.tv->accept(*this);
 
+    varVisitContext = vvc_declare;
+    n.tv->accept(*this);
+    varVisitContext = vvc_get_value;
+
+    // TODO : process type info, important step, make type assert
+    
     opt::TupleId varBinding = PlanContext::current->generateTupleIdVarScoped(resultStack.top().varDesc);
 
     resultStack.pop();
     resultStack.top().contextItem = varBinding;
     resultStack.top().opid = SequenceConcat::opid;
-    U_ASSERT(false);
-
-    contextStack.pop();
 }
 
 void lr2opt::visit(ASTOrder &n) {
@@ -428,10 +526,11 @@ void lr2opt::visit(ASTTypeSeq &n) {
 
 
 void lr2opt::visit(ASTTypeVar &n) {
-    resultStack.push(OpContextInfo(&n));
+    U_ASSERT(varVisitContext == vvc_declare);
+    resultStack.push(ResultInfo(null_op));
 
     TupleVarDescriptor * vd = new TupleVarDescriptor();
-    
+
     lr2por::visit(n);
     childOffer offer = lr2por::getOffer();
     
@@ -446,18 +545,21 @@ void lr2opt::visit(ASTType &n) {
 }
 
 void lr2opt::visit(ASTVar &n) {
-    if (dynamic_cast<ASTFor *>(contextStack.top().astNode) != NULL) {
-    } else if (dynamic_cast<ASTLet *>(contextStack.top().astNode) != NULL) {
-    } else {
-        resultStack.push(
-          OpContextInfo(
-            new VarIn(PlanContext::current->getVarTupleInScope(n.getStandardName())), invalidTupleId));
-    }
+    switch (varVisitContext) {
+      case vvc_get_value :
+        resultStack.push(ResultInfo(
+            new VarIn(PlanContext::current->getVarTupleInScope(n.getStandardName()))));
+      break;
+      case vvc_declare :
+      default:
+        U_ASSERT(false);
+      break;
+    };
 }
 
 void lr2opt::visit(ASTLit &n) {
     opt::MemoryTupleSequence * mts = new opt::MemoryTupleSequence;
-    resultStack.push(OpContextInfo(new Const(mts), invalidTupleId));
+    resultStack.push(ResultInfo(new Const(mts)));
 
     switch (n.type) {
       case ASTLit::STRING:

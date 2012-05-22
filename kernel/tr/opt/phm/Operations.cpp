@@ -367,15 +367,12 @@ phop::IOperator * AbsPathScanPrototype::compile()
     };
 
     if (schemaNodes.size() == 1) {
-        return new phop::TupleFromItemOperator(
-                    new phop::SchemaScan(schema_node_cptr(*schemaNodes.begin())));
+        return new phop::SchemaScan(schema_node_cptr(*schemaNodes.begin()), 1, 0);
     }
 
     for (SchemaNodePtrSet::const_iterator it = schemaNodes.begin(); it != schemaNodes.end(); ++it) {
         inTuples.push_back(
-            phop::MappedTupleIn(
-                new phop::TupleFromItemOperator(
-                    new phop::SchemaScan(schema_node_cptr(*it))), 0, 0));
+            phop::MappedTupleIn(new phop::SchemaScan(schema_node_cptr(*it), 1, 0), 0, 0));
     };
 
     return new phop::DocOrderMerge(1, inTuples);
@@ -528,9 +525,7 @@ phop::IOperator * ValueScanPrototype::compile()
         MappedTupleIn leftOp(leftOpPtr, leftIdx, 0);
 
         return new CachedNestedLoop(leftOp->_tsize(), leftOp,
-            MappedTupleIn(
-                new TupleFromItemOperator(
-                    new BogusConstSequence(value)), 0, TupleMap()),
+            MappedTupleIn(new BogusConstSequence(value, 1, 0), 0, TupleMap()),
             GeneralComparisonPrototype(cmp).getTupleCellComparison(),
             CachedNestedLoop::strict_output);
     }

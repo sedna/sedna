@@ -4,53 +4,40 @@
 
 using namespace phop;
 
-std::stack<ExecutionBlock * > ExecutionBlock::blockStack;
+std::stack<ExecutionBlock * > ExecutionBlock::blockBuildingStack;
 
-OPINFO_DEF(TupleFromItemOperator)
 OPINFO_DEF(ReduceToItemOperator)
 
 void BinaryTupleOperator::reset()
 {
     ITupleOperator::reset();
+
+    left.op = dynamic_cast<ITupleOperator *>(block->body[leftIdx]);
+    right.op = dynamic_cast<ITupleOperator *>(block->body[rightIdx]);
+
     left.op->reset();
     right.op->reset();
-}
-
-void BinaryTupleOperator::setContext(ExecutionContext* __context)
-{
-    phop::IOperator::setContext(__context);
-    left.op->setContext(__context);
-    right.op->setContext(__context);
 }
 
 void UnaryTupleOperator::reset()
 {
     phop::ITupleOperator::reset();
+    in.op = dynamic_cast<ITupleOperator *>(block->body[inIdx]);
     in.op->reset();
-}
-
-void UnaryTupleOperator::setContext(ExecutionContext* __context)
-{
-    phop::IOperator::setContext(__context);
-    in.op->setContext(__context);
 }
 
 void ItemOperator::reset()
 {
     phop::IValueOperator::reset();
+    in = dynamic_cast<IValueOperator *>(block->body[inIdx]);
     in->reset();
 }
 
-void ItemOperator::setContext(ExecutionContext* __context)
+IOperator::IOperator(OPINFO_T _opinfo) : opinfo(_opinfo), block(NULL)
 {
-    phop::IOperator::setContext(__context);
-    in->setContext(__context);
-}
-
-
-IOperator::IOperator(OPINFO_T _opinfo) : opinfo(_opinfo)
-{
-    ExecutionBlock::current()->body.push_back(this);
+    block = ExecutionBlock::current();
+    block->body.push_back(this);
+    block->operatorMap.insert(OperatorMap::value_type(this, block->body.size()-1));
 }
 
 IOperator::~IOperator()
@@ -58,34 +45,10 @@ IOperator::~IOperator()
     //
 }
 
-
-void TupleFromItemOperator::do_next()
-{
-    U_ASSERT(false);
-}
-
-void TupleFromItemOperator::reset()
-{
-    phop::ITupleOperator::reset();
-    _convert_op->reset();
-}
-
-void TupleFromItemOperator::setContext(ExecutionContext* __context)
-{
-    phop::IOperator::setContext(__context);
-    _convert_op->setContext(__context);
-}
-
-TupleFromItemOperator::TupleFromItemOperator(IValueOperator* convert_op, unsigned _size)
-    : ITupleOperator(OPINFO_REF, convert_op, _size)
-{
-    
-}
-
 ReduceToItemOperator::ReduceToItemOperator(const phop::TupleIn& op, bool _nested)
     : IValueOperator(OPINFO_REF), in(op), nested(_nested)
 {
-
+    inIdx = block->operatorMap.at(op.op);
 }
 
 void ReduceToItemOperator::do_next()
@@ -103,17 +66,9 @@ void ReduceToItemOperator::do_next()
 void ReduceToItemOperator::reset()
 {
     phop::IValueOperator::reset();
+    in.op = dynamic_cast<ITupleOperator *>(block->body[inIdx]);
     in->reset();
 }
-
-void ReduceToItemOperator::setContext(ExecutionContext* __context)
-{
-    phop::IOperator::setContext(__context);
-    in->setContext(__context);
-}
-
-
-
 
 XmlConstructor & IOperator::toXML(XmlConstructor & element) const
 {
@@ -122,6 +77,27 @@ XmlConstructor & IOperator::toXML(XmlConstructor & element) const
     element.closeElement();
     return element;
 }
+
+BinaryTupleOperator::BinaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right)
+    : ITupleOperator(_opinfo, _size), left(_left), right(_right)
+{
+    leftIdx = block->operatorMap.at(_left.op);
+    rightIdx = block->operatorMap.at(_right.op);
+};
+
+UnaryTupleOperator::UnaryTupleOperator(const phop::operation_info_t* _opinfo, unsigned int _size, const phop::MappedTupleIn& _in)
+    : ITupleOperator(_opinfo, _size), in(_in)
+{
+    inIdx = block->operatorMap.at(_in.op);
+}
+
+ItemOperator::ItemOperator(const phop::operation_info_t* _opinfo, IValueOperator* _in)
+    : IValueOperator(_opinfo), in(_in)
+{
+    inIdx = block->operatorMap.at(_in);
+}
+
+
 
 XmlConstructor & BinaryTupleOperator::__toXML(XmlConstructor & element ) const
 {
@@ -134,19 +110,6 @@ XmlConstructor & UnaryTupleOperator::__toXML(XmlConstructor & element ) const
 {
     in.op->toXML(element);
     return element;
-}
-
-XmlConstructor & TupleFromItemOperator::__toXML(XmlConstructor & element ) const
-{
-    return element;
-}
-
-XmlConstructor & TupleFromItemOperator::toXML(XmlConstructor & element ) const
-{
-//    element = element->addElement(PHOPQNAME(info()->name));
-    return _convert_op->toXML(element);
-//    element->close();
-//    return element;
 }
 
 XmlConstructor & ReduceToItemOperator::__toXML(XmlConstructor & element) const

@@ -39,32 +39,38 @@ class ExecutionContext;
 class IOperator;
 class ITupleOperator;
 
+typedef std::vector<IOperator *> Operators;
+typedef std::map<IOperator *, Operators::size_type> OperatorMap;
+
 class ExecutionBlock {
-    static std::stack<ExecutionBlock * > blockStack;
+    static std::stack<ExecutionBlock * > blockBuildingStack;
 public:
     static ExecutionBlock * current()
     {
-        return blockStack.top();
+        return blockBuildingStack.top();
     };
 
     static ExecutionBlock * push(ExecutionBlock * executionBlock)
     {
-        ExecutionBlock * result = blockStack.empty() ? NULL : blockStack.top();
-        blockStack.push(executionBlock);
+        ExecutionBlock * result = blockBuildingStack.empty() ? NULL : blockBuildingStack.top();
+        blockBuildingStack.push(executionBlock);
         return result;
     };
 
     static ExecutionBlock * pop()
     {
-        ExecutionBlock * result = blockStack.top();
-        blockStack.pop();
+        ExecutionBlock * result = blockBuildingStack.top();
+        blockBuildingStack.pop();
         return result;
     };
 private:
     friend class IOperator;
-
-    std::vector<IOperator *> body;
 public:
+    ExecutionContext * context;
+
+    Operators body;
+    OperatorMap operatorMap;
+
     std::stack<opt::POProt *> sourceStack;
     std::map<opt::TupleId, unsigned> resultMap;
 
@@ -73,6 +79,9 @@ public:
 
     ExecutionBlock * copy();
 
+    virtual void setContext(ExecutionContext * __context)
+      { context = __context; };
+    
     ITupleOperator * top()
     {
         return (ITupleOperator *)(body.back());
@@ -88,19 +97,16 @@ class IOperator {
 private:
     const operation_info_t * opinfo;
 protected:
-    ExecutionContext * _context;
+    ExecutionBlock * block;
 
     IOperator(OPINFO_T _opinfo);
 
     virtual void do_next() = 0;
     virtual XmlConstructor & __toXML(XmlConstructor &) const = 0;
-    
 public:
     virtual ~IOperator();
     virtual void reset() = 0;
     virtual IOperator * clone() const = 0;
-    virtual void setContext(ExecutionContext * __context)
-      { _context = __context; };
 
     const operation_info_t * info() const { return opinfo; };
 
@@ -141,29 +147,18 @@ public:
 class ITupleOperator : public IOperator {
     tuple _value;
 protected:
-    IValueOperator * _convert_op;
-
     void seteos() { _value.set_eos(); };
     tuple & value() { return _value; };
 
     virtual void do_next() = 0;
     
-    ITupleOperator(OPINFO_T _opinfo, IValueOperator * __convert_op, unsigned _size)
-      : IOperator(_opinfo), _value(_size), _convert_op(__convert_op) {};
-
     ITupleOperator(OPINFO_T _opinfo, unsigned _size)
-      : IOperator(_opinfo), _value(_size), _convert_op(NULL) {};
+      : IOperator(_opinfo), _value(_size) {};
 public:
     virtual void reset()
       { _value.eos = false; };
 
     inline bool next() {
-        if (_convert_op != NULL) {
-            _convert_op->next();
-            _value.copy(_convert_op->get());
-            return true;
-        };
-
         if (get().is_eos()) {
             return false;
         };
@@ -235,20 +230,9 @@ struct MappedTupleIn : public TupleIn {
     void assignTo(tuple & result) const { TupleIn::assignTo(result, tmap); }
 };
 
-class TupleFromItemOperator : public ITupleOperator {
-protected:
-    virtual void do_next();
-public:
-    OPINFO_DECL(0x001)
-
-    TupleFromItemOperator(IValueOperator* convert_op, unsigned _size = 1);
-
-    virtual void reset();
-    virtual void setContext(ExecutionContext* __context);
-    virtual XmlConstructor & toXML(XmlConstructor &) const;
-};
-
 class ReduceToItemOperator : public IValueOperator {
+private:
+    Operators::size_type inIdx;
 protected:
     TupleIn in;
     bool nested;
@@ -260,52 +244,51 @@ public:
     ReduceToItemOperator(const TupleIn & op, bool nested);
 
     virtual void reset();
-    virtual void setContext(ExecutionContext* __context);
     virtual XmlConstructor & toXML(XmlConstructor &) const;
 };
 
 class BinaryTupleOperator : public ITupleOperator {
+private:
+    Operators::size_type leftIdx, rightIdx;
 protected:
     MappedTupleIn left, right;
 
-    BinaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right)
-        : ITupleOperator(_opinfo, _size), left(_left), right(_right) {};
-
+    BinaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right);
+    
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
-    const MappedTupleIn & __left() const { return left; }
-    const MappedTupleIn & __right() const { return right; }
+    const MappedTupleIn & getLeft() const { return left; }
+    const MappedTupleIn & getRight() const { return right; }
   
     virtual void reset();
-    virtual void setContext(ExecutionContext* __context);
 };
 
 class UnaryTupleOperator : public ITupleOperator {
+private:
+    Operators::size_type inIdx;
 protected:
     MappedTupleIn in;
 
-    UnaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _in)
-        : ITupleOperator(_opinfo, _size), in(_in) {};
+    UnaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _in);
 
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
-    const MappedTupleIn & __in() const { return in; }
+    const MappedTupleIn & getIn() const { return in; }
     
     virtual void reset();
-    virtual void setContext(ExecutionContext* __context);
 };
 
 class ItemOperator : public IValueOperator {
+private:
+    Operators::size_type inIdx;
 protected:
     IValueOperator * in;
     
-    ItemOperator(OPINFO_T _opinfo, IValueOperator * _in)
-      : IValueOperator(_opinfo), in(_in) {};
+    ItemOperator(OPINFO_T _opinfo, IValueOperator * _in);
 
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
     virtual void reset();
-    virtual void setContext(ExecutionContext* __context);
 };
 
 }

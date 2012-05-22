@@ -233,13 +233,24 @@ public:
     PROPERTY_RO(Tuple, opt::TupleId, tid)
 };
 
+struct EmptySequenceConst { explicit EmptySequenceConst(int x = 0) {}; };
+
 class Const : public ConstantOperation {
     OPERATION(0x012)
     opt::MemoryTupleSequencePtr sequence;
 public:
-    Const(opt::MemoryTupleSequencePtr _sequence)
-      : ConstantOperation(&sopdesc), sequence(_sequence) {};
-  
+    explicit Const(opt::MemoryTupleSequencePtr _sequence)
+      : ConstantOperation(&sopdesc), sequence(_sequence)
+    {};
+
+    explicit Const(tuple_cell _value)
+      : ConstantOperation(&sopdesc), sequence(new opt::MemoryTupleSequence())
+    { sequence->push_back(_value); };
+
+    explicit Const(const EmptySequenceConst &)
+      : ConstantOperation(&sopdesc), sequence(new opt::MemoryTupleSequence())
+    { };
+    
     PROPERTY_RO(Sequence, opt::MemoryTupleSequencePtr, sequence)
 };
 
@@ -248,7 +259,7 @@ class XPathStep : public ListOperation {
     pe::Step step;
 public:
     XPathStep(RPBase* _in, const pe::Step & _step)
-      : ListOperation(&sopdesc, _in), step(_step) {};
+      : ListOperation(&sopdesc, _in), step(_step) { };
 
     PROPERTY_RO(Step, pe::Step, step)
 };
@@ -290,14 +301,53 @@ typedef std::vector< RPBase * > OperationList;
 
 class FunCall : public ConstantOperation {
     OPERATION(0x017)
-    std::string name;
+    xsd::QName name;
     OperationList opList;
 public:
-    FunCall(std::string fname, const OperationList & _oplist)
+    FunCall(const xsd::QName & fname, const OperationList & _oplist)
       : ConstantOperation(&sopdesc), name(fname), opList(_oplist) {};
 
+    FunCall(const xsd::QName & fname, RPBase* _in)
+      : ConstantOperation(&sopdesc), name(fname) { opList.push_back(_in); };
+      
     PROPERTY_RO(Operations, const OperationList &, opList)
 };
+
+class Construct : public ListOperation {
+    OPERATION(0x018)
+    t_item type;
+    RPBase * name;
+public:
+    Construct(t_item _type, RPBase* _name, RPBase* list_)
+      : ListOperation(&sopdesc, list_), type(_type), name(_name) {};
+
+    PROPERTY_RO(Name, RPBase *, name)
+    PROPERTY_RO(Type, t_item, type)
+};
+
+class Sequence : public ConstantOperation {
+    OPERATION(0x019)
+public:
+    enum space_t {
+        none,
+        atomic_spaces,
+        all_spaces
+    };
+
+private:    
+    OperationList opList;
+    space_t spaces;
+public:
+    Sequence(const OperationList & _oplist)
+      : ConstantOperation(&sopdesc), opList(_oplist), spaces(none) {};
+
+    Sequence(RPBase* _in)
+      : ConstantOperation(&sopdesc), spaces(none) { opList.push_back(_in); };
+
+    PROPERTY_RO(Operations, const OperationList &, opList)
+    PROPERTY(Spaces, space_t, spaces)
+};
+
 
 /*
 class Let : public ListOperation {

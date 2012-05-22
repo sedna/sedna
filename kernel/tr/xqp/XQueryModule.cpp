@@ -300,7 +300,7 @@ namespace sedna
         *xqv = lr->getVariableInfo(name);
     }
 
-    PPQueryEssence *XQueryModule::getOPT(bool is_subquery)
+    rqp::RPBase * XQueryModule::getOPT(bool is_subquery)
     {
         U_ASSERT(module_uri == NULL);
 
@@ -317,16 +317,13 @@ namespace sedna
 
         l2p = new lr2opt(this->drv, this, dyn_cxt, is_subquery);
 
-//        ast->accept(*l2p);
+        ast->accept(*l2p);
 
-        delete ast;
-        ast = NULL;
-
-        qep = l2p->getResult();
+        rqp::RPBase * opt = l2p->getReducedPlan();
 
         delete l2p;
 
-        return qep;
+        return opt;
     }
     
     PPQueryEssence *XQueryModule::getQEP(bool is_subquery)
@@ -347,9 +344,6 @@ namespace sedna
         l2p = new lr2por(this->drv, this, dyn_cxt, is_subquery);
 
         ast->accept(*l2p);
-
-        delete ast;
-        ast = NULL;
 
         qep = l2p->getResult();
 

@@ -36,6 +36,8 @@ OPERATION_INFO(Select, orTupleCellList)
 
 OPERATION_INFO(ComparisonExpression, orTupleCellList)
 OPERATION_INFO(FunCall, orTupleCellList)
+OPERATION_INFO(Construct, orTupleCellList)
+OPERATION_INFO(Sequence, orTupleCellList)
 
 
 
@@ -50,9 +52,14 @@ XmlConstructor& RPBase::toXML(XmlConstructor& element) const
 
 XmlConstructor& BinaryOperation::__toXML(XmlConstructor& element) const
 {
-    leftList->toXML(element);
-    rightList->toXML(element);
-    
+    if (leftList != null_op) {
+        leftList->toXML(element);
+    }
+
+    if (rightList != null_op) {
+        rightList->toXML(element);
+    }
+
     return element;
 }
 
@@ -63,7 +70,9 @@ XmlConstructor& ConstantOperation::__toXML(XmlConstructor& element) const
 
 XmlConstructor& ListOperation::__toXML(XmlConstructor& element) const
 {
-    list->toXML(element);
+    if (list != null_op) {
+        list->toXML(element);
+    }
 
     return element;
 }
@@ -71,50 +80,73 @@ XmlConstructor& ListOperation::__toXML(XmlConstructor& element) const
 XmlConstructor& NestedOperation::__toXML(XmlConstructor& element) const
 {
     element.openElement(CDGQNAME("nested"));
-    subplan->toXML(element);
+    
+    if (subplan != null_op) {
+        subplan->toXML(element);
+    }
+
     element.closeElement();
 
     return rqp::ListOperation::__toXML(element);
 }
 
 
-XmlConstructor& ItemReduce::__toXML(XmlConstructor& element) const {
+XmlConstructor& ItemReduce::__toXML(XmlConstructor& element) const
+{
     element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
     return rqp::ListOperation::__toXML(element);
 };
 
-XmlConstructor& MapConcat::__toXML(XmlConstructor& element) const {
+XmlConstructor& MapConcat::__toXML(XmlConstructor& element) const
+{
     element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
     return rqp::NestedOperation::__toXML(element);
 };
 
-XmlConstructor& SequenceConcat::__toXML(XmlConstructor& element) const {
+XmlConstructor& SequenceConcat::__toXML(XmlConstructor& element) const
+{
     element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
     return rqp::NestedOperation::__toXML(element);
 };
 
-XmlConstructor& If::__toXML(XmlConstructor& element) const {
+XmlConstructor& If::__toXML(XmlConstructor& element) const
+{
     element.openElement(CDGQNAME("if"));
-    condition->toXML(element);
+
+    if (condition != null_op) {
+        condition->toXML(element);
+    }
+
     element.closeElement();
 
     element.openElement(CDGQNAME("then"));
-    thenBranch->toXML(element);
+    
+    if (thenBranch != null_op) {
+        thenBranch->toXML(element);
+    }
+    
     element.closeElement();
 
     element.openElement(CDGQNAME("else"));
-    elseBranch->toXML(element);
+    
+    if (elseBranch != null_op) {
+        elseBranch->toXML(element);
+    }
+
     element.closeElement();
 
     return element;
 };
 
-XmlConstructor& VarIn::__toXML(XmlConstructor& element) const {
+XmlConstructor& VarIn::__toXML(XmlConstructor& element) const
+{
     element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
+    element.addAttributeValue(CDGQNAME("name"), getContext()->getVarDef(tid)->__debugGetVarLabel() );
     return rqp::ConstantOperation::__toXML(element);
 };
 
-XmlConstructor& Const::__toXML(XmlConstructor& element) const {
+XmlConstructor& Const::__toXML(XmlConstructor& element) const
+{
     for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
         element.addElementValue(CDGQNAME("value"), *it);
     };
@@ -122,22 +154,64 @@ XmlConstructor& Const::__toXML(XmlConstructor& element) const {
     return rqp::ConstantOperation::__toXML(element);
 };
 
-XmlConstructor& XPathStep::__toXML(XmlConstructor& element) const {
+XmlConstructor& XPathStep::__toXML(XmlConstructor& element) const
+{
     element.addElementValue(CDGQNAME("step"), step.toXPathString());
     return rqp::ListOperation::__toXML(element);
 };
 
-XmlConstructor& Select::__toXML(XmlConstructor& element) const {
+XmlConstructor& Select::__toXML(XmlConstructor& element) const
+{
     return rqp::NestedOperation::__toXML(element);
 };
 
-XmlConstructor& ComparisonExpression::__toXML(XmlConstructor& element) const {
+XmlConstructor& ComparisonExpression::__toXML(XmlConstructor& element) const
+{
     element.addElementValue(CDGQNAME("cmp"), cmp.toLRString());
     return rqp::BinaryOperation::__toXML(element);
 };
 
-XmlConstructor& FunCall::__toXML(XmlConstructor& element) const {
-    element.addElementValue(CDGQNAME("fun"), name);
+XmlConstructor& FunCall::__toXML(XmlConstructor& element) const
+{
+    element.addElementValue(CDGQNAME("fun"), name.getColonizedName());
+
+    int i = 0;
+    for (OperationList::const_iterator it = opList.begin(); it != opList.end(); ++it) {
+        element.openElement(CDGQNAME("param"));
+        element.addAttributeValue(CDGQNAME("index"), tuple_cell::atomic_int(i++));
+        
+        if (*it != null_op) {
+            (*it)->toXML(element);
+        }
+
+        element.closeElement();
+    };
+    
+    return rqp::ConstantOperation::__toXML(element);
+};
+
+XmlConstructor& Construct::__toXML(XmlConstructor& element) const
+{
+    element.addElementValue(CDGQNAME("type"), type2string(type));
+
+    if (name != null_op) {
+        element.openElement(CDGQNAME("name"));
+        name->toXML(element);
+        element.closeElement();
+    }
+
+    return rqp::ListOperation::__toXML(element);
+};
+
+XmlConstructor& Sequence::__toXML(XmlConstructor& element) const
+{
+    int i = 0;
+    for (OperationList::const_iterator it = opList.begin(); it != opList.end(); ++it) {
+        if (*it != null_op) {
+            (*it)->toXML(element);
+        }
+    };
+
     return rqp::ConstantOperation::__toXML(element);
 };
 

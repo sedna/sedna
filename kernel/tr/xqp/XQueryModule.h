@@ -79,7 +79,7 @@ namespace sedna
 
         ASTNode* getTree();
 
-        PPQueryEssence *getOPT(bool is_subquery);
+        rqp::RPBase *getOPT(bool is_subquery);
         PPQueryEssence *getQEP(bool is_subquery);
 
         /*

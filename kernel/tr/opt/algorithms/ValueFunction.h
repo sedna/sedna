@@ -79,5 +79,4 @@ public:
     };
 };
 
-
 #endif /* _VALUE_FUNCTION_H_ */

@@ -81,29 +81,12 @@ void DocOrderMerge::reset()
     initialized = false;
 }
 
-void DocOrderMerge::setContext ( ExecutionContext* __context )
-{
-    phop::IOperator::setContext ( __context );
-
-    for (TupleList::const_iterator it = tin.begin(); it != tin.end(); ++it) {
-        (*it)->setContext(__context);
-    };
-}
-
-
 TupleSort::TupleSort( unsigned int _size, MappedTupleIn _in, ICollationTupleSerializer* _order)
     : UnaryTupleOperator(OPINFO_REF, _size, _in),
         initialized(false), order(_order), _sorted_sequence(NULL)
 {
 
 }
-
-void TupleSort::setContext ( ExecutionContext* __context )
-{
-    phop::UnaryTupleOperator::setContext ( __context );
-    order->setCollationHandler(__context->collation);
-}
-
 
 TupleSort::~TupleSort()
 {
@@ -137,6 +120,7 @@ void TupleSort::do_next()
 void TupleSort::reset()
 {
     phop::UnaryTupleOperator::reset();
+    order->setCollationHandler(block->context->collation);
     initialized = false;
 }
 
@@ -242,6 +226,7 @@ void TupleJoinFilter::reset()
     phop::BinaryTupleOperator::reset();
 
     initialized = false;
+    tcc.handler = block->context->collation;
 
     left_seq->clear();
     right_seq->clear();
@@ -250,20 +235,20 @@ void TupleJoinFilter::reset()
     initial_left_seq_pos = 0;
     right_seq_pos = 0;
     initial_right_seq_pos = 0;
-
+    
     step_state = step_both;
-}
-
-void TupleJoinFilter::setContext ( ExecutionContext* __context )
-{
-    phop::BinaryTupleOperator::setContext ( __context );
-    tcc.handler = __context->collation;
 }
 
 
 TuplePredicateFilter::TuplePredicateFilter(const phop::MappedTupleIn& _in, const ValueFunction& _vcc)
     : UnaryTupleOperator(OPINFO_REF, _in.tmap.size(), _in), vcc(_vcc)
 {
+}
+
+void TuplePredicateFilter::reset()
+{
+    phop::UnaryTupleOperator::reset();
+    vcc.handler = block->context->collation;
 }
 
 void TuplePredicateFilter::do_next()
@@ -282,13 +267,6 @@ void TuplePredicateFilter::do_next()
         };
     } while (!in.eos());
 }
-
-void TuplePredicateFilter::setContext ( ExecutionContext* __context )
-{
-    phop::UnaryTupleOperator::setContext ( __context );
-    vcc.handler = __context->collation;
-}
-
 
 XmlConstructor & TupleJoinFilter::__toXML(XmlConstructor & producer) const
 {

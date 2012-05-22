@@ -436,6 +436,10 @@ namespace sedna
     {
         PPQueryEssence *res = (mods[ind])->getQEP(is_subquery);
 
+        if (!tr_globals::first_transaction) {
+            res->optimizedPlan = (mods[ind])->getOPT(is_subquery);
+        }
+
         // some errors might have happened
         if (gotErrors())
         {

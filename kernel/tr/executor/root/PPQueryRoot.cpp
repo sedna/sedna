@@ -12,6 +12,8 @@
 #include "tr/crmutils/serialization.h"
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"
+#include "tr/opt/algebra/IndependentPlan.h"
+#include "tr/models/XmlConstructor.h"
 
 PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
                          PPOpIn _child_) :       PPQueryEssence("PPQueryRoot"),
@@ -84,6 +86,36 @@ bool PPQueryRoot::next()
 bool PPQueryRoot::do_next()
 {
     if (first) {
+        first = false;
+
+        tr_globals::create_serializer(tr_globals::client->get_result_type());
+        tr_globals::client->begin_item(false, xs_untyped, element, "");
+
+        GlobalSerializationOptions * options = cxt->get_static_context()->get_serialization_options();
+
+        if (tr_globals::client->supports_serialization()) {
+            options->indent = false;
+            options->separateTuples = false;
+        } else if (!first && options->indent) {
+            (* tr_globals::client->get_se_ostream()) << "\n"; // separate tuples!
+            // This is needed for backward compatibility with old ( < 4 ) versions of protocol
+        }
+
+        tr_globals::serializer->prepare(tr_globals::client->get_se_ostream(), options);
+
+        XmlConstructor xmlConstructor(VirtualRootConstructor(0));
+        data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
+        tr_globals::serializer->serialize(data);
+
+    //    data.cells[0].set_eos();
+        while (!cxt->tmp_sequence.empty()) { delete cxt->tmp_sequence.top(); cxt->tmp_sequence.pop(); }
+
+        return true;
+    } else {
+        return false;
+    };
+
+    if (first) {
         tr_globals::create_serializer(tr_globals::client->get_result_type());
     }
 
@@ -143,11 +175,12 @@ bool PPQueryRoot::do_next()
     }
 
     tr_globals::serializer->prepare(tr_globals::client->get_se_ostream(), options);
+
+    XmlConstructor xmlConstructor(VirtualRootConstructor(0));
+    data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
     tr_globals::serializer->serialize(data);
 
-    if (first) {
-        first = false;
-    }
+    first = false;
 
     return true;
 }

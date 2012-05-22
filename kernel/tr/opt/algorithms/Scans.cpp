@@ -19,9 +19,9 @@ OPINFO_DEF(BogusConstSequence)
 OPINFO_DEF(CachedNestedLoop)
 OPINFO_DEF(NestedEvaluation)
 
-SchemaScan::SchemaScan(schema_node_cptr _snode)
-    : IValueOperator(OPINFO_REF),
-        _cachePtr(_cache.begin()), snode(_snode), currentBlock(XNULL)
+SchemaScan::SchemaScan(schema_node_cptr _snode, unsigned int size, unsigned int idx)
+    : ITupleOperator(OPINFO_REF, size),
+        _cachePtr(_cache.begin()), _idx(idx), snode(_snode), currentBlock(XNULL)
 {
 
 }
@@ -57,13 +57,16 @@ void SchemaScan::scan()
 
 void SchemaScan::do_next()
 {
-    if (_cache.empty() || _cachePtr == _cache.end()) {
-        scan();
-    }
+    do {
+        if (_cache.empty() || _cachePtr == _cache.end()) {
+            scan();
+        } else {
+            value().cells[_idx] = tuple_cell::node(*(_cachePtr++));
+            return;
+        }
+    } while (_cachePtr != _cache.end());
 
-    while (_cachePtr != _cache.end()) {
-        push(tuple_cell::node(*(_cachePtr++)));
-    }
+    seteos();
 }
 
 SchemaValueScan::SchemaValueScan(
@@ -115,29 +118,29 @@ void SchemaValueScan::reset()
 {
     phop::ITupleOperator::reset();
     currentNode = XNULL;
+    tcmpop.handler = block->context->collation;
 }
 
-void SchemaValueScan::setContext ( ExecutionContext* __context )
-{
-    phop::IOperator::setContext ( __context );
-    tcmpop.handler = __context->collation;
-}
-
-
-
-BogusConstSequence::BogusConstSequence(MemoryTupleSequencePtr _sequence)
-  : IValueOperator(OPINFO_REF), sequence(_sequence)
+BogusConstSequence::BogusConstSequence(MemoryTupleSequencePtr _sequence, unsigned _size, unsigned _resultIdx)
+  : ITupleOperator(OPINFO_REF, _size), sequence(_sequence), resultIdx(_resultIdx), idx(0)
 {
   
 }
 
+void BogusConstSequence::reset()
+{
+    phop::ITupleOperator::reset();
+    idx = 0;
+}
+
+
 void BogusConstSequence::do_next()
 {
-    for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
-        push(*it);
-    };
-
-    push(tuple_cell());
+    if (idx < sequence->size()) {
+        value().cells[resultIdx] = sequence->at(idx++);
+    } else {
+        seteos();
+    }
 }
 
 CachedNestedLoop::CachedNestedLoop(unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right, const TupleCellComparison & _tcmpop, CachedNestedLoop::flags_t _flags)
@@ -201,18 +204,13 @@ void CachedNestedLoop::reset()
     BinaryTupleOperator::reset();
     cacheFilled = false;
     nestedIdx = nestedSequenceCache.size();
+    tcmpop.handler = block->context->collation;
 }
-
-void CachedNestedLoop::setContext ( ExecutionContext* __context )
-{
-    phop::BinaryTupleOperator::setContext ( __context );
-    tcmpop.handler = __context->collation;
-}
-
 
 NestedEvaluation::NestedEvaluation(const phop::TupleIn& _in, IValueOperator* _op, unsigned int _size, unsigned int _resultIdx)
   : ITupleOperator(OPINFO_REF, _size), in(_in), nestedOperator(_op), resultIdx(_resultIdx)
 {
+    nestedOperatorIdx = block->operatorMap.at(_op);
 }
 
 void NestedEvaluation::do_next()
@@ -231,13 +229,8 @@ void NestedEvaluation::do_next()
 void NestedEvaluation::reset()
 {
     phop::ITupleOperator::reset();
+    nestedOperator = dynamic_cast<IValueOperator *>(block->body.at(nestedOperatorIdx));
     nestedOperator->reset();
-}
-
-void NestedEvaluation::setContext(ExecutionContext* __context)
-{
-    phop::IOperator::setContext(__context);
-    nestedOperator->setContext(__context);
 }
 
 #include <sstream>
