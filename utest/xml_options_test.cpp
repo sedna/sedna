@@ -6,15 +6,15 @@
 
 
 static const char * normalOptions =
-  "<sednaOptions><global><dataDirectory>/var/sedna</dataDirectory><listenPort>5050</listenPort><bindAddress>0.0.0.0</bindAddress><osObjectsOffset>1024</osObjectsOffset><logLevel>2</logLevel></global>"
+  "<sednaOptions><global><dataDirectory>/var/sedna</dataDirectory><listenPort>5050</listenPort><bindAddress>0.0.0.0</bindAddress><osObjectsOffset>1024</osObjectsOffset><logLevel>2</logLevel><stackDepth>4000</stackDepth><keepAlive>0</keepAlive></global>"
   "<databaseDefaults><bufferCount>1600</bufferCount><maxLogFiles>20</maxLogFiles><updateCriteria>0.9</updateCriteria><securityOptions>0</securityOptions><dataFileSize><initial><![CDATA[104857600]]></initial><max><![CDATA[1048576000]]></max><extension><![CDATA[104857600]]></extension></dataFileSize><tmpFileSize><initial><![CDATA[104857600]]></initial><max><![CDATA[1048576000]]></max><extension><![CDATA[104857600]]></extension></tmpFileSize><sessionOptions><executionStackDepth><![CDATA[54]]></executionStackDepth><queryTimeout><![CDATA[65535]]></queryTimeout></sessionOptions></databaseDefaults></sednaOptions>";
 
 static const char * errorOptions1 =
-  "<sednaOptions><global><dataDirectory>/var/sedna</dataDirectory><listenPort>50gf50</listenPort><bindAddress>0.0.0.0</bindAddress><osObjectsOffset>1024</osObjectsOffset><logLevel>UNKNOWN</logLevel></global>"
+  "<sednaOptions><global><dataDirectory>/var/sedna</dataDirectory><listenPort>50gf50</listenPort><bindAddress>0.0.0.0</bindAddress><osObjectsOffset>1024</osObjectsOffset><logLevel>UNKNOWN</logLevel><stackDepth>4000</stackDepth><keepAlive>0</keepAlive></global>"
   "<databaseDefaults><bufferCount>1600</bufferCount><maxLogFiles>20</maxLogFiles><updateCriteria>0.9</updateCriteria><securityOptions>0</securityOptions><dataFileSize><initial><![CDATA[104857600]]></initial><max><![CDATA[1048576000]]></max><extension><![CDATA[104857600]]></extension></dataFileSize><tmpFileSize><initial><![CDATA[104857600]]></initial><max><![CDATA[1048576000]]></max><extension><![CDATA[104857600]]></extension></tmpFileSize><sessionOptions><executionStackDepth><![CDATA[54]]></executionStackDepth><queryTimeout><![CDATA[65535]]></queryTimeout></sessionOptions></databaseDefaults></sednaOptions>";
 
 static const char * errorOptions2 =
-  "<sednaOptions><global><dataDirectory2>/var/sedna</dataDirectory2><listenPort>50gf50</listenPort><bindAddress>0.0.0.0</bindAddress><osObjectsOffset>1024</osObjectsOffset><logLevel>UNKNOWN</logLevel></global>"
+  "<sednaOptions><global><dataDirectory2>/var/sedna</dataDirectory2><listenPort>50gf50</listenPort><bindAddress>0.0.0.0</bindAddress><osObjectsOffset>1024</osObjectsOffset><logLevel>UNKNOWN</logLevel><stackDepth>4000</stackDepth><keepAlive>0</keepAlive></global>"
   "<databaseDefaults><bufferCount>1600</bufferCount><maxLogFiles>20</maxLogFiles><updateCriteria>0.9</updateCriteria><securityOptions>0</securityOptions><dataFileSize><initial><![CDATA[104857600]]></initial><max><![CDATA[1048576000]]></max><extension><![CDATA[104857600]]></extension></dataFileSize><tmpFileSize><initial><![CDATA[104857600]]></initial><max><![CDATA[1048576000]]></max><extension><![CDATA[104857600]]></extension></tmpFileSize><sessionOptions><executionStackDepth><![CDATA[54]]></executionStackDepth><queryTimeout><![CDATA[65535]]></queryTimeout></sessionOptions></databaseDefaults></sednaOptions>";
   
 /*
@@ -55,6 +55,8 @@ void setDefaultSednaOptions(SednaOptions * sednaOptions)
     sednaOptions->listenPort = 5050;
     sednaOptions->logLevel = 2;
     sednaOptions->osObjectsOffset = 1024;
+    sednaOptions->stackDepth = 4000;
+    sednaOptions->keepAlive = 0;
 };
 
 int main() {
