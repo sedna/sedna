@@ -19,26 +19,24 @@ struct DataGraph {
 
     DataGraphMaster * owner;
 
-    PredicateList predicates;
-    DataNodeList dataNodes;
+    Predicate * predicates[MAX_GRAPH_SIZE];
+    DataNode * dataNodes[MAX_GRAPH_SIZE];
 
     PlanDesc allPredicates;
+    PlanDesc freePositions;
+
+    PlanDesc getNeighbours(PlanDesc x);
 
     void updateIndex();
     void precompile();
 
     DataNodeList outputNodes;
-    //    DataNodeList groupByNodes;
-    //    DataNodeList orderByNodes;
-    //    DataNodeList contextNodes;
 
-    VariableMap varMap;
+//    VariableMap varMap;
 
     DataGraph(DataGraphMaster * _owner);
 
     bool replaceNode(DataNode * what, DataNode * with_what);
-
-    PlanDesc getNeighbours(PlanDesc x);
 
     std::string toLRString() const;
     XmlConstructor & toXML(XmlConstructor & producer) const;
@@ -81,6 +79,9 @@ struct Predicate {
 
     DataNodeList dataNodeList;
 
+    bool createContext;
+    TupleId contextTuple;
+
     virtual void * compile(PhysicalModel * model) = 0;
 
     virtual bool replacable(DataNode * n1, DataNode * n2);
@@ -97,6 +98,24 @@ struct BinaryPredicate : public Predicate {
     DataNode * right() const { return dataNodeList[1]; };
 };
 
+/*
+ * Predicate is used for test and switch expressions
+ * Returns a constant boolean value (the result of comparison)
+ */
+
+struct PhantomPredicate : public Predicate {
+    DataNode * goalNode;
+    tuple_cell value;
+
+    virtual void * compile(PhysicalModel * model);
+
+    virtual std::string toLRString() const;
+    virtual XmlConstructor & toXML(XmlConstructor & ) const;
+};
+
+/*
+ * Predicate for value operations
+ */
 struct VPredicate : public BinaryPredicate {
     Comparison cmp;
 
@@ -106,25 +125,9 @@ struct VPredicate : public BinaryPredicate {
     virtual XmlConstructor & toXML(XmlConstructor & ) const;
 };
 
-/* TODO:
-
-struct ValuedExpression : public BinaryPredicate {
-};
-
-struct LongIndexCandidate : public BinaryPredicate {
-};
-*/
-
 /*
-struct GPredicate : public BinaryPredicate {
-    virtual void * compile(PhysicalModel * model);
-};
-
-struct NPredicate : public BinaryPredicate {
-    virtual void * compile(PhysicalModel * model);
-};
-*/
-
+ * Predicate for structural operations
+ */
 struct SPredicate : public BinaryPredicate {
     bool disposable;
 
@@ -146,30 +149,42 @@ typedef std::vector<tuple_cell> MemoryTupleSequence;
 typedef counted_ptr< std::vector<tuple_cell> > MemoryTupleSequencePtr;
 
 struct DataNode {
-    counted_ptr<std::string> varName;
-
-    int absoluteIndex;
-
-    TupleId varIndex;
-    PlanDesc indexBit;
-    int index;
-
-    bool output, grouping, ordered;
-
-    PlanDesc predicates;
-
     enum data_node_type_t {
-        dnConst, dnExternal, dnDatabase, dnFreeNode
+        dnConst, dnExternal, dnDatabase, dnFreeNode, dnAlias
     } type;
 
+    // Global index in master graph
+    TupleId varIndex;
+    
+    // Index in graph and shifted index in graph
+    int index;
+    PlanDesc indexBit;
+
+    // Is node output in parent graph 
+    bool output;
+    
+    // Node index used while building execution schema
+    int absoluteIndex;
+
+    // Connected predicates
+    PlanDesc predicates;
+
+    // Data root information and path information
     DataRoot root;
     pe::Path path;
-    DataNode * source;
 
+    // Value of constant node
+    MemoryTupleSequencePtr sequence;
+    
+    // ???
+    DataNode * source; 
+
+    // Variable node came from
+    counted_ptr<std::string> varName;
+
+    // Used in compilation
     // FIXME: Uninitialized!
     SPredicate * producedFrom;
-
-    MemoryTupleSequencePtr sequence; // Actually, we assume, that this is the ONLY pointer to this array
 
     std::string getName() const;
     std::string toLRString() const;
@@ -177,5 +192,7 @@ struct DataNode {
 };
 
 };
+
+#define FOR_ALL_GRAPH_ELEMENTS(EL, IV) for (unsigned IV = 0; IV < MAX_GRAPH_SIZE; ++IV) if ((EL)[IV] != NULL) \
 
 #endif /* _PREDICATES_H */

@@ -188,6 +188,13 @@ bool isConst(const TupleRef &x) { return AVAILABLE(x) && x->node->type == DataNo
 inline static
 bool isPath(const TupleRef &x) { return AVAILABLE(x) && x->node->type == DataNode::dnDatabase; };
 
+void* PhysicalModel::compile(PhantomPredicate* pred)
+{
+    U_ASSERT(false);
+    return NULL;
+}
+
+
 void* PhysicalModel::compile(VPredicate* pred)
 {
     POProtIn leftOp = materialize(plan->getRef(pred->left()->absoluteIndex));

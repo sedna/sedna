@@ -22,13 +22,12 @@ static const opt::TupleId nullTuple = 0;
 static const opt::TupleId invalidTupleId = -1;
 static const opt::TupleId worldDataTupleId = 1;
 
-enum operation_result_type_t {
-    orTuple, orTupleCell, orTupleList, orTupleCellList
-};
-
-struct TupleVarDescriptor : opt::IPlanDisposable {
-    xmlscm_type t;
-    std::string name;
+enum operation_flags_t {
+    ofNone = 0,
+    oReturnTuple = 0x001,
+    oReturnList = 0x002,
+    oBlockBuilder = 0x004,
+    oBlockSpecial = 0x008,
 };
 
 struct TupleDefinition {
@@ -36,11 +35,11 @@ struct TupleDefinition {
     std::string name;
     xmlscm_type type;
 
-    TupleDefinition(opt::TupleId atid, const TupleVarDescriptor * desc) : tid(atid), name(desc->name) { type = desc->t; };
+    TupleDefinition(opt::TupleId atid, const std::string & aname) : tid(atid), name(aname), type(xs_anyType) {};
     TupleDefinition(opt::TupleId atid, const xmlscm_type at) : tid(atid), type(at) {};
     TupleDefinition(opt::TupleId atid, const std::string & aname, const xmlscm_type at) : tid(atid), name(aname), type(at) {};
 
-    std::string __debugGetVarLabel() const
+    std::string getVarLabel() const
     {
         std::stringstream s;
 

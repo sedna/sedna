@@ -29,12 +29,12 @@ class lr2opt : public lr2por
     
     struct ResultInfo {
         rqp::RPBase * op;
-        opt::TupleId contextItem;
         int opid;
-        rqp::TupleVarDescriptor * varDesc;
+        std::string variableName;
+        opt::TupleId variableId;
 
         explicit ResultInfo(rqp::RPBase * _op)
-          : op(_op), contextItem(0), opid(0), varDesc(NULL) { };
+          : op(_op), opid(0), variableId(0) { };
     };
 
     struct StepInfo {
@@ -46,6 +46,7 @@ class lr2opt : public lr2por
     std::stack<ResultInfo> resultStack;
     std::stack<StepInfo> stepStack;
 
+    opt::TupleId contextVariable;
     StaticallyKnownNamespaces * skn;
   public:
     lr2opt(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_, dynamic_context *dyn_cxt_, bool is_subquery_)

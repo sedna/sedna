@@ -55,6 +55,7 @@ class DataGraphMaster {
 
     DataNode * createFreeNode(DataGraph * dg);
     DataNode * createConstNode(DataGraph * dg, const tuple_cell & tc);
+    DataNode * createConstNode(DataGraph * dg);
     DataNode * createRootNode(DataGraph * dg, const DataRoot & root, const pe::Path & _path);
 
     DataGraph * createPath(DataGraph* dg, TupleId left, TupleId right, const pe::Path& _path, bool outer = false);

@@ -11,6 +11,8 @@ namespace pe {
     class Path;
 };
 
+#define MAX_GRAPH_SIZE 63
+
 namespace opt {
 
 typedef uint64_t PlanDesc;

@@ -13,8 +13,8 @@ const opt::TupleScheme empty_tuple_set;
 
 #define ABSTRACT_OPERATION_INFO(C)
 
-#define OPERATION_INFO(C, result_type) \
-const opdesc_t C::sopdesc = {#C, C::opid, result_type}; \
+#define OPERATION_INFO(C, TT) \
+const opdesc_t C::sopdesc = {#C, C::opid, TT}; \
 
 //void C::__init() { opdesc = &C::sopdesc; };
 
@@ -24,26 +24,27 @@ ABSTRACT_OPERATION_INFO(BinaryOperation)
 ABSTRACT_OPERATION_INFO(NestedOperation)
 
 
-OPERATION_INFO(ItemReduce, orTupleCellList)
-OPERATION_INFO(MapConcat, orTupleList)
-OPERATION_INFO(SequenceConcat, orTupleList)
-OPERATION_INFO(If, orTupleList)
+OPERATION_INFO(ItemReduce, rqp::ofNone)
+OPERATION_INFO(MapConcat, rqp::oReturnTuple)
+OPERATION_INFO(SequenceConcat, rqp::oReturnTuple)
+OPERATION_INFO(If, rqp::oReturnTuple)
 
-OPERATION_INFO(VarIn, orTupleCellList)
-OPERATION_INFO(Const, orTupleCellList)
-OPERATION_INFO(XPathStep, orTupleCellList)
-OPERATION_INFO(Select, orTupleCellList)
+OPERATION_INFO(VarIn, rqp::oBlockBuilder)
+OPERATION_INFO(Const, rqp::oBlockBuilder)
+OPERATION_INFO(XPathStep, rqp::oBlockBuilder)
+OPERATION_INFO(Select, rqp::oBlockBuilder)
 
-OPERATION_INFO(ComparisonExpression, orTupleCellList)
-OPERATION_INFO(FunCall, orTupleCellList)
-OPERATION_INFO(Construct, orTupleCellList)
-OPERATION_INFO(Sequence, orTupleCellList)
+OPERATION_INFO(ComparisonExpression, rqp::oBlockBuilder)
+OPERATION_INFO(FunCall, rqp::oBlockSpecial)
+OPERATION_INFO(Construct, rqp::ofNone)
+OPERATION_INFO(Sequence, rqp::oBlockSpecial)
 
-
+OPERATION_INFO(DataGraphOperation, rqp::oBlockSpecial)
 
 XmlConstructor& RPBase::toXML(XmlConstructor& element) const
 {
     element.openElement(CDGQNAME(info()->opname));
+    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(opuid));
     __toXML(element);
     element.closeElement();
 
@@ -94,24 +95,27 @@ XmlConstructor& NestedOperation::__toXML(XmlConstructor& element) const
 XmlConstructor& ItemReduce::__toXML(XmlConstructor& element) const
 {
     element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
+    element.addAttributeValue(CDGQNAME("name"), getContext()->getVarDef(tid)->getVarLabel() );
     return rqp::ListOperation::__toXML(element);
 };
 
 XmlConstructor& MapConcat::__toXML(XmlConstructor& element) const
 {
     element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
+    element.addAttributeValue(CDGQNAME("name"), getContext()->getVarDef(tid)->getVarLabel() );
     return rqp::NestedOperation::__toXML(element);
 };
 
 XmlConstructor& SequenceConcat::__toXML(XmlConstructor& element) const
 {
     element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
+    element.addAttributeValue(CDGQNAME("name"), getContext()->getVarDef(tid)->getVarLabel() );
     return rqp::NestedOperation::__toXML(element);
 };
 
 XmlConstructor& If::__toXML(XmlConstructor& element) const
 {
-    element.openElement(CDGQNAME("if"));
+    element.openElement(CDGQNAME("condition"));
 
     if (condition != null_op) {
         condition->toXML(element);
@@ -141,7 +145,7 @@ XmlConstructor& If::__toXML(XmlConstructor& element) const
 XmlConstructor& VarIn::__toXML(XmlConstructor& element) const
 {
     element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
-    element.addAttributeValue(CDGQNAME("name"), getContext()->getVarDef(tid)->__debugGetVarLabel() );
+    element.addAttributeValue(CDGQNAME("name"), getContext()->getVarDef(tid)->getVarLabel() );
     return rqp::ConstantOperation::__toXML(element);
 };
 
@@ -171,6 +175,12 @@ XmlConstructor& ComparisonExpression::__toXML(XmlConstructor& element) const
     return rqp::BinaryOperation::__toXML(element);
 };
 
+XmlConstructor& ManyChildren::__toXML(XmlConstructor& element) const
+{
+    return element;
+}
+
+
 XmlConstructor& FunCall::__toXML(XmlConstructor& element) const
 {
     element.addElementValue(CDGQNAME("fun"), name.getColonizedName());
@@ -187,7 +197,7 @@ XmlConstructor& FunCall::__toXML(XmlConstructor& element) const
         element.closeElement();
     };
     
-    return rqp::ConstantOperation::__toXML(element);
+    return rqp::ManyChildren::__toXML(element);
 };
 
 XmlConstructor& Construct::__toXML(XmlConstructor& element) const
@@ -205,15 +215,72 @@ XmlConstructor& Construct::__toXML(XmlConstructor& element) const
 
 XmlConstructor& Sequence::__toXML(XmlConstructor& element) const
 {
-    int i = 0;
     for (OperationList::const_iterator it = opList.begin(); it != opList.end(); ++it) {
         if (*it != null_op) {
             (*it)->toXML(element);
         }
     };
 
-    return rqp::ConstantOperation::__toXML(element);
+    return rqp::ManyChildren::__toXML(element);
 };
+
+XmlConstructor& DataGraphOperation::__toXML(XmlConstructor& element) const
+{
+    element.openElement(CDGQNAME("graph"));
+    func->toXML(element);
+    element.closeElement();
+
+    element.openElement(CDGQNAME("suboperations"));
+    for (OperationList::const_iterator it = opList.begin(); it != opList.end(); ++it) {
+        if (*it != null_op) {
+            (*it)->toXML(element);
+        }
+    };
+    element.closeElement();
+
+    return rqp::ManyChildren::__toXML(element);
+};
+
+
+void ConstantOperation::getChildren(OperationList& children) const
+{
+}
+
+void BinaryOperation::getChildren(OperationList& children) const
+{
+    children.push_back(leftList);
+    children.push_back(rightList);
+}
+
+void Construct::getChildren(OperationList& children) const
+{
+    children.push_back(name);
+    rqp::ListOperation::getChildren(children);
+}
+
+void If::getChildren(OperationList& children) const
+{
+    children.push_back(condition);
+    children.push_back(thenBranch);
+    children.push_back(elseBranch);
+}
+
+void ListOperation::getChildren(OperationList& children) const
+{
+    children.push_back(list);
+}
+
+void ManyChildren::getChildren(OperationList& _children) const
+{
+    _children.insert(_children.end(), opList.begin(), opList.end());
+}
+
+void NestedOperation::getChildren(OperationList& children) const
+{
+    children.push_back(subplan);
+    rqp::ListOperation::getChildren(children);
+}
+
 
 
 
@@ -221,12 +288,24 @@ PlanContext::PlanContext() : lastScopeMarker(0), currentTupleId(worldDataTupleId
 {
     TupleDefinition td(worldDataTupleId, "WorldData", xs_anyType);
     greatTupleScheme.insert(GreatMapRecord(td.tid, td));
+    dataGraphFactory = new DataGraphMaster();
 }
 
 
 PlanContext::~PlanContext()
 {
-    //
+    delete dataGraphFactory;
+}
+
+void PlanContext::replaceOperation(RPBase* a, RPBase* b)
+{
+    LinkMap::iterator i = linkmap.find(a);
+    U_ASSERT(i != linkmap.end());
+    
+    RPBase ** aptr = i->second;
+    linkmap.erase(i);
+    *aptr = b;
+    linkmap.insert(LinkMap::value_type(b, aptr));
 }
 
 void PlanContext::newScope() {
@@ -263,9 +342,9 @@ TupleId PlanContext::generateTupleId()
     return td.tid;
 }
 
-TupleId PlanContext::generateTupleIdVarScoped(TupleVarDescriptor* var)
+TupleId PlanContext::generateTupleIdVarScoped(const std::string & varName)
 {
-    TupleDefinition td(++currentTupleId, var);
+    TupleDefinition td(++currentTupleId, varName);
     
     greatTupleScheme.insert(GreatMapRecord(td.tid, td));
     scope.insert(VarMapRecord(td.name, td.tid));

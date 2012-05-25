@@ -8,8 +8,10 @@
 
 using namespace opt;
 
-DataGraph::DataGraph(DataGraphMaster* _owner) : lastIndex(1), owner(_owner), predicates(64, NULL), dataNodes(64, NULL)
+DataGraph::DataGraph(DataGraphMaster* _owner) : lastIndex(1), owner(_owner)
 {
+    memset(predicates, 0, sizeof(predicates));
+    memset(dataNodes, 0, sizeof(dataNodes));
 }
 
 Comparison::Comparison(const scheme_list* lst) : op(invalid)
@@ -52,7 +54,7 @@ PlanDesc DataGraph::getNeighbours(PlanDesc x)
 
     int i;
     while (-1 != (i = iter.next())) {
-        result |= predicates.at(i)->neighbours;
+        result |= predicates[i]->neighbours;
     }
 
     return (result & ~x);
@@ -64,42 +66,38 @@ void DataGraph::updateIndex()
     allPredicates = 0;
 
     outputNodes.clear();
-    
-    for (DataNodeList::iterator d = dataNodes.begin(); d != dataNodes.end(); ++d) {
-        DataNode * dd = *d;
-        if (dd != NULL) {
-            dd->predicates = 0;
-            dd->absoluteIndex = nodeIndex++;
 
-            if (dd->output) {
-                outputNodes.push_back(dd);
-            };
-        }
+    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
+        DataNode * dd = dataNodes[i];
+
+        dd->predicates = 0;
+        dd->absoluteIndex = nodeIndex++;
+
+        if (dd->output) {
+            outputNodes.push_back(dd);
+        };
     };
 
     nodeCount = nodeIndex;
 
-    for (PredicateList::iterator p = predicates.begin(); p != predicates.end(); ++p) {
-        Predicate * pp = *p;
-        if (pp != NULL) {
-            pp->dataNodeMask = 0;
-            allPredicates |= (*p)->indexBit;
+    FOR_ALL_GRAPH_ELEMENTS(predicates, i) {
+        Predicate * pp = predicates[i];
+        
+        pp->dataNodeMask = 0;
+        allPredicates |= pp->indexBit;
 
-            for (DataNodeList::iterator d = pp->dataNodeList.begin(); d != pp->dataNodeList.end(); ++d) {
-                pp->dataNodeMask |= (*d)->indexBit;
-                (*d)->predicates |= pp->indexBit;
-            }
+        for (DataNodeList::iterator d = pp->dataNodeList.begin(); d != pp->dataNodeList.end(); ++d) {
+            pp->dataNodeMask |= (*d)->indexBit;
+            (*d)->predicates |= pp->indexBit;
         }
     }
 
-    for (PredicateList::iterator p = predicates.begin(); p != predicates.end(); ++p) {
-        Predicate * pp = *p;
-        if (pp != NULL) {
-            pp->neighbours = 0;
+    FOR_ALL_GRAPH_ELEMENTS(predicates, i) {
+        Predicate * pp = predicates[i];
+        pp->neighbours = 0;
 
-            for (DataNodeList::iterator d = pp->dataNodeList.begin(); d != pp->dataNodeList.end(); ++d) {
-                pp->neighbours |= (*d)->predicates;
-            }
+        for (DataNodeList::iterator d = pp->dataNodeList.begin(); d != pp->dataNodeList.end(); ++d) {
+            pp->neighbours |= (*d)->predicates;
         }
     }
 }
@@ -122,7 +120,7 @@ bool DataGraph::replaceNode(DataNode* n1, DataNode* n2)
 
     TempPredicateSet /* sourceOnlySet, intersection, */ allSet;
 
-    if (n1->output || n1->ordered || n1->grouping) {
+    if (n1->output) {
         return false;
     };
 
@@ -130,9 +128,9 @@ bool DataGraph::replaceNode(DataNode* n1, DataNode* n2)
 
     PlanDescIterator it(n1->predicates);
     while (-1 != (i = it.next())) {
-        U_ASSERT(this->predicates.at(i) != NULL);
+        U_ASSERT(this->predicates[i] != NULL);
 
-        Predicate * p = this->predicates.at(i);
+        Predicate * p = this->predicates[i];
 
 /*
         if ((p->dataNodes & n1->indexBit) > 0) {
@@ -195,10 +193,12 @@ void DataGraph::precompile()
 
     updateIndex();
 
+    // TODO : replace same nodes;
+
 // Replace document order comparisons with path expressions
     
-    for (PredicateList::iterator p = predicates.begin(); p != predicates.end(); ++p) {
-        VPredicate * pred = dynamic_cast<VPredicate*>(*p);
+    FOR_ALL_GRAPH_ELEMENTS(predicates, i) {
+        VPredicate * pred = dynamic_cast<VPredicate*>(predicates[i]);
 
         if (pred != NULL && (pred->cmp.op == Comparison::do_after || pred->cmp.op == Comparison::do_before)) {
             pe::Step step;
@@ -220,9 +220,9 @@ void DataGraph::precompile()
 
 // Find all root vertices
 
-    for (DataNodeList::iterator d = dataNodes.begin(); d != dataNodes.end(); ++d) {
-        if (*d != NULL && (*d)->type == DataNode::dnDatabase) {
-            frontList->push_back(*d);
+    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
+        if (dataNodes[i]->type == DataNode::dnDatabase) {
+            frontList->push_back(dataNodes[i]);
         };
     };
 
@@ -237,7 +237,7 @@ void DataGraph::precompile()
             int i;
 
             while (-1 != (i = it.next())) {
-                SPredicate * pred = dynamic_cast<SPredicate*>(this->predicates.at(i));
+                SPredicate * pred = dynamic_cast<SPredicate*>(predicates[i]);
 
                 // TODO : not every path can be concatinated, some should be broken
                 if (NULL != pred && pred->left() == dn &&
@@ -299,18 +299,17 @@ std::string DataGraph::toLRString() const
     stream << "(datagraph ";
 
     stream << "(";
-    for (DataNodeList::const_iterator i = dataNodes.begin(); i != dataNodes.end(); ++i) {
-        if (*i != NULL) {
-            stream << (*i)->toLRString();
-        }
+
+    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
+        stream << dataNodes[i]->toLRString();
     };
+
     stream << ")";
 
     stream << "(";
-    for (PredicateList::const_iterator i = predicates.begin(); i != predicates.end(); ++i) {
-        if (*i != NULL) {
-            stream << (*i)->toLRString();
-        }
+
+    FOR_ALL_GRAPH_ELEMENTS(predicates, i) {
+        stream << predicates[i]->toLRString();
     };
     stream << ")";
 
@@ -322,16 +321,12 @@ XmlConstructor & DataGraph::toXML(XmlConstructor & producer) const
 {
     producer.openElement(CDGQNAME("datagraph"));
 
-    for (DataNodeList::const_iterator i = dataNodes.begin(); i != dataNodes.end(); ++i) {
-        if (*i != NULL) {
-            (*i)->toXML(producer);
-        }
+    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
+        dataNodes[i]->toXML(producer);
     };
 
-    for (PredicateList::const_iterator i = predicates.begin(); i != predicates.end(); ++i) {
-        if (*i != NULL) {
-            (*i)->toXML(producer);
-        }
+    FOR_ALL_GRAPH_ELEMENTS(predicates, i) {
+        predicates[i]->toXML(producer);
     };
 
     producer.closeElement();
@@ -360,6 +355,9 @@ std::string DataNode::toLRString() const
         case dnExternal :
             stream << " ext ";
             break;
+        case dnAlias :
+            stream << " alias ";
+            break;
     };
 
     if (output) {
@@ -380,6 +378,7 @@ XmlConstructor & DataNode::toXML(XmlConstructor & element) const
         case dnFreeNode : nodetype = "free"; break;
         case dnConst : nodetype = "const"; break;
         case dnExternal : nodetype = "ext"; break;
+        case dnAlias : nodetype = "alias"; break;
     };
 
     element.openElement(CDGQNAME("node"));
@@ -396,12 +395,12 @@ XmlConstructor & DataNode::toXML(XmlConstructor & element) const
         case dnDatabase :
             element.addElementValue(CDGQNAME("root"), root.toLRString());
             element.addElementValue(CDGQNAME("path"), path.toXPathString());
-
+            break;
+        case dnAlias :
+            element.addElementValue(CDGQNAME("source"), tuple_cell::atomic_int(index));
             break;
         case dnFreeNode :
-            break;
         case dnConst :
-            break;
         case dnExternal :
             break;
     };

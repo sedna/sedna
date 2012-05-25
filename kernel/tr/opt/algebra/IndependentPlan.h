@@ -23,8 +23,10 @@
 /* Look PlanOperationTypes for description of all operators */
 
 namespace opt {
-    class DataGraphMaster;
-    class DataGraph;
+
+class DataGraphMaster;
+class DataGraph;
+
 }
 
 namespace rqp {
@@ -34,7 +36,7 @@ class PlanVisitor;
 struct opdesc_t {
     const char * opname;
     int opType;
-    operation_result_type_t resultType;
+    operation_flags_t flags;
 };
 
 typedef const opdesc_t * _opinfo_t;
@@ -43,9 +45,15 @@ typedef int ScopeMarker;
 typedef std::stack<opt::TupleId> ScopeStack;
 typedef std::map<std::string, opt::TupleId> VarNameMap;
 typedef std::map<opt::TupleId, TupleDefinition> GreatTupleScheme;
+typedef std::vector< RPBase * > OperationList;
 
 typedef VarNameMap::value_type VarMapRecord;
 typedef GreatTupleScheme::value_type GreatMapRecord;
+
+typedef std::pair<RPBase *, RPBase *> RPEdge;
+typedef std::map<RPBase *, RPBase **> LinkMap;
+typedef std::map<opt::TupleId, opt::TupleId> TupleMapping;
+
 
 /*
 typedef std::multimap<TupleId, RPBase *> DependancyMap;
@@ -77,22 +85,32 @@ class PlanContext : public opt::IPlanDisposable {
 
     ScopeStack scopeStack;
     VarNameMap scope;
+
+    LinkMap linkmap;
+    
+    opt::DataGraphMaster * dataGraphFactory;
   public:
     static PlanContext * current;
 
-    opt::DataGraphMaster * dataGraphFactory;
+    opt::DataGraphMaster * dgm() const { return dataGraphFactory; };
 
     PlanContext();
     ~PlanContext();
 
     const TupleDefinition * getVarDef(opt::TupleId tid) const { return &(greatTupleScheme.at(tid)); };
 
+    void registerLink(RPBase * a, RPBase * b, RPBase ** bptr) {
+        linkmap.insert(LinkMap::value_type(b, bptr));
+    };
+    
     opt::TupleId generateTupleId();
-    opt::TupleId generateTupleIdVarScoped(TupleVarDescriptor * var);
+    opt::TupleId generateTupleIdVarScoped(const std::string & varName);
     opt::TupleId getVarTupleInScope(const std::string & canonicalName);
 
     ScopeMarker setScopeMarker();
 
+    void replaceOperation(RPBase * a, RPBase * b);
+    
     void newScope();
     void clearScope();
     void clearScopesToMarker(ScopeMarker marker);
@@ -106,25 +124,30 @@ class RPBase : public opt::IPlanDisposable {
   protected:
     PlanContext * context;
     static int opids;
-    int opid;
+    int opuid;
 
     virtual XmlConstructor & __toXML(XmlConstructor &) const = 0;
   public:
-    RPBase(_opinfo_t op) : opdesc(op), context(PlanContext::current), opid(opids++) {};
+    RPBase(_opinfo_t op) : opdesc(op), context(PlanContext::current), opuid(opids++) {};
 
+    inline int oid() const { return opuid; };
     inline const opdesc_t * info() const { return opdesc; };
     inline bool isType(int t) const { return opdesc->opType == t; };
     PlanContext * getContext() const { return context; };
+
+    virtual void getChildren(OperationList & children) const = 0;
 
     XmlConstructor & toXML(XmlConstructor &) const;
 };
 
 template<class T> inline static
-bool instanceof(RPBase * op) { return op != null_op && op->info()->opType == &(T::opid); };
+bool instanceof(RPBase * op) { return op != null_op && op->isType(T::opid); };
 
 /* YES! I know about typeid operator existance. */
 
 #define ABSTRACT_OPERATION \
+
+#define MAX_OPERATION_ID 0x200
 
 #define OPERATION(ID) \
 public:\
@@ -148,6 +171,7 @@ class ConstantOperation : public RPBase {
     ConstantOperation(_opinfo_t op)
       : RPBase(op) {};
 
+    virtual void getChildren(OperationList & children) const;
 };
 
 /* 1r-operations */
@@ -158,7 +182,11 @@ class ListOperation : public RPBase {
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   public:
     ListOperation(_opinfo_t op, RPBase * list_)
-      : RPBase(op), list(list_) {};
+      : RPBase(op), list(list_) {
+        PlanContext::current->registerLink(this, list_, &list);
+    };
+
+    virtual void getChildren(OperationList & children) const;
 
     PROPERTY_RO(List, RPBase *, list)
 };
@@ -171,8 +199,12 @@ class NestedOperation : public ListOperation {
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   public:
     NestedOperation(_opinfo_t op, RPBase * list_, RPBase * subplan_)
-      : ListOperation(op, list_), subplan(subplan_) {};
+      : ListOperation(op, list_), subplan(subplan_) {
+        PlanContext::current->registerLink(this, subplan_, &subplan);
+    };
 
+    virtual void getChildren(OperationList & children) const;
+      
     PROPERTY_RO(Subplan, RPBase *, subplan)
 };
 
@@ -186,8 +218,13 @@ class BinaryOperation : public RPBase {
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   public:
     BinaryOperation(_opinfo_t op, RPBase * ltItem_, RPBase * rtItem_)
-      : RPBase(op), leftList(ltItem_), rightList(rtItem_) {};
-  public:
+      : RPBase(op), leftList(ltItem_), rightList(rtItem_) {
+        PlanContext::current->registerLink(this, ltItem_, &leftList);
+        PlanContext::current->registerLink(this, rtItem_, &rightList);
+    };
+
+    virtual void getChildren(OperationList & children) const;
+
     PROPERTY_RO(Left, RPBase *, leftList)
     PROPERTY_RO(Right, RPBase *, rightList)
 };
@@ -221,7 +258,6 @@ public:
 
     PROPERTY_RO(Tuple, opt::TupleId, tid)
 };
-
 
 class VarIn : public ConstantOperation {
     OPERATION(0x011)
@@ -266,9 +302,12 @@ public:
 
 class Select : public NestedOperation {
     OPERATION(0x004)
+    opt::TupleId tid;
 public:
-    Select(RPBase* _list, RPBase* _subplan)
-      : NestedOperation(&sopdesc, _list, _subplan) {};
+    Select(RPBase* _list, RPBase* _subplan, opt::TupleId _tid)
+      : NestedOperation(&sopdesc, _list, _subplan), tid(_tid) {};
+
+    PROPERTY_RO(ContextTuple, opt::TupleId, tid)
 };
 
 class If : public RPBase {
@@ -279,7 +318,13 @@ private:
     RPBase * elseBranch;
 public:
     If(RPBase* _condition, RPBase* _then, RPBase* _else)
-      : RPBase(&sopdesc), condition(_condition), thenBranch(_then), elseBranch(_else) {};
+      : RPBase(&sopdesc), condition(_condition), thenBranch(_then), elseBranch(_else) {
+        PlanContext::current->registerLink(this, _condition, &condition);
+        PlanContext::current->registerLink(this, _then, &thenBranch);
+        PlanContext::current->registerLink(this, _else, &elseBranch);
+    };
+
+    virtual void getChildren(OperationList & children) const;
 
     PROPERTY_RO(Condition, RPBase *, condition)
     PROPERTY_RO(Then, RPBase *, thenBranch)
@@ -292,25 +337,45 @@ class ComparisonExpression : public BinaryOperation {
     opt::Comparison cmp;
 public:
     ComparisonExpression(RPBase* _left, RPBase* _right, const opt::Comparison &_cmp)
-      : BinaryOperation(&sopdesc, _left, _right), cmp(_cmp) {};
+      : BinaryOperation(&sopdesc, _left, _right), cmp(_cmp) { };
 
     PROPERTY_RO(Op, opt::Comparison, cmp)
 };
 
-typedef std::vector< RPBase * > OperationList;
+class ManyChildren : public RPBase {
+    ABSTRACT_OPERATION
+  protected:
+    OperationList opList;
 
-class FunCall : public ConstantOperation {
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
+  private:
+    void registerOps() {
+        for (OperationList::iterator it = opList.begin(); it != opList.end(); ++it) {
+            PlanContext::current->registerLink(this, *it, it.base());
+        };
+    };    
+  public:
+    ManyChildren(_opinfo_t op, const OperationList & _oplist)
+      : RPBase(op), opList(_oplist) { registerOps(); };
+
+    ManyChildren(_opinfo_t op, RPBase* _in)
+      : RPBase(op) { opList.push_back(_in); registerOps(); };
+
+    virtual void getChildren(OperationList & children) const;
+
+    PROPERTY_RO(Operations, const OperationList &, opList)
+};
+
+class FunCall : public ManyChildren {
     OPERATION(0x017)
     xsd::QName name;
-    OperationList opList;
 public:
     FunCall(const xsd::QName & fname, const OperationList & _oplist)
-      : ConstantOperation(&sopdesc), name(fname), opList(_oplist) {};
+      : ManyChildren(&sopdesc, _oplist), name(fname) { };
 
     FunCall(const xsd::QName & fname, RPBase* _in)
-      : ConstantOperation(&sopdesc), name(fname) { opList.push_back(_in); };
+      : ManyChildren(&sopdesc, _in), name(fname) { };
       
-    PROPERTY_RO(Operations, const OperationList &, opList)
 };
 
 class Construct : public ListOperation {
@@ -319,13 +384,17 @@ class Construct : public ListOperation {
     RPBase * name;
 public:
     Construct(t_item _type, RPBase* _name, RPBase* list_)
-      : ListOperation(&sopdesc, list_), type(_type), name(_name) {};
+      : ListOperation(&sopdesc, list_), type(_type), name(_name) {
+        PlanContext::current->registerLink(this, _name, &name);
+    };
 
+    virtual void getChildren(OperationList & children) const;
+      
     PROPERTY_RO(Name, RPBase *, name)
     PROPERTY_RO(Type, t_item, type)
 };
 
-class Sequence : public ConstantOperation {
+class Sequence : public ManyChildren {
     OPERATION(0x019)
 public:
     enum space_t {
@@ -335,58 +404,32 @@ public:
     };
 
 private:    
-    OperationList opList;
     space_t spaces;
 public:
     Sequence(const OperationList & _oplist)
-      : ConstantOperation(&sopdesc), opList(_oplist), spaces(none) {};
+      : ManyChildren(&sopdesc, _oplist), spaces(none) { };
 
     Sequence(RPBase* _in)
-      : ConstantOperation(&sopdesc), spaces(none) { opList.push_back(_in); };
+      : ManyChildren(&sopdesc, _in), spaces(none) { };
 
-    PROPERTY_RO(Operations, const OperationList &, opList)
     PROPERTY(Spaces, space_t, spaces)
 };
 
+class DataGraphOperation : public ManyChildren {
+    OPERATION(0x020)
+  protected:
+    opt::DataGraph * func;
+    TupleMapping tmapping;
+  public:
+    DataGraphOperation(opt::DataGraph * function_, const OperationList & _oplist, const TupleMapping & tm)
+      : ManyChildren(&sopdesc, _oplist), func(function_), tmapping(tm) {
+    };
+
+    PROPERTY(Graph, opt::DataGraph *, func)
+    PROPERTY(Mapping, const TupleMapping &, tmapping)
+};
 
 /*
-class Let : public ListOperation {
-    OPERATION
-  protected:
-    TupleId mapsTo;
-  public:
-    Let(PlanContext * context_, TupleId tupleid, RPBase * list_);
-  public:
-    PROPERTY_RO(Var, TupleId, mapsTo)
-};
-*/
-
-/*
-class Map : public NestedOperation {
-    OPERATION(0x010)
-  protected:
-    opt::TupleId mapsTo;
-  public:
-    Map(PlanContext * context_, RPBase * opin_, RPBase * function_, opt::TupleId iterateTuple, opt::TupleId resultTuple);
-  public:
-    PROPERTY_RO(Var, TupleId, mapsTo)
-};
-
-class MapAll : public Map {
-    OPERATION(0x011)
-  public:
-    MapAll(PlanContext * context_, RPBase * opin_, RPBase * function_, opt::TupleId iterateTuple, opt::TupleId resultTuple);
-};
-*/
-
-/*
-class DataNavigationGraph : public RPBase {
-    OPERATION(0x012)
-  protected:
-    DataGraph * func;
-  public:
-    DataNavigationGraph(PlanContext * context_, DataGraph * function_);
-};
 
 class Serialize : public RPBase {
     OPERATION(0x013)

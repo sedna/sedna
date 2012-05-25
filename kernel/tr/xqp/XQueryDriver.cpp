@@ -13,6 +13,7 @@
 
 #include "tr/xqp/modules.h"
 #include "tr/xqp/serial/deser.h"
+#include "tr/opt/algebra/PlanRewriter.h"
 
 namespace sedna
 {
@@ -438,6 +439,7 @@ namespace sedna
 
         if (!tr_globals::first_transaction) {
             res->optimizedPlan = (mods[ind])->getOPT(is_subquery);
+            selectDataGraphs(res->optimizedPlan);
         }
 
         // some errors might have happened

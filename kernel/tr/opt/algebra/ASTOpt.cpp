@@ -6,6 +6,11 @@
 using namespace sedna;
 using namespace rqp;
 
+/*
+ * NOTE: Context item can be ONLY overwritten
+ * during evaluation of path expressions and predicates!!!
+ */
+
 void lr2opt::visit(ASTMainModule &n)
 {
 //    n.prolog->accept(*this);
@@ -22,6 +27,7 @@ void lr2opt::visit(ASTMainModule &n)
 void lr2opt::visit(ASTQuery &n)
 {
     if (n.type == ASTQuery::QUERY) {
+        contextVariable = invalidTupleId;
         n.query->accept(*this);
     } else {
       //
@@ -57,7 +63,9 @@ void lr2opt::visit(ASTAxisStep &n) {
         n.cont->accept(*this);
         resultOp = resultStack.top().op;
         resultStack.pop();
-    }
+    } else {
+        resultOp = new rqp::VarIn(contextVariable);
+    };
 
     if (n.test == NULL) {
         throw USER_EXCEPTION(2902);
@@ -70,17 +78,23 @@ void lr2opt::visit(ASTAxisStep &n) {
     stepStack.pop();
 
     if (n.preds != NULL) {
+        opt::TupleId saveContextVariable = contextVariable;
+
         for (ASTNodesVector::iterator pred = n.preds->begin(); pred != n.preds->end(); pred++) {
+            contextVariable = PlanContext::current->generateTupleId();
             (*pred)->accept(*this);
-            resultOp = new Select(resultOp, resultStack.top().op);
+            resultOp = new Select(resultOp, resultStack.top().op, contextVariable);
             resultStack.pop();
         }
+
+        contextVariable = saveContextVariable;
     }
 
     resultStack.push(ResultInfo(resultOp));
 }
 
 void lr2opt::visit(ASTFilterStep &n) {
+    // TODO: context variable
     throw USER_EXCEPTION(2902);
 }
 
@@ -365,7 +379,7 @@ void lr2opt::visit(ASTQuantExpr &n)
 
     // TODO : process type info, important step
 
-    opt::TupleId varBinding = PlanContext::current->generateTupleIdVarScoped(resultStack.top().varDesc);
+    opt::TupleId varBinding = PlanContext::current->generateTupleIdVarScoped(resultStack.top().variableName);
     resultStack.pop();
 
     rqp::RPBase * expression = resultStack.top().op;
@@ -437,10 +451,10 @@ void lr2opt::visit(ASTFLWOR &n) {
     while (!operationStack.empty()) {
         switch (operationStack.top().opid) {
           case MapConcat::opid :
-            resultStack.top().op = new MapConcat(resultStack.top().op, operationStack.top().op, operationStack.top().contextItem);
+            resultStack.top().op = new MapConcat(resultStack.top().op, operationStack.top().op, operationStack.top().variableId);
             break;
           case SequenceConcat::opid :
-            resultStack.top().op = new SequenceConcat(resultStack.top().op, operationStack.top().op, operationStack.top().contextItem);
+            resultStack.top().op = new SequenceConcat(resultStack.top().op, operationStack.top().op, operationStack.top().variableId);
             break;
           case If::opid :
             resultStack.top().op = new If(operationStack.top().op, resultStack.top().op, null_op);
@@ -466,10 +480,10 @@ void lr2opt::visit(ASTFor &n) {
     // TODO : process type info, important step, make type assert
     // TODO : process pos var
 
-    opt::TupleId varBinding = PlanContext::current->generateTupleIdVarScoped(resultStack.top().varDesc);
+    opt::TupleId varBinding = PlanContext::current->generateTupleIdVarScoped(resultStack.top().variableName);
 
     resultStack.pop();
-    resultStack.top().contextItem = varBinding;
+    resultStack.top().variableId = varBinding;
     resultStack.top().opid = MapConcat::opid;
 
     if (n.usesPosVar()) {
@@ -486,10 +500,10 @@ void lr2opt::visit(ASTLet &n) {
 
     // TODO : process type info, important step, make type assert
     
-    opt::TupleId varBinding = PlanContext::current->generateTupleIdVarScoped(resultStack.top().varDesc);
+    opt::TupleId varBinding = PlanContext::current->generateTupleIdVarScoped(resultStack.top().variableName);
 
     resultStack.pop();
-    resultStack.top().contextItem = varBinding;
+    resultStack.top().variableId = varBinding;
     resultStack.top().opid = SequenceConcat::opid;
 }
 
@@ -529,15 +543,10 @@ void lr2opt::visit(ASTTypeVar &n) {
     U_ASSERT(varVisitContext == vvc_declare);
     resultStack.push(ResultInfo(null_op));
 
-    TupleVarDescriptor * vd = new TupleVarDescriptor();
-
     lr2por::visit(n);
     childOffer offer = lr2por::getOffer();
     
-    vd->t = offer.st.type.info.single_type;
-    vd->name = static_cast<ASTVar *>(n.var)->getStandardName();
-
-    resultStack.top().varDesc = vd;
+    resultStack.top().variableName = static_cast<ASTVar *>(n.var)->getStandardName();
 }
 
 void lr2opt::visit(ASTType &n) {

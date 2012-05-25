@@ -192,11 +192,19 @@ DataNode * DataGraphMaster::createFreeNode(DataGraph* dg)
     return result;
 }
 
-DataNode * DataGraphMaster::createConstNode(DataGraph* dg, const tuple_cell& tc)
+DataNode* DataGraphMaster::createConstNode(DataGraph* dg)
 {
     DataNode * result = createNode(dg);
     result->type = DataNode::dnConst;
-    result->sequence = new MemoryTupleSequence;
+    result->sequence = NULL;
+    return result;
+}
+
+
+DataNode * DataGraphMaster::createConstNode(DataGraph* dg, const tuple_cell& tc)
+{
+    DataNode * result = createConstNode(dg);
+    result->sequence = new MemoryTupleSequence();
     result->sequence->push_back(tc);
     return result;
 }
@@ -216,6 +224,9 @@ Predicate* DataGraphMaster::createPredicate(DataGraph* dg, Predicate* predicate)
 
     result->index = dg->lastIndex++;
     result->indexBit = 1 << result->index;
+
+    result->contextTuple = 0;
+    result->createContext = false;
 
     dg->predicates[result->index] = result;
     allPredicates.push_back(result);
@@ -333,11 +344,9 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
 
     int branchLimit = 4;
 
-    for (DataNodeList::iterator i = dg->dataNodes.begin(); i != dg->dataNodes.end(); ++i) {
-        if (*i != NULL) {
-            // TODO: External nodes MUST become evaluated initially.
-            nullPlan->initTupleSet(*i);
-        }
+    FOR_ALL_GRAPH_ELEMENTS(dg->dataNodes, i) {
+        // TODO: External nodes MUST become evaluated initially.
+        nullPlan->initTupleSet(dg->dataNodes[i]);
     };
 
     planMap->update(nullPlan);
