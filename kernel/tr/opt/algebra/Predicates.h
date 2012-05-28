@@ -24,6 +24,7 @@ struct DataGraph {
 
     PlanDesc allPredicates;
     PlanDesc freePositions;
+    PlanDesc inputNodes;
 
     PlanDesc getNeighbours(PlanDesc x);
 
@@ -37,6 +38,7 @@ struct DataGraph {
     DataGraph(DataGraphMaster * _owner);
 
     bool replaceNode(DataNode * what, DataNode * with_what);
+    void sameNode(DataNode * master, DataNode * alias);
 
     std::string toLRString() const;
     XmlConstructor & toXML(XmlConstructor & producer) const;
@@ -150,9 +152,11 @@ typedef counted_ptr< std::vector<tuple_cell> > MemoryTupleSequencePtr;
 
 struct DataNode {
     enum data_node_type_t {
-        dnConst, dnExternal, dnDatabase, dnFreeNode, dnAlias
+        dnConst = 1, dnExternal, dnDatabase, dnFreeNode, dnAlias, dnReplaced
     } type;
 
+    DataNode * replacedWith;
+    
     // Global index in master graph
     TupleId varIndex;
     
@@ -180,12 +184,18 @@ struct DataNode {
     DataNode * source; 
 
     // Variable node came from
-    counted_ptr<std::string> varName;
+    std::string varName;
+    TupleId varTupleId;
 
     // Used in compilation
-    // FIXME: Uninitialized!
     SPredicate * producedFrom;
 
+    DataNode(data_node_type_t _type, int _varIndex, int _index)
+      : type(_type), replacedWith(NULL), varIndex(_varIndex),
+        index(_index), indexBit(1ULL << _index), output(false),
+        absoluteIndex(0), predicates(0), source(NULL), varTupleId(-1), producedFrom(NULL)
+    { };
+    
     std::string getName() const;
     std::string toLRString() const;
     XmlConstructor & toXML(XmlConstructor & ) const;

@@ -394,8 +394,8 @@ void lr2opt::visit(ASTQuantExpr &n)
     
     if (n.type == ASTQuantExpr::SOME)
     {
-        aggrFunction = xsd::constQName(skn->resolvePrefix("fn"), "exists");
-        predicate = new rqp::If(predicate, new rqp::Const(fn_true()), new rqp::Const(EmptySequenceConst()));
+        aggrFunction = xsd::constQName(skn->resolvePrefix("fn"), "opt_not_empty");
+//        predicate = new rqp::If(predicate, new rqp::Const(fn_true()), new rqp::Const(EmptySequenceConst()));
     }
     else /* EVERY */
     {

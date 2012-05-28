@@ -4,7 +4,7 @@
 
 #include "tr/models/XmlConstructor.h"
 
-#include <bits/algorithmfwd.h>
+#include <algorithm>
 
 using namespace opt;
 
@@ -82,11 +82,15 @@ void DataGraph::updateIndex()
 
     FOR_ALL_GRAPH_ELEMENTS(predicates, i) {
         Predicate * pp = predicates[i];
-        
+
         pp->dataNodeMask = 0;
         allPredicates |= pp->indexBit;
 
         for (DataNodeList::iterator d = pp->dataNodeList.begin(); d != pp->dataNodeList.end(); ++d) {
+            while ((*d)->type == DataNode::dnReplaced) {
+                *d = (*d)->replacedWith;
+            };
+
             pp->dataNodeMask |= (*d)->indexBit;
             (*d)->predicates |= pp->indexBit;
         }
@@ -167,6 +171,35 @@ bool DataGraph::replaceNode(DataNode* n1, DataNode* n2)
     return true;
 }
 
+void DataGraph::sameNode(DataNode* master, DataNode* alias)
+{
+    U_ASSERT(alias->type == DataNode::dnAlias || alias->type == DataNode::dnExternal);
+
+    PlanDescIterator it(alias->predicates);
+    int i;
+
+    while (-1 != (i = it.next())) {
+        Predicate * p = predicates[i];
+
+        for (DataNodeList::iterator d = p->dataNodeList.begin(); d != p->dataNodeList.end(); ++d) {
+            if (*d == alias) {
+                *d = master;
+            }
+        }
+    }
+
+    dataNodes[alias->index] = NULL;
+    alias->replacedWith = master;
+    alias->type = DataNode::dnReplaced;
+    master->output = master->output || alias->output;
+
+    U_ASSERT(master->varTupleId == alias->varTupleId || master->varTupleId == -1);
+    U_ASSERT(master->varName.empty() || master->varName == alias->varName);
+    
+    master->varTupleId = alias->varTupleId;
+    master->varName = alias->varName;
+}
+
 bool SPredicate::replacable(DataNode* n1, DataNode* n2)
 {
     return this->disposable && path.forall(pe::StepPredicate(pe::CDPAAxisTest));
@@ -193,10 +226,38 @@ void DataGraph::precompile()
 
     updateIndex();
 
-    // TODO : replace same nodes;
+/* Find self references
+ */
+    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
+        DataNode * dn = dataNodes[i];
+        if (dn->type == DataNode::dnExternal) {
 
-// Replace document order comparisons with path expressions
-    
+            std::pair<VariableMap::iterator, VariableMap::iterator> jt =
+                owner->variableMap.equal_range(dn->varTupleId);
+
+            for (VariableMap::iterator j = jt.first; j != jt.second; ++j) {
+                if (dataNodes[j->second->index] == j->second &&
+                    j->second != dn &&
+                    j->second->type != DataNode::dnExternal)
+                {
+                    sameNode(j->second, dn);
+                };
+            };
+        }
+    };
+
+/* Replace aliases
+ */
+    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
+        if (dataNodes[i]->type == DataNode::dnAlias) {
+            sameNode(dataNodes[i]->source, dataNodes[i]);
+        }
+    };
+
+    updateIndex();
+
+/* Replace document order comparisons with path expressions
+ */
     FOR_ALL_GRAPH_ELEMENTS(predicates, i) {
         VPredicate * pred = dynamic_cast<VPredicate*>(predicates[i]);
 
@@ -218,15 +279,74 @@ void DataGraph::precompile()
         };
     }
 
-// Find all root vertices
+    updateIndex();
+    
+/* Remove all redundant nodes (i.e. all, that comes with path expression)
+ */
+
+    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
+        DataNode * dn = dataNodes[i];
+        
+        if (dataNodes[i]->type != DataNode::dnFreeNode || dataNodes[i]->output) {
+            continue;
+        };
+        
+        PlanDescIterator it(dn->predicates);
+
+        int leftIdx = it.next();
+        int rightIdx = it.next();
+
+        if (leftIdx == -1 || rightIdx == -1 || it.next() != -1) {
+            continue;
+        };
+
+        SPredicate * left = dynamic_cast<SPredicate *> (predicates[leftIdx]);
+        SPredicate * right = dynamic_cast<SPredicate *> (predicates[rightIdx]);
+
+        /* If datanode is connected with more then one predicate, it is not optimizable
+         */
+
+        if (left == NULL || right == NULL) {
+            continue;
+        };
+
+        if (left->left() == dn) {
+            U_ASSERT(right->right() == dn);
+            std::swap(left, right);
+        };
+        
+        U_ASSERT(right->left() == dn && left->right() == dn);
+
+        pe::Path path = left->path + right->path;
+
+        if (!path.inversable()) {
+            continue;
+        };
+
+        left->path = path;
+
+        predicates[right->index] = NULL;
+        dataNodes[i] = NULL;
+
+        /* This step is absolutely important to iterate through graph further
+         */
+        left->dataNodeList[1] = right->right();
+
+        right->right()->predicates =
+            (right->right()->predicates & ~right->indexBit) | left->indexBit;
+    };
+
+    updateIndex();
+    
+/* Find all root vertices
 
     FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
         if (dataNodes[i]->type == DataNode::dnDatabase) {
             frontList->push_back(dataNodes[i]);
-        };
+        };                      
     };
 
-// Expand all path expressions from root vertices
+/* Propagate all path expressions from root vertices
 
     while (!frontList->empty()) {
         backList->clear();
@@ -269,13 +389,15 @@ void DataGraph::precompile()
         frontList = backList;
         backList = swp;
     }
-
+    
     updateIndex();
+    
 // Optimization: try to delete delete all redundant nodes
 
     for (RemovalList::const_iterator p = removalCandidates.begin(); p != removalCandidates.end(); ++p) {
         replaceNode(p->first, p->second);
     };
+*/
 }
 
 
@@ -358,6 +480,9 @@ std::string DataNode::toLRString() const
         case dnAlias :
             stream << " alias ";
             break;
+        case dnReplaced :
+            stream << " REMOVED ";
+            break;
     };
 
     if (output) {
@@ -379,13 +504,15 @@ XmlConstructor & DataNode::toXML(XmlConstructor & element) const
         case dnConst : nodetype = "const"; break;
         case dnExternal : nodetype = "ext"; break;
         case dnAlias : nodetype = "alias"; break;
+        case dnReplaced : nodetype = "REMOVED"; break;
     };
 
     element.openElement(CDGQNAME("node"));
     
     element.addAttributeValue(CDGQNAME("type"), nodetype);
     element.addAttributeValue(CDGQNAME("name"), getName());
-    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(index));
+    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(varIndex));
+    element.addAttributeValue(CDGQNAME("index"), tuple_cell::atomic_int(index));
 
     if (output) {
         element.addAttributeValue(CDGQNAME("output"), tuple_cell::atomic(true));
@@ -397,7 +524,10 @@ XmlConstructor & DataNode::toXML(XmlConstructor & element) const
             element.addElementValue(CDGQNAME("path"), path.toXPathString());
             break;
         case dnAlias :
-            element.addElementValue(CDGQNAME("source"), tuple_cell::atomic_int(index));
+            element.addElementValue(CDGQNAME("source"), tuple_cell::atomic_int(source->varIndex));
+            break;
+        case dnReplaced :
+            element.addElementValue(CDGQNAME("with"), tuple_cell::atomic_int(replacedWith->varIndex));
             break;
         case dnFreeNode :
         case dnConst :
@@ -415,10 +545,10 @@ std::string DataNode::getName() const
 {
     std::stringstream stream;
 
-    if (varName.isnull()) {
+    if (varName.empty()) {
         stream << "%" << varIndex;
     } else {
-        stream << *varName;
+        stream << varName;
     }
 
     return stream.str();
@@ -460,7 +590,7 @@ std::string VPredicate::toLRString() const
 
 XmlConstructor & SPredicate::toXML(XmlConstructor & element) const
 {
-    element.openElement(CDGQNAME("SPredicate"));
+    element.openElement(CDGQNAME("StructurePredicate"));
   
     element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(index));
     element.addElementValue(CDGQNAME("path"), path.toXPathString());
@@ -474,7 +604,7 @@ XmlConstructor & SPredicate::toXML(XmlConstructor & element) const
 
 XmlConstructor & VPredicate::toXML(XmlConstructor & element) const
 {
-    element.openElement(CDGQNAME("SPredicate"));
+    element.openElement(CDGQNAME("ValuePredicate"));
 
     element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(index));
     element.addElementValue(CDGQNAME("cmp"), cmp.toLRString());

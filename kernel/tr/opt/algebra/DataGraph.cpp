@@ -90,7 +90,7 @@ DataNode* DataGraphMaster::createNodeFromLR(DataGraph* dg, const scheme_list* ls
     };
 
     vmap->insert(VariableNameMap::value_type(node_id, result));
-    result->varName = new std::string(node_id);
+    result->varName = node_id;
 
     return result;
 }
@@ -168,28 +168,21 @@ DataGraph* DataGraphMaster::createGraphFromLR(const scheme_list* vf)
     return dg;
 }
 
-
 DataNode* DataGraphMaster::createNode(DataGraph* dg)
 {
-    DataNode * result = new DataNode();
-    
-    result->varIndex = lastIndex++;
-    result->index = dg->lastIndex++;
-    result->indexBit = 1 << result->index;
+    DataNode * result = new DataNode(DataNode::dnFreeNode, lastIndex++, dg->lastIndex++);
     
     dg->dataNodes[result->index] = result;
 
     allNodes.push_back(result);
-    variableMap.insert(VariableMap::value_type(result->varIndex, result));
+    U_ASSERT(allNodes.at(result->varIndex) == result);
     
     return result;
 }
 
 DataNode * DataGraphMaster::createFreeNode(DataGraph* dg)
 {
-    DataNode * result = createNode(dg);
-    result->type = DataNode::dnFreeNode;
-    return result;
+    return createNode(dg);
 }
 
 DataNode* DataGraphMaster::createConstNode(DataGraph* dg)

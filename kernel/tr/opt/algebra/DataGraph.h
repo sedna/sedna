@@ -40,7 +40,6 @@ class DataGraphMaster {
     PredicateList allPredicates;
     DataNodeList allNodes;
     DataGraphList allGraphs;
-    VariableMap variableMap;
 
     DataNode * createNode(DataGraph * dg);
     Predicate * createPredicate(DataGraph * dg, Predicate * predicate);
@@ -48,6 +47,7 @@ class DataGraphMaster {
     DataNode * createNodeFromLR(DataGraph * dg, const scheme_list * vf, VariableNameMap * vmap);
     Predicate * createPredicateFromLR(DataGraph * dg, const scheme_list * vf, VariableNameMap * vmap);
   public:
+    VariableMap variableMap;
     /* Factory functions */
 
     DataGraph * createGraph();
@@ -63,7 +63,7 @@ class DataGraphMaster {
 
     Predicate * replacePredicate(DataGraph* dg, Predicate* predicate, Predicate* withPredicate);
     
-    DataNode * getVarNode(TupleId var) const { return variableMap.at(var); };
+    DataNode * getVarNode(TupleId var) const { return allNodes.at(var); };
 
     phop::ITupleOperator* compile(DataGraph* dg);
 };

@@ -74,12 +74,13 @@ typedef std::vector<Predicate *> PredicateList;
 typedef std::vector<DataNode *> DataNodeList;
 typedef std::vector<DataGraph *> DataGraphList;
 
-typedef std::map<TupleId, DataNode *> VariableMap;
+typedef std::multimap<TupleId, DataNode *> VariableMap;
 typedef std::map<std::string, DataNode *> VariableNameMap;
 
 typedef std::set<Predicate *> PredicateSet;
 typedef std::set<TupleId> TupleScheme;
-typedef std::map<TupleId, int> LogicalToPhysicalTupleMap;
+typedef std::map<TupleId, TupleId> TupleMapping;
+
 
 static inline
 TupleScheme singleTupleScheme(opt::TupleId tid)

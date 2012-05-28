@@ -40,6 +40,7 @@ OPERATION_INFO(Construct, rqp::ofNone)
 OPERATION_INFO(Sequence, rqp::oBlockSpecial)
 
 OPERATION_INFO(DataGraphOperation, rqp::oBlockSpecial)
+OPERATION_INFO(MapGraph, rqp::oBlockSpecial)
 
 XmlConstructor& RPBase::toXML(XmlConstructor& element) const
 {
@@ -227,7 +228,7 @@ XmlConstructor& Sequence::__toXML(XmlConstructor& element) const
 XmlConstructor& DataGraphOperation::__toXML(XmlConstructor& element) const
 {
     element.openElement(CDGQNAME("graph"));
-    func->toXML(element);
+//    func->toXML(element);
     element.closeElement();
 
     element.openElement(CDGQNAME("suboperations"));
@@ -239,6 +240,17 @@ XmlConstructor& DataGraphOperation::__toXML(XmlConstructor& element) const
     element.closeElement();
 
     return rqp::ManyChildren::__toXML(element);
+};
+
+XmlConstructor& MapGraph::__toXML(XmlConstructor& element) const
+{
+    rqp::DataGraphOperation::__toXML(element);
+  
+    if (list != null_op) {
+        list->toXML(element);
+    }
+
+    return element;
 };
 
 
@@ -281,6 +293,11 @@ void NestedOperation::getChildren(OperationList& children) const
     rqp::ListOperation::getChildren(children);
 }
 
+void MapGraph::getChildren(OperationList& children) const
+{
+    rqp::ManyChildren::getChildren(children);
+    children.push_back(list);
+}
 
 
 
@@ -306,6 +323,13 @@ void PlanContext::replaceOperation(RPBase* a, RPBase* b)
     linkmap.erase(i);
     *aptr = b;
     linkmap.insert(LinkMap::value_type(b, aptr));
+}
+
+void PlanContext::replaceLink(RPBase* a, RPBase** aptr)
+{
+    LinkMap::iterator i = linkmap.find(a);
+    U_ASSERT(i != linkmap.end());
+    i->second = aptr;
 }
 
 void PlanContext::newScope() {

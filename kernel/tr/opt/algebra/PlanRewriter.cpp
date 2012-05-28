@@ -9,8 +9,6 @@ using namespace rqp;
 struct DataReductionBlock {
     RPEdge in;
     OperationList out;
-    TupleMapping externalBindings;
-    
     OperationList members;
 
     DataGraph* buildBlock();
@@ -42,6 +40,7 @@ public:
 };
 
 typedef std::map<RPBase *, DataNode *> ResultMap;
+typedef std::multimap<opt::TupleId, opt::TupleId> ExternalMap;
 
 struct Generator {
     ResultMap map;
@@ -52,6 +51,7 @@ struct Generator {
 
         if (map.find(op) == map.end()) {
             x = dg->owner->createFreeNode(dg);
+            x->type = DataNode::dnExternal;
             map.insert(ResultMap::value_type(op, x));
         } else {
             x = map.at(op);
@@ -62,8 +62,8 @@ struct Generator {
 };
 
 static
-std::string * varName(rqp::VarIn * op) {
-    return new std::string(op->getContext()->getVarDef(op->getTuple())->getVarLabel());
+std::string varName(rqp::VarIn * op) {
+    return std::string(op->getContext()->getVarDef(op->getTuple())->getVarLabel());
 };
 
 DataGraph * DataReductionBlock::buildBlock()
@@ -84,8 +84,9 @@ DataGraph * DataReductionBlock::buildBlock()
             node = context.get(op);
             node->type = DataNode::dnAlias;
             node->source = context.get(sop->getList());
-
-            externalBindings[sop->getContextTuple()] = node->source->varIndex;
+            node->varTupleId = sop->getContextTuple();
+            
+            dgm->variableMap.insert(VariableMap::value_type(node->varTupleId, node));
           } break;
           case rqp::Const::opid :
             U_ASSERT(dynamic_cast<rqp::Const *>(op) != NULL);
@@ -100,21 +101,22 @@ DataGraph * DataReductionBlock::buildBlock()
             rqp::VarIn * vop = static_cast<rqp::VarIn *>(op);
             
             node = context.get(op);
-            node->type = DataNode::dnFreeNode; // TODO : Fix this stuff
+            node->type = DataNode::dnExternal;
             node->varName = varName(vop);
+            node->varTupleId = vop->getTuple();
 
-            externalBindings[vop->getTuple()] = node->varIndex;
-            
+            dgm->variableMap.insert(VariableMap::value_type(node->varTupleId, node));
           } break;
           case rqp::XPathStep::opid : {
             U_ASSERT(dynamic_cast<rqp::XPathStep *>(op) != NULL);
             
             rqp::XPathStep * xop = static_cast<rqp::XPathStep *>(op);
             node = context.get(op);
+            node->type = DataNode::dnFreeNode;
 
             dgm->createPath(context.dg,
-                node->varIndex,
                 context.get(xop->getList())->varIndex,
+                node->varIndex,
                 xop->getStep());
 
           } break;
@@ -140,6 +142,8 @@ DataGraph * DataReductionBlock::buildBlock()
           break;
         };
     };
+
+    context.get(in.second)->output = true;
 
     return context.dg;
 }
@@ -186,8 +190,26 @@ void DataGraphReduction::execute(RPBase* op)
 
     for (std::vector<DataReductionBlock *>::const_iterator it = blocks.begin(); it != blocks.end(); ++it) {
         DataGraph * dg = (*it)->buildBlock();
-        DataGraphOperation * op = new DataGraphOperation(dg, (*it)->out, (*it)->externalBindings);
-        op->getContext()->replaceOperation((*it)->in.second, op);
+        dg->precompile();
+        dg->updateIndex();
+
+        rqp::MapConcat * mapConcatIn = dynamic_cast<rqp::MapConcat *>((*it)->in.first);
+
+        if (mapConcatIn != NULL &&
+            instanceof<rqp::MapConcat>(mapConcatIn) &&
+            mapConcatIn->getSubplan() == (*it)->in.second)
+        {
+            MapGraph * op = new MapGraph(mapConcatIn->getList(), dg, (*it)->out);
+            U_ASSERT(dg->outputNodes.size() == 1);
+            DataNode * out = dg->outputNodes[0];
+            out->varTupleId = mapConcatIn->getTuple();
+            out->varName = mapConcatIn->getContext()->getVarDef(out->varTupleId)->getVarLabel();
+            op->tupleMask.insert(out->varTupleId);
+            op->getContext()->replaceOperation(mapConcatIn, op);
+        } else {
+            DataGraphOperation * op = new DataGraphOperation(dg, (*it)->out);
+            op->getContext()->replaceOperation((*it)->in.second, op);
+        }
     };
 }
 

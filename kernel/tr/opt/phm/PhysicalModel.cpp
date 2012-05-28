@@ -194,7 +194,6 @@ void* PhysicalModel::compile(PhantomPredicate* pred)
     return NULL;
 }
 
-
 void* PhysicalModel::compile(VPredicate* pred)
 {
     POProtIn leftOp = materialize(plan->getRef(pred->left()->absoluteIndex));

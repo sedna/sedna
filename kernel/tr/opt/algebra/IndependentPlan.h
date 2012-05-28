@@ -52,7 +52,6 @@ typedef GreatTupleScheme::value_type GreatMapRecord;
 
 typedef std::pair<RPBase *, RPBase *> RPEdge;
 typedef std::map<RPBase *, RPBase **> LinkMap;
-typedef std::map<opt::TupleId, opt::TupleId> TupleMapping;
 
 
 /*
@@ -100,7 +99,7 @@ class PlanContext : public opt::IPlanDisposable {
     const TupleDefinition * getVarDef(opt::TupleId tid) const { return &(greatTupleScheme.at(tid)); };
 
     void registerLink(RPBase * a, RPBase * b, RPBase ** bptr) {
-        linkmap.insert(LinkMap::value_type(b, bptr));
+        linkmap[b] = bptr;
     };
     
     opt::TupleId generateTupleId();
@@ -110,6 +109,7 @@ class PlanContext : public opt::IPlanDisposable {
     ScopeMarker setScopeMarker();
 
     void replaceOperation(RPBase * a, RPBase * b);
+    void replaceLink(RPBase * a, RPBase ** aptr);
     
     void newScope();
     void clearScope();
@@ -416,17 +416,35 @@ public:
 };
 
 class DataGraphOperation : public ManyChildren {
-    OPERATION(0x020)
+    OPERATION(0x01a)
   protected:
     opt::DataGraph * func;
-    TupleMapping tmapping;
+    
+    DataGraphOperation(_opinfo_t op, opt::DataGraph * function_, const OperationList & _oplist)
+      : ManyChildren(op, _oplist), func(function_) {
+    };
   public:
-    DataGraphOperation(opt::DataGraph * function_, const OperationList & _oplist, const TupleMapping & tm)
-      : ManyChildren(&sopdesc, _oplist), func(function_), tmapping(tm) {
+    DataGraphOperation(opt::DataGraph * function_, const OperationList & _oplist)
+      : ManyChildren(&sopdesc, _oplist), func(function_) {
     };
 
     PROPERTY(Graph, opt::DataGraph *, func)
-    PROPERTY(Mapping, const TupleMapping &, tmapping)
+//    PROPERTY(Mapping, const opt::TupleMapping &, tmapping)
+};
+
+class MapGraph : public DataGraphOperation {
+    OPERATION(0x01b)
+
+    RPBase * list;
+public:
+    MapGraph(RPBase* _list, opt::DataGraph * function_, const OperationList & _oplist)
+      : DataGraphOperation(&sopdesc, function_, _oplist), list(_list) {
+        context->registerLink(this, _list, &list);
+    };
+
+    virtual void getChildren(OperationList & children) const;
+      
+    opt::TupleScheme tupleMask;
 };
 
 /*
