@@ -164,9 +164,9 @@ void RenameLastSoftFaultDir()
 
 
 #ifdef _WIN32
-    std::string new_name = buf + std::string("\\") + string(SE_SOFT_FAULT_LOG_DIR) + buf2;
+    std::string new_name = buf + std::string("\\") + std::string(SE_SOFT_FAULT_LOG_DIR) + buf2;
 #else
-    std::string new_name = buf + std::string("/") + string(SE_SOFT_FAULT_LOG_DIR) + buf2;
+    std::string new_name = buf + std::string("/") + std::string(SE_SOFT_FAULT_LOG_DIR) + buf2;
 #endif
 
     if (uIsFileExist(new_name.c_str(), NULL))
@@ -175,12 +175,12 @@ void RenameLastSoftFaultDir()
        char val[128];
        for (;;)
        {
-         if (!uIsFileExist((new_name + string(".")  + u_itoa(i, val, 10)).c_str(), NULL)) break;
+         if (!uIsFileExist((new_name + std::string(".")  + u_itoa(i, val, 10)).c_str(), NULL)) break;
         
          i++;
        }
 
-       new_name += string(".")  + u_itoa(i, val, 10);
+       new_name += std::string(".")  + u_itoa(i, val, 10);
     }
 
     if(uMoveFile(last_sf_dir.c_str(),
@@ -190,10 +190,4 @@ void RenameLastSoftFaultDir()
   }
 
   return;
-}
-
-
-void mergeCommandLineAndConfig()
-{
-
 }

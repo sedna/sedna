@@ -8,8 +8,7 @@
 
 #include "common/structures/config_data.h"
 
-extern GlobalParameters * sednaGlobalOptions;
-extern bool gov_help;
+bool parseSednaOptions(int argc, char ** argv, GlobalParameters * sednaGlobalOptions);
 
 #endif
 

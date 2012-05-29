@@ -62,30 +62,12 @@ int main(int argc, char** argv)
 #endif
 
     try {
-        /* Parse command line */
-        if (0 == arg_parse(argc, argv, govArgtable)) {
-          throw USER_EXCEPTION2(SE4601, buf);
-        }
+        GlobalParameters sednaGlobalOptions;
+        if ( parseSednaOptions(argc, argv, &sednaGlobalOptions) ) { return 1; }
 
-        /* Process technical arguments */
-        if (gov_globals::help->count > 0)
-        {
-            print_gov_usage();
-            arg_freetable(govArgtable, sizeof(govArgtable)/sizeof(govArgtable[0]));
-            return 0;
-        }
+// !FIXME: do we really need SEDNA_DATA in this form?
+//  SEDNA_DATA = ..... = sednaGlobalOptions.global.dataDirectory;
 
-        if (gov_globals::govVersion->count > 0)
-        {
-           print_version_and_copyright("Sedna Governor");
-           return 0;
-        }
-
-
-	
-	/* TODO: fill there merged data dir option, not cl_data_dir */
-	SEDNA_DATA = gov_globals::cmdDataDir->sval[0];
-	
         check_data_folder_existence();
 
         RenameLastSoftFaultDir();
@@ -105,18 +87,10 @@ int main(int argc, char** argv)
       if (event_logger_start_daemon(el_convert_log_level(cfg.gov_vars.el_level), SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
           throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
-      gov_table = new info_table();
-      gov_table->init(&cfg);
-
       log_out_system_information();
 
-      create_global_memory_mapping(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound);
+      create_global_memory_mapping(sednaGlobalOptions.global.osObjectsOffset);
 
-//       pps->startup();
-//       is_pps_close = false;
-
-      d_printf1("Process ping server has been started\n");
-      elog(EL_LOG, ("Process ping server is ready"));
 
 #ifdef _WIN32
       BOOL fSuccess;
@@ -133,26 +107,13 @@ int main(int argc, char** argv)
         if (signal(SIGTERM, GOVCtrlHandler) == SIG_ERR)
            throw USER_EXCEPTION(SE4403);
 #endif
-
-
-
-//       client_listener(gov_table->get_config_struct(), background_off_from_background_on);
-      
+     
       Worker * govWorker = new Worker(&cfg);
       govWorker->createListener();
       govWorker->run();
 
-      gov_table->wait_all_notregistered_sess();
-
-//       pps->shutdown();
-//       delete pps;
-//       pps = NULL;
-//       is_pps_close = true;
 
       if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
-
-      gov_table->release();
-      delete gov_table;
 
       release_global_memory_mapping();
 
@@ -167,7 +128,7 @@ int main(int argc, char** argv)
     } catch (SednaUserException &e) {
         fprintf(stderr, "%s\n", e.what());
         event_logger_release();
-//         if (!is_pps_close) { if (pps) pps->shutdown();}
+
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_GOV);
