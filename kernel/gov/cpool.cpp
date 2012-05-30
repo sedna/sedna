@@ -1,20 +1,7 @@
-#include <iostream>
-#include <algorithm>
-#include "common/commutil.h"
-#include "common/ipc_ops.h"
-#include "common/config.h"
-
 #include "gov/cpool.h"
 #include "gov/clients.h"
-#include "gov/config_utils.h"
-#include "common/u/usem.h"
 #include "common/errdbg/d_printf.h"
-#include "common/db_utils.h"
-#include "common/structures/sm_structures.h"
-#include "common/structures/tr_structures.h"
-#include "common/processes/command_lines.h"
-#include "common/SSMMsg.h"
-#include "common/sm_vmm_data.h"
+
 
 using namespace std;
 

@@ -81,7 +81,7 @@ class ProcessManager {
     bool requestsPending;
     void doProcessRequests();
 public:
-    ProcessManager() : lastSessionId(0), requestsPending(false) {};
+    ProcessManager(GlobalParameters _parameters) : lastSessionId(0), requestsPending(false), parameters(_parameters) {};
     ~ProcessManager();
 
     session_id getNewSessionId() { return lastSessionId++; };

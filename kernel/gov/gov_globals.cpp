@@ -150,7 +150,7 @@ void mergeCommandLineAndConfig(SednaOptions * sednaOptions)
 
 
 /* returns true if we should exit se_gov */
-bool parseSednaOptions(int argc, char ** argv, GlobalParameters * sednaGlobalOptions)
+bool parseSednaOptions(int argc, char ** argv, GlobalParameters * sednaGlobalOptions, char * progname)
 {
     int nerrors;
 
@@ -162,8 +162,9 @@ bool parseSednaOptions(int argc, char ** argv, GlobalParameters * sednaGlobalOpt
     }
     nerrors = arg_parse(argc,argv,govArgtable);
     if (help->count > 0) {
-        printf("Usage: se_gov");
+        printf("Usage: %s [options] \n\n", progname);
         arg_print_syntax(stdout,govArgtable,"\n");
+        arg_print_glossary(stdout, govArgtable, "  %-25s $s\n");
         
         arg_freetable(govArgtable,sizeof(govArgtable)/sizeof(govArgtable[0]));
         return true;
@@ -172,6 +173,8 @@ bool parseSednaOptions(int argc, char ** argv, GlobalParameters * sednaGlobalOpt
     if (govVersion->count > 0)
     {
         printf("Sedna governor; version 4.0\n");
+        printf("Copyright (C) 2003-2012 Institute for System Programming RAS ISP RAS and others. All rights reserved.\n");
+        printf("See file COPYRIGHT provided with the distribution.\n");
         
         arg_freetable(govArgtable,sizeof(govArgtable)/sizeof(govArgtable[0]));
         return true;
@@ -179,8 +182,8 @@ bool parseSednaOptions(int argc, char ** argv, GlobalParameters * sednaGlobalOpt
     
     if (nerrors > 0)
     {
-        arg_print_errors(stdout,end,"se_gov\n");
-        printf("Try 'se_gov --help' for more information.\n");
+        arg_print_errors(stdout,end,progname);
+        printf("Try '%s --help' for more information.\n", progname);
         
         arg_freetable(govArgtable,sizeof(govArgtable)/sizeof(govArgtable[0]));
         return true;

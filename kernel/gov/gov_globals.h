@@ -8,7 +8,7 @@
 
 #include "common/structures/config_data.h"
 
-bool parseSednaOptions(int argc, char ** argv, GlobalParameters * sednaGlobalOptions);
+bool parseSednaOptions(int argc, char** argv, GlobalParameters* sednaGlobalOptions, char* progname);
 
 #endif
 
