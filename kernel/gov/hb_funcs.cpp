@@ -12,13 +12,12 @@
 #include "gov/hb_files.h"
 
 #include "common/base.h"
-#include "common/SSMMsg.h"
-#include "common/ipc_ops.h"
-#include "common/sp.h"
+#include "common/ssmmsg/SSMMsg.h"
+#include "common/protocol/sp.h"
 
-#include "common/u/uutils.h"
+#include "u/uutils.h"
 
-#include "common/lfsGlobals.h"
+#include "common/llcommon/lfsGlobals.h"
 
 
 #define MAX_SE_SOCKET_STR (SE_SOCKET_MSG_BUF_SIZE - 5)

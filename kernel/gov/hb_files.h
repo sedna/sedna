@@ -6,7 +6,7 @@
 #ifndef _HB_FILES_H
 #define _HB_FILES_H
 
-#include "common/u/u.h"
+#include "u/u.h"
 
 // notice: this functions DO NOT add trailing zero if length of a buf string equals maxlen (strncpy semantics)
 // all functions return length of the result buf string and -1 in the case of error

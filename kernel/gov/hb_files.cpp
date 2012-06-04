@@ -1,12 +1,14 @@
 
 #include "hb_files.h"
 
-#include "common/u/u.h"
-#include "common/u/uutils.h"
-#include "common/u/uprocess.h"
-#include "common/u/uhdd.h"
 #include <stdio.h>
+
+#include "u/uutils.h"
+#include "u/uprocess.h"
+#include "u/uhdd.h"
+
 #include "common/sedna.h"
+
 
 // make data file name and write it to buf
 // return: length of str

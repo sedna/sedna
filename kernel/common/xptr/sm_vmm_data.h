@@ -9,9 +9,9 @@
 
 #include "common/sedna.h"
 #include "common/base.h"
-#include "common/xptr.h"
-#include "common/wustructures.h"
-#include "common/lfsGlobals.h"
+#include "common/xptr/xptr.h"
+#include "common/xptr/wustructures.h"
+#include "common/llcommon/lfsGlobals.h"
 
 struct vmm_sm_blk_hdr
 {

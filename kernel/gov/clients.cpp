@@ -444,6 +444,7 @@ SocketClient* DatabaseConnectionProcessor::processData()
       setObsolete();
       return NULL;
   }
+  return NULL;
 }
 
 ////////////////////////////class CreateDatabaseRequestProcessor//////////////////////////////////////////////
@@ -459,6 +460,7 @@ CreateDatabaseRequestProcessor::CreateDatabaseRequestProcessor(WorkerSocketClien
 SocketClient* CreateDatabaseRequestProcessor::processData()
 {
     ProcessManager * pm = worker->getProcessManager();
+    string dbName;
     
     switch (state) {
        case cdb_awaiting_db_options:
@@ -471,7 +473,7 @@ SocketClient* CreateDatabaseRequestProcessor::processData()
 
           elog(EL_LOG, ("Request for database creation"));
 
-          string dbName = communicator->readString();
+          dbName = communicator->readString();
 
           if (pm->getDatabaseOptions(dbName) != NULL) {
               respondError();

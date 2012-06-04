@@ -6,9 +6,9 @@
 #ifndef _HB_FUNCS_H
 #define _HB_FUNCS_H
 
-#include "common/sp.h"
-#include "common/u/usocket.h"
-#include "common/sm_vmm_data.h"
+#include "common/protocol/sp.h"
+#include "u/usocket.h"
+#include "common/xptr/sm_vmm_data.h"
 
 // init new hot-backup connection
 int hbNewClient(USOCKET sock);
