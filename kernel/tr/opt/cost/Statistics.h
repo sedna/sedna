@@ -41,7 +41,7 @@ struct SequenceInfo : public IPlanDisposable {
     Range sortCost;
 };
 
-struct ComparisonInfo : public IPlanDisposable {
+struct EvaluationInfo : public IPlanDisposable {
     Range opCost;
     Range selectivity;
 };
@@ -84,8 +84,8 @@ public:
 
     TupleStatistics* getConstInfo(MemoryTupleSequencePtr cnst);
 
-    ComparisonInfo * getCmpInfo(TupleStatistics* m1, TupleStatistics* m2, const Comparison& cmp);
-    ComparisonInfo * getDocOrderInfo(PathCostModel* m1, PathCostModel* m2, const pe::Path & path);
+    EvaluationInfo * getCmpInfo(TupleStatistics* m1, TupleStatistics* m2, const Comparison& cmp);
+    EvaluationInfo * getDocOrderInfo(PathCostModel* m1, PathCostModel* m2, const pe::Path & path);
     
 //    void startProfile();
 //    void endProfile();

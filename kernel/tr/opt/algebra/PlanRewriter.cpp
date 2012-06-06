@@ -50,7 +50,7 @@ struct Generator {
         DataNode * x = NULL;
 
         if (map.find(op) == map.end()) {
-            x = dg->owner->createFreeNode(dg);
+            x = dg->owner->createNode(dg);
             x->type = DataNode::dnExternal;
             map.insert(ResultMap::value_type(op, x));
         } else {
@@ -114,11 +114,7 @@ DataGraph * DataReductionBlock::buildBlock()
             node = context.get(op);
             node->type = DataNode::dnFreeNode;
 
-            dgm->createPath(context.dg,
-                context.get(xop->getList())->varIndex,
-                node->varIndex,
-                xop->getStep());
-
+            new SPredicate(context.dg, context.get(xop->getList()), node, xop->getStep());
           } break;
           case rqp::ComparisonExpression::opid : {
             U_ASSERT(dynamic_cast<rqp::ComparisonExpression *>(op) != NULL);
@@ -131,11 +127,18 @@ DataGraph * DataReductionBlock::buildBlock()
             node->sequence = new MemoryTupleSequence();
             node->sequence->push_back(tuple_cell::atomic(true));
 
-            dgm->createComparison(context.dg,
-                context.get(cop->getLeft())->varIndex,
-                context.get(cop->getRight())->varIndex,
-                cop->getOp());
+            new VPredicate(context.dg, context.get(cop->getLeft()), context.get(cop->getRight()), cop->getOp());
+          } break;
+          case rqp::FunCall::opid : {
+            U_ASSERT(dynamic_cast<rqp::FunCall *>(op) != NULL);
 
+            rqp::FunCall * cop = static_cast<rqp::FunCall *>(op);
+
+            node = context.get(op);
+            node->type = DataNode::dnFreeNode;
+
+            // TODO: Fix number of parameters
+            new FPredicate(context.dg, context.get(cop->getOperations().at(0)), node, NULL);
           } break;
           default:
             U_ASSERT(false);
@@ -152,8 +155,20 @@ DataGraph * DataReductionBlock::buildBlock()
 void DataGraphReduction::collectBlocks(RPBase * parent, RPBase * op)
 {
     bool blockOwner = false;
-
-    if ((op->info()->flags & rqp::oBlockBuilder) > 0) {
+    bool blockBuilder = (op->info()->flags & rqp::oBlockBuilder) > 0;
+    
+    OperationList children;
+    op->getChildren(children);
+    
+    if ((op->info()->flags & rqp::oBlockSpecial) > 0) {
+        switch (op->info()->opType) {
+          case FunCall::opid : {
+            blockBuilder = static_cast<FunCall *>(op)->getFunction()->;
+          }; break;
+        };
+    }
+    
+    if (blockBuilder) {
         blockOwner = blockStack.top() == NULL;
 
         if (blockOwner) {
@@ -168,9 +183,6 @@ void DataGraphReduction::collectBlocks(RPBase * parent, RPBase * op)
         blockOwner = true;
     };
 
-    OperationList children;
-    op->getChildren(children);
-
     for (OperationList::const_iterator it = children.begin(); it != children.end(); ++it) {
         if (*it != NULL) {
             collectBlocks(op, *it);
@@ -182,6 +194,13 @@ void DataGraphReduction::collectBlocks(RPBase * parent, RPBase * op)
     };
 };
 
+/*
+void DataGraphReduction::concatGraphs()
+{
+//    DataGraphMaster.join();
+//    DataGraphMaster.leftOuterJoin();
+};
+*/
 
 void DataGraphReduction::execute(RPBase* op)
 {

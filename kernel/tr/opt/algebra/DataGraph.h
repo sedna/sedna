@@ -41,31 +41,26 @@ class DataGraphMaster {
     DataNodeList allNodes;
     DataGraphList allGraphs;
 
-    DataNode * createNode(DataGraph * dg);
-    Predicate * createPredicate(DataGraph * dg, Predicate * predicate);
-
     DataNode * createNodeFromLR(DataGraph * dg, const scheme_list * vf, VariableNameMap * vmap);
     Predicate * createPredicateFromLR(DataGraph * dg, const scheme_list * vf, VariableNameMap * vmap);
   public:
     VariableMap variableMap;
     /* Factory functions */
 
+    DataNode * createNode(DataGraph * dg);
+    Predicate * createPredicate(DataGraph * dg, Predicate * predicate);
+    
     DataGraph * createGraph();
     DataGraph * createGraphFromLR(const scheme_list * vf);
-
-    DataNode * createFreeNode(DataGraph * dg);
-    DataNode * createConstNode(DataGraph * dg, const tuple_cell & tc);
-    DataNode * createConstNode(DataGraph * dg);
-    DataNode * createRootNode(DataGraph * dg, const DataRoot & root, const pe::Path & _path);
-
-    DataGraph * createPath(DataGraph* dg, TupleId left, TupleId right, const pe::Path& _path, bool outer = false);
-    DataGraph * createComparison(DataGraph * dg, TupleId left, TupleId right, const Comparison & cmp);
 
     Predicate * replacePredicate(DataGraph* dg, Predicate* predicate, Predicate* withPredicate);
     
     DataNode * getVarNode(TupleId var) const { return allNodes.at(var); };
 
     phop::ITupleOperator* compile(DataGraph* dg);
+
+    DataGraph * join(DataGraph * left, DataGraph * right);
+    DataGraph * leftOuterJoin(DataGraph * left, DataGraph * right);
 };
 
 }

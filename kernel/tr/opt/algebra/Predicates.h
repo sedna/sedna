@@ -6,6 +6,10 @@
 #include "tr/opt/path/DataSources.h"
 #include "tr/executor/base/tuple.h"
 
+namespace phop {
+class IFunction;
+}
+
 class XmlConstructor;
 
 namespace opt {
@@ -33,11 +37,8 @@ struct DataGraph {
 
     DataNodeList outputNodes;
 
-//    VariableMap varMap;
-
     DataGraph(DataGraphMaster * _owner);
 
-    bool replaceNode(DataNode * what, DataNode * with_what);
     void sameNode(DataNode * master, DataNode * alias);
 
     std::string toLRString() const;
@@ -78,24 +79,24 @@ struct Predicate {
 
     PlanDesc neighbours;
     PlanDesc dataNodeMask;
+    PlanDesc evaluateAfter;
 
     DataNodeList dataNodeList;
 
     bool createContext;
     TupleId contextTuple;
 
+    Predicate(DataGraph * dg);
+    
     virtual void * compile(PhysicalModel * model) = 0;
-
-    virtual bool replacable(DataNode * n1, DataNode * n2);
-    virtual Predicate * replace(DataNode * n1, DataNode * n2);
 
     virtual std::string toLRString() const = 0;
     virtual XmlConstructor & toXML(XmlConstructor & ) const = 0;
 };
 
 struct BinaryPredicate : public Predicate {
-    void setVertices(DataGraph* dg, TupleId left, TupleId right);
-
+    BinaryPredicate(DataGraph * dg, DataNode * left, DataNode * right);
+    
     DataNode * left() const { return dataNodeList[0]; };
     DataNode * right() const { return dataNodeList[1]; };
 };
@@ -116,11 +117,27 @@ struct PhantomPredicate : public Predicate {
 };
 
 /*
+ * Predicate for function evaluation
+ */
+struct FPredicate : public BinaryPredicate {
+    phop::IFunction * func;
+
+    FPredicate(DataGraph * dg, DataNode* left, DataNode* right, phop::IFunction * f);
+
+    virtual void * compile(PhysicalModel * model);
+
+    virtual std::string toLRString() const;
+    virtual XmlConstructor & toXML(XmlConstructor & ) const;
+};
+
+/*
  * Predicate for value operations
  */
 struct VPredicate : public BinaryPredicate {
     Comparison cmp;
 
+    VPredicate(opt::DataGraph* dg, opt::DataNode* left, opt::DataNode* right, const opt::Comparison& _cmp);
+    
     virtual void * compile(PhysicalModel * model);
 
     virtual std::string toLRString() const;
@@ -131,17 +148,12 @@ struct VPredicate : public BinaryPredicate {
  * Predicate for structural operations
  */
 struct SPredicate : public BinaryPredicate {
-    bool disposable;
-
     bool outer;
     pe::Path path;
 
-    SPredicate() : disposable(false) {};
-
+    SPredicate(DataGraph* dg, DataNode* left, DataNode* right, const pe::Path & path);
+    
     virtual void * compile(PhysicalModel * model);
-
-    virtual bool replacable(DataNode * n1, DataNode * n2);
-    virtual Predicate * replace(DataNode* n1, DataNode* n2);
 
     virtual std::string toLRString() const;
     virtual XmlConstructor & toXML(XmlConstructor & ) const;

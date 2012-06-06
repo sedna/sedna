@@ -14,6 +14,39 @@ DataGraph::DataGraph(DataGraphMaster* _owner) : lastIndex(1), owner(_owner)
     memset(dataNodes, 0, sizeof(dataNodes));
 }
 
+Predicate::Predicate(DataGraph* dg)
+{
+    if (dg != NULL) {
+        dg->owner->createPredicate(dg, this);
+    }
+}
+
+BinaryPredicate::BinaryPredicate(DataGraph* dg, DataNode* left, DataNode* right)
+    : Predicate(dg)
+{
+    dataNodeList.push_back(left);
+    dataNodeList.push_back(right);
+}
+
+SPredicate::SPredicate(DataGraph* dg, DataNode* left, DataNode* right, const pe::Path& _path)
+    : BinaryPredicate(dg, left, right), outer(false), path(_path)
+{
+    
+}
+
+VPredicate::VPredicate(DataGraph* dg, DataNode* left, DataNode* right, const Comparison & _cmp)
+    : BinaryPredicate(dg, left, right), cmp(_cmp)
+{
+
+}
+
+FPredicate::FPredicate(DataGraph* dg, DataNode* left, DataNode* right, phop::IFunction* f)
+    : BinaryPredicate(dg, left, right), func(f)
+{
+
+}
+
+
 Comparison::Comparison(const scheme_list* lst) : op(invalid)
 {
     if (lst->size() < 1 || lst->at(0).type != SCM_SYMBOL) {
@@ -41,11 +74,11 @@ void * VPredicate::compile(PhysicalModel* model)
     return model->compile(this);
 }
 
-void BinaryPredicate::setVertices(DataGraph* dg, TupleId _left, TupleId _right)
+void* FPredicate::compile(PhysicalModel* model)
 {
-    dataNodeList.push_back(dg->owner->getVarNode(_left));
-    dataNodeList.push_back(dg->owner->getVarNode(_right));
+    return model->compile(this);
 }
+
 
 PlanDesc DataGraph::getNeighbours(PlanDesc x)
 {
@@ -106,70 +139,7 @@ void DataGraph::updateIndex()
     }
 }
 
-bool Predicate::replacable(DataNode* n1, DataNode* n2)
-{
-    return false;
-}
-
-Predicate* Predicate::replace(DataNode* n1, DataNode* n2)
-{
-    return this;
-}
-
 using namespace pe;
-
-bool DataGraph::replaceNode(DataNode* n1, DataNode* n2)
-{
-    typedef std::vector<Predicate*> TempPredicateSet;
-
-    TempPredicateSet /* sourceOnlySet, intersection, */ allSet;
-
-    if (n1->output) {
-        return false;
-    };
-
-    int i;
-
-    PlanDescIterator it(n1->predicates);
-    while (-1 != (i = it.next())) {
-        U_ASSERT(this->predicates[i] != NULL);
-
-        Predicate * p = this->predicates[i];
-
-/*
-        if ((p->dataNodes & n1->indexBit) > 0) {
-            sourceOnlySet.push_back(p);
-        } else {
-            intersection.push_back(p);
-        };
-*/
-
-        allSet.push_back(p);
-    }
-
-    for (TempPredicateSet::const_iterator i = allSet.begin(); i != allSet.end(); ++i) {
-        if (!(*i)->replacable(n1, n2)) {
-            return false;
-        }
-    };
-
-    for (TempPredicateSet::const_iterator i = allSet.begin(); i != allSet.end(); ++i) {
-        Predicate * np = (*i)->replace(n1, n2);
-
-        if (np != *i) {
-//            delete *i;
-            this->predicates[(*i)->index] = np;
-        };
-    }
-
-    /* By this time there should be no predicates with d1 left */
-//    delete n1;
-    this->dataNodes[n1->index] = NULL;
-
-    updateIndex();
-
-    return true;
-}
 
 void DataGraph::sameNode(DataNode* master, DataNode* alias)
 {
@@ -198,20 +168,6 @@ void DataGraph::sameNode(DataNode* master, DataNode* alias)
     
     master->varTupleId = alias->varTupleId;
     master->varName = alias->varName;
-}
-
-bool SPredicate::replacable(DataNode* n1, DataNode* n2)
-{
-    return this->disposable && path.forall(pe::StepPredicate(pe::CDPAAxisTest));
-}
-
-Predicate * SPredicate::replace(DataNode* n1, DataNode* n2)
-{
-    if (replacable(n1, n2)) {
-        return NULL;
-    } else {
-        return this;
-    }
 }
 
 /* Static optimization phase */
@@ -270,11 +226,7 @@ void DataGraph::precompile()
                 step = pe::Step(pe::axis_preceding, nt_any_kind, xsd::QNameAny);
             };
 
-            SPredicate * rep = new SPredicate();
-
-            rep->path = pe::Path(step);
-            rep->outer = false;
-
+            SPredicate * rep = new SPredicate(NULL, pred->left(), pred->right(), step);
             owner->replacePredicate(this, pred, rep);
         };
     }
@@ -339,13 +291,13 @@ void DataGraph::precompile()
     updateIndex();
     
 /* Find all root vertices
-
+*/
     FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
         if (dataNodes[i]->type == DataNode::dnDatabase) {
             frontList->push_back(dataNodes[i]);
         };                      
     };
-
+/*
 /* Propagate all path expressions from root vertices
 
     while (!frontList->empty()) {
@@ -374,13 +326,7 @@ void DataGraph::precompile()
                     pred->right()->path = path;
                     pred->right()->producedFrom = pred;
 
-                    pred->disposable = true;
-
                     backList->push_back(pred->right());
-
-                    if (!dn->output) {
-                        removalCandidates.insert(RemovalList::key_type(dn, pred->right()));
-                    }
                 }
             }
         };
@@ -391,12 +337,6 @@ void DataGraph::precompile()
     }
     
     updateIndex();
-    
-// Optimization: try to delete delete all redundant nodes
-
-    for (RemovalList::const_iterator p = removalCandidates.begin(); p != removalCandidates.end(); ++p) {
-        replaceNode(p->first, p->second);
-    };
 */
 }
 
@@ -579,6 +519,12 @@ std::string Comparison::toLRString() const
 
     stream << ")";
     return stream.str();
+ 
+}
+
+std::string FPredicate::toLRString() const
+{
+  return "";
 }
 
 std::string VPredicate::toLRString() const
@@ -586,6 +532,20 @@ std::string VPredicate::toLRString() const
     std::stringstream stream;
     stream << "(vj " << left()->getName() << " " << right()->getName() << " " << cmp.toLRString() << ")";
     return stream.str();
+}
+
+XmlConstructor& FPredicate::toXML(XmlConstructor& element) const
+{
+    element.openElement(CDGQNAME("Function"));
+
+    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(index));
+//    element.addElementValue(CDGQNAME("path"), path.toXPathString());
+    element.addElementValue(CDGQNAME("left"), tuple_cell::atomic_int(left()->index));
+    element.addElementValue(CDGQNAME("right"), tuple_cell::atomic_int(right()->index));
+
+    element.closeElement();
+
+    return element;
 }
 
 XmlConstructor & SPredicate::toXML(XmlConstructor & element) const

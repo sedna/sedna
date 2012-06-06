@@ -143,9 +143,9 @@ ValueCostModel* CostModel::getValueCost(PathCostModel* m, TupleStatistics * _res
     return result;
 }
 
-ComparisonInfo* CostModel::getCmpInfo(TupleStatistics* m1, TupleStatistics* m2, const Comparison& cmp)
+EvaluationInfo* CostModel::getCmpInfo(TupleStatistics* m1, TupleStatistics* m2, const Comparison& cmp)
 {
-    ComparisonInfo* result = new ComparisonInfo;
+    EvaluationInfo* result = new EvaluationInfo;
 
     Range values1 = std::min(m1->distinctValues, m2->distinctValues);
     Range values2 = std::max(m1->distinctValues, m2->distinctValues);
@@ -182,9 +182,9 @@ TupleStatistics* CostModel::getConstInfo(MemoryTupleSequencePtr cnst)
     return result;
 }
 
-ComparisonInfo* CostModel::getDocOrderInfo(PathCostModel* m1, PathCostModel* m2, const pe::Path& path)
+EvaluationInfo* CostModel::getDocOrderInfo(PathCostModel* m1, PathCostModel* m2, const pe::Path& path)
 {
-    ComparisonInfo* result = new ComparisonInfo;
+    EvaluationInfo* result = new EvaluationInfo;
 
     if (path.horizontal()) {
         if (path.forall(pe::StepPredicate::axis(pe::axis_following) | pe::StepPredicate::axis(pe::axis_preceding))) {

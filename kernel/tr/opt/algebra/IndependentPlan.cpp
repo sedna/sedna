@@ -1,6 +1,7 @@
 #include "IndependentPlan.h"
 
 #include "tr/models/XmlConstructor.h"
+#include "tr/opt/functions/Functions.h"
 
 #include <set>
 
@@ -184,7 +185,7 @@ XmlConstructor& ManyChildren::__toXML(XmlConstructor& element) const
 
 XmlConstructor& FunCall::__toXML(XmlConstructor& element) const
 {
-    element.addElementValue(CDGQNAME("fun"), name.getColonizedName());
+    element.addAttributeValue(CDGQNAME("name"), name.getColonizedName());
 
     int i = 0;
     for (OperationList::const_iterator it = opList.begin(); it != opList.end(); ++it) {
@@ -228,7 +229,7 @@ XmlConstructor& Sequence::__toXML(XmlConstructor& element) const
 XmlConstructor& DataGraphOperation::__toXML(XmlConstructor& element) const
 {
     element.openElement(CDGQNAME("graph"));
-//    func->toXML(element);
+    func->toXML(element);
     element.closeElement();
 
     element.openElement(CDGQNAME("suboperations"));
@@ -298,6 +299,15 @@ void MapGraph::getChildren(OperationList& children) const
     rqp::ManyChildren::getChildren(children);
     children.push_back(list);
 }
+
+
+
+
+void FunCall::resolve()
+{
+    function = functionLibrary->;
+}
+
 
 
 

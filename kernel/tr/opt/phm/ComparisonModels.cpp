@@ -19,7 +19,7 @@ SequenceInfo* GeneralComparisonPrototype::getSequenceCost(CostModel* model, Tupl
     return model->getValueSequenceCost(in);
 }
 
-ComparisonInfo* GeneralComparisonPrototype::getComparisonCost(CostModel* model, TupleRef left, TupleRef right)
+EvaluationInfo* GeneralComparisonPrototype::getComparisonCost(CostModel* model, TupleRef left, TupleRef right)
 {
     return model->getCmpInfo(left->statistics, right->statistics, cmp);
 }
@@ -59,7 +59,7 @@ ValueFunction GeneralComparisonPrototype::getValueFunction(unsigned idxL, unsign
 
 
 
-ComparisonInfo* PathComparisonPrototype::getComparisonCost(CostModel* model, TupleRef left, TupleRef right)
+EvaluationInfo* PathComparisonPrototype::getComparisonCost(CostModel* model, TupleRef left, TupleRef right)
 {
     return model->getDocOrderInfo(left->statistics->pathInfo, right->statistics->pathInfo, path);
 }

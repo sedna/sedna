@@ -12,6 +12,7 @@
 #include "tr/opt/path/XPathLookup.h"
 #include "tr/executor/base/ITupleSerializer.h"
 #include "tr/opt/algorithms/Comparison.h"
+#include "tr/opt/functions/Functions.h"
 
 using namespace opt;
 
@@ -25,6 +26,7 @@ OPINFO(MergeJoinPrototype)
 OPINFO(StructuralJoinPrototype)
 OPINFO(ValueScanPrototype)
 OPINFO(ValidatePathPrototype)
+OPINFO(EvaluatePrototype)
 
 AbsPathScanPrototype::AbsPathScanPrototype(PhysicalModel* model, const TupleRef& tref)
   : POProt(OPREF(AbsPathScanPrototype)), dataRoot(), path()
@@ -143,6 +145,24 @@ XmlConstructor & ValidatePathPrototype::__toXML(XmlConstructor & element) const
     return POProt::__toXML(element);
 }
 
+EvaluatePrototype::EvaluatePrototype(PhysicalModel* model, const opt::POProtIn& _left, const opt::TupleRef& _right, phop::IFunction* _func)
+    : POProt(OPREF(EvaluatePrototype)), func(_func)
+{
+    in.push_back(_left);
+    result = model->updateOne(_left.op->result, POProtIn(this, _right.tid));
+    resultSet.push_back(_right.tid);
+
+    evaluateCost(publicCostModel);
+}
+
+XmlConstructor & EvaluatePrototype::__toXML(XmlConstructor & element) const
+{
+//    element.addElementValue(CDGQNAME("root"), dataRoot.toLRString());
+//    element.addElementValue(CDGQNAME("path"), path.toXPathString());
+
+    return POProt::__toXML(element);
+}
+
 
 
 /*
@@ -218,7 +238,7 @@ void MergeJoinPrototype::evaluateCost(CostModel* model)
     SequenceInfo * leftSeq = comparison->getSequenceCost(model, leftIn);
     SequenceInfo * rightSeq = comparison->getSequenceCost(model, rightIn);
 
-    ComparisonInfo * cmpInfo = comparison->getComparisonCost(model, leftIn, rightIn); ;
+    EvaluationInfo * cmpInfo = comparison->getComparisonCost(model, leftIn, rightIn); ;
 
     leftResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
     rightResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
@@ -258,7 +278,7 @@ void FilterTuplePrototype::evaluateCost(CostModel* model)
 
     cost = new OperationCost();
 
-    ComparisonInfo * cmpInfo = comparison->getComparisonCost(model, leftIn, rightIn);
+    EvaluationInfo * cmpInfo = comparison->getComparisonCost(model, leftIn, rightIn);
 
     leftResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
     rightResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
@@ -286,7 +306,7 @@ void ValueScanPrototype::evaluateCost(CostModel* model)
     model->getValueCost(inRef->statistics->pathInfo, inRef->statistics);
     outRef->statistics = new TupleStatistics(inRef->statistics);
 
-    ComparisonInfo * cmpInfo = model->getCmpInfo(inRef->statistics, model->getConstInfo(value.get()), cmp);
+    EvaluationInfo * cmpInfo = model->getCmpInfo(inRef->statistics, model->getConstInfo(value.get()), cmp);
 
     outRef->statistics->distinctValues *= cmpInfo->selectivity;
     result->rowCount = outRef->statistics->distinctValues;
@@ -296,6 +316,27 @@ void ValueScanPrototype::evaluateCost(CostModel* model)
     cost->firstCost = inCost->firstCost;
     cost->fullCost  = inCost->fullCost + inRef.tupleDesc->rowCount * cmpInfo->opCost;
     cost->nextCost  = (cost->fullCost - cost->firstCost) / result->rowCount;
+}
+
+void EvaluatePrototype::evaluateCost(CostModel* model)
+{
+    TupleRef inRef(in[0], NULL);
+    TupleRef outRef(result, resultSet[0]);
+
+    const OperationCost * inCost = in.at(0).op->getCost();
+
+    U_ASSERT(inRef->statistics);
+
+    cost = new OperationCost();
+
+    outRef->statistics = new TupleStatistics(inRef->statistics);
+
+    result->rowCount = inRef.tupleDesc->rowCount;
+    result->rowSize = inRef.tupleDesc->rowSize + model->getNodeSize();
+ 
+    cost->firstCost = inCost->firstCost;
+    cost->nextCost  = inCost->nextCost + model->getCPUCost();
+    cost->fullCost  = cost->firstCost + cost->nextCost * result->rowCount;
 }
 
 void PathEvaluationPrototype::evaluateCost(CostModel* model)
@@ -530,6 +571,19 @@ phop::IOperator * ValueScanPrototype::compile()
             CachedNestedLoop::strict_output);
     }
 }
+
+IOperator* EvaluatePrototype::compile()
+{
+    ExecutionBlockWarden(this);
+
+    ITupleOperator * leftOpPtr = dynamic_cast<ITupleOperator *>(in.at(0).op->getStatement());
+    // WARNING: Result is mapped after compile()
+    unsigned leftIdx = ExecutionBlock::current()->resultMap[in.at(0).index];
+    MappedTupleIn leftOp(leftOpPtr, leftIdx, 0);
+
+    return new FunctionOp(leftOp, leftOp->_tsize() + 1, leftOp->_tsize(), func->createInstance());
+}
+
 
 phop::IOperator * ValidatePathPrototype::compile()
 {

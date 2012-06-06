@@ -29,6 +29,7 @@ struct OperationCost;
 struct PhantomPredicate;
 struct VPredicate;
 struct SPredicate;
+struct FPredicate;
 
 class POProt;
 
@@ -211,6 +212,7 @@ public:
     void * compile(PhantomPredicate * pred);
     void * compile(VPredicate * pred);
     void * compile(SPredicate * pred);
+    void * compile(FPredicate * pred);
 };
 
 }

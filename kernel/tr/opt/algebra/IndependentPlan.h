@@ -369,13 +369,22 @@ class ManyChildren : public RPBase {
 class FunCall : public ManyChildren {
     OPERATION(0x017)
     xsd::QName name;
+    phop::IFunction * function;
+
+    void resolve();
 public:
     FunCall(const xsd::QName & fname, const OperationList & _oplist)
-      : ManyChildren(&sopdesc, _oplist), name(fname) { };
+      : ManyChildren(&sopdesc, _oplist), name(fname), function(NULL) {
+        resolve();
+    };
 
     FunCall(const xsd::QName & fname, RPBase* _in)
-      : ManyChildren(&sopdesc, _in), name(fname) { };
-      
+      : ManyChildren(&sopdesc, _in), name(fname), function(NULL) {
+        resolve();
+    };
+
+    PROPERTY_RO(Name, const xsd::QName &, name)
+    PROPERTY_RO(Function, phop::IFunction * , function)
 };
 
 class Construct : public ListOperation {

@@ -8,6 +8,8 @@
 
 namespace phop {
 
+struct IFunctionOpInstance;
+
 class SchemaScan : public ITupleOperator {
 private:
     std::vector<xptr> _cache;
@@ -105,7 +107,20 @@ public:
     virtual void reset();
 };
 
+class FunctionOp : public ITupleOperator {
+protected:
+    IFunctionOpInstance * func;
+    phop::MappedTupleIn in;
+    unsigned resultIdx;
 
+    virtual void do_next();
+public:
+    OPINFO_DECL(0x214)
+
+    FunctionOp(const phop::MappedTupleIn& _in, unsigned _size, unsigned _resultIdx, IFunctionOpInstance * _inst);
+
+    virtual void reset();
+};
 
 }
 

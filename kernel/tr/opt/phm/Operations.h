@@ -5,6 +5,10 @@
 #include "tr/opt/phm/PhysicalModel.h"
 #include "tr/opt/algebra/Predicates.h"
 
+namespace phop {
+  class IFunction;
+}
+
 namespace opt {
 
 struct ComparisonPrototype;
@@ -78,6 +82,17 @@ protected:
     virtual phop::IOperator * compile();
 public:
     ValueScanPrototype(PhysicalModel * model, const POProtIn & _left, const TupleRef & _right, const Comparison& _cmp);
+
+    virtual void evaluateCost(CostModel* model);
+};
+
+class EvaluatePrototype : public POProt {
+    phop::IFunction * func;
+protected:
+    virtual XmlConstructor & __toXML(XmlConstructor & ) const;
+    virtual phop::IOperator * compile();
+public:
+    EvaluatePrototype(PhysicalModel * model, const POProtIn & _left, const TupleRef & _right, phop::IFunction * _func);
 
     virtual void evaluateCost(CostModel* model);
 };

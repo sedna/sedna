@@ -68,14 +68,18 @@ DataNode* DataGraphMaster::createNodeFromLR(DataGraph* dg, const scheme_list* ls
     const char * node_type = scmGetSymbol(lst, i++, nodeLRError);
 
     if (strcmp(node_type, "free") == 0) {
-        result = createFreeNode(dg);
+        result = createNode(dg);
+        result->type = DataNode::dnFreeNode;
     } else if (strcmp(node_type, "const") == 0) {
-        result = createConstNode(dg, tc(lst->at(i++)));
+        result = createNode(dg);
+        result->type = DataNode::dnConst;
+        result->sequence = new MemoryTupleSequence();
+        result->sequence->push_back(tc(lst->at(i++)));
     } else if (strcmp(node_type, "root") == 0) {
-        result =
-            createRootNode(dg,
-              DataRoot(scmGetList(lst, i+0, nodeLRError)),
-              pe::Path(scmGetList(lst, i+1, nodeLRError)));
+        result = createNode(dg);
+        result->type = DataNode::dnDatabase;
+        result->root = scmGetList(lst, i+0, nodeLRError);
+        result->path = scmGetList(lst, i+1, nodeLRError);
         i += 2;
     } else {
         throw USER_EXCEPTION2(SE1004, nodeLRError);
@@ -114,23 +118,16 @@ Predicate* DataGraphMaster::createPredicateFromLR(DataGraph* dg, const scheme_li
     const char * node_type = scmGetSymbol(lst, i++, predicateLRError);
 
     if (strcmp(node_type, "sj") == 0) {
-        SPredicate * sp = new SPredicate();
-
-        sp->dataNodeList.push_back(getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)));
-        sp->dataNodeList.push_back(getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)));
-
-        sp->path = pe::Path(scmGetList(lst, i++, predicateLRError));
-
-        result = createPredicate(dg, sp);
+        result = new SPredicate(dg,
+            getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)),
+            getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)),
+            pe::Path(scmGetList(lst, i++, predicateLRError))
+        );
     } else if (strcmp(node_type, "vj") == 0) {
-        VPredicate * vp = new VPredicate();
-
-        vp->dataNodeList.push_back(getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)));
-        vp->dataNodeList.push_back(getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)));
-
-        vp->cmp = Comparison(scmGetList(lst, i++, predicateLRError));
-
-        result = createPredicate(dg, vp);
+        result = new VPredicate(dg,
+            getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)),
+            getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)),
+            Comparison(scmGetList(lst, i++, predicateLRError)));
     }
 
     return result;
@@ -180,6 +177,7 @@ DataNode* DataGraphMaster::createNode(DataGraph* dg)
     return result;
 }
 
+/*
 DataNode * DataGraphMaster::createFreeNode(DataGraph* dg)
 {
     return createNode(dg);
@@ -210,6 +208,7 @@ DataNode * DataGraphMaster::createRootNode(DataGraph* dg, const DataRoot& root, 
     result->path = _path;
     return result;
 }
+*/
 
 Predicate* DataGraphMaster::createPredicate(DataGraph* dg, Predicate* predicate)
 {
@@ -227,7 +226,7 @@ Predicate* DataGraphMaster::createPredicate(DataGraph* dg, Predicate* predicate)
     return result;
 }
 
-
+/*
 DataGraph* DataGraphMaster::createPath(DataGraph* dg, TupleId left, TupleId right, const pe::Path& _path, bool outer)
 {
     SPredicate * p = new SPredicate();
@@ -237,6 +236,16 @@ DataGraph* DataGraphMaster::createPath(DataGraph* dg, TupleId left, TupleId righ
     p->outer = outer;
     return dg;
 }
+
+DataGraph* DataGraphMaster::createComparison(DataGraph* dg, TupleId left, TupleId right, const Comparison& cmp)
+{
+    VPredicate * p = new VPredicate();
+    createPredicate(dg, p);
+    p->setVertices(dg, left, right);
+    p->cmp = cmp;
+    return dg;
+}
+*/
 
 Predicate* DataGraphMaster::replacePredicate(DataGraph* dg, Predicate* predicate, Predicate* withPredicate)
 {
@@ -255,15 +264,6 @@ Predicate* DataGraphMaster::replacePredicate(DataGraph* dg, Predicate* predicate
     return withPredicate;
 }
 
-
-DataGraph* DataGraphMaster::createComparison(DataGraph* dg, TupleId left, TupleId right, const Comparison& cmp)
-{
-    VPredicate * p = new VPredicate();
-    createPredicate(dg, p);
-    p->setVertices(dg, left, right);
-    p->cmp = cmp;
-    return dg;
-}
 
 // ***************************** Execution Plan ***************************
 

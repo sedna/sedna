@@ -27,6 +27,8 @@
 #include "tr/crmutils/serialization.h"
 #include "tr/executor/base/xsd.h"
 
+#include "tr/opt/OptTypes.h"
+
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_cache.h"
 #include "tr/ft/ft_index_data.h"
@@ -393,6 +395,9 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
     if (!wu_reported) { catalog_on_transaction_end(is_commit); }
     d_printf1("OK\n");
 
+    elog(EL_LOG, ("Optimizer used : %llu / %llu", opt::currentOptimizationSpace->totalAllocated(), opt::currentOptimizationSpace->total()));
+//    opt::currentOptimizationSpace->clear();
+    
     d_printf1("Releasing VMM...");
     vmm_delete_tmp_blocks();
     vmm_on_transaction_end();

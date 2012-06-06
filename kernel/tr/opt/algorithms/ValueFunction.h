@@ -29,10 +29,16 @@ protected:
         un_op_tuple_cell unary;
         unsigned idx;
     };
-
+/*    
+    struct unary_t {
+        un_op_tuple_cell unary;
+        unsigned idx;
+    };
+*/
     union {
         binary_t b;
         unary_t u;
+//        custom_t;
     } params;
 
     virtual tuple_cell do_evaluate(const tuple & x) { U_ASSERT(false); return tuple_cell(); };
@@ -57,8 +63,6 @@ public:
     explicit ValueFunction(unsigned idx, bool atomized)
       : simple_type(atomized ? atomized_value : nid_value) { params.u.idx = idx; }
 
-    virtual ~ValueFunction() {};
-    
     tuple_cell evaluate(const tuple & x) {
         switch(simple_type) {
           case atomized_value:

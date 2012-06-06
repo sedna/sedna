@@ -92,16 +92,4 @@ public:
 
 }
 
-/*
-class GSMJMergeComparator {
-public:
-    bool stepLeft;
-    bool stepRight;
-
-    virtual bool compare(tuple left, tuple right) = 0;
-};
-
-AbstractSequence * createEqualValueJoin();
-*/
-
 #endif /* PLAN_EXECUTION_H */

@@ -10,6 +10,7 @@
 #include "tr/strings/strings.h"
 #include "tr/opt/SequenceModel.h"
 #include "tr/opt/phm/ComparisonModels.h"
+#include "tr/opt/functions/Functions.h"
 
 using namespace opt;
 
@@ -361,6 +362,26 @@ void* PhysicalModel::compile(SPredicate* pred)
     return result;
 }
 
+void* PhysicalModel::compile(FPredicate* pred)
+{
+    POProtIn leftOp = materialize(plan->getRef(pred->left()->absoluteIndex));
+    POProtIn rightOp = plan->getRef(pred->right()->absoluteIndex);
+
+    result = NULL;
+    
+    if (leftOp.op == NULL) {
+        return NULL;
+    } else {
+        U_ASSERT(rightOp.op == NULL);
+
+        result = new EvaluatePrototype(this, leftOp, initialRef(rightOp.index), pred->func);
+    };
+
+    updateBranch(result);
+    plan->opList.push_back(result);
+    
+    return NULL;
+}
 
 phop::ITupleOperator* PlanInfo::compile()
 {

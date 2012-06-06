@@ -14,14 +14,14 @@ namespace opt {
 
 class CostModel;
 struct SequenceInfo;
-struct ComparisonInfo;
+struct EvaluationInfo;
 
 struct ComparisonPrototype : public IPlanDisposable {
     virtual ICollationTupleSerializer * createTupleSerializer(unsigned idx) = 0;
     virtual TupleCellComparison getTupleCellComparison() = 0;
     virtual ValueFunction getValueFunction(unsigned idxL, unsigned idxR) = 0;
 
-    virtual ComparisonInfo * getComparisonCost(CostModel * model, TupleRef left, TupleRef right) = 0;
+    virtual EvaluationInfo * getComparisonCost(CostModel * model, TupleRef left, TupleRef right) = 0;
     virtual SequenceInfo * getSequenceCost(CostModel * model, TupleRef in) = 0;
 
     virtual XmlConstructor & __toXML(XmlConstructor & ) const = 0;
@@ -36,7 +36,7 @@ struct GeneralComparisonPrototype : public ComparisonPrototype {
     virtual TupleCellComparison getTupleCellComparison();
     virtual ValueFunction getValueFunction(unsigned idxL, unsigned idxR);
 
-    virtual ComparisonInfo * getComparisonCost(CostModel* model, TupleRef left, TupleRef right);
+    virtual EvaluationInfo * getComparisonCost(CostModel* model, TupleRef left, TupleRef right);
     virtual SequenceInfo * getSequenceCost(CostModel* model, TupleRef in);
 
     virtual XmlConstructor & __toXML(XmlConstructor & ) const;
@@ -51,7 +51,7 @@ struct PathComparisonPrototype : public ComparisonPrototype {
     virtual TupleCellComparison getTupleCellComparison();
     virtual ValueFunction getValueFunction(unsigned idxL, unsigned idxR);
 
-    virtual ComparisonInfo * getComparisonCost(CostModel* model, TupleRef left, TupleRef right);
+    virtual EvaluationInfo * getComparisonCost(CostModel* model, TupleRef left, TupleRef right);
     virtual SequenceInfo * getSequenceCost(CostModel* model, TupleRef in);
 
     virtual XmlConstructor & __toXML(XmlConstructor & ) const;
