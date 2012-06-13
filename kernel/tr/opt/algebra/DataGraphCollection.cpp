@@ -3,11 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "DataGraph.h"
+#include "DataGraphCollection.h"
 
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/phm/PhysicalModel.h"
 #include "tr/opt/algebra/Predicates.h"
+#include "tr/opt/algebra/DataGraphs.h"
 
 #include "tr/structures/nodetypes.h"
 
@@ -168,48 +169,79 @@ DataGraph* DataGraphMaster::createGraphFromLR(const scheme_list* vf)
 DataNode* DataGraphMaster::createNode(DataGraph* dg)
 {
     DataNode * result = new DataNode(DataNode::dnFreeNode, lastIndex++, dg->lastIndex++);
-    
+
     dg->dataNodes[result->index] = result;
 
     allNodes.push_back(result);
     U_ASSERT(allNodes.at(result->varIndex) == result);
-    
+
+    return result;
+}
+
+struct VariableInfo {
+    DataNode * firstNode;
+    DataNodeList nodes;
+
+    VariableInfo() : firstNode(NULL) {};
+};
+
+typedef std::map<TupleId, VariableInfo> VariableInfoMap;
+
+inline static
+void addVariable(VariableInfoMap & map, DataNode * dn)
+{
+    if (dn->varTupleId != opt::invalidTupleId) {
+        if (map.find(dn->varTupleId) == map.end()) {
+            map.insert(VariableInfoMap::value_type(dn->varTupleId, VariableInfo()));
+        };
+
+        VariableInfo & info = map[dn->varTupleId];
+
+        if (dn->type != DataNode::dnAlias && dn->type != DataNode::dnExternal) {
+            U_ASSERT(info.firstNode == NULL);
+            info.firstNode = dn;
+        } else {
+            info.nodes.insert(dn);
+        };
+    };
+};
+
+DataGraph* DataGraphMaster::join(DataGraph* left, DataGraph* right)
+{
+    DataGraphBuilder ng;
+
+    DataGraphWrapper lg(left);
+    DataGraphWrapper rg(right);
+
+    VariableInfoMap varMap;
+
+    ng.nodes.reserve(lg.nodes.size() + rg.nodes.size());
+    ng.nodes.insert(ng.nodes.end(), lg.nodes.begin(), lg.nodes.end());
+    ng.nodes.insert(ng.nodes.end(), rg.nodes.begin(), rg.nodes.end());
+
+    ng.predicates.reserve(lg.predicates.size() + rg.predicates.size());
+    ng.predicates.insert(ng.predicates.end(), lg.predicates.begin(), lg.predicates.end());
+    ng.predicates.insert(ng.predicates.end(), rg.predicates.begin(), rg.predicates.end());
+
+    ng.out.reserve(lg.out.size() + rg.out.size());
+    ng.out.insert(ng.out.end(), lg.out.begin(), lg.out.end());
+    ng.out.insert(ng.out.end(), rg.out.begin(), rg.out.end());
+
+    for (DataNodeList::const_iterator it = ng.nodes.begin(); it != ng.nodes.end(); ++it) {
+        if ((*it)->varTupleId != opt::invalidTupleId) {
+            varMap.insert(VariableMap::value_type((*it)->varTupleId, *it));
+        };
+    };
+
+    DataGraph * result = ng.build(this);
+
+    for () {
+    };
+
     return result;
 }
 
 /*
-DataNode * DataGraphMaster::createFreeNode(DataGraph* dg)
-{
-    return createNode(dg);
-}
-
-DataNode* DataGraphMaster::createConstNode(DataGraph* dg)
-{
-    DataNode * result = createNode(dg);
-    result->type = DataNode::dnConst;
-    result->sequence = NULL;
-    return result;
-}
-
-
-DataNode * DataGraphMaster::createConstNode(DataGraph* dg, const tuple_cell& tc)
-{
-    DataNode * result = createConstNode(dg);
-    result->sequence = new MemoryTupleSequence();
-    result->sequence->push_back(tc);
-    return result;
-}
-
-DataNode * DataGraphMaster::createRootNode(DataGraph* dg, const DataRoot& root, const pe::Path& _path)
-{
-    DataNode * result = createNode(dg);
-    result->type = DataNode::dnDatabase;
-    result->root = root;
-    result->path = _path;
-    return result;
-}
-*/
-
 Predicate* DataGraphMaster::createPredicate(DataGraph* dg, Predicate* predicate)
 {
     Predicate * result = predicate;
@@ -225,27 +257,6 @@ Predicate* DataGraphMaster::createPredicate(DataGraph* dg, Predicate* predicate)
 
     return result;
 }
-
-/*
-DataGraph* DataGraphMaster::createPath(DataGraph* dg, TupleId left, TupleId right, const pe::Path& _path, bool outer)
-{
-    SPredicate * p = new SPredicate();
-    createPredicate(dg, p);
-    p->setVertices(dg, left, right);
-    p->path = _path;
-    p->outer = outer;
-    return dg;
-}
-
-DataGraph* DataGraphMaster::createComparison(DataGraph* dg, TupleId left, TupleId right, const Comparison& cmp)
-{
-    VPredicate * p = new VPredicate();
-    createPredicate(dg, p);
-    p->setVertices(dg, left, right);
-    p->cmp = cmp;
-    return dg;
-}
-*/
 
 Predicate* DataGraphMaster::replacePredicate(DataGraph* dg, Predicate* predicate, Predicate* withPredicate)
 {
@@ -263,6 +274,7 @@ Predicate* DataGraphMaster::replacePredicate(DataGraph* dg, Predicate* predicate
     
     return withPredicate;
 }
+*/
 
 
 // ***************************** Execution Plan ***************************

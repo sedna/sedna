@@ -107,6 +107,7 @@ public:
     virtual void reset();
 };
 
+/*
 class FunctionOp : public ITupleOperator {
 protected:
     IFunctionOpInstance * func;
@@ -121,7 +122,7 @@ public:
 
     virtual void reset();
 };
-
+*/
 }
 
 #endif /* SCANS_H */

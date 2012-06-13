@@ -18,10 +18,6 @@
 
 namespace rqp {
   
-static const opt::TupleId nullTuple = 0;
-static const opt::TupleId invalidTupleId = -1;
-static const opt::TupleId worldDataTupleId = 1;
-
 enum operation_flags_t {
     ofNone = 0,
     oReturnTuple = 0x001,

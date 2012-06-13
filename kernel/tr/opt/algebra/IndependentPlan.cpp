@@ -305,9 +305,10 @@ void MapGraph::getChildren(OperationList& children) const
 
 void FunCall::resolve()
 {
-    function = functionLibrary->;
+    // TODO : remove this
+    phop::initializeFunctionLibrary();
+    function = phop::functionLibrary->findFunction(getName());
 }
-
 
 
 

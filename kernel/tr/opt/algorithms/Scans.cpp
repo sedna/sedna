@@ -19,7 +19,7 @@ OPINFO_DEF(SchemaValueScan)
 OPINFO_DEF(BogusConstSequence)
 OPINFO_DEF(CachedNestedLoop)
 OPINFO_DEF(NestedEvaluation)
-OPINFO_DEF(FunctionOp)
+//OPINFO_DEF(FunctionOp)
 
 SchemaScan::SchemaScan(schema_node_cptr _snode, unsigned int size, unsigned int idx)
     : ITupleOperator(OPINFO_REF, size),
@@ -235,6 +235,7 @@ void NestedEvaluation::reset()
     nestedOperator->reset();
 }
 
+/*
 FunctionOp::FunctionOp(const phop::MappedTupleIn& _in, unsigned int _size, unsigned int _resultIdx, IFunctionOpInstance* _inst)
     : ITupleOperator(OPINFO_REF, _size), func(_inst), in(_in), resultIdx(_resultIdx)
 {
@@ -255,7 +256,7 @@ void FunctionOp::reset()
     func->reset();
     phop::ITupleOperator::reset();
 }
-
+*/
 
 
 #include <sstream>
@@ -317,11 +318,12 @@ XmlConstructor & NestedEvaluation::__toXML(XmlConstructor & producer) const
     return producer;
 };
 
+/*
 XmlConstructor & FunctionOp::__toXML(XmlConstructor & producer) const
 {
     in.op->toXML(producer);
     return producer;
 };
 
-
+*/
 

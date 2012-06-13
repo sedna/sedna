@@ -293,9 +293,16 @@ void lr2opt::visit(ASTFunCall &n) {
         oplist.push_back(resultStack.top().op);
         resultStack.pop();
 
+        xmlns_ptr ns;
+
+        if (!n.pref->empty()) {
+             ns = skn->resolvePrefix(n.pref->c_str());
+        } else {
+             ns = skn->resolvePrefix("fn");
+        };
+
         resultStack.push(ResultInfo(
-            new FunCall(xsd::constQName(skn->resolvePrefix(n.pref->c_str()), n.local->c_str()),
-                oplist)));
+            new FunCall(xsd::constQName(ns, n.local->c_str()), oplist)));
     } else {
         throw USER_EXCEPTION(2902);
     }

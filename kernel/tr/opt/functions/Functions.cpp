@@ -3,44 +3,46 @@
 
 using namespace phop;
 
-
 FunctionLibrary * phop::functionLibrary = NULL;
 
-
-void FunctionLibrary::registerFunction(IFunction* function)
+FunctionSignature* FunctionLibrary::registerFunction(FunctionSignature* function)
 {
-    functions.insert(FunctionMap::value_type(function->info(), function));
+    functions.insert(FunctionMap::value_type(function->getName(), function));
+    return function;
 }
 
-
-#define FN_INFO(PREFIX, NAME)
-
-void fn_doc_op(tuple )
+FunctionSignature* FunctionLibrary::findFunction(const xsd::QName& qname)
 {
-};
+    std::string name = qname.emptyUri() ?
+        (std::string("{}:") + qname.getLocalName()) :
+        (std::string("{") + qname.getUri() + "}:" + qname.getLocalName());
 
-/*
- fn_doc
+    FunctionMap::const_iterator it = functions.find(name);
 
-class FnDocument : public IFunction {
-public:
-    FnDocument() {
-        m_info.uri = predefinedNamespaces[namespace_fn].uri;
-        m_info.name = "doc";
-        m_info.hasDataGraph = false;
-        m_info.preservesNull = false;
-        m_info.rty = 1;
+    if (it == functions.end()) {
+        U_ASSERT(false);
+        return NULL;
+    } else {
+        return it->second;
     };
-};
-*/
+}
 
-void initializeFunctionLibrary()
+#define FN_URI (predefinedNamespaces[namespace_fn].uri)
+
+void phop::initializeFunctionLibrary()
 {
     if (functionLibrary != NULL) {
         return;
     }
 
     functionLibrary = new FunctionLibrary();
-    functionLibrary->registerFunction(new FnDocument());
+
+    functionLibrary->registerFunction(
+        new FunctionSignature(FN_URI, "doc", 1))
+            ->setFlag(fn_preserves_null);
+
+    functionLibrary->registerFunction(
+        new FunctionSignature(FN_URI, "opt_not_empty", 1))
+            ->setFlag(fn_preserves_null);
 }
 

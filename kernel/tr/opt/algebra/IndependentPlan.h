@@ -22,6 +22,10 @@
 
 /* Look PlanOperationTypes for description of all operators */
 
+namespace phop {
+    struct FunctionSignature;
+}
+
 namespace opt {
 
 class DataGraphMaster;
@@ -369,7 +373,7 @@ class ManyChildren : public RPBase {
 class FunCall : public ManyChildren {
     OPERATION(0x017)
     xsd::QName name;
-    phop::IFunction * function;
+    phop::FunctionSignature * function;
 
     void resolve();
 public:
@@ -384,7 +388,7 @@ public:
     };
 
     PROPERTY_RO(Name, const xsd::QName &, name)
-    PROPERTY_RO(Function, phop::IFunction * , function)
+    PROPERTY_RO(Function, phop::FunctionSignature * , function)
 };
 
 class Construct : public ListOperation {

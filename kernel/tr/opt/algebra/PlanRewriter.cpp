@@ -2,6 +2,7 @@
 #include "tr/opt/algebra/IndependentPlan.h"
 #include "tr/opt/algebra/DataGraph.h"
 #include "tr/opt/algebra/Predicates.h"
+#include "tr/opt/functions/Functions.h"
 
 using namespace opt;
 using namespace rqp;
@@ -156,18 +157,18 @@ void DataGraphReduction::collectBlocks(RPBase * parent, RPBase * op)
 {
     bool blockOwner = false;
     bool blockBuilder = (op->info()->flags & rqp::oBlockBuilder) > 0;
-    
+
     OperationList children;
     op->getChildren(children);
-    
+
     if ((op->info()->flags & rqp::oBlockSpecial) > 0) {
         switch (op->info()->opType) {
           case FunCall::opid : {
-            blockBuilder = static_cast<FunCall *>(op)->getFunction()->;
+            blockBuilder = static_cast<FunCall *>(op)->getFunction()->getFlag(phop::fn_in_block);
           }; break;
         };
     }
-    
+
     if (blockBuilder) {
         blockOwner = blockStack.top() == NULL;
 

@@ -581,7 +581,7 @@ IOperator* EvaluatePrototype::compile()
     unsigned leftIdx = ExecutionBlock::current()->resultMap[in.at(0).index];
     MappedTupleIn leftOp(leftOpPtr, leftIdx, 0);
 
-    return new FunctionOp(leftOp, leftOp->_tsize() + 1, leftOp->_tsize(), func->createInstance());
+    return NULL;//new FunctionOp(leftOp, leftOp->_tsize() + 1, leftOp->_tsize(), func->createInstance());
 }
 
 

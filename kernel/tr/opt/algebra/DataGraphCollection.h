@@ -4,8 +4,8 @@
  */
 
 
-#ifndef DATAGRAPH_H
-#define DATAGRAPH_H
+#ifndef _DATAGRAPH_COLLECTION_H
+#define _DATAGRAPH_COLLECTION_H
 
 #include <map>
 #include <vector>
@@ -14,20 +14,7 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/executor/por2qep/scheme_tree.h"
 
-namespace phop {
-    class ITupleOperator;
-}
-
-class tuple_cell;
-class DataRoot;
-
-namespace pe {
-  class Path;
-}
-
 namespace opt {
-
-struct Comparison;
 
 class DataGraphMaster {
   friend class DataGraph;
@@ -45,24 +32,23 @@ class DataGraphMaster {
     Predicate * createPredicateFromLR(DataGraph * dg, const scheme_list * vf, VariableNameMap * vmap);
   public:
     VariableMap variableMap;
+
     /* Factory functions */
 
-    DataNode * createNode(DataGraph * dg);
-    Predicate * createPredicate(DataGraph * dg, Predicate * predicate);
-    
-    DataGraph * createGraph();
+//    DataNode * createNode(DataGraph * dg);
+//    Predicate * createPredicate(DataGraph * dg, Predicate * predicate);
+
+//    DataGraph * createGraph();
     DataGraph * createGraphFromLR(const scheme_list * vf);
 
-    Predicate * replacePredicate(DataGraph* dg, Predicate* predicate, Predicate* withPredicate);
-    
-    DataNode * getVarNode(TupleId var) const { return allNodes.at(var); };
-
-    phop::ITupleOperator* compile(DataGraph* dg);
+//    DataNode * getVarNode(TupleId var) const { return allNodes.at(var); };
 
     DataGraph * join(DataGraph * left, DataGraph * right);
     DataGraph * leftOuterJoin(DataGraph * left, DataGraph * right);
+
+    phop::ITupleOperator* compile(DataGraph* dg);
 };
 
 }
 
-#endif /* DATAGRAPH_H */
+#endif /* _DATAGRAPH_COLLECTION_H */
