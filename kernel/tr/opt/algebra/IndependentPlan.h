@@ -14,24 +14,13 @@
 #include <stack>
 
 #include "tr/structures/xmlns.h"
+#include "tr/opt/OptTypes.h"
 
 #include "tr/opt/algebra/PlanOperations.h"
 #include "tr/opt/algebra/TupleScheme.h"
-#include "tr/opt/algebra/DataGraph.h"
-#include "tr/opt/algebra/Predicates.h"
+#include "tr/opt/path/XPathTypes.h"
 
 /* Look PlanOperationTypes for description of all operators */
-
-namespace phop {
-    struct FunctionSignature;
-}
-
-namespace opt {
-
-class DataGraphMaster;
-class DataGraph;
-
-}
 
 namespace rqp {
 
@@ -56,29 +45,6 @@ typedef GreatTupleScheme::value_type GreatMapRecord;
 
 typedef std::pair<RPBase *, RPBase *> RPEdge;
 typedef std::map<RPBase *, RPBase **> LinkMap;
-
-
-/*
-typedef std::multimap<TupleId, RPBase *> DependancyMap;
-typedef std::pair<DependancyMap::const_iterator, DependancyMap::const_iterator> DependancyMapRange;
-typedef std::multimap<RPBase *, opt::TupleId> DependancyBackMap;
-typedef std::vector<TupleScheme *> TupleSchemeStorage;
-typedef std::vector<RPBase *> OperationList;
-*/
-
-
-
-class TupleDependancyMap {
-//        DependancyMap tupleDependencyMap;
-//        DependancyBackMap tupleDependencyBackMap;
-
-/*
-    void addDependancy(opt::TupleId tid, RPBase * item) {
-        tupleDependencyMap.insert(std::pair<TupleId, RPBase *>(tid, item));
-        tupleDependencyBackMap.insert(std::pair<RPBase *, TupleId>(item, tid));
-    };
-*/
-};
 
 class PlanContext : public opt::IPlanDisposable {
   private:
@@ -456,8 +422,10 @@ public:
     };
 
     virtual void getChildren(OperationList & children) const;
-      
+
     opt::TupleScheme tupleMask;
+
+    PROPERTY_RO(List, RPBase *, list)
 };
 
 /*

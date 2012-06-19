@@ -2,7 +2,7 @@
 #define JOINS_H
 
 #include "tr/opt/SequenceModel.h"
-#include "tr/opt/algorithms/Comparison.h"
+#include "tr/opt/algorithms/ComparisonOperation.h"
 #include "tr/opt/algorithms/ValueFunction.h"
 
 #include "tr/nid/nidstring.h"

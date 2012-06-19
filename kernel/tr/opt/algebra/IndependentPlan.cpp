@@ -2,6 +2,8 @@
 
 #include "tr/models/XmlConstructor.h"
 #include "tr/opt/functions/Functions.h"
+#include "tr/opt/algebra/DataGraphCollection.h"
+#include "tr/opt/algebra/DataGraphs.h"
 
 #include <set>
 
@@ -173,7 +175,7 @@ XmlConstructor& Select::__toXML(XmlConstructor& element) const
 
 XmlConstructor& ComparisonExpression::__toXML(XmlConstructor& element) const
 {
-    element.addElementValue(CDGQNAME("cmp"), cmp.toLRString());
+    element.addElementValue(CDGQNAME("cmp"), cmp.toString());
     return rqp::BinaryOperation::__toXML(element);
 };
 

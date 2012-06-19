@@ -8,7 +8,7 @@
 #include "tr/models/XmlConstructor.h"
 
 #include "tr/opt/algorithms/ValueFunction.h"
-#include "tr/opt/algorithms/Comparison.h"
+#include "tr/opt/algorithms/ComparisonOperation.h"
 
 namespace opt {
 

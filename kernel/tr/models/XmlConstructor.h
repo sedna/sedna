@@ -32,4 +32,9 @@ public:
     tuple_cell getLastChild() const { return lastElement; };
 };
 
+class IXMLSerializable {
+public:
+    virtual XmlConstructor& toXML(XmlConstructor& output) = 0;
+};
+
 #endif /* _XML_CONSTRUCTOR_H_ */

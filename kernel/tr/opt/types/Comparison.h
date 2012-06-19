@@ -2,8 +2,11 @@
 #define _COMPARISON_H_
 
 #include <string>
+#include "tr/executor/por2qep/scheme_tree.h"
 
 extern const int reverseComparisonMap[];
+
+namespace opt {
 
 struct Comparison {
     enum comp_t {
@@ -28,6 +31,9 @@ struct Comparison {
     };
 
     std::string toString() const;
+    std::string toLRString() const;
+};
+
 };
 
 #endif /* _COMPARISON_H_ */

@@ -4,7 +4,7 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/SequenceModel.h"
 #include "tr/opt/algebra/Predicates.h"
-#include "tr/opt/algorithms/Comparison.h"
+#include "tr/opt/algorithms/ComparisonOperation.h"
 
 namespace phop {
 

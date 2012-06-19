@@ -69,9 +69,12 @@ if (ENABLE_DTSEARCH)
     endif (UNIX)
 endif (ENABLE_DTSEARCH)
 
+set(trn_SRC ${trn_SRC} debugstream.cpp)
 # se_trn
 add_executable(se_trn ${trn_SRC})
-target_link_libraries(se_trn ${common_libs})
+target_link_libraries(se_trn ${common_libs} )
+
+target_link_libraries(se_trn boost_system boost_thread-mt)
 
 add_dependencies(se_trn generate_error_codes) # generate error files before se_trn
 add_dependencies(se_trn custom_expat)         # find/build expat before se_trn

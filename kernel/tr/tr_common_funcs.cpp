@@ -27,7 +27,9 @@
 #include "tr/crmutils/serialization.h"
 #include "tr/executor/base/xsd.h"
 
+#include "tr/opt/OptSpace.h"
 #include "tr/opt/OptTypes.h"
+#include "tr/debugstream.h"
 
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_cache.h"
@@ -131,6 +133,10 @@ release_transaction_id(SSMMsg* sm_server)
 
 void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active)
 {
+    if (!first_transaction) {
+        start_debug_stream(45002);
+    }
+
     string log_files_path = string(SEDNA_DATA) + string("/data/") + string(db_name) + string("_files/");
     char buf[1024];
 
@@ -245,6 +251,10 @@ void on_session_end(SSMMsg* &sm_server)
         wait_sem_inited = false;
     }
     d_printf1("OK\n");
+
+    if (!first_transaction) {
+        destroy_debug_stream();
+    }
 }
 
 void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active)
@@ -395,7 +405,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
     if (!wu_reported) { catalog_on_transaction_end(is_commit); }
     d_printf1("OK\n");
 
-    elog(EL_LOG, ("Optimizer used : %llu / %llu", opt::currentOptimizationSpace->totalAllocated(), opt::currentOptimizationSpace->total()));
+    elog(EL_LOG, ("Optimizer used : %llu / %llu", opt::currentOptimizationSpace->memoryPool.totalAllocated(), opt::currentOptimizationSpace->memoryPool.total()));
 //    opt::currentOptimizationSpace->clear();
     
     d_printf1("Releasing VMM...");

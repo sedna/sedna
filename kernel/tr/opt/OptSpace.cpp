@@ -1,18 +1,31 @@
 #include "OptSpace.h"
+#include "OptTypes.h"
 
-OptimizationSpace::OptimizationSpace()
-: allocated(0)
+MemoryPool::MemoryPool()
+  : allocated(0)
 {
     createNewRegion();
 }
 
-OptimizationSpace::~OptimizationSpace()
+MemoryPool::~MemoryPool()
 {
     clearOnly();
 }
 
-size_t OptimizationSpace::total() const
+size_t MemoryPool::total() const
 {
     return regions.size() * MEMORY_BLOCK_SIZE;
+}
+
+
+OptimizationSpace::OptimizationSpace()
+{
+
+}
+
+OptimizationSpace::~OptimizationSpace()
+{
+    ptrs.destroyAll<opt::IPlanDisposable>(NULL);
+    memoryPool.clear();
 }
 

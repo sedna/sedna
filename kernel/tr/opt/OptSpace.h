@@ -2,6 +2,7 @@
 #define _OPT_SPACE_H_
 
 #include "common/sedna.h"
+#include "tr/cat/catmem.h"
 
 #include <set>
 #include <stdlib.h>
@@ -16,11 +17,11 @@ struct MemoryBlock {
 
 typedef std::set<MemoryBlock *> MemoryRegionMap;
 
-class OptimizationSpace {
+class MemoryPool {
     MemoryRegionMap regions;
     MemoryBlock * freeRegion;
     size_t allocated;
-    
+
     void createNewRegion()
     {
         MemoryBlock * region = (MemoryBlock *) malloc(MEMORY_BLOCK_SIZE);
@@ -29,7 +30,7 @@ class OptimizationSpace {
         regions.insert(region);
         freeRegion = region;
     };
-    
+
     void clearOnly()
     {
         allocated = 0;
@@ -40,35 +41,50 @@ class OptimizationSpace {
 
         regions.clear();
     };
-
 public:
-    OptimizationSpace();
-    ~OptimizationSpace();
-    
+    MemoryPool();
+    ~MemoryPool();
+
     void * alloc(size_t n)
     {
         U_ASSERT(MEMORY_BLOCK_SIZE > (n + sizeof(MemoryBlock::freePtr) + sizeof(MemoryBlock::size)));
-        
+
         if (freeRegion->size - freeRegion->freePtr < n) {
             createNewRegion();
         }
-        
+
         void * result = freeRegion->data + freeRegion->freePtr;
-        
+
         freeRegion->freePtr += n;
         allocated += n;
-        
+
         return result;
     };
-    
+
     void clear()
     {
         clearOnly();
         createNewRegion();
     };
-    
+
     size_t total() const ;
     size_t totalAllocated() const { return allocated; };
+
+};
+
+class OptimizationSpace {
+public:
+    MemoryPool memoryPool;
+    FastPointerArray ptrs;
+
+    void * createObject(size_t n) {
+        void * ptr = memoryPool.alloc(n);
+        ptrs.add(ptr);
+        return ptr;
+    };
+    
+    OptimizationSpace();
+    ~OptimizationSpace();
 };
 
 #endif /* _OPT_SPACE_H_ */

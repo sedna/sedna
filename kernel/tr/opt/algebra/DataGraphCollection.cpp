@@ -12,6 +12,8 @@
 
 #include "tr/structures/nodetypes.h"
 
+#include <algorithm>
+
 using namespace std;
 using namespace opt;
 
@@ -26,25 +28,21 @@ DataGraphMaster::DataGraphMaster() : lastIndex(0)
 
 DataGraphMaster::~DataGraphMaster()
 {
-    for (PredicateList::iterator i = allPredicates.begin(); i != allPredicates.end(); ++i) {
-        delete *i;
-    };
-    
-    for (DataNodeList::iterator i = allNodes.begin(); i != allNodes.end(); ++i) {
-        delete *i;
-    };
 
-    for (DataGraphList::iterator i = allGraphs.begin(); i != allGraphs.end(); ++i) {
-        delete *i;
-    };
 }
 
-DataGraph* DataGraphMaster::createGraph()
-{
-    DataGraph * result = new DataGraph(this);
-    allGraphs.push_back(result);
-    return result;
-}
+inline static
+DataNode * getDataNode(VariableNameMap* vmap, const char * x) {
+    VariableNameMap::const_iterator i = vmap->find(x);
+
+    if (i != vmap->end()) {
+        return i->second;
+    };
+
+    return NULL;
+};
+
+/*
 
 inline static
 tuple_cell tc(const scm_elem & vf) {
@@ -90,7 +88,7 @@ DataNode* DataGraphMaster::createNodeFromLR(DataGraph* dg, const scheme_list* ls
         const char * option = scmGetSymbol(lst, i, nodeLRError);
 
         if (strcmp(option, "output") == 0) {
-            result->output = true;
+            dg->outputNodes |= result->indexBit;
         };
     };
 
@@ -100,17 +98,6 @@ DataNode* DataGraphMaster::createNodeFromLR(DataGraph* dg, const scheme_list* ls
     return result;
 }
 
-inline static
-DataNode * getDataNode(VariableNameMap* vmap, const char * x) {
-    VariableNameMap::const_iterator i = vmap->find(x);
-
-    if (i != vmap->end()) {
-        return i->second;
-    };
-
-    return NULL;
-};
-
 Predicate* DataGraphMaster::createPredicateFromLR(DataGraph* dg, const scheme_list* lst, VariableNameMap* vmap)
 {
     Predicate* result = NULL;
@@ -119,13 +106,13 @@ Predicate* DataGraphMaster::createPredicateFromLR(DataGraph* dg, const scheme_li
     const char * node_type = scmGetSymbol(lst, i++, predicateLRError);
 
     if (strcmp(node_type, "sj") == 0) {
-        result = new SPredicate(dg,
+        result = new StructuralPredicate(
             getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)),
             getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)),
             pe::Path(scmGetList(lst, i++, predicateLRError))
         );
     } else if (strcmp(node_type, "vj") == 0) {
-        result = new VPredicate(dg,
+        result = new ValuePredicate(
             getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)),
             getDataNode(vmap, scmGetSymbol(lst, i++, predicateLRError)),
             Comparison(scmGetList(lst, i++, predicateLRError)));
@@ -161,121 +148,105 @@ DataGraph* DataGraphMaster::createGraphFromLR(const scheme_list* vf)
         createPredicateFromLR(dg, i->internal.list, &tmpMap);
     };
 
-    dg->updateIndex();
-
     return dg;
-}
-
-DataNode* DataGraphMaster::createNode(DataGraph* dg)
-{
-    DataNode * result = new DataNode(DataNode::dnFreeNode, lastIndex++, dg->lastIndex++);
-
-    dg->dataNodes[result->index] = result;
-
-    allNodes.push_back(result);
-    U_ASSERT(allNodes.at(result->varIndex) == result);
-
-    return result;
-}
-
-struct VariableInfo {
-    DataNode * firstNode;
-    DataNodeList nodes;
-
-    VariableInfo() : firstNode(NULL) {};
-};
-
-typedef std::map<TupleId, VariableInfo> VariableInfoMap;
-
-inline static
-void addVariable(VariableInfoMap & map, DataNode * dn)
-{
-    if (dn->varTupleId != opt::invalidTupleId) {
-        if (map.find(dn->varTupleId) == map.end()) {
-            map.insert(VariableInfoMap::value_type(dn->varTupleId, VariableInfo()));
-        };
-
-        VariableInfo & info = map[dn->varTupleId];
-
-        if (dn->type != DataNode::dnAlias && dn->type != DataNode::dnExternal) {
-            U_ASSERT(info.firstNode == NULL);
-            info.firstNode = dn;
-        } else {
-            info.nodes.insert(dn);
-        };
-    };
-};
-
-DataGraph* DataGraphMaster::join(DataGraph* left, DataGraph* right)
-{
-    DataGraphBuilder ng;
-
-    DataGraphWrapper lg(left);
-    DataGraphWrapper rg(right);
-
-    VariableInfoMap varMap;
-
-    ng.nodes.reserve(lg.nodes.size() + rg.nodes.size());
-    ng.nodes.insert(ng.nodes.end(), lg.nodes.begin(), lg.nodes.end());
-    ng.nodes.insert(ng.nodes.end(), rg.nodes.begin(), rg.nodes.end());
-
-    ng.predicates.reserve(lg.predicates.size() + rg.predicates.size());
-    ng.predicates.insert(ng.predicates.end(), lg.predicates.begin(), lg.predicates.end());
-    ng.predicates.insert(ng.predicates.end(), rg.predicates.begin(), rg.predicates.end());
-
-    ng.out.reserve(lg.out.size() + rg.out.size());
-    ng.out.insert(ng.out.end(), lg.out.begin(), lg.out.end());
-    ng.out.insert(ng.out.end(), rg.out.begin(), rg.out.end());
-
-    for (DataNodeList::const_iterator it = ng.nodes.begin(); it != ng.nodes.end(); ++it) {
-        if ((*it)->varTupleId != opt::invalidTupleId) {
-            varMap.insert(VariableMap::value_type((*it)->varTupleId, *it));
-        };
-    };
-
-    DataGraph * result = ng.build(this);
-
-    for () {
-    };
-
-    return result;
-}
-
-/*
-Predicate* DataGraphMaster::createPredicate(DataGraph* dg, Predicate* predicate)
-{
-    Predicate * result = predicate;
-
-    result->index = dg->lastIndex++;
-    result->indexBit = 1 << result->index;
-
-    result->contextTuple = 0;
-    result->createContext = false;
-
-    dg->predicates[result->index] = result;
-    allPredicates.push_back(result);
-
-    return result;
-}
-
-Predicate* DataGraphMaster::replacePredicate(DataGraph* dg, Predicate* predicate, Predicate* withPredicate)
-{
-    if (withPredicate != NULL) {
-        withPredicate->index = predicate->index;
-        withPredicate->dataNodeList = predicate->dataNodeList;
-        withPredicate->dataNodeMask = predicate->dataNodeMask;
-        withPredicate->indexBit = predicate->indexBit;
-        withPredicate->neighbours = predicate->neighbours;
-
-        allPredicates.push_back(withPredicate);
-    }
-
-    dg->predicates[predicate->index] = withPredicate;
-    
-    return withPredicate;
 }
 */
 
+void DataGraphMaster::addVariable(DataNode* dn)
+{
+    if (dn->varTupleId != opt::invalidTupleId) {
+        if (variableMap.find(dn->varTupleId) == variableMap.end()) {
+            variableMap.insert(VariableInfoMap::value_type(dn->varTupleId, VariableInfo(dn->varTupleId)));
+        };
+
+        VariableInfo & info = variableMap.at(dn->varTupleId);
+
+        while (info.pointsTo != opt::invalidTupleId) {
+            info = variableMap.at(info.pointsTo);
+        };
+
+        if (dn->type != DataNode::dnAlias && dn->type != DataNode::dnExternal) {
+            U_ASSERT(info.producer == NULL);
+            info.producer = dn;
+        } else {
+            info.nodes.push_back(dn);
+        };
+    };
+}
+
+void DataGraphMaster::setVarName(TupleId varTupleId, const string& name)
+{
+    if (variableMap.find(varTupleId) == variableMap.end()) {
+        variableMap.insert(VariableInfoMap::value_type(varTupleId, VariableInfo(varTupleId)));
+    };
+
+    VariableInfo & info = variableMap.at(varTupleId);
+
+    while (info.pointsTo != opt::invalidTupleId) {
+        info = variableMap.at(info.pointsTo);
+    };
+
+    info.name = name;
+}
+
+
+void DataGraphMaster::mergeVariables(TupleId t1, TupleId t2)
+{
+    VariableInfo & var1 = getVariable(t1);
+    VariableInfo & var2 = getVariable(t2);
+
+    if (var1.id == var2.id) {
+        return;
+    }
+    
+    if (var1.name.empty() || (!var2.name.empty() && (var2.name[0] == '$'))) {
+        var1.name = var2.name;
+    };
+
+    U_ASSERT(var1.producer == NULL || var2.producer == NULL);
+
+    if (var1.producer == NULL) {
+        var1.producer = var2.producer;
+
+        if (var2.producer != NULL) {
+            var2.producer->varTupleId = var1.id;
+            var2.producer = NULL;
+        }
+    };
+
+    for (DataNodeList::iterator it = var1.nodes.begin(); it != var1.nodes.end(); ++it) {
+        (*it)->varTupleId = var1.id;
+    };
+
+    var1.nodes.insert(var1.nodes.end(), var2.nodes.begin(), var2.nodes.end());
+    var2.nodes.clear();
+    var2.pointsTo = var1.id;
+}
+
+void DataGraphMaster::removeVariable(DataNode* dn)
+{
+    VariableInfo & info = variableMap.at(dn->varTupleId);
+
+    while (info.pointsTo != opt::invalidTupleId) {
+        info = variableMap.at(info.pointsTo);
+    };
+
+    info.nodes.erase(std::find(info.nodes.begin(), info.nodes.end(), dn));
+}
+
+DataGraph* DataGraphMaster::join(DataGraph* left, DataGraph* right)
+{
+    DataGraphWrapper lg(left);
+    DataGraphWrapper rg(right);
+
+    lg.nodes.insert(lg.nodes.end(), rg.nodes.begin(), rg.nodes.end());
+    lg.predicates.insert(lg.predicates.end(), rg.predicates.begin(), rg.predicates.end());
+    lg.out.insert(lg.out.end(), rg.out.begin(), rg.out.end());
+
+    lg.rebuild();
+
+    return left;
+}
 
 // ***************************** Execution Plan ***************************
 
@@ -338,6 +309,9 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
     Serializer * serializer = Serializer::createSerializer(se_output_method_xml);
     serializer->prepare(&Fstream, &opt);
 */
+    DataGraphIndex dgi(dg);
+    DataGraphWrapper dgw(dg);
+
     PlanMap * planMap = new PlanMap();
 
     PlanDescSet set1, set2;
@@ -345,7 +319,7 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
     PlanDescSet * currentStepSet = &set1;
     PlanDescSet * nextStepSet = &set2;
 
-    PlanInfo * nullPlan = new PlanInfo(dg->nodeCount);
+    PlanInfo * nullPlan = new PlanInfo(dgw.nodes.size());
 
     int branchLimit = 4;
 
@@ -372,12 +346,12 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
 
         for (PlanDescSet::const_iterator it = currentStepSet->begin(); it != currentStepSet->end(); ++it) {
             PlanInfo * info = planMap->get(*it);
-            PlanDesc dsc = dg->getNeighbours(info->getDesc());
+            PlanDesc dsc = dgi.getNeighbours(info->getDesc());
 
 //            if (dsc == 0 && branchLimit > 0) {
             if (branchLimit > 0) {
                 branchLimit--;
-                dsc = dg->allPredicates & ~info->getDesc();
+                dsc = dgi.allPredicates & ~info->getDesc();
             };
 
             PlanDescIterator neighbours(dsc);

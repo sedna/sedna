@@ -15,6 +15,10 @@
 #include "tr/xqp/serial/deser.h"
 #include "tr/opt/algebra/PlanRewriter.h"
 
+#include "tr/opt/algebra/IndependentPlan.h"
+#include "tr/models/XmlConstructor.h"
+#include "tr/debugstream.h"
+
 namespace sedna
 {
     XQStdFunctionInfo XQueryDriver::stdFuncs;
@@ -440,6 +444,9 @@ namespace sedna
         if (!tr_globals::first_transaction) {
             res->optimizedPlan = (mods[ind])->getOPT(is_subquery);
             selectDataGraphs(res->optimizedPlan);
+
+            XmlConstructor xmlConstructor(VirtualRootConstructor(0));
+            debug_xml("opt.g", res->optimizedPlan->toXML(xmlConstructor).getLastChild());
         }
 
         // some errors might have happened

@@ -11,23 +11,26 @@
 
 #include "tr/opt/OptSpace.h"
 #include "tr/opt/types/Range.h"
+#include "tr/opt/types/Comparison.h"
 #include "tr/opt/types/IntBitIterator.h"
+#include "tr/executor/base/tuple.h"
 
 class DataRoot;
+class XmlConstructor;
 
 namespace pe {
+class Step;
 class Path;
 };
 
 namespace phop {
 class ITupleOperator;
+struct FunctionSignature;
 }
 
 #define MAX_GRAPH_SIZE 63
 
 namespace opt {
-
-struct Comparison;
 
 typedef uint64_t PlanDesc;
 typedef std::set<PlanDesc> PlanDescSet;
@@ -45,12 +48,14 @@ struct Predicate;
 struct DataNode;
 struct Variable;
 struct DataGraph;
+struct DataGraphMaster;
 
 class PhysicalModel;
 
 typedef std::vector<Predicate *> PredicateList;
 typedef std::vector<DataNode *> DataNodeList;
 typedef std::vector<DataGraph *> DataGraphList;
+typedef std::set<DataGraph *> DataGraphSet;
 
 typedef std::multimap<TupleId, DataNode *> VariableMap;
 typedef std::map<std::string, DataNode *> VariableNameMap;
@@ -71,11 +76,16 @@ TupleScheme singleTupleScheme(opt::TupleId tid)
 }
 
 extern ::OptimizationSpace * currentOptimizationSpace;
+extern ::OptimizationSpace * optObjects;
 
 class IPlanDisposable {
 public:
     virtual ~IPlanDisposable() {};
-    void * operator new(size_t n) { return currentOptimizationSpace->alloc(n); };
+    void * operator new(size_t n)
+    {
+        return currentOptimizationSpace->createObject(n);
+    };
+    
     void operator delete(void *) { return; };
 };
 

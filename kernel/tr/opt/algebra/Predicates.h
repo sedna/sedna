@@ -5,6 +5,7 @@
 #include "tr/opt/path/XPathTypes.h"
 #include "tr/opt/path/DataSources.h"
 #include "tr/opt/algebra/DataGraphs.h"
+#include "tr/opt/types/Comparison.h"
 #include "tr/executor/base/tuple.h"
 
 namespace phop {
@@ -16,7 +17,7 @@ class XmlConstructor;
 namespace opt {
 
 struct BinaryPredicate : public opt::Predicate {
-    BinaryPredicate(DataGraph * dg, DataNode * left, DataNode * right);
+    BinaryPredicate(DataNode * left, DataNode * right);
     
     DataNode * left() const { return dataNodeList[0]; };
     DataNode * right() const { return dataNodeList[1]; };
@@ -32,8 +33,6 @@ struct PhantomPredicate : public opt::Predicate {
     tuple_cell value;
 
     virtual void * compile(PhysicalModel * model);
-
-    virtual std::string toLRString() const;
     virtual XmlConstructor & toXML(XmlConstructor & ) const;
 };
 
@@ -43,40 +42,34 @@ struct PhantomPredicate : public opt::Predicate {
 struct FPredicate : public BinaryPredicate {
     phop::IFunction * func;
 
-    FPredicate(DataGraph * dg, DataNode* left, DataNode* right, phop::IFunction * f);
+    FPredicate(DataNode* left, DataNode* right, phop::IFunction * f);
 
     virtual void * compile(PhysicalModel * model);
-
-    virtual std::string toLRString() const;
     virtual XmlConstructor & toXML(XmlConstructor & ) const;
 };
 
 /*
  * Predicate for value operations
  */
-struct VPredicate : public BinaryPredicate {
-    Comparison cmp;
+struct ValuePredicate : public BinaryPredicate {
+    opt::Comparison cmp;
 
-    VPredicate(opt::DataGraph* dg, opt::DataNode* left, opt::DataNode* right, const opt::Comparison& _cmp);
+    ValuePredicate(opt::DataNode* left, opt::DataNode* right, const opt::Comparison& _cmp);
     
     virtual void * compile(PhysicalModel * model);
-
-    virtual std::string toLRString() const;
     virtual XmlConstructor & toXML(XmlConstructor & ) const;
 };
 
 /*
  * Predicate for structural operations
  */
-struct SPredicate : public BinaryPredicate {
+struct StructuralPredicate : public BinaryPredicate {
     bool outer;
     pe::Path path;
 
-    SPredicate(DataGraph* dg, DataNode* left, DataNode* right, const pe::Path & path);
+    StructuralPredicate(opt::DataNode* left, opt::DataNode* right, const pe::Path& _path);
     
     virtual void * compile(PhysicalModel * model);
-
-    virtual std::string toLRString() const;
     virtual XmlConstructor & toXML(XmlConstructor & ) const;
 };
 

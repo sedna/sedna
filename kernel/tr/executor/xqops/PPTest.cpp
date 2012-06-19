@@ -20,7 +20,8 @@
 #include "tr/mo/nodemoutils.h"
 #include "tr/opt/algebra/Predicates.h"
 
-#include "tr/opt/algebra/DataGraph.h"
+#include "tr/opt/algebra/DataGraphCollection.h"
+#include "tr/opt/algebra/DataGraphs.h"
 #include "tr/models/SCElementProducer.h"
 
 #include "tr/opt/path/XPathLookup.h"
@@ -311,6 +312,7 @@ void PPTest::do_accept(PPVisitor &v)
 
 void PPDataGraph::do_next(tuple& t)
 {
+/*
     static opt::DataGraphMaster dgm;
 
     if (data != NULL) {
@@ -351,8 +353,6 @@ void PPDataGraph::do_next(tuple& t)
 
         opt::DataGraph *dg = dgm.createGraphFromLR(scml.get());
 
-        dg->precompile();
-
         IElementProducer * rootProducer = SCElementProducer::getVirtualRoot(XNULL);
 //        IElementProducer * dgElement = dg->toXML(rootProducer);
 
@@ -368,14 +368,12 @@ void PPDataGraph::do_next(tuple& t)
         
         op->reset();
 
-/*
         phop::MappedTupleIn mt = dynamic_cast<phop::BinaryTupleOperator *>(
             dynamic_cast<phop::UnaryTupleOperator *>(op)->__in().op
             )->__left();
         
         op = mt.op;
         idx = 4;
-*/
         data = op;
 
         u_ftime(&t_opt);
@@ -383,8 +381,9 @@ void PPDataGraph::do_next(tuple& t)
 //        do_next(t);
         XmlConstructor vroot(VirtualRootConstructor(0));
         t.cells[0] = op->toXML(vroot).getLastChild();
-//        PPOpIn op(dgm.compile(dg), 1);
+        PPOpIn op(dgm.compile(dg), 1);
     }
+*/
 }
 
 PPDataGraph::PPDataGraph(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)

@@ -2,31 +2,36 @@
 #define _DATA_GRAPHS_H_
 
 #include "tr/opt/OptTypes.h"
+#include "tr/opt/path/DataSources.h"
 
 class XmlConstructor;
 
 namespace opt {
 
-class SPredicate;
+class DataGraph;
+class StructuralPredicate;
 
 struct Predicate : public IPlanDisposable {
     int index;
     PlanDesc indexBit;
 
-    PlanDesc neighbours;
-    PlanDesc dataNodeMask;
-    PlanDesc evaluateAfter;
-
+    PredicateList neighbours;
+    PredicateList evaluateAfter;
     DataNodeList dataNodeList;
 
 //    bool createContext;
 //    TupleId contextTuple;
 
-    Predicate(DataGraph * dg);
+    void setIndex(int _index) {
+        index = _index;
+        indexBit = 1ULL << _index;
+    };
+
+    Predicate() : index(0), indexBit(0) {};
 
     virtual void * compile(PhysicalModel * model) = 0;
 
-    virtual std::string toLRString() const = 0;
+//    virtual std::string toLRString() const = 0;
     virtual XmlConstructor & toXML(XmlConstructor & ) const = 0;
 };
 
@@ -36,12 +41,11 @@ struct DataNode : public IPlanDisposable {
     } type;
 
     DataNode * replacedWith; // If node is replaced, tells, what is it replaced with
-    TupleId varIndex; // Global index in master graph
 
     int index; // Index in graph 
     PlanDesc indexBit; // Shifted index in graph
+
     int absoluteIndex; // Node index used while building execution schema
-    PlanDesc predicates; // Connected predicates
 
     // Data root information and path information
     DataRoot root;
@@ -51,19 +55,39 @@ struct DataNode : public IPlanDisposable {
 
     DataNode * aliasFor;
 
-    std::string varName;
     TupleId varTupleId; // Variable node came from
 
-    SPredicate * producedFrom; // Used in compilation
+    StructuralPredicate * producedFrom; // Used in compilation
 
-    DataNode(data_node_type_t _type, int _varIndex, int _index)
-        : type(_type), replacedWith(NULL), varIndex(_varIndex),
-            index(_index), indexBit(1ULL << _index), absoluteIndex(0),
-            predicates(0), aliasFor(NULL), varTupleId(opt::invalidTupleId), producedFrom(NULL)
+    DataGraph * parent;
+    
+    explicit DataNode(data_node_type_t _type)
+        : type(_type), replacedWith(NULL), index(0), indexBit(0),
+          absoluteIndex(0), aliasFor(NULL),
+          varTupleId(opt::invalidTupleId), producedFrom(NULL),
+          parent(NULL)
     { };
 
-    std::string getName() const;
+    void setIndex(int _index) {
+        index = _index;
+        indexBit = 1ULL << _index;
+    };
+
     XmlConstructor & toXML(XmlConstructor & ) const;
+};
+
+struct PredicateIndex {
+    Predicate * p;
+    PlanDesc neighbours;
+    PlanDesc dataNodeMask;
+    PlanDesc evaluateAfter;
+};
+
+struct DataNodeIndex {
+    DataNode * p;
+    PlanDesc predicates;
+    bool input;
+    bool output;
 };
 
 class DataGraphMaster;
@@ -77,6 +101,7 @@ struct DataGraph : public IPlanDisposable {
     PlanDesc inputNodes;
     PlanDesc outputNodes;
 
+    explicit DataGraph(DataGraphMaster* _owner);
     XmlConstructor & toXML(XmlConstructor & ) const;
 };
 
@@ -87,36 +112,55 @@ struct DataGraphWrapper {
     DataNodeList in;
     DataNodeList out;
 
+    TupleScheme inTuples;
+    TupleScheme outTuples;
+
     PredicateList predicates;
 
-    DataGraphWrapper(DataGraph * _dg);
+    explicit DataGraphWrapper(DataGraph * _dg);
+
+    void update();
+    void rebuild();
 };
 
 struct DataGraphBuilder {
-    int lastIndex;
-
     DataNodeList nodes;
     DataNodeList out;
 
     PredicateList predicates;
 
     DataGraph * build(DataGraphMaster * master);
+    DataGraph * make(DataGraphMaster * master, DataGraph * graph);
 };
 
 struct DataGraphIndex {
     DataGraph * dg;
 
+    PredicateIndex predicates[MAX_GRAPH_SIZE];
+    DataNodeIndex nodes[MAX_GRAPH_SIZE];
+    
     PlanDesc allPredicates;
-    PlanDesc freePositions;
 
-    DataGraphIndex(DataGraph * _dg);
+    explicit DataGraphIndex(DataGraph * _dg);
 
-    PlanDesc getNeighbours(PlanDesc x);
+    PlanDesc getNeighbours(PlanDesc x) {
+        PlanDesc result = 0;
+        PlanDescIterator iter(x);
+
+        int i;
+        while (-1 != (i = iter.next())) {
+            result |= predicates[i].neighbours;
+        }
+
+        return (result & ~x);
+    };
+
     void update();
 };
 
 };
 
-#define FOR_ALL_GRAPH_ELEMENTS(EL, IV) for (unsigned IV = 0; IV < MAX_GRAPH_SIZE; ++IV) if ((EL)[IV] != NULL) \
+#define FOR_ALL_GRAPH_ELEMENTS(EL, IV) for (unsigned IV = 0; IV < MAX_GRAPH_SIZE; ++IV) if ((EL)[IV] != NULL)
+#define FOR_ALL_INDEXES(EL, IV) for (unsigned IV = 0; IV < MAX_GRAPH_SIZE; ++IV) if ((EL)[IV].p != NULL)
 
 #endif /* _DATA_GRAPHS_H_ */

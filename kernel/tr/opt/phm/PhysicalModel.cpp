@@ -195,7 +195,7 @@ void* PhysicalModel::compile(PhantomPredicate* pred)
     return NULL;
 }
 
-void* PhysicalModel::compile(VPredicate* pred)
+void* PhysicalModel::compile(ValuePredicate* pred)
 {
     POProtIn leftOp = materialize(plan->getRef(pred->left()->absoluteIndex));
     POProtIn rightOp = materialize(plan->getRef(pred->right()->absoluteIndex));
@@ -239,7 +239,7 @@ void* PhysicalModel::compile(VPredicate* pred)
     return result;
 }
 
-void* PhysicalModel::compile(SPredicate* pred)
+void* PhysicalModel::compile(StructuralPredicate* pred)
 {
     enum strategy_t {
         impossible_to_evaluate,
@@ -431,7 +431,7 @@ XmlConstructor & POProt::__commonToXML(XmlConstructor & element) const
     for (std::vector<int>::const_iterator i = resultSet.begin(); i != resultSet.end(); ++i) {
         TupleRef tref(result, *i);
         element.openElement(CDGQNAME("result"));
-        element.addAttributeValue(CDGQNAME("var"), tref->node->getName());
+        element.addAttributeValue(CDGQNAME("var"), tuple_cell::atomic_int(tref->node->index));
         element.closeElement();
     };
 

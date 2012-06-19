@@ -11,7 +11,7 @@
 #include "tr/opt/algorithms/Joins.h"
 #include "tr/opt/path/XPathLookup.h"
 #include "tr/executor/base/ITupleSerializer.h"
-#include "tr/opt/algorithms/Comparison.h"
+#include "tr/opt/algorithms/ComparisonOperation.h"
 #include "tr/opt/functions/Functions.h"
 
 using namespace opt;

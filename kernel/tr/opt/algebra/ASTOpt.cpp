@@ -27,7 +27,7 @@ void lr2opt::visit(ASTMainModule &n)
 void lr2opt::visit(ASTQuery &n)
 {
     if (n.type == ASTQuery::QUERY) {
-        contextVariable = invalidTupleId;
+        contextVariable = opt::invalidTupleId;
         n.query->accept(*this);
     } else {
       //
@@ -398,7 +398,8 @@ void lr2opt::visit(ASTQuantExpr &n)
     resultStack.pop();
 
     xsd::QName aggrFunction;
-    
+
+    // TODO: not fair! should be an aggr function
     if (n.type == ASTQuantExpr::SOME)
     {
         aggrFunction = xsd::constQName(skn->resolvePrefix("fn"), "opt_not_empty");
@@ -411,9 +412,12 @@ void lr2opt::visit(ASTQuantExpr &n)
     }
 
     resultStack.push(ResultInfo(
+        new rqp::MapConcat(predicate, expression, varBinding)));
+/*    
+    resultStack.push(ResultInfo(
         new rqp::FunCall(aggrFunction,
             new rqp::MapConcat(predicate, expression, varBinding))));
-
+*/
     PlanContext::current->clearScopesToMarker(scopeMarker);
 }
 

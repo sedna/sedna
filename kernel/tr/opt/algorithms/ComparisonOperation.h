@@ -1,7 +1,8 @@
-#ifndef _COMPARISON_H_
-#define _COMPARISON_H_
+#ifndef _COMPARISON_OPERATION_H_
+#define _COMPARISON_OPERATION_H_
 
 #include "tr/executor/base/ITupleSerializer.h"
+#include "tr/executor/base/tuple.h"
 #include "tr/executor/fo/op_map.h"
 #include "tr/executor/base/PPUtils.h"
 
@@ -73,4 +74,4 @@ public:
     virtual int compare(void* buf1, size_t size1, void* buf2, size_t size2);
 };
 
-#endif /* _COMPARISON_H_ */
+#endif /* _COMPARISON_OPERATION_H_ */

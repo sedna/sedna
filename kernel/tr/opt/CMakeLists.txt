@@ -1,4 +1,4 @@
-set(opt_SRC OptTypes.cpp SequenceModel.cpp)
+set(opt_SRC OptTypes.cpp SequenceModel.cpp types/Comparison.cpp OptSpace.cpp)
 
 ADD_SUBFOLDER_SRC(opt_SRC algebra)
 ADD_SUBFOLDER_SRC(opt_SRC algorithms)

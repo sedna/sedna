@@ -27,8 +27,8 @@ struct TupleStatistics;
 struct OperationCost;
 
 struct PhantomPredicate;
-struct VPredicate;
-struct SPredicate;
+struct ValuePredicate;
+struct StructuralPredicate;
 struct FPredicate;
 
 class POProt;
@@ -210,8 +210,8 @@ public:
     TupleChrysalis * updateTwo(TupleChrysalis* x, TupleChrysalis* y, POProt* op, TupleId ind1, TupleId ind2);
 
     void * compile(PhantomPredicate * pred);
-    void * compile(VPredicate * pred);
-    void * compile(SPredicate * pred);
+    void * compile(ValuePredicate * pred);
+    void * compile(StructuralPredicate * pred);
     void * compile(FPredicate * pred);
 };
 

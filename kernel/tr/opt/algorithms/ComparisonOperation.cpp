@@ -1,4 +1,4 @@
-#include "Comparison.h"
+#include "ComparisonOperation.h"
 
 #include "tr/executor/fo/op_map.h"
 #include "tr/executor/base/PPUtils.h"
