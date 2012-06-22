@@ -402,22 +402,22 @@ void lr2opt::visit(ASTQuantExpr &n)
     // TODO: not fair! should be an aggr function
     if (n.type == ASTQuantExpr::SOME)
     {
-        aggrFunction = xsd::constQName(skn->resolvePrefix("fn"), "opt_not_empty");
+//        aggrFunction = xsd::constQName(skn->resolvePrefix("fn"), "opt_not_empty");
 //        predicate = new rqp::If(predicate, new rqp::Const(fn_true()), new rqp::Const(EmptySequenceConst()));
+        
+        resultStack.push(ResultInfo(
+            new rqp::MapConcat(predicate, expression, varBinding)));
     }
     else /* EVERY */
     {
         aggrFunction = xsd::constQName(skn->resolvePrefix("fn"), "empty");
         predicate = new rqp::If(predicate, new rqp::Const(EmptySequenceConst()), new rqp::Const(fn_true()));
+        
+        resultStack.push(ResultInfo(
+            new rqp::FunCall(aggrFunction,
+                new rqp::MapConcat(predicate, expression, varBinding))));
     }
 
-    resultStack.push(ResultInfo(
-        new rqp::MapConcat(predicate, expression, varBinding)));
-/*    
-    resultStack.push(ResultInfo(
-        new rqp::FunCall(aggrFunction,
-            new rqp::MapConcat(predicate, expression, varBinding))));
-*/
     PlanContext::current->clearScopesToMarker(scopeMarker);
 }
 

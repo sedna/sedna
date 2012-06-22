@@ -7,10 +7,13 @@
 #include "tr/opt/algebra/Predicates.h"
 #include "tr/opt/functions/Functions.h"
 #include "tr/opt/algebra/Rewriter.h"
+#include "tr/debugstream.h"
 
 #include <vector>
 #include <map>
 #include <stack>
+
+#include <boost/shared_ptr.hpp>
 
 using namespace opt;
 using namespace rqp;
@@ -23,12 +26,40 @@ struct DataReductionBlock {
     DataGraph* buildBlock();
 };
 
+struct GraphContext;
+
+typedef boost::shared_ptr<GraphContext> GraphContextPtr;
+
+struct GraphContext {
+    GraphContextPtr parent;
+    counted_ptr<DataGraphWrapper> graph;
+    TupleScheme visibleVariables;
+    bool breakNullPreserve;
+    RPBase * op;
+
+    explicit GraphContext(GraphContextPtr aparent, bool _breakNullPreserve, DataGraph * _graph)
+        : parent(aparent), graph(NULL), breakNullPreserve(_breakNullPreserve)
+    {
+        if (parent.get() != NULL) {
+            visibleVariables.insert(parent->visibleVariables.begin(), parent->visibleVariables.end());
+        }
+
+        if (_graph != NULL) {
+            graph = new DataGraphWrapper(_graph);
+            visibleVariables.insert(graph->outTuples.begin(), graph->outTuples.end());
+        }
+    };
+
+    ~GraphContext() {};
+};
+
 class DataGraphReduction {
     std::vector<DataReductionBlock *> blocks;
     std::map<RPBase *, DataReductionBlock *> opBlockMap;
     std::stack<DataReductionBlock *> blockStack;
+
     OperationList opStack;
-    std::stack<DataGraphWrapper> dataGraphStack;
+    GraphContextPtr dataGraphStack;
 
     DataReductionBlock * newBlock()
     {
@@ -44,7 +75,7 @@ class DataGraphReduction {
         blockStack.top()->members.push_back(op);
         opBlockMap[op] = blockStack.top();
     };
-    
+
 public:
     void collectBlocks(RPBase * parent, RPBase * op);
 
@@ -346,18 +377,51 @@ bool DataGraphReduction::tryJoin(DataGraphWrapper& left, DataGraphWrapper& right
 
 void DataGraphReduction::selectPossibleJoins(DataGraphWrapper& dgw, RPBase* op, RPBase* substOp, TupleId resultTuple)
 {
-    if (dataGraphStack.empty()) {
+    if (dataGraphStack.get() == NULL) {
         return;
     };
 
-    // TODO : make best candidate selection
+    GraphContextPtr it = dataGraphStack;
 
-    if (tryJoin(dataGraphStack.top(), dgw)) {
-        if (substOp == null_op && resultTuple != invalidTupleId) {
-            substOp = new rqp::VarIn(resultTuple);
+    {
+        std::stringstream ss;
+
+        while (it.get() != NULL) {
+            if (!it->graph.isnull()) {
+                ss << (intptr_t) it->graph->dg << " ";
+            } else {
+                ss << "[break by " << it->op->info()->opname << "] ";
+            };
+
+            it = it->parent;
         };
 
-        PlanContext::current->replaceOperation(op, substOp);
+        ss << "\n";
+
+        debug_string("opt.o", ss.str());
+
+        it = dataGraphStack;
+    }
+    
+    while (it.get() != NULL) {
+        if (it->breakNullPreserve) {
+            break;
+        };
+
+        if (!it->graph.isnull()) {
+            // TODO : make the best candidate selection
+            if (tryJoin(*it->graph, dgw)) {
+                if (substOp == null_op && resultTuple != invalidTupleId) {
+                    substOp = new rqp::VarIn(resultTuple);
+                };
+
+                PlanContext::current->replaceOperation(op, substOp);
+
+                break;
+            };
+        };
+
+        it = it->parent;
     };
 };
 
@@ -368,13 +432,14 @@ void DataGraphReduction::findJoinsRec(RPBase* op)
 
     if (instanceof<rqp::MapGraph>(op)) {
         rqp::MapGraph * mapG = dynamic_cast<rqp::MapGraph *>(op);
-        dataGraphStack.push(DataGraphWrapper(mapG->getGraph()));
+
+        dataGraphStack.reset(new GraphContext(dataGraphStack, false, mapG->getGraph()));
 
         if (mapG->getList() != null_op) {
             findJoinsRec(mapG->getList());
         }
 
-        dataGraphStack.pop();
+        dataGraphStack = dataGraphStack->parent;
 
         DataGraphWrapper dgw(mapG->getGraph());
         
@@ -389,6 +454,25 @@ void DataGraphReduction::findJoinsRec(RPBase* op)
         U_ASSERT(dgop->getOperations().empty());
         selectPossibleJoins(dgw, dgop, null_op, resultTuple);
     } else {
+        bool preservesNull = true;
+
+        switch (op->info()->opType) {
+          case rqp::If::opid : {
+              preservesNull = (static_cast<rqp::If *>(op)->getElse() == null_op);
+          } break;
+          case rqp::Construct::opid :
+              preservesNull = false;
+          break;
+          default:
+             //
+          break;
+        };
+
+        if (!preservesNull) {
+            dataGraphStack.reset(new GraphContext(dataGraphStack, true, NULL));
+            dataGraphStack->op = op;
+        }
+        
         OperationList children;
         op->getChildren(children);
         for (OperationList::const_iterator it = children.begin(); it != children.end(); ++it) {
@@ -396,6 +480,10 @@ void DataGraphReduction::findJoinsRec(RPBase* op)
                 findJoinsRec(*it);
             }
         };
+        
+        if (!preservesNull) {
+            dataGraphStack = dataGraphStack->parent;
+        }      
     }
     
     opStack.pop_back();

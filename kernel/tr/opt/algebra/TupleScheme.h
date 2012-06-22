@@ -24,6 +24,8 @@ enum operation_flags_t {
     oReturnList = 0x002,
     oBlockBuilder = 0x004,
     oBlockSpecial = 0x008,
+    oPreservesNull = 0x008,
+    oPreservesNullQuery = 0x008,
 };
 
 struct TupleDefinition {
