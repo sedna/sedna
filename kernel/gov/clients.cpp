@@ -11,19 +11,6 @@
 using namespace std;
 
 
-class InternalProcessNegotiation : public InternalSocketClient {
-    enum {
-        iproc_initial,
-        iproc_awaiting_key,
-        iproc_ticket_recieved
-    } state;
-public:
-    InternalProcessNegotiation(WorkerSocketClient* producer)
-        : InternalSocketClient(producer, se_Client_Priority_SM) {}
-    
-    virtual SocketClient* processData();
-    virtual void cleanupOnError();
-};
 
 SocketClient* InternalProcessNegotiation::processData()
 {
@@ -133,6 +120,7 @@ public:
         }
     };
 };
+
 
 class ClientDatabaseStartCallback : public ClientConnectionCallback {
     virtual void onSuccess(CallbackMessage * cbm) {
@@ -393,7 +381,7 @@ SocketClient* DatabaseConnectionProcessor::processData()
 
       communicator->readString(dbName);
 
-      DatabaseOptions options = pm->getDatabaseOptions(dbName);
+      DatabaseOptions * options = pm->getDatabaseOptions(dbName);
 
       if (options == NULL) {
           respondError();

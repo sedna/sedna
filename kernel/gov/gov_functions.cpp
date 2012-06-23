@@ -20,7 +20,8 @@
 #include "common/errdbg/d_printf.h"
 #include "common/structures/config_data.h"
 #include "u/uhdd.h"
-
+#include "u/usystem.h"
+#include "u/uutils.h"
 
 
 /****************************************************************************

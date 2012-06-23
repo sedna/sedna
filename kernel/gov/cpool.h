@@ -34,7 +34,12 @@ private:
     bool shutting_down;
 
     void processClientData(WorkerSocketClient * client);
+
+    /* TODO: this should work some other way, not like this */
+//     WorkerSocketClient * addClient(WorkerSocketClient * stream);
+//     void deleteClient(WorkerSocketClient * stream);
 public:
+                     Worker();
     ProcessManager * getProcessManager() { return processManager; };
 
     Worker(ProcessManager * _processManager)

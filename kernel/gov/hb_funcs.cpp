@@ -1,9 +1,13 @@
+#ifdef _GOV_READY
+// uncomment this after gov will work
+
 /*
  * File:  hb_funcs.cpp
  * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #include <string>
+#include <vector>
 
 #include "common/sedna.h"
 
@@ -56,7 +60,7 @@ static void hbSendMsgToSm(sm_msg_struct *msg)
 
 	sm_server = new SSMMsg(SSMMsg::Client,
                            sizeof(sm_msg_struct),
-                           CHARISMA_SSMMSG_SM_ID(get_db_id_by_name(gov_table->get_config_struct(), hbDbName->c_str()), buf, 1024),
+                           SEDNA_SSMMSG_SM_ID(get_db_id_by_name(gov_table->get_config_struct(), hbDbName->c_str()), buf, 1024),
                            SM_NUMBER_OF_SERVER_THREADS);
 
 	if (sm_server->init() != 0)
@@ -414,3 +418,5 @@ int hbNewClient(USOCKET sock)
 
 	return 0;
 }
+
+#endif /* _GOV_READY */

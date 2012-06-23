@@ -7,6 +7,7 @@
 #include "common/structures/config_data.h"
 
 #include "worker_client.h"
+#include "process_manager.h"
 
 #include <string>
 
@@ -55,6 +56,22 @@ struct ServiceProtocolClient {
           databaseName(_databaseName) {};
 };
 
+class InternalProcessNegotiation : public InternalSocketClient {
+    enum {
+        iproc_initial,
+        iproc_awaiting_key,
+        iproc_ticket_recieved
+    } state;
+public:
+    InternalProcessNegotiation(WorkerSocketClient* producer, const std::string& _ticket)
+        : InternalSocketClient(producer, se_Client_Priority_SM, _ticket) {}
+    
+    virtual SocketClient* processData();
+    virtual void cleanupOnError();
+};
+
+
+
 class ClientNegotiationManager : public WorkerSocketClient {
 public:
                                 ClientNegotiationManager(Worker * _parent, USOCKET sock) 
@@ -68,8 +85,8 @@ private:
     session_id                  sid;
     SessionProcessInfo *        trninfo;
 public:
-    SessionConnectionProcessor  (WorkerSocketClient * producer)
-      : InternalSocketClient(producer, se_Client_Priority_TRN), sid(0), trninfo(NULL) { }
+    SessionConnectionProcessor  (WorkerSocketClient * producer, const std::string& _ticket)
+      : InternalSocketClient(producer, se_Client_Priority_TRN, ticket), sid(0), trninfo(NULL) { }
                                 
     virtual SocketClient * processData ();
     virtual void cleanupOnError();
@@ -111,6 +128,7 @@ public:
     virtual  SocketClient * processData();
 };
 
+class ClientConnectionCallback;
 
 class ClientConnectionProcessor : public WorkerSocketClient {
 private:
@@ -130,13 +148,19 @@ public:
     struct CommonProtocolClient { };
 
     explicit ClientConnectionProcessor(WorkerSocketClient * producer, const CommonProtocolClient & )
-        : activeCallback(NULL), WorkerSocketClient(producer, se_Client_Priority_Client),
-          state(client_initial_state), sminfo(NULL), trninfo(NULL),
+        : WorkerSocketClient(producer, se_Client_Priority_Client), 
+          activeCallback(NULL), 
+          state(client_initial_state), 
+          sminfo(NULL), 
+          trninfo(NULL),
           associatedSessionClient(NULL) {};
 
     explicit ClientConnectionProcessor(WorkerSocketClient * producer, const ServiceProtocolClient & _authData)
-        : activeCallback(NULL), WorkerSocketClient(producer, se_Client_Priority_Client),
-          state(client_awaiting_sm_and_trn), sminfo(NULL), trninfo(NULL),
+        : WorkerSocketClient(producer, se_Client_Priority_Client),
+          activeCallback(NULL), 
+          state(client_awaiting_sm_and_trn), 
+          sminfo(NULL), 
+          trninfo(NULL),
           associatedSessionClient(NULL) {
         authData.databaseName = _authData.databaseName;
     };

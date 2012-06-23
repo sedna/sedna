@@ -20,7 +20,7 @@ enum se_socket_client_type
 };
 
 class WorkerSocketClient : public SocketClient {
-protected: 
+protected:
     Worker * worker;
     int priority;
 

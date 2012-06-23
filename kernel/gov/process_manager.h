@@ -59,7 +59,6 @@ public:
     virtual void onSuccess(CallbackMessage * cbm) = 0;
 };
 
-// TODO: Move it into another file
 class ProcessManager {
     GlobalParameters parameters;
 
@@ -81,7 +80,7 @@ class ProcessManager {
     bool requestsPending;
     void doProcessRequests();
 public:
-    ProcessManager(GlobalParameters _parameters) : lastSessionId(0), requestsPending(false), parameters(_parameters) {};
+    ProcessManager(GlobalParameters _parameters) : parameters(_parameters), lastSessionId(0), requestsPending(false) {};
     ~ProcessManager();
 
     session_id getNewSessionId() { return lastSessionId++; };

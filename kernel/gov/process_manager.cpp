@@ -1,5 +1,6 @@
 #include "process_manager.h"
 #include "common/procutils/cmdlines.h"
+#include "common/structures/config_data.h"
 
 #include <sstream>
 
@@ -150,3 +151,4 @@ void ProcessManager::processRegistered(const std::string& ticket, WorkerSocketCl
     
     i->second->clientCallbackSet.clear();
 }
+
