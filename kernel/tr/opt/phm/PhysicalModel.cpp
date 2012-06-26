@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "tr/opt/algebra/Predicates.h"
+#include "tr/opt/graphs/Predicates.h"
 #include "tr/opt/path/XPathTypes.h"
 #include "tr/opt/cost/Statistics.h"
 #include "tr/opt/phm/Operations.h"

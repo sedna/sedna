@@ -33,11 +33,10 @@ struct VariableInfo {
 };
 
 typedef std::map<TupleId, VariableInfo> VariableInfoMap;
-  
+
 class DataGraphMaster {
     friend class DataGraph;
     friend class DataGraphBuilder;
-
 public:
     DataGraphMaster();
     ~DataGraphMaster();
@@ -76,7 +75,7 @@ public:
     };
 
     void setVarName(TupleId varTupleId, const std::string & name);
-    
+
  //    DataNode * getVarNode(TupleId var) const { return allNodes.at(var); };
 
     DataGraph * join(DataGraph * left, DataGraph * right);

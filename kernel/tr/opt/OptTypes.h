@@ -25,7 +25,7 @@ class Path;
 
 namespace phop {
 class ITupleOperator;
-struct FunctionSignature;
+struct FunctionInfo;
 }
 
 #define MAX_GRAPH_SIZE 63
@@ -63,6 +63,7 @@ typedef std::map<std::string, DataNode *> VariableNameMap;
 typedef std::set<Predicate *> PredicateSet;
 typedef std::set<TupleId> TupleScheme;
 typedef std::map<TupleId, TupleId> TupleMapping;
+typedef std::vector<TupleId> TupleArray;
 
 typedef std::vector<tuple_cell> MemoryTupleSequence;
 typedef counted_ptr< std::vector<tuple_cell> > MemoryTupleSequencePtr;

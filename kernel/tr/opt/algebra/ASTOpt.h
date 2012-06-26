@@ -14,51 +14,20 @@
 
 /* Reduced query plan generation */
 
+struct OptimizationContext;
+
 namespace sedna
 {
 
 class lr2opt : public lr2por
 {
   private:
-
-    enum var_context_t {
-        vvc_none,
-        vvc_get_value,
-        vvc_declare,
-    } varVisitContext;
-    
-    struct ResultInfo {
-        rqp::RPBase * op;
-        int opid;
-        std::string variableName;
-        opt::TupleId variableId;
-
-        explicit ResultInfo(rqp::RPBase * _op)
-          : op(_op), opid(0), variableId(0) { };
-    };
-
-    struct StepInfo {
-        pe::axis_t axis;
-        pe::node_test_t nodeTest;
-        xsd::TemplateQName tqname;
-    };
-
-    std::stack<ResultInfo> resultStack;
-    std::stack<StepInfo> stepStack;
-
-    opt::TupleId contextVariable;
-    StaticallyKnownNamespaces * skn;
+    OptimizationContext * context;
   public:
-    lr2opt(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_, dynamic_context *dyn_cxt_, bool is_subquery_)
-      : lr2por(drv_, mod_, dyn_cxt_, is_subquery_), varVisitContext(vvc_none)
-    {
-        skn = dyn_cxt_->get_static_context()->getStaticallyKnownNamespaces();
-    }
+    lr2opt(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_, dynamic_context *dyn_cxt_, bool is_subquery_);
+    ~lr2opt();
 
-    ~lr2opt() {
-    }
-
-    rqp::RPBase * getReducedPlan() const { return resultStack.top().op; };
+    rqp::RPBase * getPlan() const;
 
     /* a11n and a12n */
 

@@ -34,7 +34,7 @@ public:
 
 class IXMLSerializable {
 public:
-    virtual XmlConstructor& toXML(XmlConstructor& output) = 0;
+    virtual XmlConstructor& toXML(XmlConstructor& constructor) const = 0;
 };
 
 #endif /* _XML_CONSTRUCTOR_H_ */

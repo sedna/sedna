@@ -1,4 +1,4 @@
-#include "Rewriter.h"
+#include "GraphRewriter.h"
 #include "DataGraphCollection.h"
 #include "Predicates.h"
 

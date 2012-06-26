@@ -1,12 +1,17 @@
 #include "PlanRewriter.h"
 
 #include "tr/opt/OptTypes.h"
-#include "tr/opt/algebra/IndependentPlan.h"
-#include "tr/opt/algebra/DataGraphs.h"
-#include "tr/opt/algebra/DataGraphCollection.h"
-#include "tr/opt/algebra/Predicates.h"
+
+#include "tr/opt/algebra/AllOperations.h"
+
+#include "tr/opt/graphs/DataGraphCollection.h"
+#include "tr/opt/graphs/DataGraphs.h"
+#include "tr/opt/graphs/Predicates.h"
+
 #include "tr/opt/functions/Functions.h"
-#include "tr/opt/algebra/Rewriter.h"
+
+#include "tr/opt/graphs/GraphRewriter.h"
+
 #include "tr/debugstream.h"
 
 #include <vector>
@@ -85,6 +90,24 @@ public:
     bool tryJoin(DataGraphWrapper & left, DataGraphWrapper & right);
     void selectPossibleJoins(DataGraphWrapper& right, RPBase* op, RPBase* substOp, TupleId resultTuple);
 };
+
+RPBase* selectDataGraphs(RPBase* op)
+{
+    DataGraphReduction().execute(op);
+    return op;
+};
+
+
+/*
+RPBase* varUsageAnalyzis(RPBase* op)
+{
+    OptimizationContext context;
+
+
+
+    return op;
+}
+*/
 
 typedef std::map<RPBase *, DataNode *> ResultMap;
 typedef std::multimap<opt::TupleId, opt::TupleId> ExternalMap;
@@ -166,6 +189,7 @@ DataGraph * DataReductionBlock::buildBlock()
             context.builder.predicates.push_back(
                 new StructuralPredicate(context.get(xop->getList()), node, xop->getStep()));
           } break;
+/*
           case rqp::ComparisonExpression::opid : {
             U_ASSERT(dynamic_cast<rqp::ComparisonExpression *>(op) != NULL);
 
@@ -180,6 +204,7 @@ DataGraph * DataReductionBlock::buildBlock()
             context.builder.predicates.push_back(
                 new ValuePredicate(context.get(cop->getLeft()), context.get(cop->getRight()), cop->getOp()));
           } break;
+*/
           case rqp::FunCall::opid : {
             U_ASSERT(dynamic_cast<rqp::FunCall *>(op) != NULL);
 
@@ -190,7 +215,7 @@ DataGraph * DataReductionBlock::buildBlock()
 
             // TODO: Fix number of parameters
             context.builder.predicates.push_back(
-                new FPredicate(context.get(cop->getOperations().at(0)), node, NULL));
+                new FPredicate(context.get(cop->children.at(0)), node, NULL));
           } break;
           default:
             U_ASSERT(false);
@@ -205,7 +230,7 @@ DataGraph * DataReductionBlock::buildBlock()
 
         node->type = DataNode::dnAlias;
         node->aliasFor = out;
-        node->varTupleId = mapConcatIn->getTuple();
+        node->varTupleId = mapConcatIn->context.item;
 
         if (out->varTupleId == invalidTupleId) {
             out->varTupleId = node->varTupleId;
@@ -237,8 +262,7 @@ void DataGraphReduction::collectBlocks(RPBase * parent, RPBase * op)
     bool blockOwner = false;
     bool blockBuilder = (op->info()->flags & rqp::oBlockBuilder) > 0;
 
-    OperationList children;
-    op->getChildren(children);
+    OperationList & children = op->children;
 
     if ((op->info()->flags & rqp::oBlockSpecial) > 0) {
         switch (op->info()->opType) {
@@ -489,8 +513,3 @@ void DataGraphReduction::findJoinsRec(RPBase* op)
     opStack.pop_back();
 };  
 
-RPBase* selectDataGraphs(RPBase* op)
-{
-    DataGraphReduction().execute(op);
-    return op;
-};

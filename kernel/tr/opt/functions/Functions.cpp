@@ -1,17 +1,71 @@
 #include "tr/opt/functions/Functions.h"
+#include "tr/opt/SequenceModel.h"
 #include "tr/executor/base/namespaces.h"
 
 using namespace phop;
 
 FunctionLibrary * phop::functionLibrary = NULL;
 
-FunctionSignature* FunctionLibrary::registerFunction(FunctionSignature* function)
+/*
+class Compare {
+};
+
+tuple_cell f1(const tuple & x) {
+};
+
+tuple_cell f2_next(const tuple & x) {
+};
+
+tuple_cell f2_reset(const tuple & x) {
+};
+
+tuple_cell f1(const tuple & x) {
+};
+
+class Function : public ITupleOperator
+{
+};
+
+class Comparison : public ITupleOperator
+{
+private:
+    virtual void do_next();
+public:
+    virtual void reset();
+};
+
+struct function_data_t
+{
+    lazy_impl ;
+    apply ;
+};
+
+bool apply_equals(void * data, opt::DataGraph * dg)
+{
+    
+};
+
+
+
+
+
+
+
+*/
+
+
+
+
+
+
+
+FunctionInfo* FunctionLibrary::registerFunction(FunctionInfo* function)
 {
     functions.insert(FunctionMap::value_type(function->getName(), function));
     return function;
 }
 
-FunctionSignature* FunctionLibrary::findFunction(const xsd::QName& qname)
+FunctionInfo* FunctionLibrary::findFunction(const xsd::QName& qname)
 {
     std::string name = qname.emptyUri() ?
         (std::string("{}:") + qname.getLocalName()) :
@@ -38,11 +92,11 @@ void phop::initializeFunctionLibrary()
     functionLibrary = new FunctionLibrary();
 
     functionLibrary->registerFunction(
-        new FunctionSignature(FN_URI, "doc", 1))
+        new FunctionInfo(FN_URI, "doc", 1))
             ->setFlag(fn_preserves_null);
 
     functionLibrary->registerFunction(
-        new FunctionSignature(FN_URI, "opt_not_empty", 1))
+        new FunctionInfo(FN_URI, "opt_not_empty", 1))
             ->setFlag(fn_preserves_null);
 }
 

@@ -10,7 +10,7 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/cat/catptr.h"
 #include "tr/opt/path/XPathTypes.h"
-#include "tr/opt/algebra/Predicates.h"
+#include "tr/opt/graphs/Predicates.h"
 
 namespace opt {
 

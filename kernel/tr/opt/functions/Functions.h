@@ -10,6 +10,10 @@ namespace opt {
 
 class dynamic_context;
 
+struct IFunctionData {
+    virtual ~IFunctionData() {};
+};
+
 namespace phop {
 
 enum function_flags_t {
@@ -17,7 +21,14 @@ enum function_flags_t {
     fn_in_block = 0x02,
 };
 
-struct FunctionSignature
+
+
+struct function_methods_t
+{
+    
+};
+
+struct FunctionInfo
 {
 private:
     // NOTE: We cannot use xsd::QName for name here, because xml_ns storage is transaction depended
@@ -28,16 +39,16 @@ private:
 public:
     int getArgumentCount() const { return argc; };
     const std::string & getName() const { return name; };
+//    const q & getQName() const { return name; };
     bool getFlag(function_flags_t _f) const { return (flags & _f) > 0; }
 
-    FunctionSignature(const std::string &_uri, const std::string &_local_name, int _argc)
+    FunctionInfo(const std::string &_uri, const std::string &_local_name, int _argc)
         : name("{" + _uri + "}:" + _local_name), argc(_argc), flags(0) {};
 
-    FunctionSignature& setFlag(function_flags_t _f) { flags |= _f; return *this; };
+    FunctionInfo& setFlag(function_flags_t _f) { flags |= _f; return *this; };
 };
 
-
-typedef std::map<std::string, FunctionSignature *> FunctionMap;
+typedef std::map<std::string, FunctionInfo *> FunctionMap;
 
 class FunctionLibrary
 {
@@ -47,8 +58,8 @@ public:
     FunctionLibrary() {};
     ~FunctionLibrary() {};
 
-    FunctionSignature * registerFunction(FunctionSignature * function);
-    FunctionSignature * findFunction(const xsd::QName & qname);
+    FunctionInfo * registerFunction(FunctionInfo * function);
+    FunctionInfo * findFunction(const xsd::QName & qname);
 };
 
 extern FunctionLibrary * functionLibrary;

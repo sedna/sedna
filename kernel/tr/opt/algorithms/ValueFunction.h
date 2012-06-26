@@ -41,7 +41,7 @@ protected:
 //        custom_t;
     } params;
 
-    virtual tuple_cell do_evaluate(const tuple & x) { U_ASSERT(false); return tuple_cell(); };
+    tuple_cell do_evaluate(const tuple & x) { U_ASSERT(false); return tuple_cell(); };
 public:
     CollationHandler * handler;
 
@@ -59,7 +59,7 @@ public:
         params.u.unary = un;
         params.u.idx = idx;
     };
-    
+
     explicit ValueFunction(unsigned idx, bool atomized)
       : simple_type(atomized ? atomized_value : nid_value) { params.u.idx = idx; }
 

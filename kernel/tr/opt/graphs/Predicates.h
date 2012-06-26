@@ -4,7 +4,7 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/path/XPathTypes.h"
 #include "tr/opt/path/DataSources.h"
-#include "tr/opt/algebra/DataGraphs.h"
+#include "tr/opt/graphs/DataGraphs.h"
 #include "tr/opt/types/Comparison.h"
 #include "tr/executor/base/tuple.h"
 

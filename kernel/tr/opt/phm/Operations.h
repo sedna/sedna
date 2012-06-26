@@ -3,7 +3,7 @@
 
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/phm/PhysicalModel.h"
-#include "tr/opt/algebra/Predicates.h"
+#include "tr/opt/graphs/Predicates.h"
 
 namespace phop {
   class IFunction;

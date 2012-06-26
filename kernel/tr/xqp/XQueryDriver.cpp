@@ -13,6 +13,7 @@
 
 #include "tr/xqp/modules.h"
 #include "tr/xqp/serial/deser.h"
+
 #include "tr/opt/algebra/PlanRewriter.h"
 
 #include "tr/opt/algebra/IndependentPlan.h"

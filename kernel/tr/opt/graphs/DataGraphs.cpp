@@ -28,8 +28,10 @@ void DataGraphWrapper::update()
 
         if ((dg->dataNodes[i]->indexBit & dg->outputNodes) > 0) {
             out.push_back(dg->dataNodes[i]);
-            U_ASSERT(dg->dataNodes[i]->varTupleId != invalidTupleId);
-            outTuples.insert(dg->dataNodes[i]->varTupleId);
+
+            if (dg->dataNodes[i]->varTupleId != invalidTupleId) {
+                outTuples.insert(dg->dataNodes[i]->varTupleId);
+            }
         };
 
         if ((dg->dataNodes[i]->indexBit & dg->inputNodes) > 0) {

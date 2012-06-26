@@ -1,1 +1,1 @@
-set(algebra_SRC Predicates.cpp DataGraphCollection.cpp DataGraphs.cpp IndependentPlan.cpp ASTOpt.cpp PlanRewriter.cpp Rewriter.cpp)
+set(algebra_SRC ASTOpt.cpp IndependentPlan.cpp BranchOperations.cpp GraphOperations.cpp ElementaryOperations.cpp MapOperations.cpp FunctionOperations.cpp PlanAlgorithms.cpp)

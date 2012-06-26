@@ -319,7 +319,7 @@ namespace sedna
 
         ast->accept(*l2p);
 
-        rqp::RPBase * opt = l2p->getReducedPlan();
+        rqp::RPBase * opt = l2p->getPlan();
 
         delete l2p;
 

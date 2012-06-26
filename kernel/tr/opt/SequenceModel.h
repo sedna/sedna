@@ -24,12 +24,10 @@ class POProt;
 #define OPINFO_DECL(ID) \
 static const struct phop::operation_info_t op_info; \
   static const int opid = ID; \
-  virtual phop::IOperator * clone() const; \
   virtual XmlConstructor & __toXML(XmlConstructor &) const;
 
 #define OPINFO_DEF(TT) \
-  const struct phop::operation_info_t TT::op_info = {#TT, TT::opid}; \
-  phop::IOperator * TT::clone() const { return new TT(*this); };
+  const struct phop::operation_info_t TT::op_info = {#TT, TT::opid}; 
 
 #define OPINFO_REF &op_info
 
@@ -106,7 +104,6 @@ protected:
 public:
     virtual ~IOperator();
     virtual void reset() = 0;
-    virtual IOperator * clone() const = 0;
 
     const operation_info_t * info() const { return opinfo; };
 

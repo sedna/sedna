@@ -7,8 +7,8 @@
 
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/phm/PhysicalModel.h"
-#include "tr/opt/algebra/Predicates.h"
-#include "tr/opt/algebra/DataGraphs.h"
+#include "tr/opt/graphs/Predicates.h"
+#include "tr/opt/graphs/DataGraphs.h"
 
 #include "tr/structures/nodetypes.h"
 
