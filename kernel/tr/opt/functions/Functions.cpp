@@ -45,25 +45,31 @@ bool apply_equals(void * data, opt::DataGraph * dg)
     
 };
 
-
-
-
-
-
-
 */
 
 
-
-
-
-
-
-FunctionInfo* FunctionLibrary::registerFunction(FunctionInfo* function)
+FunctionLibrary::FunctionLibrary()
 {
-    functions.insert(FunctionMap::value_type(function->getName(), function));
-    return function;
+
 }
+
+FunctionLibrary::~FunctionLibrary()
+{
+
+}
+
+static
+std::string getSearchName(const char* uri, const char* localname)
+{
+};
+
+FunctionInfo* FunctionLibrary::registerFunction(const char* uri, const char* localname, const function_info_t* finfo)
+{
+    FunctionInfo * result = new FunctionInfo(uri, localname, finfo);
+    std::string name = localname + 
+}
+
+
 
 FunctionInfo* FunctionLibrary::findFunction(const xsd::QName& qname)
 {
@@ -90,13 +96,5 @@ void phop::initializeFunctionLibrary()
     }
 
     functionLibrary = new FunctionLibrary();
-
-    functionLibrary->registerFunction(
-        new FunctionInfo(FN_URI, "doc", 1))
-            ->setFlag(fn_preserves_null);
-
-    functionLibrary->registerFunction(
-        new FunctionInfo(FN_URI, "opt_not_empty", 1))
-            ->setFlag(fn_preserves_null);
 }
 

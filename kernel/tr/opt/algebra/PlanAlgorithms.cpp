@@ -2,6 +2,7 @@
 
 #include "tr/opt/graphs/Predicates.h"
 #include "tr/opt/graphs/GraphRewriter.h"
+#include "tr/opt/functions/FnHelpers.h"
 
 using namespace rqp;
 using namespace opt;
@@ -40,27 +41,6 @@ void PlanRewriter::execute()
         throw USER_EXCEPTION(2303);
     };
 }
-
-static
-DataNode * initGraph(DataGraphBuilder & dgb, VarIn * invar)
-{
-    DataNode * nodeIn = new DataNode(opt::DataNode::dnExternal);
-    nodeIn->varTupleId = invar->getTuple();
-    dgb.nodes.push_back(nodeIn);
-    return nodeIn;
-};
-
-static
-void replaceInParent(PlanRewriter * pr, RPBase * op1, RPBase * op2)
-{
-    size_t sz = pr->traverseStack.size() - 1;
-
-    if (sz > 0) {
-        RPBase * parent = pr->traverseStack.at(sz - 1);
-        U_ASSERT(parent != op1);
-        parent->replace(op1, op2);
-    }
-};
 
 /* Rewriting rules, based on each operation */
 bool rule_post_XPathStep_to_DataGraph(PlanRewriter * pr, XPathStep * op)

@@ -55,6 +55,7 @@ private:
 */    
 public:
     VariableInfoMap variableMap;
+    MemoryTupleSequencePtr alwaysTrueSequence;
 
     /* Factory functions */
 //    DataGraph * createGraphFromLR(const scheme_list * vf);

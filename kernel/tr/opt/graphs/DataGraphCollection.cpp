@@ -23,7 +23,8 @@ static const char * predicateLRError = "Invalid predicate LR represenation";
 
 DataGraphMaster::DataGraphMaster() : lastIndex(0)
 {
-    
+    alwaysTrueSequence = new MemoryTupleSequence();
+    alwaysTrueSequence->push_back(tuple_cell::atomic(true));
 }
 
 DataGraphMaster::~DataGraphMaster()

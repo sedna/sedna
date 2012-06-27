@@ -152,6 +152,7 @@ class QName {
     static std::string getColonizedName(NCName prefix, NCName local);
 
     inline xmlns_ptr getXmlNs() const { return ns; };
+
     inline const char * getUri() const { return ns == NULL_XMLNS ? NULL : ns->get_uri(); };
     inline const char * getPrefix() const { return ns == NULL_XMLNS ? "" : ns->get_prefix(); };
     inline const char * getLocalName() const { return localName; };

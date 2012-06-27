@@ -37,6 +37,13 @@ public:
     PROPERTY_RO(Tuple, opt::TupleId, tid)
 };
 
+class Exists : public ListOperation {
+    OPERATION(0x01d)
+public:
+    Exists(RPBase * list)
+      : ListOperation(&sopdesc, list) {};
+};
+
 class Sequence : public ManyChildren {
     OPERATION(0x019)
 public:

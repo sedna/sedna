@@ -16,36 +16,26 @@ struct IFunctionData {
 
 namespace phop {
 
-enum function_flags_t {
-    fn_preserves_null = 0x01,
-    fn_in_block = 0x02,
-};
+typedef bool (rule_func_t)(PlanRewriter * pr, rqp::FunCall * op);
 
-
-
-struct function_methods_t
+struct function_info_t
 {
-    
+    rule_func_t rule_func;
 };
 
 struct FunctionInfo
 {
-private:
-    // NOTE: We cannot use xsd::QName for name here, because xml_ns storage is transaction depended
-    std::string name;
+    const char * uri;
+    const char * localname;
+    const function_info_t * finfo;
+    IFunctionData * default_data;
 
-    int argc;
-    int flags;
-public:
-    int getArgumentCount() const { return argc; };
-    const std::string & getName() const { return name; };
-//    const q & getQName() const { return name; };
-    bool getFlag(function_flags_t _f) const { return (flags & _f) > 0; }
+    getQName();
 
-    FunctionInfo(const std::string &_uri, const std::string &_local_name, int _argc)
-        : name("{" + _uri + "}:" + _local_name), argc(_argc), flags(0) {};
+    FunctionInfo(const char * _uri, const char * _localname, const function_info_t * _finfo) :
+      uri(_uri), localname(_localname), finfo(_finfo), default_data(NULL) {};
 
-    FunctionInfo& setFlag(function_flags_t _f) { flags |= _f; return *this; };
+    ~FunctionInfo() { delete default_data; };
 };
 
 typedef std::map<std::string, FunctionInfo *> FunctionMap;
@@ -55,10 +45,10 @@ class FunctionLibrary
 private:
     FunctionMap functions;
 public:
-    FunctionLibrary() {};
-    ~FunctionLibrary() {};
+    FunctionLibrary();
+    ~FunctionLibrary();
 
-    FunctionInfo * registerFunction(FunctionInfo * function);
+    FunctionInfo * registerFunction(const char * uri, const char * localname, const function_info_t * finfo);
     FunctionInfo * findFunction(const xsd::QName & qname);
 };
 

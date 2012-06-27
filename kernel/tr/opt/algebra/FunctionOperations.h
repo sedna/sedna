@@ -21,7 +21,6 @@ class FunCall : public ManyChildren {
     OPERATION(0x017)
     IFunctionData * function_data;
     phop::FunctionInfo * function;
-
 public:
     FunCall(phop::FunctionInfo * func, IFunctionData * _fd, const OperationList & _oplist)
       : ManyChildren(&sopdesc, _oplist), function_data(_fd), function(func) {
@@ -35,8 +34,11 @@ public:
       : ManyChildren(&sopdesc, _in1), function_data(_fd), function(func) {
         children.push_back(_in2);
     };
+
+    ~FunCall() { delete function_data; }
     
     PROPERTY_RO(Function, phop::FunctionInfo * , function)
+    PROPERTY_RO(Data, IFunctionData * , function_data)
 };
 
 class Construct : public ListOperation {
