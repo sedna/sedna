@@ -1,6 +1,7 @@
 #include "PlanAlgorithms.h"
 
 #include "tr/opt/graphs/Predicates.h"
+#include "tr/opt/graphs/GraphRewriter.h"
 
 using namespace rqp;
 using namespace opt;
@@ -77,7 +78,7 @@ bool rule_post_XPathStep_to_DataGraph(PlanRewriter * pr, XPathStep * op)
         DataGraphWrapper dgw(dgo->getGraph());
 
         DataNode * node = new DataNode(opt::DataNode::dnFreeNode);
-        
+
         dgw.nodes.push_back(node);
         dgw.out.clear();
         dgw.out.push_back(node);
@@ -86,10 +87,11 @@ bool rule_post_XPathStep_to_DataGraph(PlanRewriter * pr, XPathStep * op)
             new StructuralPredicate(dgo->out, node, op->getStep()));
 
         dgo->out = node;
-        
+
         dgw.rebuild();
 
         replaceInParent(pr, op, dgo);
+        pr->traverseStack.pop_back();
 
         return true;
     };
@@ -115,13 +117,49 @@ bool rule_post_XPathStep_to_DataGraph(PlanRewriter * pr, XPathStep * op)
         dgo = new DataGraphOperation(dg, OperationList());
 
         replaceInParent(pr, op, dgo);
+        pr->traverseStack.pop_back();
 
         return true;
     };
-    
+
     return false;
 };
 
+bool rule_post_MapConcat_to_MapGraph(PlanRewriter * pr, MapConcat * op)
+{
+    if (instanceof<DataGraphOperation>(op->getSubplan()))
+    {
+        DataGraphOperation * dgo = static_cast<DataGraphOperation *>(op->getList());
+        DataGraphRewriter dgw(dgo->getGraph());
+        MapGraph * mg = new MapGraph(op->getList(), dgo->getGraph(), dgo->children);
+
+        DataNode * node = new DataNode(opt::DataNode::dnAlias);
+
+        node->aliasFor = dgo->out;
+        node->varTupleId = op->context.item;
+
+        dgw.graph.nodes.push_back(node);
+        dgw.graph.out.clear();
+        dgw.graph.out.push_back(node);
+
+        dgw.graph.rebuild();
+        dgw.index.update();
+
+        dgw.doPathExpansion();
+        dgw.aliasResolution();
+        dgw.selfReferenceResolution();
+
+        replaceInParent(pr, op, mg);
+
+        pr->traverseStack.pop_back();
+        pr->traverseStack.push_back(mg);
+        pr->do_execute();
+
+        return true;
+    }
+
+    return false;
+};
 
 void PlanRewriter::do_execute()
 {
@@ -134,10 +172,26 @@ void PlanRewriter::do_execute()
             varMap[xop->getTuple()].used = true;
         } break;
 */
-        case XPathStep::opid :
+      case FunCall::opid :
+        {
+            FunCall * fun = static_cast<FunCall *>(op);
+            traverseChildren(op->children);
+            if (fun->getFunction()->)
+                { return; };
+        } break;
+
+      case MapConcat::opid :
         {
             traverseChildren(op->children);
-            if (rule_post_XPathStep_to_DataGraph(this, static_cast<XPathStep *>(op))) { break; };
+            if (rule_post_MapConcat_to_MapGraph(this, static_cast<MapConcat *>(op)))
+                { return; };
+        } break;
+
+      case XPathStep::opid :
+        {
+            traverseChildren(op->children);
+            if (rule_post_XPathStep_to_DataGraph(this, static_cast<XPathStep *>(op)))
+                { return; };
         } break;
 
         default :
