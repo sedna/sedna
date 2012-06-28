@@ -3,6 +3,7 @@
 #include "tr/opt/graphs/Predicates.h"
 #include "tr/opt/graphs/GraphRewriter.h"
 #include "tr/opt/functions/FnHelpers.h"
+#include "tr/opt/functions/Functions.h"
 
 using namespace rqp;
 using namespace opt;
@@ -71,7 +72,6 @@ bool rule_post_XPathStep_to_DataGraph(PlanRewriter * pr, XPathStep * op)
         dgw.rebuild();
 
         replaceInParent(pr, op, dgo);
-        pr->traverseStack.pop_back();
 
         return true;
     };
@@ -97,7 +97,6 @@ bool rule_post_XPathStep_to_DataGraph(PlanRewriter * pr, XPathStep * op)
         dgo = new DataGraphOperation(dg, OperationList());
 
         replaceInParent(pr, op, dgo);
-        pr->traverseStack.pop_back();
 
         return true;
     };
@@ -107,9 +106,11 @@ bool rule_post_XPathStep_to_DataGraph(PlanRewriter * pr, XPathStep * op)
 
 bool rule_post_MapConcat_to_MapGraph(PlanRewriter * pr, MapConcat * op)
 {
-    if (instanceof<DataGraphOperation>(op->getSubplan()))
+    RPBase * subexpr = op->getSubplan();
+
+    if (instanceof<DataGraphOperation>(subexpr))
     {
-        DataGraphOperation * dgo = static_cast<DataGraphOperation *>(op->getList());
+        DataGraphOperation * dgo = static_cast<DataGraphOperation *>(subexpr);
         DataGraphRewriter dgw(dgo->getGraph());
         MapGraph * mg = new MapGraph(op->getList(), dgo->getGraph(), dgo->children);
 
@@ -131,52 +132,79 @@ bool rule_post_MapConcat_to_MapGraph(PlanRewriter * pr, MapConcat * op)
 
         replaceInParent(pr, op, mg);
 
-        pr->traverseStack.pop_back();
-        pr->traverseStack.push_back(mg);
-        pr->do_execute();
-
         return true;
     }
 
     return false;
 };
 
-void PlanRewriter::do_execute()
+bool rule_delete_Singleton_Sequence(PlanRewriter * pr, Sequence * op)
 {
-    RPBase * op = traverseStack.back();
-
-    switch (op->info()->opType) {
-/*
-        case rqp::VarIn::opid : {
-            VarIn * xop = static_cast<VarIn *>(op);
-            varMap[xop->getTuple()].used = true;
-        } break;
-*/
-      case FunCall::opid :
-        {
-            FunCall * fun = static_cast<FunCall *>(op);
-            traverseChildren(op->children);
-            if (fun->getFunction()->)
-                { return; };
-        } break;
-
-      case MapConcat::opid :
-        {
-            traverseChildren(op->children);
-            if (rule_post_MapConcat_to_MapGraph(this, static_cast<MapConcat *>(op)))
-                { return; };
-        } break;
-
-      case XPathStep::opid :
-        {
-            traverseChildren(op->children);
-            if (rule_post_XPathStep_to_DataGraph(this, static_cast<XPathStep *>(op)))
-                { return; };
-        } break;
-
-        default :
-          traverseChildren(op->children);
+    if (op->children.size() == 0)
+    {
+        replaceInParent(pr, op, null_op);
+        return true;
     };
 
-    traverseStack.pop_back();
+    if (op->children.size() == 1)
+    {
+        replaceInParent(pr, op, op->children.at(0));
+        return true;
+    };
+
+    return false;
+};
+
+
+void PlanRewriter::do_execute()
+{
+#define RULE(x) do { if (x) { goto _end_label; } } while (false)
+    do {
+        RPBase * op = traverseStack.back();
+
+        /* Before or instead traverse */
+        switch (op->info()->opType) {
+          default: {
+            traverseChildren(op->children);
+          } break;
+        }
+
+        /* After traverse */
+        switch (op->info()->opType) {
+          case Sequence::opid :
+            {
+                RULE(rule_delete_Singleton_Sequence(this, static_cast<Sequence *>(op)));
+            }
+            break;
+          case FunCall::opid :
+            {
+                FunCall * fun = static_cast<FunCall *>(op);
+
+                if (fun->getFunction()->finfo->rule_func != NULL) {
+                    RULE(fun->getFunction()->finfo->rule_func(this, static_cast<FunCall *>(op)));
+                };
+            }
+            break;
+          case MapConcat::opid :
+            {
+                RULE(rule_post_MapConcat_to_MapGraph(this, static_cast<MapConcat *>(op)));
+            }
+            break;
+          case XPathStep::opid :
+            {
+                RULE(rule_post_XPathStep_to_DataGraph(this, static_cast<XPathStep *>(op)));
+            }
+            break;
+          default : break;
+        };
+
+        U_ASSERT(!traverseStack.empty());
+
+// This is far better then break. To be sure all is ok.
+_end_label:
+        if (traverseStack.back() == op) {
+            traverseStack.pop_back();
+            break;
+        };
+    } while (!traverseStack.empty());
 }

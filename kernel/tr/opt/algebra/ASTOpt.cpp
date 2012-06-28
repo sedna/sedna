@@ -1,6 +1,7 @@
 #include "ASTOpt.h"
 
 #include "tr/opt/algebra/AllOperations.h"
+#include "tr/opt/functions/AllFunctions.h"
 #include "tr/executor/base/XPath.h"
 
 using namespace sedna;
@@ -396,8 +397,16 @@ void lr2opt::visit(ASTFunCall &n) {
         };
 
         // fndoc
-        context->resultStack.push(ResultInfo(
-            new FunCall(NULL, NULL, oplist)));
+
+        phop::FunctionInfo * f = getFunctionLibrary()->findFunction(
+              xsd::constQName(ns, n.local->c_str()));
+
+        if (f == NULL) {
+            U_ASSERT(false);
+            XQUERY_EXCEPTION2(0017, "Function not found");
+        };
+        
+        context->resultStack.push(ResultInfo(new FunCall(f, f->default_data, oplist)));
     } else {
         throw USER_EXCEPTION(2902);
     }
@@ -437,7 +446,8 @@ void lr2opt::visit(ASTBop &n) {
         };
 
         context->resultStack.push(ResultInfo(
-            new FunCall(NULL, /*new ComparisonData(cmp) */ NULL, leftSequence, rightSequence)));
+            new FunCall(general_comparison_function,
+                        new ComparisonData(cmp), leftSequence, rightSequence)));
     } else {
         U_ASSERT(false);
     };

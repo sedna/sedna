@@ -6,47 +6,10 @@ using namespace phop;
 
 FunctionLibrary * phop::functionLibrary = NULL;
 
-/*
-class Compare {
-};
-
-tuple_cell f1(const tuple & x) {
-};
-
-tuple_cell f2_next(const tuple & x) {
-};
-
-tuple_cell f2_reset(const tuple & x) {
-};
-
-tuple_cell f1(const tuple & x) {
-};
-
-class Function : public ITupleOperator
+void phop::initFunctionLibrary()
 {
-};
-
-class Comparison : public ITupleOperator
-{
-private:
-    virtual void do_next();
-public:
-    virtual void reset();
-};
-
-struct function_data_t
-{
-    lazy_impl ;
-    apply ;
-};
-
-bool apply_equals(void * data, opt::DataGraph * dg)
-{
-    
-};
-
-*/
-
+    phop::functionLibrary = new FunctionLibrary;
+}
 
 FunctionLibrary::FunctionLibrary()
 {
@@ -55,27 +18,29 @@ FunctionLibrary::FunctionLibrary()
 
 FunctionLibrary::~FunctionLibrary()
 {
-
+    for (FunctionMap::const_iterator it = functions.begin(); it != functions.end(); ++it)
+    {
+        delete it->second;
+    };
 }
 
 static
 std::string getSearchName(const char* uri, const char* localname)
 {
+    return std::string(localname) + ((uri == NULL) ? "@{}" : ("@{" + std::string(uri) + "}"));
 };
 
 FunctionInfo* FunctionLibrary::registerFunction(const char* uri, const char* localname, const function_info_t* finfo)
 {
     FunctionInfo * result = new FunctionInfo(uri, localname, finfo);
-    std::string name = localname + 
+    std::string name = getSearchName(uri, localname);
+    functions.insert(FunctionMap::value_type(name, result));
+    return result;
 }
-
-
 
 FunctionInfo* FunctionLibrary::findFunction(const xsd::QName& qname)
 {
-    std::string name = qname.emptyUri() ?
-        (std::string("{}:") + qname.getLocalName()) :
-        (std::string("{") + qname.getUri() + "}:" + qname.getLocalName());
+    std::string name = getSearchName(qname.getUri(), qname.getLocalName());
 
     FunctionMap::const_iterator it = functions.find(name);
 
@@ -87,14 +52,4 @@ FunctionInfo* FunctionLibrary::findFunction(const xsd::QName& qname)
     };
 }
 
-#define FN_URI (predefinedNamespaces[namespace_fn].uri)
-
-void phop::initializeFunctionLibrary()
-{
-    if (functionLibrary != NULL) {
-        return;
-    }
-
-    functionLibrary = new FunctionLibrary();
-}
 

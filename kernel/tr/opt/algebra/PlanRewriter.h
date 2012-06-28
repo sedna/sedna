@@ -8,6 +8,8 @@
 //}
 
 //rqp::RPBase* varUsageAnalyzis(rqp::RPBase* op);
+
+inline static
 rqp::RPBase* selectDataGraphs(rqp::RPBase* op)
 {
     rqp::PlanRewriter rewriter(op);

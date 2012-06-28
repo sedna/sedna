@@ -2,6 +2,7 @@
 #define _FUNCTION_OPERATIONS_H_
 
 #include "IndependentPlan.h"
+#include "tr/opt/functions/Functions.h"
 
 struct IFunctionData;
 
@@ -24,15 +25,18 @@ class FunCall : public ManyChildren {
 public:
     FunCall(phop::FunctionInfo * func, IFunctionData * _fd, const OperationList & _oplist)
       : ManyChildren(&sopdesc, _oplist), function_data(_fd), function(func) {
+        U_ASSERT(func != NULL);
     };
 
     FunCall(phop::FunctionInfo * func, IFunctionData * _fd, RPBase* _in)
       : ManyChildren(&sopdesc, _in), function_data(_fd), function(func) {
+        U_ASSERT(func != NULL);
     };
 
     FunCall(phop::FunctionInfo * func, IFunctionData * _fd, RPBase* _in1, RPBase* _in2)
       : ManyChildren(&sopdesc, _in1), function_data(_fd), function(func) {
         children.push_back(_in2);
+        U_ASSERT(func != NULL);
     };
 
     ~FunCall() { delete function_data; }

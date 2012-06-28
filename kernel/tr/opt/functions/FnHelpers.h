@@ -14,6 +14,12 @@ bool isGraphExpr(rqp::RPBase * op)
 };
 
 inline static
+bool isConstExpr(rqp::RPBase * op)
+{
+    return op == rqp::null_op || rqp::instanceof<rqp::Const>(op);
+};
+
+inline static
 opt::DataNode * addGraphToJoin(opt::DataGraphBuilder & builder, rqp::RPBase * op)
 {
     if (rqp::instanceof<rqp::DataGraphOperation>(op))
@@ -21,20 +27,20 @@ opt::DataNode * addGraphToJoin(opt::DataGraphBuilder & builder, rqp::RPBase * op
         rqp::DataGraphOperation * dgo = static_cast<rqp::DataGraphOperation *>(op);
         opt::DataGraphWrapper dgw(dgo->getGraph());
 
-        builder.nodes.insert(builder.nodes.back(), dgw.nodes.begin(), dgw.nodes.end());
-        builder.out.insert(builder.out.back(), dgw.out.begin(), dgw.out.end());
-        builder.predicates.insert(builder.predicates.back(), dgw.predicates.begin(), dgw.predicates.end());
+        builder.nodes.insert(builder.nodes.end(), dgw.nodes.begin(), dgw.nodes.end());
+        builder.out.insert(builder.out.end(), dgw.out.begin(), dgw.out.end());
+        builder.predicates.insert(builder.predicates.end(), dgw.predicates.begin(), dgw.predicates.end());
 
         return dgo->out;
     } else if (rqp::instanceof<rqp::VarIn>(op))
     {
-        opt::DataGraphMaster master = rqp::PlanContext::current->dgm();
+        opt::DataGraphMaster * master = rqp::PlanContext::current->dgm();
         opt::DataNode * node = new opt::DataNode(opt::DataNode::dnExternal);
         node->varTupleId = static_cast<rqp::VarIn *>(op)->getTuple();
-        master.addVariable(node);
+        master->addVariable(node);
 
-        builder.nodes.insert(node);
-        builder.out.insert(node);
+        builder.nodes.push_back(node);
+        builder.out.push_back(node);
 
         return node;
     } else {
@@ -83,7 +89,17 @@ void replaceInParent(rqp::PlanRewriter * pr, rqp::RPBase * op1, rqp::RPBase * op
         U_ASSERT(parent != op1);
         parent->replace(op1, op2);
     }
+
+    pr->traverseStack.pop_back();
+    pr->traverseStack.push_back(op2);
 };
+
+#define REGISTER_FUNCTIONS_BEGIN(LIB) \
+struct RegisterFunctions##LIB { RegisterFunctions##LIB() {
+
+#define REGISTER_FUNCTIONS_END(LIB) \
+}; }; \
+static const RegisterFunctions##LIB onModuleInit##LIB;
 
 
 #endif /* _FN_HELPERS_H */
