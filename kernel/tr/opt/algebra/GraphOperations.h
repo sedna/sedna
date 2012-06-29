@@ -2,13 +2,14 @@
 #define _GRAPH_OPERATIONS_H_
 
 #include "IndependentPlan.h"
+#include "tr/opt/graphs/DataGraphs.h"
 
 namespace rqp {
 
 class DataGraphOperation : public ManyChildren {
     OPERATION(0x01a)
   protected:
-    opt::DataGraph * func;
+    opt::DataGraphWrapper func;
 
     DataGraphOperation(_opinfo_t op, opt::DataGraph * function_, const OperationList & _oplist)
       : ManyChildren(op, _oplist), func(function_) {
@@ -24,8 +25,8 @@ class DataGraphOperation : public ManyChildren {
         detectOutNode();
     };
 
-    PROPERTY(Graph, opt::DataGraph *, func)
-//    PROPERTY(Mapping, const opt::TupleMapping &, tmapping)
+    opt::DataGraphWrapper & graph() { return func; }
+    const opt::DataGraphWrapper & graph() const { return func; }
 };
 
 class MapGraph : public DataGraphOperation {
@@ -42,6 +43,9 @@ public:
 
     opt::TupleScheme tupleMask;
 
+    void joinGraph(opt::DataGraphWrapper & dg);
+    void leftJoinGraph(opt::DataGraphWrapper & dg);
+    
     PROPERTY_RO(List, RPBase *, children[list_id])
 };
 

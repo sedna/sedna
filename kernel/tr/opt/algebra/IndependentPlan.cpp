@@ -65,6 +65,9 @@ XmlConstructor& ListOperation::__toXML(XmlConstructor& element) const
 
 XmlConstructor& NestedOperation::__toXML(XmlConstructor& element) const
 {
+    element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
+    element.addAttributeValue(CDGQNAME("name"), getContext()->getVarDef(tid)->getVarLabel() );
+
     element.openElement(CDGQNAME("nested"));
     
     if (getSubplan() != null_op) {

@@ -11,8 +11,7 @@ OPERATION_INFO(XPathStep)
 
 XmlConstructor& FunCall::__toXML(XmlConstructor& element) const
 {
-    // TODO :: recover;
-//    element.addAttributeValue(CDGQNAME("name"), function->getName().getColonizedName());
+    element.addAttributeValue(CDGQNAME("name"), function->getQName().getColonizedName());
 
     int i = 0;
     for (OperationList::const_iterator it = children.begin(); it != children.end(); ++it) {

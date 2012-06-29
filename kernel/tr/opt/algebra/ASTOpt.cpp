@@ -143,7 +143,7 @@ void lr2opt::visit(ASTAxisStep &n)
         for (ASTNodesVector::iterator pred = n.preds->begin(); pred != n.preds->end(); pred++) {
             context->generateContext();
             (*pred)->accept(*this);
-            resultOp = new Select(resultOp, context->popResult(), context->context);
+            resultOp = new Select(context->popResult(), resultOp, context->context);
         }
 
         context->context = saveContextVariable;
@@ -176,7 +176,7 @@ void lr2opt::visit(ASTFilterStep &n) {
         for (ASTNodesVector::iterator pred = n.preds->begin(); pred != n.preds->end(); pred++) {
             context->generateContext();
             (*pred)->accept(*this);
-            resultOp = new Select(resultOp, context->popResult(), context->context);
+            resultOp = new Select(context->popResult(), resultOp, context->context);
         }
 
         context->context = saveContextVariable;
@@ -508,7 +508,8 @@ void lr2opt::visit(ASTQuantExpr &n)
 //        predicate = new rqp::If(predicate, new rqp::Const(fn_true()), new rqp::Const(EmptySequenceConst()));
         
         context->resultStack.push(ResultInfo(
-            new rqp::MapConcat(predicate, expression, varBinding)));
+            new Exists(
+                new rqp::MapConcat(predicate, expression, varBinding))));
     }
     else /* EVERY */
     {

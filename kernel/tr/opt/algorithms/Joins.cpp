@@ -146,7 +146,7 @@ TupleJoinFilter::~TupleJoinFilter()
 inline
 void getValue(const MappedTupleIn & tin, sequence * seq, tuple & value, size_t pos)
 {
-    if (seq->size() <= pos) {
+    if ((size_t) (seq->size()) <= pos) {
         tin->next();
         value.copy(tin->get());
         seq->add(value);

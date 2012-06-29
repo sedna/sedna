@@ -62,10 +62,10 @@ FunctionInfo * g_lt_function = NULL;
 REGISTER_FUNCTIONS_BEGIN(CMP)
     FunctionLibrary * lib = getFunctionLibrary();
 
-    general_comparison_function = lib->registerFunction("internal", "general_comparison", &cmp_function);
+    general_comparison_function = lib->registerFunction(NULL, "internal", "general_comparison", &cmp_function);
 
 #define CMP_FUNCTION(OP) \
-    OP##_function = lib->registerFunction("internal", #OP, &cmp_function); \
+    OP##_function = lib->registerFunction(NULL, "internal", #OP, &cmp_function); \
     OP##_function->default_data = new ComparisonData(Comparison(opt::Comparison::OP));
 
     CMP_FUNCTION(g_eq)

@@ -342,39 +342,6 @@ DataGraphReduction & DataGraphReduction::execute(RPBase* op)
     return *this;
 }
 
-// TODO : to the library
-
-template<class Set1, class Set2>
-static
-size_t intersection_size(const Set1 &set1, const Set2 &set2)
-{
-    if(set1.empty() || set2.empty()) return 0;
-
-    typename Set1::const_iterator it1 = set1.begin(), it1End = set1.end();
-    typename Set2::const_iterator it2 = set2.begin(), it2End = set2.end();
-
-    if (*it1 > *set2.rbegin() || *it2 > *set1.rbegin()) return 0;
-
-    size_t result = 0;
-
-    while(it1 != it1End && it2 != it2End)
-    {
-        if (*it1 == *it2) {
-            result++;
-            it1++;
-            it2++;
-        }
-
-        if (*it1 < *it2) {
-            it1++;
-        } else {
-            it2++;
-        }
-    }
-
-    return result;
-}
-
 bool DataGraphReduction::tryJoin(DataGraphWrapper& left, DataGraphWrapper& right)
 {
     DataGraphMaster * dgm = PlanContext::current->dgm();

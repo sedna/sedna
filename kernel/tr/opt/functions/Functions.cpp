@@ -30,9 +30,13 @@ std::string getSearchName(const char* uri, const char* localname)
     return std::string(localname) + ((uri == NULL) ? "@{}" : ("@{" + std::string(uri) + "}"));
 };
 
-FunctionInfo* FunctionLibrary::registerFunction(const char* uri, const char* localname, const function_info_t* finfo)
+FunctionInfo* FunctionLibrary::registerFunction(
+    const char* default_prefix,
+    const char* uri,
+    const char* localname,
+    const function_info_t* finfo)
 {
-    FunctionInfo * result = new FunctionInfo(uri, localname, finfo);
+    FunctionInfo * result = new FunctionInfo(default_prefix, uri, localname, finfo);
     std::string name = getSearchName(uri, localname);
     functions.insert(FunctionMap::value_type(name, result));
     return result;

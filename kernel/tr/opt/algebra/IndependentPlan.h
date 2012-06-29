@@ -180,8 +180,10 @@ class NestedOperation : public ListOperation {
   protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   public:
-    NestedOperation(_opinfo_t op, RPBase * list_, RPBase * subplan_)
-      : ListOperation(op, list_) {
+    opt::TupleId tid;
+
+    NestedOperation(_opinfo_t op, RPBase * list_, RPBase * subplan_, opt::TupleId _tid)
+      : ListOperation(op, list_), tid(_tid) {
         children.push_back(subplan_);
         PlanContext::current->registerLink(this, subplan_, &(children[1]));
     };

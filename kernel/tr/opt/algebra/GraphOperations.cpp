@@ -1,6 +1,7 @@
 #include "GraphOperations.h"
 
 #include "tr/opt/graphs/DataGraphs.h"
+#include "tr/opt/graphs/DataGraphCollection.h"
 
 using namespace rqp;
 using namespace opt;
@@ -10,9 +11,7 @@ OPERATION_INFO(MapGraph)
 
 XmlConstructor& DataGraphOperation::__toXML(XmlConstructor& element) const
 {
-    element.openElement(CDGQNAME("graph"));
-    func->toXML(element);
-    element.closeElement();
+    graph().dg->toXML(element);
 
     element.openElement(CDGQNAME("suboperations"));
     for (OperationList::const_iterator it = children.begin(); it != children.end(); ++it) {
@@ -27,19 +26,15 @@ XmlConstructor& DataGraphOperation::__toXML(XmlConstructor& element) const
 
 void DataGraphOperation::detectOutNode()
 {
-    DataGraphWrapper dgw(func);
+    U_ASSERT(func.out.size() == 1);
 
-    U_ASSERT(dgw.out.size() == 1);
-
-    out = dgw.out.at(0);
+    out = func.out.at(0);
 }
 
 
 XmlConstructor& MapGraph::__toXML(XmlConstructor& element) const
 {
-    element.openElement(CDGQNAME("graph"));
-    func->toXML(element);
-    element.closeElement();
+    graph().dg->toXML(element);
 
     element.openElement(CDGQNAME("suboperations"));
     for (OperationList::const_iterator it = children.begin(); it != children.end()-1; ++it) {
@@ -55,4 +50,13 @@ XmlConstructor& MapGraph::__toXML(XmlConstructor& element) const
 
     return element;
 };
+
+void MapGraph::joinGraph(DataGraphWrapper& rg)
+{
+    func.nodes.insert(func.nodes.end(), rg.nodes.begin(), rg.nodes.end());
+    func.predicates.insert(func.predicates.end(), rg.predicates.begin(), rg.predicates.end());
+    func.out.insert(func.out.end(), rg.out.begin(), rg.out.end());
+
+    func.rebuild();
+}
 

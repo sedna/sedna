@@ -25,7 +25,7 @@ struct VariableInfo {
     std::string name;
 
     DataNode * producer;
-    DataNodeList nodes;
+    DataNodeSet nodes;
 
     TupleId pointsTo;
 

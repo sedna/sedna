@@ -100,6 +100,10 @@ DataGraph* DataGraphBuilder::make(DataGraphMaster* master, DataGraph* graph)
         if (n->type == opt::DataNode::dnExternal) {
             graph->inputNodes |= n->indexBit;
         }
+
+        if (n->varTupleId != invalidTupleId) {
+            master->addVariable(n);
+        }
         
         lastIndex++;
     };

@@ -54,6 +54,7 @@ class PhysicalModel;
 
 typedef std::vector<Predicate *> PredicateList;
 typedef std::vector<DataNode *> DataNodeList;
+typedef std::set<DataNode *> DataNodeSet;
 typedef std::vector<DataGraph *> DataGraphList;
 typedef std::set<DataGraph *> DataGraphSet;
 

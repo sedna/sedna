@@ -41,7 +41,7 @@ void opt::DataGraphRewriter::mergeNodes(const DataNodeIndex & master, const Data
             master.p->varTupleId = alias.p->varTupleId;
             graph.dg->owner->addVariable(master.p);
         };
-    
+
         graph.dg->owner->removeVariable(alias.p);
     };
 }

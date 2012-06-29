@@ -64,7 +64,7 @@ phop::function_info_t doc_function = {rule_fn_doc };
 REGISTER_FUNCTIONS_BEGIN(DOC)
     FunctionLibrary * lib = getFunctionLibrary();
 
-    lib->registerFunction(FN_URI, "doc", &doc_function);
+    lib->registerFunction(FN_NS.prefix, FN_NS.uri, "doc", &doc_function);
 //    lib->registerFunction(FN_URI, "doc-available", fn_doc_available_impl);
 //    lib->registerFunction(FN_URI, "collection", fn_collection);
 REGISTER_FUNCTIONS_END(DOC)

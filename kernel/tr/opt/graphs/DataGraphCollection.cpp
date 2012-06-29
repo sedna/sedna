@@ -170,7 +170,7 @@ void DataGraphMaster::addVariable(DataNode* dn)
             U_ASSERT(info.producer == NULL);
             info.producer = dn;
         } else {
-            info.nodes.push_back(dn);
+            info.nodes.insert(dn);
         };
     };
 }
@@ -189,7 +189,6 @@ void DataGraphMaster::setVarName(TupleId varTupleId, const string& name)
 
     info.name = name;
 }
-
 
 void DataGraphMaster::mergeVariables(TupleId t1, TupleId t2)
 {
@@ -215,11 +214,11 @@ void DataGraphMaster::mergeVariables(TupleId t1, TupleId t2)
         }
     };
 
-    for (DataNodeList::iterator it = var1.nodes.begin(); it != var1.nodes.end(); ++it) {
+    for (DataNodeSet::iterator it = var1.nodes.begin(); it != var1.nodes.end(); ++it) {
         (*it)->varTupleId = var1.id;
     };
 
-    var1.nodes.insert(var1.nodes.end(), var2.nodes.begin(), var2.nodes.end());
+    var1.nodes.insert(var2.nodes.begin(), var2.nodes.end());
     var2.nodes.clear();
     var2.pointsTo = var1.id;
 }
@@ -232,7 +231,7 @@ void DataGraphMaster::removeVariable(DataNode* dn)
         info = variableMap.at(info.pointsTo);
     };
 
-    info.nodes.erase(std::find(info.nodes.begin(), info.nodes.end(), dn));
+    info.nodes.erase(dn);
 }
 
 DataGraph* DataGraphMaster::join(DataGraph* left, DataGraph* right)

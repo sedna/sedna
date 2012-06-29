@@ -34,11 +34,26 @@ struct FunctionInfo
     const char * localname;
     const function_info_t * finfo;
     IFunctionData * default_data;
+    const char * default_prefix;
 
-//    getQName();
+    xsd::QName getQName() const
+    {
+        return xsd::constQName(xmlns_touch(default_prefix, uri), localname);
+    };
 
-    FunctionInfo(const char * _uri, const char * _localname, const function_info_t * _finfo) :
-      uri(_uri), localname(_localname), finfo(_finfo), default_data(NULL) {};
+    FunctionInfo(
+        const char * _default_prefix,
+        const char * _uri,
+        const char * _localname,
+        const function_info_t * _finfo) :
+
+      uri(_uri),
+      localname(_localname),
+      finfo(_finfo),
+      default_data(NULL),
+      default_prefix(_default_prefix)
+
+        {};
 
     ~FunctionInfo() { delete default_data; };
 };
@@ -53,7 +68,12 @@ public:
     FunctionLibrary();
     ~FunctionLibrary();
 
-    FunctionInfo * registerFunction(const char * uri, const char * localname, const function_info_t * finfo);
+    FunctionInfo * registerFunction(
+        const char * default_prefix,
+        const char * uri,
+        const char * localname,
+        const function_info_t * finfo);
+
     FunctionInfo * findFunction(const xsd::QName & qname);
 };
 
@@ -63,7 +83,7 @@ void initFunctionLibrary();
 
 };
 
-#define FN_URI (predefinedNamespaces[namespace_fn].uri)
+#define FN_NS (predefinedNamespaces[namespace_fn])
 
 inline static
 phop::FunctionLibrary * getFunctionLibrary()

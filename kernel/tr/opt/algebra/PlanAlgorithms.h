@@ -10,19 +10,22 @@ namespace rqp {
 
 struct VarStatInfoItem {
     enum influence_t {
+        inf_op,
         inf_function,
         inf_not,
         inf_dg,
         inf_no_null_preserve,
     } influence;
 
-    union {
-        rqp::RPBase * rp;
-        opt::DataNode * dn;
-    } op;
-};
+    rqp::RPBase * rp;
+    opt::DataNode * dn;
 
-static const VarStatInfoItem initialVar = {};
+    VarStatInfoItem()
+      : influence(inf_op), rp(NULL), dn(NULL) {};
+      
+    VarStatInfoItem(enum influence_t _influence, rqp::RPBase * _rp, opt::DataNode * _dn)
+      : influence(_influence), rp(_rp), dn(_dn) {};
+};
 
 typedef std::list<VarStatInfoItem> VarPath;
 
@@ -42,14 +45,62 @@ struct PlanRewriter {
     rqp::OperationList traverseStack;
     VarInfoMap varMap;
 
+    std::vector<opt::TupleId> scopes;
+    std::vector<size_t> scopeMarkers;
+
+    VarStatInfo & declVar(opt::TupleId varid)
+    {
+        VarInfoMap::iterator it = varMap.find(varid);
+        U_ASSERT(it == varMap.end() || it->second.path.empty());
+
+        scopes.push_back(varid);
+
+        if (it == varMap.end()) {
+            return varMap.insert(VarInfoMap::value_type(varid, VarStatInfo())).first->second;
+        } else {
+            return it->second;
+        };
+    };
+
+    RPBase * getParent()
+    {
+        if (traverseStack.size() < 2) {
+            return NULL;
+        }
+
+        return traverseStack.at(traverseStack.size() - 2);
+    };
+    
+    void openScope()
+    {
+        scopeMarkers.push_back(scopes.size());
+    };
+    
+    void closeScope()
+    {
+        while (scopes.size() > scopeMarkers.back()) {
+            varMap.at(scopes.back()).path.pop_back();
+            scopes.pop_back();
+        };
+
+        scopeMarkers.pop_back();
+    };
+
     void do_execute();
 
-    void traverseChildren(rqp::OperationList & children) {
+    inline 
+    void traverse(RPBase * op)
+    {
+        if (null_op != op) {
+            traverseStack.push_back(op);
+            do_execute();
+        }
+    };
+    
+    void traverseChildren(const rqp::OperationList & children)
+    {
         for (rqp::OperationList::const_iterator it = children.begin(); it != children.end(); ++it) {
-            if (*it != null_op) {
-                traverseStack.push_back(*it);
-                do_execute();
-            }
+            traverse(*it);
         };
     };
 
