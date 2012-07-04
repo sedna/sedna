@@ -51,9 +51,6 @@ typedef std::vector< RPBase * > OperationList;
 typedef VarNameMap::value_type VarMapRecord;
 typedef GreatTupleScheme::value_type GreatMapRecord;
 
-typedef std::pair<RPBase *, RPBase *> RPEdge;
-typedef std::map<RPBase *, RPBase **> LinkMap;
-
 class PlanContext : public opt::IPlanDisposable {
   private:
     ScopeMarker lastScopeMarker;
@@ -63,8 +60,6 @@ class PlanContext : public opt::IPlanDisposable {
     ScopeStack scopeStack;
     VarNameMap scope;
 
-    LinkMap linkmap;
-    
     opt::DataGraphMaster * dataGraphFactory;
   public:
     static PlanContext * current;
@@ -76,19 +71,12 @@ class PlanContext : public opt::IPlanDisposable {
 
     const TupleDefinition * getVarDef(opt::TupleId tid) const { return &(greatTupleScheme.at(tid)); };
 
-    void registerLink(RPBase * a, RPBase * b, RPBase ** bptr) {
-        linkmap[b] = bptr;
-    };
-    
     opt::TupleId generateTupleId();
     opt::TupleId generateTupleIdVarScoped(const std::string & varName);
     opt::TupleId getVarTupleInScope(const std::string & canonicalName);
 
     ScopeMarker setScopeMarker();
 
-    void replaceOperation(RPBase * a, RPBase * b);
-    void replaceLink(RPBase * a, RPBase ** aptr);
-    
     void newScope();
     void clearScope();
     void clearScopesToMarker(ScopeMarker marker);
@@ -103,6 +91,7 @@ class RPBase : public opt::IPlanDisposable, public IXMLSerializable {
     PlanContext * context;
     static int opids;
     int opuid;
+    int resultChild;
 
     virtual XmlConstructor & __toXML(XmlConstructor &) const = 0;
   public:
@@ -111,13 +100,13 @@ class RPBase : public opt::IPlanDisposable, public IXMLSerializable {
   public:
     OperationList children;
 
+    RPBase(_opinfo_t op) : opdesc(op), context(PlanContext::current), opuid(opids++), resultChild(-1) {};
+
     /* Replace child operation op with another operation */
     void replace(RPBase * op, RPBase * with);
-
-    RPBase(_opinfo_t op) : opdesc(op), context(PlanContext::current), opuid(opids++) {};
-
     PlanContext * getContext() const { return context; };
-
+    RPBase * result() { if (resultChild > -1) { return children[resultChild]; } else { return null_op; } };
+    
     virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
 
 //    virtual rewrite() const;
@@ -168,7 +157,6 @@ class ListOperation : public RPBase {
     ListOperation(_opinfo_t op, RPBase * list_)
       : RPBase(op) {
         children.push_back(list_);
-        PlanContext::current->registerLink(this, list_, &(children[0]));
     };
 
     PROPERTY_RO(List, RPBase *, children[0])
@@ -185,7 +173,6 @@ class NestedOperation : public ListOperation {
     NestedOperation(_opinfo_t op, RPBase * list_, RPBase * subplan_, opt::TupleId _tid)
       : ListOperation(op, list_), tid(_tid) {
         children.push_back(subplan_);
-        PlanContext::current->registerLink(this, subplan_, &(children[1]));
     };
 
     PROPERTY_RO(Subplan, RPBase *, children[1])
@@ -202,9 +189,6 @@ class BinaryOperation : public RPBase {
       : RPBase(op) {
         children.push_back(ltItem_);
         children.push_back(rtItem_);
-
-        PlanContext::current->registerLink(this, ltItem_, &(children[0]));
-        PlanContext::current->registerLink(this, rtItem_, &(children[1]));
     };
 
     PROPERTY_RO(Left, RPBase *, children[0])
@@ -228,11 +212,6 @@ class ManyChildren : public RPBase {
   protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   private:
-    void registerOps() {
-        for (OperationList::iterator it = children.begin(); it != children.end(); ++it) {
-            PlanContext::current->registerLink(this, *it, it.base());
-        };
-    };    
   public:
     ManyChildren(_opinfo_t op, const OperationList & _oplist)
       : RPBase(op)
@@ -240,12 +219,10 @@ class ManyChildren : public RPBase {
         for (OperationList::const_iterator it = _oplist.begin(); it != _oplist.end(); ++it) {
             children.push_back(*it);
         };
-
-        registerOps();
     };
 
     ManyChildren(_opinfo_t op, RPBase* _in)
-      : RPBase(op) { children.push_back(_in); registerOps(); };
+      : RPBase(op) { children.push_back(_in); };
 };
 
 }

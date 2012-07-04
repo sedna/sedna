@@ -10,14 +10,17 @@ class If : public RPBase {
 private:
 public:
     If(RPBase* _condition, RPBase* _then, RPBase* _else)
-      : RPBase(&sopdesc) {
+      : RPBase(&sopdesc)
+    {
         children.push_back(_condition);
         children.push_back(_then);
         children.push_back(_else);
 
-        PlanContext::current->registerLink(this, _condition, &(children[0]));
-        PlanContext::current->registerLink(this, _then, &(children[1]));
-        PlanContext::current->registerLink(this, _else, &(children[2]));
+        if (_else == null_op) {
+            resultChild = 1;
+        } else if (_then == null_op) {
+            resultChild = 2;
+        };
     };
 
     PROPERTY_RO(Condition, RPBase *, children[0])

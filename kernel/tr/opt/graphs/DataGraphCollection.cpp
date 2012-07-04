@@ -167,7 +167,7 @@ void DataGraphMaster::addVariable(DataNode* dn)
         };
 
         if (dn->type != DataNode::dnAlias && dn->type != DataNode::dnExternal) {
-            U_ASSERT(info.producer == NULL);
+            U_ASSERT(info.producer == dn || info.producer == NULL);
             info.producer = dn;
         } else {
             info.nodes.insert(dn);

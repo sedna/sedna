@@ -51,7 +51,6 @@ struct PlanRewriter {
     VarStatInfo & declVar(opt::TupleId varid)
     {
         VarInfoMap::iterator it = varMap.find(varid);
-        U_ASSERT(it == varMap.end() || it->second.path.empty());
 
         scopes.push_back(varid);
 

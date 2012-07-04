@@ -38,7 +38,7 @@ public:
       : DataGraphOperation(&sopdesc, function_, _oplist) {
         list_id = children.size();
         children.push_back(_list);
-        context->registerLink(this, _list, &(children[list_id]));
+        resultChild = list_id;
     };
 
     opt::TupleScheme tupleMask;

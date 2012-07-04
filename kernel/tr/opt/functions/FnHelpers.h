@@ -11,6 +11,36 @@ bool isConstExpr(rqp::RPBase * op)
     return op == rqp::null_op || rqp::instanceof<rqp::Const>(op);
 };
 
+/* Conditional expressions implies EBV on result */
+inline static
+bool isConditional(rqp::RPBase * parent, rqp::RPBase * child)
+{
+    return
+      (rqp::instanceof<rqp::If>(parent) && static_cast<rqp::If *>(parent)->getCondition() == child) ||
+      (rqp::instanceof<rqp::Select>(parent) && static_cast<rqp::Select *>(parent)->getList() == child);
+};
+
+inline static
+bool isResultOp(rqp::RPBase * parent, rqp::RPBase * child)
+{
+    return parent->result() == child;
+};
+
+/* Expression preserves null iff it returns null on null input form child */
+inline static
+bool preservesNull(rqp::RPBase * parent, rqp::RPBase * child)
+{
+    return
+    /* Result passthrough */
+      isResultOp(parent, child) || 
+    /* Condition of IF expression with only THEN branch */
+      (rqp::instanceof<rqp::If>(parent) && static_cast<rqp::If *>(parent)->getCondition() == child &&
+          parent->result() == static_cast<rqp::If *>(parent)->getThen()) ||
+    /* Any branch of Select or MapConcat */
+      rqp::instanceof<rqp::Select>(parent) ||
+      rqp::instanceof<rqp::MapConcat>(parent);
+};
+
 inline static
 bool isGraphExpr(rqp::RPBase * op)
 {
@@ -21,9 +51,12 @@ bool isGraphExpr(rqp::RPBase * op)
       rqp::instanceof<rqp::VarIn>(op);
 };
 
+//inline static
+//void 
 
+template<typename BuilderType>
 inline static
-opt::DataNode * addGraphToJoin(opt::DataGraphBuilder & builder, rqp::RPBase * op)
+opt::DataNode * addGraphToJoin(BuilderType & builder, rqp::RPBase * op)
 {
     opt::DataGraphMaster * master = rqp::PlanContext::current->dgm();
 
@@ -104,6 +137,8 @@ void replaceInParent(rqp::PlanRewriter * pr, rqp::RPBase * op1, rqp::RPBase * op
 
     pr->traverseStack.pop_back();
     pr->traverseStack.push_back(op2);
+
+    
 };
 
 #define REGISTER_FUNCTIONS_BEGIN(LIB) \

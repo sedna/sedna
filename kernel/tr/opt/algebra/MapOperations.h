@@ -16,14 +16,20 @@ class MapConcat : public NestedOperation {
     OPERATION(0x002)
 public:
     MapConcat(RPBase* _list, RPBase* _subplan, const ContextInfo & _context)
-      : NestedOperation(&sopdesc, _list, _subplan, _context.item) {};
+      : NestedOperation(&sopdesc, _list, _subplan, _context.item)
+    {
+        resultChild = 0;
+    };
 };
 
 class SequenceConcat : public NestedOperation {
     OPERATION(0x003)
 public:
     SequenceConcat(RPBase* _list, RPBase* _subplan, opt::TupleId _tid)
-      : NestedOperation(&sopdesc, _list, _subplan, _tid) {};
+      : NestedOperation(&sopdesc, _list, _subplan, _tid)
+    {
+        resultChild = 0;
+    };
 };
 
 /*
@@ -38,7 +44,10 @@ class Select : public NestedOperation {
     OPERATION(0x004)
 public:
     Select(RPBase* _list, RPBase* _subplan, const ContextInfo & _context)
-      : NestedOperation(&sopdesc, _list, _subplan, _context.item) {};
+      : NestedOperation(&sopdesc, _list, _subplan, _context.item)
+    {
+        resultChild = 1;
+    };
 };
 
 }

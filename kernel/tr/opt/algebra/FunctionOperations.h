@@ -50,9 +50,9 @@ class Construct : public ListOperation {
     t_item type;
 public:
     Construct(t_item _type, RPBase* _name, RPBase* list_)
-      : ListOperation(&sopdesc, list_), type(_type) {
+      : ListOperation(&sopdesc, list_), type(_type)
+    {
         children.push_back(_name);
-        PlanContext::current->registerLink(this, _name, &(children[1]));
     };
 
     PROPERTY_RO(Name, RPBase *, children[1])

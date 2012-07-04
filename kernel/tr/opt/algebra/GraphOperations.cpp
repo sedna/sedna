@@ -34,8 +34,14 @@ void DataGraphOperation::detectOutNode()
 
 XmlConstructor& MapGraph::__toXML(XmlConstructor& element) const
 {
+    for (TupleScheme::const_iterator it = tupleMask.begin(); it != tupleMask.end(); ++it) {
+        element.openElement(CDGQNAME("tuple"));
+        element.addAttributeValue(CDGQNAME("tid"), tuple_cell::atomic_int(*it));
+        element.closeElement();
+    };
+    
     graph().dg->toXML(element);
-
+    
     element.openElement(CDGQNAME("suboperations"));
     for (OperationList::const_iterator it = children.begin(); it != children.end()-1; ++it) {
         if (*it != null_op) {

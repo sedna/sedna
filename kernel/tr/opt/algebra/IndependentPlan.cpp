@@ -103,24 +103,6 @@ PlanContext::~PlanContext()
     delete dataGraphFactory;
 }
 
-void PlanContext::replaceOperation(RPBase* a, RPBase* b)
-{
-    LinkMap::iterator i = linkmap.find(a);
-    U_ASSERT(i != linkmap.end());
-    
-    RPBase ** aptr = i->second;
-    linkmap.erase(i);
-    *aptr = b;
-    linkmap.insert(LinkMap::value_type(b, aptr));
-}
-
-void PlanContext::replaceLink(RPBase* a, RPBase** aptr)
-{
-    LinkMap::iterator i = linkmap.find(a);
-    U_ASSERT(i != linkmap.end());
-    i->second = aptr;
-}
-
 void PlanContext::newScope() {
     scopeStack.push(invalidTupleId);
     ++lastScopeMarker;
