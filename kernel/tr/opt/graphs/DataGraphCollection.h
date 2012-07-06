@@ -16,6 +16,10 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/executor/por2qep/scheme_tree.h"
 
+namespace rqp {
+    class RPBase;
+}
+
 namespace opt {
 
 struct DataGraphBuilder;
@@ -24,12 +28,13 @@ struct VariableInfo {
     TupleId id;
     std::string name;
 
+    rqp::RPBase * declaredIn;
     DataNode * producer;
     DataNodeSet nodes;
 
     TupleId pointsTo;
 
-    VariableInfo(TupleId _id) : id(_id), producer(), pointsTo(opt::invalidTupleId) {};
+    VariableInfo(TupleId _id) : id(_id), declaredIn(NULL), producer(NULL), pointsTo(opt::invalidTupleId) {};
 };
 
 typedef std::map<TupleId, VariableInfo> VariableInfoMap;
@@ -61,11 +66,16 @@ public:
 //    DataGraph * createGraphFromLR(const scheme_list * vf);
 
     void addVariable(DataNode * dn);
+    void addVariableDecl(TupleId tid, rqp::RPBase * op);
     void removeVariable(DataNode * dn);
     void mergeVariables(TupleId t1, TupleId t2);
 
+    void deleteGraph(DataGraph* dg);
+
     VariableInfo & getVariable(TupleId tid)
     {
+        U_ASSERT(variableMap.find(tid) != variableMap.end());
+
         VariableInfo & info = variableMap.at(tid);
 
         while (info.pointsTo != opt::invalidTupleId) {

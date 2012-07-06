@@ -9,7 +9,7 @@ namespace rqp {
 class DataGraphOperation : public ManyChildren {
     OPERATION(0x01a)
   protected:
-    opt::DataGraphWrapper func;
+    opt::DataGraphIndex func;
 
     DataGraphOperation(_opinfo_t op, opt::DataGraph * function_, const OperationList & _oplist)
       : ManyChildren(op, _oplist), func(function_) {
@@ -25,8 +25,8 @@ class DataGraphOperation : public ManyChildren {
         detectOutNode();
     };
 
-    opt::DataGraphWrapper & graph() { return func; }
-    const opt::DataGraphWrapper & graph() const { return func; }
+    opt::DataGraphIndex & graph() { return func; }
+    const opt::DataGraphIndex & graph() const { return func; }
 };
 
 class MapGraph : public DataGraphOperation {
@@ -43,8 +43,8 @@ public:
 
     opt::TupleScheme tupleMask;
 
-    void joinGraph(opt::DataGraphWrapper & dg);
-    void leftJoinGraph(opt::DataGraphWrapper & dg);
+    void joinGraph(opt::DataGraphIndex & dg);
+    void leftJoinGraph(opt::DataGraphIndex & dg);
     
     PROPERTY_RO(List, RPBase *, children[list_id])
 };

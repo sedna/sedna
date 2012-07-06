@@ -30,9 +30,17 @@ class VarIn : public ConstantOperation {
     OPERATION(0x011)
 private:
     opt::TupleId tid;
+
+    void setDataNode(opt::TupleId _tid);
 public:
+    /* Phantom datanode */
+    opt::DataNode * dnode;
+
     VarIn(opt::TupleId _tid)
-      : ConstantOperation(&sopdesc), tid(_tid) {};
+      : ConstantOperation(&sopdesc), tid(_tid)
+    {
+        setDataNode(_tid);
+    };
 
     PROPERTY_RO(Tuple, opt::TupleId, tid)
 };

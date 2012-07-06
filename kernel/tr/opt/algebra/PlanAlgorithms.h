@@ -8,6 +8,7 @@
 
 namespace rqp {
 
+/*
 struct VarStatInfoItem {
     enum influence_t {
         inf_op,
@@ -39,10 +40,13 @@ struct VarStatInfo {
 };
 
 typedef std::map<opt::TupleId, VarStatInfo> VarInfoMap;
+*/
 
 struct PlanRewriter {
-    rqp::RPBase* inputOp;
+    rqp::RPBase* root;
     rqp::OperationList traverseStack;
+    
+/*
     VarInfoMap varMap;
 
     std::vector<opt::TupleId> scopes;
@@ -61,15 +65,6 @@ struct PlanRewriter {
         };
     };
 
-    RPBase * getParent()
-    {
-        if (traverseStack.size() < 2) {
-            return NULL;
-        }
-
-        return traverseStack.at(traverseStack.size() - 2);
-    };
-    
     void openScope()
     {
         scopeMarkers.push_back(scopes.size());
@@ -84,7 +79,16 @@ struct PlanRewriter {
 
         scopeMarkers.pop_back();
     };
+*/
+    RPBase * getParent()
+    {
+        if (traverseStack.size() < 2) {
+            return NULL;
+        }
 
+        return traverseStack.at(traverseStack.size() - 2);
+    };
+   
     void do_execute();
 
     inline 
@@ -95,7 +99,29 @@ struct PlanRewriter {
             do_execute();
         }
     };
+
+//    bool __debug_trace_replace(uint op1, uint op2);
     
+    inline 
+    void replaceInParent(rqp::RPBase * op1, rqp::RPBase * op2)
+    {
+        rqp::RPBase * parent = getParent();
+
+        /* If parent not exists, replace root */
+
+        if (parent == null_op) {
+            U_ASSERT(root == op1);
+            root = op2;
+        } else {
+            U_ASSERT(parent != op1);
+            parent->replace(op1, op2);
+//            U_ASSERT(__debug_trace_replace(op1->oid(), op2->oid()));
+        }
+
+        traverseStack.pop_back();
+        traverseStack.push_back(op2);
+    };
+
     void traverseChildren(const rqp::OperationList & children)
     {
         for (rqp::OperationList::const_iterator it = children.begin(); it != children.end(); ++it) {
@@ -105,7 +131,7 @@ struct PlanRewriter {
 
     void execute();
 
-    PlanRewriter(rqp::RPBase* op) : inputOp(op) {};
+    PlanRewriter(rqp::RPBase* op) : root(op) {};
 };
 
 }

@@ -19,7 +19,7 @@ bool rule_fn_doc(PlanRewriter * pr, rqp::FunCall * op)
 
     if (arg == null_op)
     {
-        replaceInParent(pr, op, null_op);
+        pr->replaceInParent(op, null_op);
         return true;
     };
 
@@ -30,7 +30,7 @@ bool rule_fn_doc(PlanRewriter * pr, rqp::FunCall * op)
 
         if (seq->size() == 0)
         {
-            replaceInParent(pr, op, null_op);
+            pr->replaceInParent(op, null_op);
             return true;
         };
 
@@ -47,7 +47,7 @@ bool rule_fn_doc(PlanRewriter * pr, rqp::FunCall * op)
         RPBase * newop = new DataGraphOperation(
             builder.build(op->getContext()->dgm()), OperationList());
 
-        replaceInParent(pr, op, newop);
+        pr->replaceInParent(op, newop);
 
         return true;
     } else if (isGraphExpr(arg)) {

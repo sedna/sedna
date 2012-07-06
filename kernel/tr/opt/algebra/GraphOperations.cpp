@@ -31,7 +31,6 @@ void DataGraphOperation::detectOutNode()
     out = func.out.at(0);
 }
 
-
 XmlConstructor& MapGraph::__toXML(XmlConstructor& element) const
 {
     for (TupleScheme::const_iterator it = tupleMask.begin(); it != tupleMask.end(); ++it) {
@@ -39,9 +38,9 @@ XmlConstructor& MapGraph::__toXML(XmlConstructor& element) const
         element.addAttributeValue(CDGQNAME("tid"), tuple_cell::atomic_int(*it));
         element.closeElement();
     };
-    
+
     graph().dg->toXML(element);
-    
+
     element.openElement(CDGQNAME("suboperations"));
     for (OperationList::const_iterator it = children.begin(); it != children.end()-1; ++it) {
         if (*it != null_op) {
@@ -57,7 +56,7 @@ XmlConstructor& MapGraph::__toXML(XmlConstructor& element) const
     return element;
 };
 
-void MapGraph::joinGraph(DataGraphWrapper& rg)
+void MapGraph::joinGraph(DataGraphIndex& rg)
 {
     func.nodes.insert(func.nodes.end(), rg.nodes.begin(), rg.nodes.end());
     func.predicates.insert(func.predicates.end(), rg.predicates.begin(), rg.predicates.end());

@@ -40,7 +40,7 @@ bool rule_general_comparison_to_graph(PlanRewriter * pr, rqp::FunCall * op)
             oplist
           ));
 
-        replaceInParent(pr, op, newop);
+        pr->replaceInParent(op, newop);
 
         return true;
     };

@@ -6,13 +6,13 @@
 namespace opt {
   
 struct DataGraphRewriter {
-    DataGraphWrapper graph;
-    DataGraphIndex index;
+    DataGraphIndex & graph;
 
-    DataGraphRewriter(DataGraph * dg) : graph(dg), index(dg) {};
+    DataGraphRewriter(DataGraphIndex & _graph) : graph(_graph) {};
 
     void mergeNodes(const DataNodeIndex& master, const DataNodeIndex& alias);
 
+    void deleteRedundantConsts();
     void selfReferenceResolution();
     void aliasResolution();
     void structuralComparison();

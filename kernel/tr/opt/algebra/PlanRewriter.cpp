@@ -37,7 +37,7 @@ typedef boost::shared_ptr<GraphContext> GraphContextPtr;
 
 struct GraphContext {
     GraphContextPtr parent;
-    counted_ptr<DataGraphWrapper> graph;
+    counted_ptr<DataGraphIndex> graph;
     TupleScheme visibleVariables;
     bool breakNullPreserve;
     RPBase * op;
@@ -50,7 +50,7 @@ struct GraphContext {
         }
 
         if (_graph != NULL) {
-            graph = new DataGraphWrapper(_graph);
+            graph = new DataGraphIndex(_graph);
             visibleVariables.insert(graph->outTuples.begin(), graph->outTuples.end());
         }
     };
@@ -87,8 +87,8 @@ public:
     DataGraphReduction & execute(RPBase * op);
 
     void findJoinsRec(RPBase* op);
-    bool tryJoin(DataGraphWrapper & left, DataGraphWrapper & right);
-    void selectPossibleJoins(DataGraphWrapper& right, RPBase* op, RPBase* substOp, TupleId resultTuple);
+    bool tryJoin(DataGraphIndex & left, DataGraphIndex & right);
+    void selectPossibleJoins(DataGraphIndex& right, RPBase* op, RPBase* substOp, TupleId resultTuple);
 };
 
 RPBase* selectDataGraphs(RPBase* op)
@@ -342,7 +342,7 @@ DataGraphReduction & DataGraphReduction::execute(RPBase* op)
     return *this;
 }
 
-bool DataGraphReduction::tryJoin(DataGraphWrapper& left, DataGraphWrapper& right)
+bool DataGraphReduction::tryJoin(DataGraphIndex& left, DataGraphIndex& right)
 {
     DataGraphMaster * dgm = PlanContext::current->dgm();
     
@@ -366,7 +366,7 @@ bool DataGraphReduction::tryJoin(DataGraphWrapper& left, DataGraphWrapper& right
     return false;
 }
 
-void DataGraphReduction::selectPossibleJoins(DataGraphWrapper& dgw, RPBase* op, RPBase* substOp, TupleId resultTuple)
+void DataGraphReduction::selectPossibleJoins(DataGraphIndex& dgw, RPBase* op, RPBase* substOp, TupleId resultTuple)
 {
     if (dataGraphStack.get() == NULL) {
         return;
@@ -432,12 +432,12 @@ void DataGraphReduction::findJoinsRec(RPBase* op)
 
         dataGraphStack = dataGraphStack->parent;
 
-        DataGraphWrapper dgw(mapG->getGraph());
+        DataGraphIndex dgw(mapG->getGraph());
         
         selectPossibleJoins(dgw, mapG, mapG->getList(), invalidTupleId);
     } else if (instanceof<rqp::DataGraphOperation>(op)) {
         rqp::DataGraphOperation * dgop = dynamic_cast<rqp::DataGraphOperation *>(op);
-        DataGraphWrapper dgw(dgop->getGraph());
+        DataGraphIndex dgw(dgop->getGraph());
 
         U_ASSERT(dgw.outTuples.size() == 1);
         TupleId resultTuple = *dgw.outTuples.begin();

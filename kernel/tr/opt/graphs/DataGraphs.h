@@ -3,6 +3,12 @@
 
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/path/DataSources.h"
+#include "tr/models/XmlConstructor.h"
+
+namespace rqp {
+  class RPBase;
+  class DataGraphOperation;
+}
 
 class XmlConstructor;
 
@@ -35,7 +41,8 @@ struct Predicate : public IPlanDisposable {
     virtual XmlConstructor & toXML(XmlConstructor & ) const = 0;
 };
 
-struct DataNode : public IPlanDisposable {
+struct DataNode : public IPlanDisposable, public IXMLSerializable
+{
     enum data_node_type_t {
         dnConst = 1, dnExternal, dnDatabase, dnFreeNode, dnAlias, dnReplaced
     } type;
@@ -73,7 +80,7 @@ struct DataNode : public IPlanDisposable {
         indexBit = 1ULL << _index;
     };
 
-    XmlConstructor & toXML(XmlConstructor & ) const;
+    virtual XmlConstructor & toXML(XmlConstructor & ) const;
 };
 
 struct PredicateIndex {
@@ -94,6 +101,7 @@ class DataGraphMaster;
 
 struct DataGraph : public IPlanDisposable {
     DataGraphMaster * owner;
+    rqp::RPBase * operation;
 
     Predicate * predicates[MAX_GRAPH_SIZE];
     DataNode * dataNodes[MAX_GRAPH_SIZE];
@@ -103,24 +111,6 @@ struct DataGraph : public IPlanDisposable {
 
     explicit DataGraph(DataGraphMaster* _owner);
     XmlConstructor & toXML(XmlConstructor & ) const;
-};
-
-struct DataGraphWrapper {
-    DataGraph * dg;
-
-    DataNodeList nodes;
-    DataNodeList in;
-    DataNodeList out;
-
-    TupleScheme inTuples;
-    TupleScheme outTuples;
-
-    PredicateList predicates;
-
-    explicit DataGraphWrapper(DataGraph * _dg);
-
-    void update();
-    void rebuild();
 };
 
 struct DataGraphBuilder {
@@ -136,10 +126,19 @@ struct DataGraphBuilder {
 struct DataGraphIndex {
     DataGraph * dg;
 
-    PredicateIndex predicates[MAX_GRAPH_SIZE];
-    DataNodeIndex nodes[MAX_GRAPH_SIZE];
+    DataNodeList nodes;
+    DataNodeList in;
+    DataNodeList out;
+
+    TupleScheme inTuples;
+    TupleScheme outTuples;
+
+    PredicateList predicates;
     
-    PlanDesc allPredicates;
+    PredicateIndex predicateIndex[MAX_GRAPH_SIZE];
+    DataNodeIndex nodeIndex[MAX_GRAPH_SIZE];
+    
+    PlanDesc predicateMask;
 
     explicit DataGraphIndex(DataGraph * _dg);
 
@@ -149,13 +148,14 @@ struct DataGraphIndex {
 
         int i;
         while (-1 != (i = iter.next())) {
-            result |= predicates[i].neighbours;
+            result |= predicateIndex[i].neighbours;
         }
 
         return (result & ~x);
     };
 
     void update();
+    void rebuild();
 };
 
 };

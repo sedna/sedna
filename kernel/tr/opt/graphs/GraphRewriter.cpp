@@ -46,14 +46,16 @@ void opt::DataGraphRewriter::mergeNodes(const DataNodeIndex & master, const Data
     };
 }
 
-void opt::DataGraphRewriter::selfReferenceResolution()
+void DataGraphRewriter::deleteRedundantConsts()
 {
-    DataNode ** dataNodes = graph.dg->dataNodes;
+    // TODO: delete consts;
+/*
+  DataNode ** dataNodes = graph.dg->dataNodes;
 
     FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
         DataNode * dn = dataNodes[i];
 
-        if (dn->type == DataNode::dnExternal) {
+        if (dn->type == DataNode::dnConst) {
             DataNode * producerPtr = graph.dg->owner->getVariable(dn->varTupleId).producer;
 
             if (producerPtr != NULL && dataNodes[producerPtr->index] ==  producerPtr) {
@@ -66,6 +68,29 @@ void opt::DataGraphRewriter::selfReferenceResolution()
 
     graph.update();
     index.update();
+*/    
+}
+
+
+void opt::DataGraphRewriter::selfReferenceResolution()
+{
+    DataNode ** dataNodes = graph.dg->dataNodes;
+
+    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
+        DataNode * dn = dataNodes[i];
+
+        if (dn->type == DataNode::dnExternal) {
+            DataNode * producerPtr = graph.dg->owner->getVariable(dn->varTupleId).producer;
+
+            if (producerPtr != NULL && dataNodes[producerPtr->index] ==  producerPtr) {
+                mergeNodes(
+                    graph.nodeIndex[producerPtr->index],
+                    graph.nodeIndex[dn->index]);
+            };
+        }
+    };
+
+    graph.update();
 }
 
 void DataGraphRewriter::aliasResolution()
@@ -77,13 +102,12 @@ void DataGraphRewriter::aliasResolution()
     FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
         if (dataNodes[i]->type == DataNode::dnAlias) {
             mergeNodes(
-              index.nodes[dataNodes[i]->aliasFor->index],
-              index.nodes[dataNodes[i]->index]);
+              graph.nodeIndex[dataNodes[i]->aliasFor->index],
+              graph.nodeIndex[dataNodes[i]->index]);
         }
     };
 
     graph.update();
-    index.update();
 }
 
 /*
@@ -92,7 +116,7 @@ void DataGraphRewriter::aliasResolution()
 
 void DataGraphRewriter::structuralComparison()
 {
-    PredicateIndex * predicates = index.predicates;
+    PredicateIndex * predicates = graph.predicateIndex;
 
     for (PredicateList::iterator it = graph.predicates.begin(); it != graph.predicates.end(); ++it) {
         ValuePredicate * pred = dynamic_cast<ValuePredicate*>(*it);
@@ -112,7 +136,6 @@ void DataGraphRewriter::structuralComparison()
     };
 
     graph.rebuild();
-    index.update();
 }
 
 void DataGraphRewriter::doPathExpansion()
@@ -127,7 +150,7 @@ void DataGraphRewriter::doPathExpansion()
             continue;
         };
 
-        PlanDescIterator it(index.nodes[dn->index].predicates);
+        PlanDescIterator it(graph.nodeIndex[dn->index].predicates);
 
         int leftIdx = it.next();
         int rightIdx = it.next();
@@ -170,14 +193,13 @@ void DataGraphRewriter::doPathExpansion()
          */
         left->dataNodeList[1] = right->right();
 
-        DataNodeIndex * rightOfRight = &(index.nodes[right->right()->index]);
+        DataNodeIndex * rightOfRight = &(graph.nodeIndex[right->right()->index]);
 
         rightOfRight->predicates &= ~right->indexBit;
         rightOfRight->predicates |= left->indexBit;
     };
 
     graph.update();
-    index.update();
 }
 
 /* Static optimization phase */

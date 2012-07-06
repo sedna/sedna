@@ -13,7 +13,7 @@ DataGraph::DataGraph(DataGraphMaster* _owner) : owner(_owner)
     memset(dataNodes, 0, sizeof(dataNodes[0]) * MAX_GRAPH_SIZE);
 }
 
-void DataGraphWrapper::update()
+void DataGraphIndex::update()
 {
     nodes.clear();
     out.clear();
@@ -23,35 +23,83 @@ void DataGraphWrapper::update()
     outTuples.clear();
     inTuples.clear();
 
-    FOR_ALL_GRAPH_ELEMENTS(dg->dataNodes, i) {
-        nodes.push_back(dg->dataNodes[i]);
+    predicateMask = 0;
 
-        if ((dg->dataNodes[i]->indexBit & dg->outputNodes) > 0) {
+    memset(nodeIndex, 0, sizeof(nodeIndex[0]) * MAX_GRAPH_SIZE);
+    memset(predicateIndex, 0, sizeof(predicateIndex[0]) * MAX_GRAPH_SIZE);
+
+    unsigned aI = 0;
+    
+    FOR_ALL_GRAPH_ELEMENTS(dg->dataNodes, i) {
+        DataNode * n = dg->dataNodes[i];
+        DataNodeIndex * nidx = nodeIndex + i;
+
+        nidx->output = (n->indexBit & dg->outputNodes) > 0;
+        nidx->input = (n->indexBit & dg->inputNodes) > 0;
+
+        n->absoluteIndex = aI++;
+        nidx->p = n;
+        nidx->predicates = 0;
+
+        nodes.push_back(n);
+
+        if ((n->indexBit & dg->outputNodes) > 0) {
             out.push_back(dg->dataNodes[i]);
-            
-            if (dg->dataNodes[i]->varTupleId != invalidTupleId) {
+
+            if (n->varTupleId != invalidTupleId) {
                 outTuples.insert(dg->dataNodes[i]->varTupleId);
             }
         };
 
-        if ((dg->dataNodes[i]->indexBit & dg->inputNodes) > 0) {
-            in.push_back(dg->dataNodes[i]);
-            U_ASSERT(dg->dataNodes[i]->varTupleId != invalidTupleId);
-            inTuples.insert(dg->dataNodes[i]->varTupleId);
+        if ((n->indexBit & dg->inputNodes) > 0) {
+            in.push_back(n);
+            U_ASSERT(n->varTupleId != invalidTupleId);
+            inTuples.insert(n->varTupleId);
         };
     };
 
     FOR_ALL_GRAPH_ELEMENTS(dg->predicates, i) {
-        predicates.push_back(dg->predicates[i]);
+        Predicate * p = dg->predicates[i];
+        PredicateIndex * pidx = predicateIndex + i;
+
+        pidx->p = p;
+        pidx->dataNodeMask = 0;
+
+        for (DataNodeList::const_iterator it = p->dataNodeList.begin(); it != p->dataNodeList.end(); ++it) {
+            pidx->dataNodeMask |= (*it)->indexBit;
+            nodeIndex[(*it)->index].predicates |= p->indexBit;
+        }
+
+        pidx->evaluateAfter = 0;
+        for (PredicateList::const_iterator it = p->evaluateAfter.begin(); it != p->evaluateAfter.end(); ++it) {
+            pidx->evaluateAfter |= (*it)->indexBit;
+        }
+
+        pidx->neighbours = 0;
+
+        predicateMask |= p->indexBit;
+        predicates.push_back(p);
     };
 
+    FOR_ALL_GRAPH_ELEMENTS(dg->predicates, i) {
+        Predicate * p = dg->predicates[i];
+        PredicateIndex * pidx = predicateIndex + i;
+
+        for (DataNodeList::const_iterator jt = p->dataNodeList.begin(); jt != p->dataNodeList.end(); ++jt) {
+            pidx->neighbours |= nodeIndex[(*jt)->index].predicates;
+        }
+
+        pidx->neighbours &= ~p->indexBit;
+    };
+    
     std::sort(nodes.begin(), nodes.end());
     std::sort(out.begin(), out.end());
     std::sort(in.begin(), in.end());
     std::sort(predicates.begin(), predicates.end());
 }
 
-DataGraphWrapper::DataGraphWrapper(DataGraph* _dg) : dg(_dg)
+DataGraphIndex::DataGraphIndex(DataGraph* _dg)
+    : dg(_dg), predicateMask(0)
 {
     nodes.reserve(MAX_GRAPH_SIZE / 2);
     in.reserve(MAX_GRAPH_SIZE / 2);
@@ -61,7 +109,7 @@ DataGraphWrapper::DataGraphWrapper(DataGraph* _dg) : dg(_dg)
     update();
 }
 
-void DataGraphWrapper::rebuild()
+void DataGraphIndex::rebuild()
 {
     DataGraphBuilder builder;
     
@@ -125,68 +173,6 @@ DataGraph* DataGraphBuilder::build(DataGraphMaster* master)
     return result;
 }
 
-void DataGraphIndex::update()
-{
-    allPredicates = 0;
-
-    memset(nodes, 0, sizeof(nodes[0]) * MAX_GRAPH_SIZE);
-    memset(predicates, 0, sizeof(predicates[0]) * MAX_GRAPH_SIZE);
-
-    unsigned aI = 0;
-
-    FOR_ALL_GRAPH_ELEMENTS(dg->dataNodes, i) {
-        DataNode * n = dg->dataNodes[i];
-        DataNodeIndex * nidx = nodes + i;
-
-        nidx->output = (n->indexBit & dg->outputNodes) > 0;
-        nidx->input = (n->indexBit & dg->inputNodes) > 0;
-        
-        n->absoluteIndex = aI++;
-        nidx->p = n;
-        nidx->predicates = 0;
-    };
-    
-    FOR_ALL_GRAPH_ELEMENTS(dg->predicates, i) {
-        Predicate * p = dg->predicates[i];
-        PredicateIndex * pidx = predicates + i;
-
-        pidx->p = p;
-        pidx->dataNodeMask = 0;
-
-        for (DataNodeList::const_iterator it = p->dataNodeList.begin(); it != p->dataNodeList.end(); ++it) {
-            pidx->dataNodeMask |= (*it)->indexBit;
-            nodes[(*it)->index].predicates |= p->indexBit;
-        }
-
-        pidx->evaluateAfter = 0;
-        for (PredicateList::const_iterator it = p->evaluateAfter.begin(); it != p->evaluateAfter.end(); ++it) {
-            pidx->evaluateAfter |= (*it)->indexBit;
-        }
-        
-        pidx->neighbours = 0;
-
-        allPredicates |= dg->predicates[i]->indexBit;
-    };
-
-    FOR_ALL_GRAPH_ELEMENTS(dg->predicates, i) {
-        Predicate * p = dg->predicates[i];
-        PredicateIndex * pidx = predicates + i;
-        
-        for (DataNodeList::const_iterator jt = p->dataNodeList.begin(); jt != p->dataNodeList.end(); ++jt) {
-            pidx->neighbours |= nodes[(*jt)->index].predicates;
-        }
-
-        pidx->neighbours &= ~p->indexBit;
-    };
-}
-
-
-DataGraphIndex::DataGraphIndex(DataGraph* _dg)
-  : dg(_dg), allPredicates(0)
-{
-    update();
-}
-
 XmlConstructor & DataGraph::toXML(XmlConstructor & producer) const
 {
     producer.openElement(CDGQNAME("datagraph"));
@@ -225,11 +211,15 @@ XmlConstructor & DataNode::toXML(XmlConstructor& element) const
     if (varTupleId != opt::invalidTupleId) {
         element.addAttributeValue(CDGQNAME("varId"), tuple_cell::atomic_int(varTupleId));
 
-        VariableInfo & vinfo = parent->owner->getVariable(varTupleId);
+        if (parent->owner->variableMap.find(varTupleId) == parent->owner->variableMap.end()) {
+            element.addAttributeValue(CDGQNAME("bad"), tuple_cell::atomic(true));
+        } else {
+            VariableInfo & vinfo = parent->owner->getVariable(varTupleId);
 
-        if (!vinfo.name.empty()) {
-            element.addAttributeValue(CDGQNAME("varName"), vinfo.name);
-        };
+            if (!vinfo.name.empty()) {
+                element.addAttributeValue(CDGQNAME("varName"), vinfo.name);
+            };
+        }
     };
 
     if ((parent->outputNodes & this->indexBit) > 0) {

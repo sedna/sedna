@@ -5,11 +5,15 @@
 
 #include <stack>
 
+class XmlConstructor;
+
 class VirtualRootConstructor {
-public : VirtualRootConstructor(int x) {};
+public :
+    VirtualRootConstructor(int x) {};
 };
 
-class XmlConstructor {
+class XmlConstructor
+{
     tuple_cell lastElement;
     std::stack<IElementProducer *> producers;
 public:
@@ -35,6 +39,7 @@ public:
 class IXMLSerializable {
 public:
     virtual XmlConstructor& toXML(XmlConstructor& constructor) const = 0;
+    tuple_cell serialize() const;
 };
 
 #endif /* _XML_CONSTRUCTOR_H_ */

@@ -14,8 +14,7 @@ rqp::RPBase* selectDataGraphs(rqp::RPBase* op)
 {
     rqp::PlanRewriter rewriter(op);
     rewriter.execute();
-    return rewriter.inputOp;
-//    return op;
+    return rewriter.root;
 };
 
 #endif /* _PLAN_REWRITER_H_ */

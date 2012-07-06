@@ -54,6 +54,33 @@ bool isGraphExpr(rqp::RPBase * op)
 //inline static
 //void 
 
+/*
+inline static
+void deleteOperation(rqp::RPBase * op)
+{
+    switch (op->info()->opType) {
+      case rqp::VarIn :
+        {
+            op->getContext()->dgm()->deleteGraph(static_cast<rqp::VarIn *>(op)->dnode->parent);
+        }; break;
+      case rqp::DataGraphOperation :
+        {
+            op->getContext()->dgm()->deleteGraph(static_cast<rqp::DataGraphOperation *>(op)->graph().dg);
+        }; break;
+      case rqp::MapGraph :
+        U_ASSERT(false);
+      default :
+        break;      
+    };
+};
+*/
+
+inline static
+opt::DataNode * initGraphNode(rqp::VarIn * invar)
+{
+    return invar->dnode;
+};
+
 template<typename BuilderType>
 inline static
 opt::DataNode * addGraphToJoin(BuilderType & builder, rqp::RPBase * op)
@@ -64,7 +91,7 @@ opt::DataNode * addGraphToJoin(BuilderType & builder, rqp::RPBase * op)
     {
         rqp::DataGraphOperation * dgo = static_cast<rqp::DataGraphOperation *>(op);
         U_ASSERT(dgo->out != NULL);
-        opt::DataGraphWrapper & dgw = dgo->graph();
+        opt::DataGraphIndex & dgw = dgo->graph();
 
         builder.nodes.insert(builder.nodes.end(), dgw.nodes.begin(), dgw.nodes.end());
         builder.out.insert(builder.out.end(), dgw.out.begin(), dgw.out.end());
@@ -73,8 +100,7 @@ opt::DataNode * addGraphToJoin(BuilderType & builder, rqp::RPBase * op)
         return dgo->out;
     } else if (rqp::instanceof<rqp::VarIn>(op))
     {
-        opt::DataNode * node = new opt::DataNode(opt::DataNode::dnExternal);
-        node->varTupleId = static_cast<rqp::VarIn *>(op)->getTuple();
+        opt::DataNode * node = initGraphNode(static_cast<rqp::VarIn *>(op));
 
         builder.nodes.push_back(node);
         builder.out.push_back(node);
@@ -107,38 +133,12 @@ rqp::OperationList & addSuboperations(rqp::OperationList & oplist, rqp::RPBase *
     return oplist;
 };
 
-
 inline static
 opt::DataNode * createTrueNode()
 {
     opt::DataNode * result = new opt::DataNode(opt::DataNode::dnConst);
     result->sequence = rqp::PlanContext::current->dgm()->alwaysTrueSequence;
     return result;
-};
-
-inline static
-opt::DataNode * initGraphNode(rqp::VarIn * invar)
-{
-    opt::DataNode * nodeIn = new opt::DataNode(opt::DataNode::dnExternal);
-    nodeIn->varTupleId = invar->getTuple();
-    return nodeIn;
-};
-
-inline static
-void replaceInParent(rqp::PlanRewriter * pr, rqp::RPBase * op1, rqp::RPBase * op2)
-{
-    size_t sz = pr->traverseStack.size() - 1;
-
-    if (sz > 0) {
-        rqp::RPBase * parent = pr->traverseStack.at(sz - 1);
-        U_ASSERT(parent != op1);
-        parent->replace(op1, op2);
-    }
-
-    pr->traverseStack.pop_back();
-    pr->traverseStack.push_back(op2);
-
-    
 };
 
 #define REGISTER_FUNCTIONS_BEGIN(LIB) \

@@ -4,6 +4,11 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/models/SCElementProducer.h"
 
+tuple_cell IXMLSerializable::serialize() const
+{
+    XmlConstructor constructor(VirtualRootConstructor(0));
+    return this->toXML(constructor).getLastChild();
+}
 
 void XmlConstructor::openElement(const xsd::QName& qname, xmlscm_type type)
 {

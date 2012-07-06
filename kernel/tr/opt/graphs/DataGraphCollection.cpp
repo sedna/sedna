@@ -12,6 +12,9 @@
 
 #include "tr/structures/nodetypes.h"
 
+#include "tr/models/XmlConstructor.h"
+#include "tr/debugstream.h"
+
 #include <algorithm>
 
 using namespace std;
@@ -44,7 +47,6 @@ DataNode * getDataNode(VariableNameMap* vmap, const char * x) {
 };
 
 /*
-
 inline static
 tuple_cell tc(const scm_elem & vf) {
     switch (vf.type) {
@@ -153,9 +155,28 @@ DataGraph* DataGraphMaster::createGraphFromLR(const scheme_list* vf)
 }
 */
 
+void DataGraphMaster::addVariableDecl(TupleId tid, rqp::RPBase* op)
+{
+    U_ASSERT(tid != opt::invalidTupleId);
+    
+    if (variableMap.find(tid) == variableMap.end()) {
+        variableMap.insert(VariableInfoMap::value_type(tid, VariableInfo(tid)));
+    };
+
+    VariableInfo & info = variableMap.at(tid);
+
+    while (info.pointsTo != opt::invalidTupleId) {
+        info = variableMap.at(info.pointsTo);
+    };
+
+    info.declaredIn = op;
+}
+
 void DataGraphMaster::addVariable(DataNode* dn)
 {
     if (dn->varTupleId != opt::invalidTupleId) {
+//        debug_xml("opt.var", dn->serialize());
+      
         if (variableMap.find(dn->varTupleId) == variableMap.end()) {
             variableMap.insert(VariableInfoMap::value_type(dn->varTupleId, VariableInfo(dn->varTupleId)));
         };
@@ -223,6 +244,19 @@ void DataGraphMaster::mergeVariables(TupleId t1, TupleId t2)
     var2.pointsTo = var1.id;
 }
 
+void DataGraphMaster::deleteGraph(DataGraph* dg)
+{
+    FOR_ALL_GRAPH_ELEMENTS(dg->dataNodes, i)
+    {
+        DataNode * dn = dg->dataNodes[i];
+        
+        if (dn->varTupleId != invalidTupleId && dn->type == opt::DataNode::dnExternal)
+        {
+            getVariable(dn->varTupleId).nodes.erase(dn);
+        };
+    };
+}
+
 void DataGraphMaster::removeVariable(DataNode* dn)
 {
     VariableInfo & info = variableMap.at(dn->varTupleId);
@@ -236,8 +270,8 @@ void DataGraphMaster::removeVariable(DataNode* dn)
 
 DataGraph* DataGraphMaster::join(DataGraph* left, DataGraph* right)
 {
-    DataGraphWrapper lg(left);
-    DataGraphWrapper rg(right);
+    DataGraphIndex lg(left);
+    DataGraphIndex rg(right);
 
     lg.nodes.insert(lg.nodes.end(), rg.nodes.begin(), rg.nodes.end());
     lg.predicates.insert(lg.predicates.end(), rg.predicates.begin(), rg.predicates.end());
@@ -310,7 +344,7 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
     serializer->prepare(&Fstream, &opt);
 */
     DataGraphIndex dgi(dg);
-    DataGraphWrapper dgw(dg);
+    DataGraphIndex dgw(dg);
 
     PlanMap * planMap = new PlanMap();
 
@@ -351,7 +385,7 @@ phop::ITupleOperator* DataGraphMaster::compile(DataGraph* dg)
 //            if (dsc == 0 && branchLimit > 0) {
             if (branchLimit > 0) {
                 branchLimit--;
-                dsc = dgi.allPredicates & ~info->getDesc();
+                dsc = dgi.predicateMask & ~info->getDesc();
             };
 
             PlanDescIterator neighbours(dsc);
