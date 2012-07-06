@@ -11,7 +11,6 @@ using namespace rqp;
 using namespace opt;
 
 int RPBase::opids = 0;
-PlanContext * rqp::PlanContext::current = NULL;
 const opt::TupleScheme empty_tuple_set;
 
 void RPBase::replace(RPBase* op, RPBase* with)
@@ -94,13 +93,11 @@ PlanContext::PlanContext() : lastScopeMarker(0), currentTupleId(worldDataTupleId
 {
     TupleDefinition td(worldDataTupleId, "WorldData", xs_anyType);
     greatTupleScheme.insert(GreatMapRecord(td.tid, td));
-    dataGraphFactory = new DataGraphMaster();
 }
 
 
 PlanContext::~PlanContext()
 {
-    delete dataGraphFactory;
 }
 
 void PlanContext::newScope() {

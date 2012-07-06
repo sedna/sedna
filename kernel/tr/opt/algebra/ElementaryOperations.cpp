@@ -23,7 +23,7 @@ void VarIn::setDataNode(TupleId _tid)
 
     dnode = new DataNode(opt::DataNode::dnExternal);
     dnode->varTupleId = _tid;
-    dnode->parent = new DataGraph(context->dgm());
+    dnode->parent = new DataGraph(optimizer->dgm());
     dnode->parent->dataNodes[0] = dnode;
     dnode->parent->operation =  this;
 }

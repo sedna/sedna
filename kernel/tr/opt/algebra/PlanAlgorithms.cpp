@@ -104,7 +104,7 @@ bool rule_post_XPathStep_to_DataGraph(PlanRewriter * pr, XPathStep * op)
 
     if (instanceof<VarIn>(op->getList()))
     {
-        DataGraphMaster * dgm = op->getContext()->dgm();
+        DataGraphMaster * dgm = optimizer->dgm();
         DataGraphBuilder dgb;
         DataGraphOperation * dgo = NULL;
 
@@ -350,7 +350,7 @@ bool rule_DataGraph_try_join(PlanRewriter * pr, DataGraphOperation * op)
                 } else {
     /* We must introduce new bogus variable to propagade graph to the parent,
      * this variable should be declared in rewriter first */
-                    TupleId varId = PlanContext::current->generateTupleId();
+                    TupleId varId = optimizer->context()->generateTupleId();
                     op->out->varTupleId = varId;
                     pr->replaceInParent(op, new VarIn(varId));
                 };
@@ -376,7 +376,7 @@ bool rule_redundant_MapGraph(PlanRewriter * pr, MapGraph * op)
           (rqp::instanceof<rqp::Const>(op->getList()) ||
             rqp::instanceof<rqp::VarIn>(op->getList())))
     {
-        op->getContext()->dgm()->deleteGraph(op->graph().dg);
+        optimizer->dgm()->deleteGraph(op->graph().dg);
 
         debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), op->getList()->oid());
         pr->replaceInParent(op, op->getList());
@@ -400,7 +400,7 @@ DataGraphSet & getDataGraphSet(DataGraphSet & dgs, VariableInfo & vinfo)
 static
 bool rule_MapGraph_remove_unused(PlanRewriter * pr, MapGraph * op)
 {
-    DataGraphMaster * dgm = PlanContext::current->dgm();
+    DataGraphMaster * dgm = optimizer->dgm();
     DataGraphIndex & dgw = op->graph();
     
     bool modified = false;
@@ -430,7 +430,7 @@ bool rule_MapGraph_remove_unused(PlanRewriter * pr, MapGraph * op)
 static 
 bool rule_push_down_variable(PlanRewriter * pr, SequenceConcat * op)
 {
-    DataGraphMaster * dgm = PlanContext::current->dgm();
+    DataGraphMaster * dgm = optimizer->dgm();
 
     if (instanceof<DataGraphOperation>(op->getSubplan())) {
         DataGraphOperation * plan = static_cast<DataGraphOperation *>(op->getSubplan());
@@ -502,7 +502,7 @@ void PlanRewriter::do_execute()
 
               for (TupleScheme::const_iterator it = mg->tupleMask.begin(); it != mg->tupleMask.end(); ++it)
               {
-                  op->getContext()->dgm()->addVariableDecl(*it, op);
+                  optimizer->dgm()->addVariableDecl(*it, op);
               };
 
               traverse(mg->getList());
@@ -515,7 +515,7 @@ void PlanRewriter::do_execute()
               NestedOperation * nop = static_cast<NestedOperation *>(op);
 
               traverse(nop->getSubplan());
-              op->getContext()->dgm()->addVariableDecl(nop->tid, op);
+              optimizer->dgm()->addVariableDecl(nop->tid, op);
               traverse(nop->getList());
             }
             break;
@@ -565,7 +565,7 @@ void PlanRewriter::do_execute()
             break;
           case VarIn::opid :
             {
-                PlanContext::current->dgm()->getVariable(static_cast<VarIn *>(op)->getTuple())
+                optimizer->dgm()->getVariable(static_cast<VarIn *>(op)->getTuple())
                   .nodes.insert(static_cast<VarIn *>(op)->dnode);
 /*
                 if (varMap.find(static_cast<VarIn *>(op)->getTuple()) != varMap.end()) {

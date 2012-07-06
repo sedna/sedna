@@ -34,9 +34,9 @@ struct OptimizationContext {
 
     void generateContext()
     {
-        context.item = PlanContext::current->generateTupleId();
-        context.position = PlanContext::current->generateTupleId();
-        context.size = PlanContext::current->generateTupleId();
+        context.item = optimizer->context()->generateTupleId();
+        context.position = optimizer->context()->generateTupleId();
+        context.size = optimizer->context()->generateTupleId();
     };
 
     RPBase * popResult() {
@@ -77,10 +77,6 @@ void lr2opt::visit(ASTMainModule &n)
 {
 //    n.prolog->accept(*this);
     // TODO : remove
-
-    if (PlanContext::current == NULL) {
-        PlanContext::current = new PlanContext();
-    }
 
     n.query->accept(*this);
 }
@@ -482,7 +478,7 @@ void lr2opt::visit(ASTIf &n) {
 
 void lr2opt::visit(ASTQuantExpr &n)
 {
-    ScopeMarker scopeMarker = PlanContext::current->setScopeMarker();
+    ScopeMarker scopeMarker = optimizer->context()->setScopeMarker();
 
     n.expr->accept(*this);
 
@@ -523,7 +519,7 @@ void lr2opt::visit(ASTQuantExpr &n)
 */                
     }
 
-    PlanContext::current->clearScopesToMarker(scopeMarker);
+    optimizer->context()->clearScopesToMarker(scopeMarker);
 }
 
 void lr2opt::visit(ASTTypeSwitch &n) {
@@ -540,10 +536,10 @@ void lr2opt::visit(ASTSeq &n) {
 void lr2opt::visit(ASTFLWOR &n) {
     std::stack<ResultInfo> operationStack;
 
-    ScopeMarker scopeMarker = PlanContext::current->setScopeMarker();
+    ScopeMarker scopeMarker = optimizer->context()->setScopeMarker();
     
     for (ASTNodesVector::const_iterator fl = n.fls->begin(); fl != n.fls->end(); fl++) {
-        PlanContext::current->newScope();
+        optimizer->context()->newScope();
         (*fl)->accept(*this);
 
         operationStack.push(context->resultStack.top());
@@ -583,7 +579,7 @@ void lr2opt::visit(ASTFLWOR &n) {
         operationStack.pop();
     };
     
-    PlanContext::current->clearScopesToMarker(scopeMarker);
+    optimizer->context()->clearScopesToMarker(scopeMarker);
 }
 
 void lr2opt::visit(ASTFor &n) {
@@ -646,7 +642,7 @@ void lr2opt::visit(ASTTypeSeq &n) {
 
 void lr2opt::visit(ASTTypeVar &n) {
     std::string varName = static_cast<ASTVar *>(n.var)->getStandardName();
-    opt::TupleId varBinding = PlanContext::current->generateTupleIdVarScoped(varName);
+    opt::TupleId varBinding = optimizer->context()->generateTupleIdVarScoped(varName);
     context->resultStack.top().variable.item = varBinding;
 }
 
@@ -656,7 +652,7 @@ void lr2opt::visit(ASTType &n) {
 
 void lr2opt::visit(ASTVar &n) {
     context->resultStack.push(ResultInfo(
-          new VarIn(PlanContext::current->getVarTupleInScope(n.getStandardName()))));
+          new VarIn(optimizer->context()->getVarTupleInScope(n.getStandardName()))));
 }
 
 void lr2opt::visit(ASTLit &n) {

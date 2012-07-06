@@ -72,19 +72,4 @@ public:
 
 };
 
-class OptimizationSpace {
-public:
-    MemoryPool memoryPool;
-    FastPointerArray ptrs;
-
-    void * createObject(size_t n) {
-        void * ptr = memoryPool.alloc(n);
-        ptrs.add(ptr);
-        return ptr;
-    };
-    
-    OptimizationSpace();
-    ~OptimizationSpace();
-};
-
 #endif /* _OPT_SPACE_H_ */

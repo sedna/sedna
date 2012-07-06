@@ -292,6 +292,8 @@ void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active
     set_tr_mode_lock_mgr(is_ro_mode);
     d_printf1("OK\n");
 
+    optimizer->onTransactionBegin();
+    
 #ifdef SE_ENABLE_TRIGGERS
     d_printf1("Triggers on transaction begin...");
     triggers_on_transaction_begin(rcv_active);
@@ -385,6 +387,8 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
     d_printf1("OK\n");
 #endif
 
+    optimizer->onTransactionEnd();
+    
     try {
         d_printf1("\nReleasing logical log...");
         hl_logical_log_on_transaction_end(is_commit, rcv_active);
@@ -405,9 +409,6 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, b
     if (!wu_reported) { catalog_on_transaction_end(is_commit); }
     d_printf1("OK\n");
 
-    elog(EL_LOG, ("Optimizer used : %llu / %llu", opt::currentOptimizationSpace->memoryPool.totalAllocated(), opt::currentOptimizationSpace->memoryPool.total()));
-//    opt::currentOptimizationSpace->clear();
-    
     d_printf1("Releasing VMM...");
     vmm_delete_tmp_blocks();
     vmm_on_transaction_end();

@@ -9,6 +9,7 @@
 
 #include <cstddef>
 
+#include "tr/opt/OptimizingExecutor.h"
 #include "tr/opt/OptSpace.h"
 #include "tr/opt/types/Range.h"
 #include "tr/opt/types/Comparison.h"
@@ -77,15 +78,12 @@ TupleScheme singleTupleScheme(opt::TupleId tid)
     return a;
 }
 
-extern ::OptimizationSpace * currentOptimizationSpace;
-extern ::OptimizationSpace * optObjects;
-
 class IPlanDisposable {
 public:
     virtual ~IPlanDisposable() {};
     void * operator new(size_t n)
     {
-        return currentOptimizationSpace->createObject(n);
+        return optimizer->createObject(n);
     };
     
     void operator delete(void *) { return; };

@@ -36,7 +36,7 @@ bool rule_general_comparison_to_graph(PlanRewriter * pr, rqp::FunCall * op)
 
         RPBase * newop = new rqp::Exists(
           new DataGraphOperation(
-            joinBuilder.build(op->getContext()->dgm()),
+            joinBuilder.build(optimizer->dgm()),
             oplist
           ));
 

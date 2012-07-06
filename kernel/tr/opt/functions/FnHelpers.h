@@ -85,7 +85,7 @@ template<typename BuilderType>
 inline static
 opt::DataNode * addGraphToJoin(BuilderType & builder, rqp::RPBase * op)
 {
-    opt::DataGraphMaster * master = rqp::PlanContext::current->dgm();
+    opt::DataGraphMaster * master = optimizer->dgm();
 
     if (rqp::instanceof<rqp::DataGraphOperation>(op))
     {
@@ -137,7 +137,7 @@ inline static
 opt::DataNode * createTrueNode()
 {
     opt::DataNode * result = new opt::DataNode(opt::DataNode::dnConst);
-    result->sequence = rqp::PlanContext::current->dgm()->alwaysTrueSequence;
+    result->sequence = optimizer->dgm()->alwaysTrueSequence;
     return result;
 };
 

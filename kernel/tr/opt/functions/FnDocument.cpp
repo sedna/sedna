@@ -34,7 +34,7 @@ bool rule_fn_doc(PlanRewriter * pr, rqp::FunCall * op)
             return true;
         };
 
-// TODO : resolve uri        std::string uri = PlanContext::current->staticContext()->resolveUri(atomize(seq->at(0)));
+// TODO : resolve uri        std::string uri = optimizer->context()->staticContext()->resolveUri(atomize(seq->at(0)));
         std::string uri = atomize(seq->at(0)).get_str_mem();
 
         DataGraphBuilder builder;
@@ -45,7 +45,7 @@ bool rule_fn_doc(PlanRewriter * pr, rqp::FunCall * op)
         builder.out.push_back(result);
 
         RPBase * newop = new DataGraphOperation(
-            builder.build(op->getContext()->dgm()), OperationList());
+            builder.build(optimizer->dgm()), OperationList());
 
         pr->replaceInParent(op, newop);
 

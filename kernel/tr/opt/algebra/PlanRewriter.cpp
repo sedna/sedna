@@ -138,7 +138,7 @@ std::string varName(rqp::VarIn * op) {
 
 DataGraph * DataReductionBlock::buildBlock()
 {
-    DataGraphMaster * dgm = PlanContext::current->dgm();
+    DataGraphMaster * dgm = optimizer->dgm();
     Generator context;
     DataNode * node;
 
@@ -236,10 +236,10 @@ DataGraph * DataReductionBlock::buildBlock()
             out->varTupleId = node->varTupleId;
         };
         
-        dgm->setVarName(node->varTupleId, PlanContext::current->getVarDef(node->varTupleId)->getVarLabel());
+        dgm->setVarName(node->varTupleId, optimizer->context()->getVarDef(node->varTupleId)->getVarLabel());
     } else {
         if (out->varTupleId == invalidTupleId) {
-            out->varTupleId = PlanContext::current->generateTupleId();
+            out->varTupleId = optimizer->context()->generateTupleId();
         }
     };
 
@@ -344,7 +344,7 @@ DataGraphReduction & DataGraphReduction::execute(RPBase* op)
 
 bool DataGraphReduction::tryJoin(DataGraphIndex& left, DataGraphIndex& right)
 {
-    DataGraphMaster * dgm = PlanContext::current->dgm();
+    DataGraphMaster * dgm = optimizer->dgm();
     
     size_t linkSize = intersection_size(left.outTuples, right.inTuples);
     size_t totalSize = left.nodes.size() + right.nodes.size();
@@ -406,7 +406,7 @@ void DataGraphReduction::selectPossibleJoins(DataGraphIndex& dgw, RPBase* op, RP
                     substOp = new rqp::VarIn(resultTuple);
                 };
 
-                PlanContext::current->replaceOperation(op, substOp);
+                optimizer->context()->replaceOperation(op, substOp);
 
                 break;
             };

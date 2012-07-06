@@ -59,13 +59,7 @@ class PlanContext : public opt::IPlanDisposable {
 
     ScopeStack scopeStack;
     VarNameMap scope;
-
-    opt::DataGraphMaster * dataGraphFactory;
   public:
-    static PlanContext * current;
-
-    opt::DataGraphMaster * dgm() const { return dataGraphFactory; };
-
     PlanContext();
     ~PlanContext();
 
@@ -100,7 +94,7 @@ class RPBase : public opt::IPlanDisposable, public IXMLSerializable {
   public:
     OperationList children;
 
-    RPBase(_opinfo_t op) : opdesc(op), context(PlanContext::current), opuid(opids++), resultChild(-1) {};
+    RPBase(_opinfo_t op) : opdesc(op), context(optimizer->context()), opuid(opids++), resultChild(-1) {};
 
     /* Replace child operation op with another operation */
     void replace(RPBase * op, RPBase * with);
