@@ -24,9 +24,15 @@ private:
     MemoryPool memoryPool;
     FastPointerArray ptrs;
 public:
+    inline 
+    void * alloc(size_t n)
+    {
+        return memoryPool.alloc(n);
+    };
 
     inline 
-    void * createObject(size_t n) {
+    void * createObject(size_t n)
+    {
         void * ptr = memoryPool.alloc(n);
         ptrs.add(ptr);
         return ptr;

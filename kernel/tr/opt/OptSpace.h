@@ -45,6 +45,7 @@ public:
     MemoryPool();
     ~MemoryPool();
 
+    inline 
     void * alloc(size_t n)
     {
         U_ASSERT(MEMORY_BLOCK_SIZE > (n + sizeof(MemoryBlock::freePtr) + sizeof(MemoryBlock::size)));

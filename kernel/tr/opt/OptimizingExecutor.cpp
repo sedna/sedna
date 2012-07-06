@@ -31,7 +31,7 @@ void opt::OptimizingExecutor::onTransactionEnd()
 {
     delete _context;
     delete _dgm;
-  
+
     elog(EL_LOG, ("Optimizer used : %llu / %llu", memoryPool.totalAllocated(), memoryPool.total()));
 
     ptrs.destroyAll<opt::IPlanDisposable>(NULL);
