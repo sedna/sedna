@@ -6,25 +6,26 @@
 
 DatabaseOptions* ProcessManager::getDatabaseOptions(const std::string& dbName)
 {
-    DatabaseOptionMap::iterator i = parameters.databaseOptions.find(dbName);
+    GlobalParameters::DatabaseOptionMap::iterator i = parameters.databaseOptions.find(dbName);
 
     if (i == parameters.databaseOptions.end()) {
         return NULL;
     } else {
-        return &(i->second());
+        return &(i->second);
     }
 };
 
 void ProcessManager::setDatabaseOptions(const std::string& dbName, const std::string& xmlOptions)
 {
     std::stringstream stream(xmlOptions, std::ios_base::out);
-    parameters.loadDatabaseFromStream(dbName, stream);
+    parameters.loadDatabaseFromStream(dbName, &stream);
 };
 
-#define CMD_LINE_BUFFER_LEN
+#define CMD_LINE_BUFFER_LEN 1024
 
 void execStorageManagerProcess(const std::string& ticket, DatabaseProcessInfo * databaseProcessInfo) 
 {
+/*    
     char command_line_buffer[CMD_LINE_BUFFER_LEN];
 
     databaseProcessInfo->locked = false;
@@ -37,14 +38,64 @@ void execStorageManagerProcess(const std::string& ticket, DatabaseProcessInfo * 
     }
 
     return databaseProcessInfo;
+*/    
 };
+
+ProcessManager::~ProcessManager()
+{
+//
+}
+
+void ProcessManager::startDatabase(const std::string& dbName, IProcessCallback* callback)
+{
+    std::string ticket;
+
+    GlobalParameters::DatabaseOptionMap::iterator it = parameters.databaseOptions.find(dbName);
+    // TODO : check for existence and throw exceptions if not exists
+    DatabaseOptions * databaseOptions = &it->second;
+
+    // TODO : make universal process start framework
+    DatabaseProcessInfo * databaseProcessInfo = new DatabaseProcessInfo();
+    databaseProcessInfo->databaseCreationMode = false;
+    databaseProcessInfo->databaseName = dbName;
+    databaseProcessInfo->clientCallbackSet.insert(callback);
+
+    try {
+        execStorageManagerProcess(ticket, databaseProcessInfo);
+    } catch(std::exception & x) {
+        delete databaseProcessInfo;
+        callbackError(callback, x.what());
+    };
+    
+    processMap.insert(ProcessMap::value_type(ticket, databaseProcessInfo));
+}
+
+void ProcessManager::requestSession(DatabaseProcessInfo* sm, IProcessCallback* callback)
+{
+    std::string ticket;
+
+    // TODO : make universal process start framework
+    SessionProcessInfo * sessionProcessInfo = new SessionProcessInfo();
+    sessionProcessInfo->state = trninfo_not_started;
+    sessionProcessInfo->database = sm;
+    sessionProcessInfo->clientCallbackSet.insert(callback);
+
+    try {
+//        execStorageManagerProcess(ticket, sessionProcessInfo);
+    } catch(std::exception & x) {
+        delete sessionProcessInfo;
+        callbackError(callback, x.what());
+    };
+    
+    processMap.insert(ProcessMap::value_type(ticket, sessionProcessInfo));
+}
 
 /*TODO this function should be executed in separate thread */
 void ProcessManager::createDatabase(const std::string& dbName, IProcessCallback* callback)
 {
     std::string ticket;
   
-    DatabaseOptionMap::iterator i = parameters.databaseOptions.find(dbName);
+    GlobalParameters::DatabaseOptionMap::iterator i = parameters.databaseOptions.find(dbName);
 
     if (i == parameters.databaseOptions.end()) {
         U_ASSERT(false);
@@ -59,13 +110,13 @@ void ProcessManager::createDatabase(const std::string& dbName, IProcessCallback*
     // CRITICAL SECTION START TODO
     
     try {
-        execStorageManagerProcess(ticket, dbName, true);
+        execStorageManagerProcess(ticket, databaseProcessInfo);
     } catch(std::exception & x) {
         delete databaseProcessInfo;
         callbackError(callback, x.what());
     };
     
-    processMap.insert(ticket, databaseProcessInfo);
+    processMap.insert(ProcessMap::value_type(ticket, databaseProcessInfo));
     
     // CRITICAL SECTION END
 };
@@ -79,7 +130,7 @@ void ProcessManager::callbackSuccess(IProcessCallback* cb, ProcessInfo* pinfo, W
 
 void ProcessManager::callbackError(IProcessCallback* cb, const char* messageInfo)
 {
-    CallbackMessage msg = {cb, CallbackMessage::Error, messageInfo};
+    CallbackMessage msg = {cb, CallbackMessage::Error, NULL, NULL, messageInfo};
     requestProcessQueue.push(msg);
     requestsPending = true;
 }
@@ -111,10 +162,9 @@ ProcessInfo * ProcessManager::getUnregisteredProcess(const std::string& ticket)
         return NULL;
     } else {
         i->second->locked = true;
-        return &(i->second());
+        return i->second;
     }
 };
-
 
 void ProcessManager::processRegistrationFailed(const std::string& ticket, const std::string& reason)
 {

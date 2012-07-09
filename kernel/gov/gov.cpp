@@ -31,8 +31,8 @@ int main(int argc, char** argv)
         if ( parseSednaOptions(argc, argv, &sednaGlobalOptions, program_name_argv_0) ) { return 1; }
 
 // !FIXME: do we really need SEDNA_DATA in this form?
-        
-        memcpy(SEDNA_DATA, sednaGlobalOptions.global.dataDirectory.c_str(), sednaGlobalOptions.global.dataDirectory.size());
+
+        SEDNA_DATA = sednaGlobalOptions.global.dataDirectory.c_str();
 
         check_data_folder_existence();
         RenameLastSoftFaultDir();
@@ -40,43 +40,27 @@ int main(int argc, char** argv)
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR)
             throw SYSTEM_EXCEPTION("Failed to initialize socket library");
 
-// TODO:        InitGlobalNames(os_primitives_id_min_bound,INT_MAX);
-//              SetGlobalNames();
-      global_name SE_EVENT_LOG_SHM = createSednaGlobalName(GLOBAL_NAME(SE_EVENT_LOG_SHM));
-      global_name SE_EVENT_LOG_SEM = createSednaGlobalName(GLOBAL_NAME(SE_EVENT_LOG_SEM));
-      
-      if (event_logger_start_daemon(el_convert_log_level(sednaGlobalOptions.global.logLevel), SE_EVENT_LOG_SHM, SE_EVENT_LOG_SEM))
-          throw SYSTEM_EXCEPTION("Failed to initialize event log");
+        initSednaGlobalNameRegistry(sednaGlobalOptions.global.osObjectsOffset, 0, 0);
 
-      log_out_system_information();
+        global_name SE_EVENT_LOG_SHM = createSednaGlobalName(GLOBAL_NAME(SE_EVENT_LOG_SHM));
+        global_name SE_EVENT_LOG_SEM = createSednaGlobalName(GLOBAL_NAME(SE_EVENT_LOG_SEM));
 
-//       FIXME: wtf? it's now in trn, do we need this?
-//       create_global_memory_mapping(sednaGlobalOptions.global.osObjectsOffset);
+        if (event_logger_start_daemon(el_convert_log_level(sednaGlobalOptions.global.logLevel), SE_EVENT_LOG_SHM, SE_EVENT_LOG_SEM))
+            throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
-      ProcessManager procManager(sednaGlobalOptions);
-      Worker * govWorker = new Worker();
-      govWorker->createListener();
-      govWorker->run();
+        log_out_system_information();
 
+        ProcessManager processManager(sednaGlobalOptions);
+        Worker * govWorker = new Worker(&processManager);
+        govWorker->createListener();
+        govWorker->run();
 
-      if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
+        if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
 
-//       FIXME: wtf? it's now in trn, do we need this?
-//       release_global_memory_mapping();
+        elog(EL_LOG, ("SEDNA event log is down"));
+        event_logger_shutdown_daemon(SE_EVENT_LOG_SHM);
 
-      elog(EL_LOG, ("SEDNA event log is down"));
-      event_logger_shutdown_daemon(SE_EVENT_LOG_SHM);
-
-
-      fprintf(res_os, "GOVERNOR has been shut down successfully\n");
-      fflush(res_os);
-      return 0;
-
-    } catch (SednaUserException &e) {
-        fprintf(stderr, "%s\n", e.what());
-        event_logger_release();
-
-        return 1;
+        return 0;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_GOV);
     } catch (ANY_SE_EXCEPTION) {

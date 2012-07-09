@@ -27,7 +27,7 @@ private:
     U_SSET allSet, readySet;
     USOCKET maxfd;
 
-    SocketClientList clientList;
+    UnsortedSocketClientList clientList;
     ProcessManager * processManager;
 
     WorkerSocketClient * ownListenerSocket;
@@ -35,11 +35,10 @@ private:
 
     void processClientData(WorkerSocketClient * client);
 
-    /* TODO: this should work some other way, not like this */
-//     WorkerSocketClient * addClient(WorkerSocketClient * stream);
-//     void deleteClient(WorkerSocketClient * stream);
+    WorkerSocketClient * addClient(WorkerSocketClient * stream);
 public:
-                     Worker();
+    UnsortedSocketClientList newClients;
+
     ProcessManager * getProcessManager() { return processManager; };
 
     Worker(ProcessManager * _processManager)

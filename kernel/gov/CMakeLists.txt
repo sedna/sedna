@@ -1,8 +1,8 @@
 # common libraries for our executables
 if (UNIX)
-set(common_libs common expat ancillary ${sysaux_LIB})
+set(common_libs common expat ancillary aux ${sysaux_LIB})
 else (UNIX)
-set(common_libs common expat ${sysaux_LIB})
+set(common_libs common expat aux ${sysaux_LIB})
 endif (UNIX)
 
 # se_gov
@@ -10,6 +10,7 @@ set(gov_SRC clients.cpp cpool.cpp gov.cpp gov_functions.cpp gov_globals.cpp hb_f
 SET_SOURCES(gov_SRC 1)
 
 add_executable(se_gov ${gov_SRC})
+add_dependencies(se_gov aux)
 target_link_libraries(se_gov ${common_libs})
 
 # place binaries in build/bin directory

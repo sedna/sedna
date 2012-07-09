@@ -4,6 +4,7 @@
 #include "common/base.h"
 #include "common/structures/config_data.h"
 
+#include "u/u.h"
 #include "u/usocket.h"
 #include "u/uprocess.h"
 
@@ -25,10 +26,11 @@ struct ProcessInfo
 {
     virtual ~ProcessInfo() {};
   
+//    utime_t startTime; TODO: start time 
     UPID pid; // Every process have PID
     UPHANDLE pHandle;
-    SocketClient * socketClient; // Every process communicates
-                  // with the master process, namely gov
+    SocketClient * socketClient; // Every process communicates with the master process, namely gov
+    
     bool locked;
     std::set<IProcessCallback *> clientCallbackSet;
 };

@@ -23,6 +23,7 @@ struct SocketClientGreater {
     }
 };
 
+typedef std::vector<WorkerSocketClient *> UnsortedSocketClientList;
 typedef std::set<WorkerSocketClient *, SocketClientGreater> SocketClientList;
 
 typedef std::map<USOCKET, WorkerSocketClient *> SystemSocketMap;
@@ -60,27 +61,33 @@ public:
 };
 
 class ProcessManager {
-    GlobalParameters parameters;
+    GlobalParameters & parameters;
 
+    /* List of all launched process of Sedna instance */
     ProcessList processList;
-    SystemSocketMap systemSocketMap;
+    
+//    SystemSocketMap systemSocketMap;
 
+    /* Lookup for launched processes by ticket id */
     ProcessMap processMap;
 
+    /* Database lookup by dbmap */
     DatabaseMap databaseMap;
+    
+    /* Session process lookup by session */
     SessionMap sessionIndexById;
 
     session_id lastSessionId;
 
     std::queue<CallbackMessage> requestProcessQueue;
-    
+
     void callbackError(IProcessCallback * cb, const char * messageInfo);
     void callbackSuccess(IProcessCallback * cb, ProcessInfo * pinfo, WorkerSocketClient * socketClient);
-    
+
     bool requestsPending;
     void doProcessRequests();
 public:
-    ProcessManager(GlobalParameters _parameters) : parameters(_parameters), lastSessionId(0), requestsPending(false) {};
+    ProcessManager(GlobalParameters & _parameters) : parameters(_parameters), lastSessionId(0), requestsPending(false) {};
     ~ProcessManager();
 
     session_id getNewSessionId() { return lastSessionId++; };
@@ -111,12 +118,26 @@ public:
     
     void processRegistrationFailed(const std::string& ticket, const std::string& reason);
     
-    DatabaseProcessInfo * getDatabaseProcess(const std::string& dbName);
+    DatabaseProcessInfo * getDatabaseProcess(const std::string& dbName)
+    {
+        DatabaseMap::iterator it = databaseMap.find(dbName);
+
+        if (it == databaseMap.end()) {
+            return NULL;
+        } else {
+            return it->second;
+        };
+    };
+
+    SessionProcessInfo * getAvailableSession(DatabaseProcessInfo * sm) const
+    {
+        return NULL;
+    };
+    
 
     GlobalParameters * getGlobalParameters() { return &parameters; };
 
-    SessionProcessInfo * getAvailableSession(DatabaseProcessInfo * sm) const;
-
+/*    
     WorkerSocketClient * getClientBySocket(USOCKET socket) const {
         SystemSocketMap::const_iterator it = systemSocketMap.find(socket);
 
@@ -126,7 +147,7 @@ public:
             return NULL;
         };
     };
-
+*/
     SessionProcessInfo * getSessionById(session_id sid) const {
         SessionMap::const_iterator it = sessionIndexById.find(sid);
 

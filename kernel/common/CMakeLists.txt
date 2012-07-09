@@ -1,5 +1,5 @@
 # full common library for sedna
-set(common_SRC )
+set(common_SRC base.cpp)
 
 ADD_SUBFOLDER_SRC(common_SRC errdbg)
 ADD_SUBFOLDER_SRC(common_SRC globalobjects)

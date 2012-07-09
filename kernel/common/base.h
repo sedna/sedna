@@ -71,7 +71,7 @@ typedef uint16_t shft;
  * SEDNA_DATA contains path to the Sedna's data directory
  */
 #define SEDNA_DATA_VAR_SIZE 1024
-SE_EXTERN_C char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
+extern const char * SEDNA_DATA;
 
 #define MODULES_COLLECTION_NAME "$modules"
 

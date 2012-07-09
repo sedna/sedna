@@ -21,7 +21,7 @@ char SE_EVENT_LOG_SHARED_MEMORY_NAME__buf__[128];
 char SE_EVENT_LOG_SEMAPHORES_NAME__buf__[128];
 
 int main () {
-    SEDNA_DATA = (char *) malloc(2048);
+    char * SEDNA_DATA = (char *) malloc(2048);
   
     std::string elog_location = uGetImageProcPath(SEDNA_DATA, __sys_call_error);
     strcpy(SEDNA_DATA, elog_location.c_str());

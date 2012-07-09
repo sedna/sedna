@@ -128,7 +128,8 @@ class BaseMessageExchanger {
 
     void                    readString      (char * dest, size_t maxlen);
     void                    readString      (std::string& dest, size_t maxlen); //in this case read string attaches to dest string
-    std::string             readString      (size_t maxlen); 
+    inline 
+    std::string             readString      (size_t maxlen) { std::string s; readString(s, maxlen); return s; }; 
 
     uint8_t                 readChar        (void);
     uint32_t                readInt32       (void);

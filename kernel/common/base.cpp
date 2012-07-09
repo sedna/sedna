@@ -15,10 +15,9 @@
 using namespace std;
 
 FILE* res_os = stdout; //otput stream of transaction results (result of the user's query)
+const char * SEDNA_DATA = NULL;
 
-/*	global names */ 
-
-
+/*
 void InitGlobalNames(int rangeBegin, int rangeEnd)
 {
 	UInitGlobalNamesRegistry(globalNamesRegistry, NULL, rangeBegin, rangeEnd);
@@ -55,7 +54,6 @@ global_name CreateNameOfEventLockGranted(int sessionId, char *buf, size_t bufSiz
 	return UCreateGlobalName("EVENT_LOCK_GRANTED", sessionId, buf, bufSize);
 }
 
-/* empty string is invalid as a global name but NULL is valid, so we use empty string as initializer  */ 
 global_name GOVERNOR_SHARED_MEMORY_NAME = "";
 global_name CHARISMA_GOVERNOR_IS_READY = "";
 global_name SE_EVENT_LOG_SHARED_MEMORY_NAME = "";
@@ -87,7 +85,6 @@ void SetGlobalNames()
 		UCreateGlobalName("SHMEM_GLOBAL", 0, SEDNA_GLOBAL_MEMORY_MAPPING__buf__, 128);
 }
 
-/* empty string is invalid as a global name but NULL is valid, so we use empty string as initializer  */ 
 global_name CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME = "";
 global_name CHARISMA_BUFFER_SHARED_MEMORY_NAME = "";
 global_name VMM_SM_SEMAPHORE_STR = "";
@@ -163,7 +160,6 @@ void SetGlobalNamesDB(int databaseId)
 
     SEDNA_CHECKPOINT_FINISHED_SEM = 
         UCreateGlobalName("SEMAP_CHECKPOINT_FINISHED", databaseId, SEDNA_CHECKPOINT_FINISHED_SEM__buf__, 128);
-/*
 
 	METADATA_SEMAPHORE_STR =
 		UCreateGlobalName("SEMAP_METADATA", databaseId, METADATA_SEMAPHORE_STR__buf__, 128);
@@ -176,7 +172,6 @@ void SetGlobalNamesDB(int databaseId)
 
 	TRIGGER_SEMAPHORE_STR =
 		UCreateGlobalName("SEMAP_TRIGGERS", databaseId, TRIGGER_SEMAPHORE_STR__buf__, 128);
-*/
 
     CATALOG_NAMETABLE_SEMAPHORE_STR =
         UCreateGlobalName("SEMAP_CATALOG_NAMETABLES", databaseId, CATALOG_NAMETABLE_SEMAPHORE_STR__buf__, 128);
@@ -211,7 +206,7 @@ void SetGlobalNamesDB(int databaseId)
 	CHARISMA_SM_IS_READY =
 		UCreateGlobalName("EVENT_SM_READY", databaseId, CHARISMA_SM_IS_READY__buf__, 128);
 };
-
+*/
 
 /* The following chars are allowed:
  * ! (0x21), # (0x23), % (0x25), & (0x26), ( (0x28), ) (0x29),

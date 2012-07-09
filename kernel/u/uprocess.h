@@ -82,7 +82,7 @@ extern char *program_name_argv_0;
 /*  The result if written to buf. The size of the buf should be
  *  not less than U_MAX_PATH + 1. The function return buf. 
  */
-char* uGetImageProcPath(char *buf, sys_call_error_fun fun);
+char* uGetImageProcPath(char* buf, sys_call_error_fun fun);
 
 #ifdef __cplusplus
 }

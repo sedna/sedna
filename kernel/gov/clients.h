@@ -11,6 +11,7 @@
 
 #include <string>
 
+class CreateDatabaseCallback;
 struct DatabaseProcessInfo;
 struct SessionProcessInfo;
 
@@ -63,8 +64,8 @@ class InternalProcessNegotiation : public InternalSocketClient {
         iproc_ticket_recieved
     } state;
 public:
-    InternalProcessNegotiation(WorkerSocketClient* producer, const std::string& _ticket)
-        : InternalSocketClient(producer, se_Client_Priority_SM, _ticket) {}
+    InternalProcessNegotiation(WorkerSocketClient* producer)
+        : InternalSocketClient(producer, se_Client_Priority_SM, std::string()) {}
     
     virtual SocketClient* processData();
     virtual void cleanupOnError();
@@ -123,7 +124,7 @@ public:
     
     ServiceConnectionProcessor(WorkerSocketClient * producer, bool toContinue)
       : WorkerSocketClient(producer, se_Client_Priority_Client), state(service_client_awaiting_instructions) { };
-      
+
     virtual ~ServiceConnectionProcessor();
     virtual  SocketClient * processData();
 };
@@ -133,18 +134,17 @@ class ClientConnectionCallback;
 class ClientConnectionProcessor : public WorkerSocketClient {
 private:
     friend class ClientConnectionCallback;
-
     ClientConnectionCallback * activeCallback;
 
     ProtocolVersion protocolVersion;
     client_state_t state;
 
     CommonClientAuthentication authData;
-
+public:
     DatabaseProcessInfo * sminfo;
     SessionProcessInfo * trninfo;
     SessionConnectionProcessor * associatedSessionClient;
-public:
+
     struct CommonProtocolClient { };
 
     explicit ClientConnectionProcessor(WorkerSocketClient * producer, const CommonProtocolClient & )
@@ -180,7 +180,7 @@ class DatabaseConnectionProcessor : public InternalSocketClient {
     std::string                 dbName;
     DatabaseProcessInfo *       dbInfo;
   public:
-                                DatabaseConnectionProcessor   (WorkerSocketClient * producer);
+                                DatabaseConnectionProcessor   (WorkerSocketClient * producer, const std::string & ticket);
     void                        registerCdb              ();
     virtual SocketClient *      processData              ();
     virtual void                cleanupOnError();
@@ -189,6 +189,9 @@ class DatabaseConnectionProcessor : public InternalSocketClient {
 
 class CreateDatabaseRequestProcessor : public WorkerSocketClient {
   private:
+    friend class CreateDatabaseCallback;
+    CreateDatabaseCallback      * activeCallback;
+
     cdb_state_t                 state;
     
   public:

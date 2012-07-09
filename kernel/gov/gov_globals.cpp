@@ -49,14 +49,15 @@ struct arg_int * cmdStackDepth       = arg_int0  ("d","stack-depth", "<int>", "e
 struct arg_int * cmdOsObjectsOffset  = arg_int0  ("m","os-min-bound", "<int>", "os min bound (default 1500)" );
 struct arg_end * end                 = arg_end(80);
 
-void * govArgtable[] =  {help, 
-                         govVersion, 
+void * govArgtable[] =  {help, govVersion, 
                          cmdDataDirectory, 
                          cmdBindAddress, 
                          cmdListenPort, 
                          cmdLogLevel, 
+                         cmdKeepAliveTimeout,
                          cmdStackDepth, 
-                         cmdOsObjectsOffset};
+                         cmdOsObjectsOffset, 
+                         end};
 
 
 void getSednaConfValues(GlobalParameters * sednaGlobalOptions)

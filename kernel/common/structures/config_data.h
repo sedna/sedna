@@ -92,5 +92,4 @@ struct GlobalParameters {
     void loadFromStream(std::istream * stream);
 };
 
-
 #endif /* _CONFIG_DATA_H_ */
