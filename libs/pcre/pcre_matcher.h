@@ -3,12 +3,15 @@
 
 #include <stdexcept>
 #include <string>
+
+#include "pcre.h"
 #include "pcre_pattern.h"
 #include "pcre_matcher_base.h"
 
 template <typename CharIterator, typename iter_off_t>
 class PcreMatcher : private PcreMatcherBase<CharIterator, iter_off_t>
 {
+    typedef PcreMatcherBase<CharIterator, iter_off_t> parent_t;
 private:
 	int					m_capturecount;
 	int					m_ofscount;
@@ -45,9 +48,9 @@ private:
 	void load_re(const pcre * re) {
 		free_offsets();
 		free_re_data();
-		PcreMatcherBase<CharIterator,iter_off_t>::set_re(re);
+		parent_t::set_re(re);
 
-		int rc = pcre_fullinfo(PcreMatcherBase<CharIterator,iter_off_t>::m_re, m_re_extra, PCRE_INFO_CAPTURECOUNT, &m_capturecount);
+		int rc = pcre_fullinfo(parent_t::m_re, m_re_extra, PCRE_INFO_CAPTURECOUNT, &m_capturecount);
 		if (rc == 0)
 			m_ofscount = (m_capturecount+2)*3; //XXX - +2 probably should be +1
 		else
@@ -127,7 +130,7 @@ public:
 		if (m_offsets == NULL)
 			m_offsets = new CharIterator[m_ofscount];
 
-		int rc = exec(m_re_extra, subject_start, subject_end, match_start, options, m_offsets, m_ofscount);
+		int rc = parent_t::exec(m_re_extra, subject_start, subject_end, match_start, options, m_offsets, m_ofscount);
 		if (rc == PCRE_ERROR_NOMATCH)
 			return false; //no need to do anything since we made reset() 
 		else if (rc < 0)
@@ -145,12 +148,12 @@ public:
 	CharIterator start(int group) const {
 		if (group < 0 || group >= m_groups)
 			throw PcreException("invalid group number");
-		return substring_start(m_offsets, group);
+		return parent_t::substring_start(m_offsets, group);
 	}
 	CharIterator end(int group) const {
 		if (group < 0 || group >= m_groups)
 			throw PcreException("invalid group number");
-		return substring_end(m_offsets, group);
+		return parent_t::substring_end(m_offsets, group);
 	}
 
 	template <typename OIterator>
