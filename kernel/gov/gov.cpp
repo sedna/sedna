@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 
         SEDNA_DATA = sednaGlobalOptions.global.dataDirectory.c_str();
 
-        check_data_folder_existence();
+        check_data_folder_existence(sednaGlobalOptions.global.dataDirectory.c_str());
         RenameLastSoftFaultDir();
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR)

@@ -63,8 +63,10 @@ typedef uint16_t shft;
 
 #ifdef _WIN32
 #define SESSION_EXE "se_trn.exe"
+#define GOV_EXE "se_gov.exe"
 #else
 #define SESSION_EXE "se_trn"
+#define GOV_EXE "se_gov"
 #endif
 
 /*

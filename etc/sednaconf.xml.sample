@@ -12,7 +12,7 @@
         - path must be absolute;
         - on Windows use '/' for separating directories (example: c:/sedna) 
   -->
-  <sedna_data>/var/lib/sedna</sedna_data>
+  <dataDirectory>/var/lib/sedna</dataDirectory>
 
   <!-- 
        Left bound of range for identifiers of system resources.
@@ -21,7 +21,7 @@
        instance)
        Default: 1500
   -->
-  <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>
+  <osObjectsOffset>1500</osObjectsOffset>
 
   <!-- 
        The address on which the server is to listen for connections from
@@ -31,21 +31,14 @@
 	   "loopback" connections to be made.
        Default: localhost
   -->
-  <listen_address>localhost</listen_address>
+  <bindAddress>localhost</bindAddress>
 
   <!--
        Sedna server listening port number. If you run multiple
        Sedna instances this value MUST differ between them.
        Default: 5050
   -->
-  <listener_port>5050</listener_port>
-
-  <!-- 
-       Sedna server ping port number. If you run multiple
-       Sedna instances this value MUST differ between them.
-       Default: 5151
-  -->
-  <ping_port>5151</ping_port>
+  <listenPort>5050</listenPort>
 
   <!-- 
        Event logging level 
@@ -57,20 +50,20 @@
        4 -  log everything including internal debug messages
        Default: 3
   -->
-  <event_log_level>3</event_log_level>
+  <logLevel>3</logLevel>
 
   <!-- Session keep alive timeout
        Number of seconds to wait for the next request
        from the some client on the same connection
        Default: 0 - no timeout (infinite timeout)
   -->
-  <keep_alive_timeout>0</keep_alive_timeout>
+  <keepAlive>0</keepAlive>
   
   <!-- Maximum depth of the query execution plan.
        Make sure that you have enough process stack size
        before increasing this parameter.
        Default: 4000
   -->
-  <session_stack_depth>4000</session_stack_depth>
+  <stackDepth>4000</stackDepth>
 
 </sednaconf>

@@ -73,10 +73,10 @@ void log_out_system_information()
 }
 
 
-void check_data_folder_existence()
+void check_data_folder_existence(const char * dataDirectory)
 {
     char buf[U_MAX_PATH + 10]; /// should be enough to place "%SEDNA_DATA%/data"!
-    strcpy(buf, SEDNA_DATA);
+    strcpy(buf, dataDirectory);
 
 #ifdef _WIN32
     strcat(buf, "\\data");

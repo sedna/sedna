@@ -76,6 +76,11 @@ void getSednaConfValues(GlobalParameters * sednaGlobalOptions)
         throw USER_EXCEPTION(SE4081);
 
     /* TODO: find out how to set sedna_cfg_file location correctly */
+    
+    if (strlen(procBuf) > strlen(GOV_EXE)) {
+        memset(procBuf + strlen(procBuf) - strlen(GOV_EXE), 0, 1);
+    }
+    
     strcpy(sednaCfgFile,  procBuf);
 
 #ifdef _WIN32

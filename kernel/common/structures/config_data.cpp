@@ -162,6 +162,8 @@ void SednaOptions::saveToXml(XMLBuilder* xmlBuilder) const
     xmlBuilder->addElement(EXPANDW(bindAddress));
     xmlBuilder->addElement(EXPANDWC(osObjectsOffset));
     xmlBuilder->addElement(EXPANDWC(logLevel));
+    xmlBuilder->addElement(EXPANDWC(stackDepth));
+    xmlBuilder->addElement(EXPANDWC(keepAlive));
 }
 
 void GlobalParameters::loadFromStream(std::istream* stream)

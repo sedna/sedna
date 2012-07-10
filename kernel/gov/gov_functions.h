@@ -9,7 +9,7 @@
 // void clean_resources(gov_config_struct& cfg, bool background_off_from_background_on);
 
 
-void check_data_folder_existence();
+void check_data_folder_existence(const char * dataDirectory);
 
 void log_out_system_information();
 
