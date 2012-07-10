@@ -24,8 +24,6 @@ class sequence;
 
 /// Array of int pairs
 typedef std::vector< std::pair<unsigned, unsigned> > TupleMap;
-typedef std::pair<int, int>			int_pair;
-typedef std::vector<int_pair>		arr_of_int_pairs;
 
 typedef counted_ptr<char, de_delete_array<char> > str_counted_ptr;
 //typedef counted_ptr<protal_node> portalnode_ptr;
@@ -41,7 +39,6 @@ typedef counted_ptr<char, de_delete_array<char> > str_counted_ptr;
 /// analyzer.
 
 #define MAX_ATOMIC_LEX_REPR_SIZE        2000
-
 
 /// Possible types of tuple cell
 #define tc_eos                         (uint32_t)(0x80000000) // cell stores end of sequence
@@ -800,14 +797,6 @@ public:
         for (int i = 0; i < t.cells_number; i++) cells[i] = t.cells[i];
         cells[cells_number - 2] = tc1;
         cells[cells_number - 1] = tc2;
-    }
-    void copy(const tuple &s1, const tuple &s2, const arr_of_int_pairs &order)
-    {
-        eos = false;
-        if (s1.cells_number + s2.cells_number != cells_number)
-            throw USER_EXCEPTION2(SE1003, "Cannot construct tuple from two tuples (size mismatch)");
-        const tuple* arr[2] = {&s1, &s2};
-        for (int i = 0; i < cells_number; i++) cells[i] = arr[order[i].first - 1]->cells[order[i].second - 1];
     }
 
     bool is_eos() const { return eos; }

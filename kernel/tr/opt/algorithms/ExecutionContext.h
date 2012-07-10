@@ -10,18 +10,19 @@ namespace phop {
 class StaticContext {
 };
 
-class IIterator {
-    
+struct VarIterator {
+    //
 };
 
 class VariableMap {
 public:
-    IIterator * get(opt::TupleId tid);
-    void bind(opt::TupleId tid, IIterator * value);
+    VarIterator & get(opt::TupleId tid);
+    void bind(opt::TupleId tid, VarIterator value);
 };
 
 class DynamicContext {
 public:
+//    Sequence * ;
 };
   
 class ExecutionContext {

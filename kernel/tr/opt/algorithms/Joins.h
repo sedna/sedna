@@ -57,16 +57,16 @@ private:
     TupleCellComparison tcc;
     sequence * left_seq;
     sequence * right_seq;
-    
+
     size_t left_seq_pos;
     size_t right_seq_pos;
 
     size_t initial_left_seq_pos;
     size_t initial_right_seq_pos;
-    
+
     tuple initialLeft, initialRight;
     tuple leftValue, rightValue;
-    
+
     step_t step_state;
 
     virtual void do_next();

@@ -100,7 +100,7 @@ class RPBase : public opt::IPlanDisposable, public IXMLSerializable {
     void replace(RPBase * op, RPBase * with);
     PlanContext * getContext() const { return context; };
     RPBase * result() { if (resultChild > -1) { return children[resultChild]; } else { return null_op; } };
-    
+
     virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
 
 //    virtual rewrite() const;
@@ -188,18 +188,6 @@ class BinaryOperation : public RPBase {
     PROPERTY_RO(Left, RPBase *, children[0])
     PROPERTY_RO(Right, RPBase *, children[1])
 };
-
-/*
-class ComparisonExpression : public BinaryOperation {
-    OPERATION(0x016)
-    opt::Comparison cmp;
-public:
-    ComparisonExpression(RPBase* _left, RPBase* _right, const opt::Comparison &_cmp)
-      : BinaryOperation(&sopdesc, _left, _right), cmp(_cmp) { };
-
-    PROPERTY_RO(Op, opt::Comparison, cmp)
-};
-*/
 
 class ManyChildren : public RPBase {
     ABSTRACT_OPERATION

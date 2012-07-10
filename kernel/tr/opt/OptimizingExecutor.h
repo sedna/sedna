@@ -9,8 +9,6 @@ namespace rqp {
     class PlanContext;
 }
 
-class OptimizationSpace;
-
 namespace opt {
 
 class DataGraphMaster;

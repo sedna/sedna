@@ -52,7 +52,7 @@ public:
         params.b.idxL = idxL;
         params.b.idxR = idxR;
     };
-    
+
     explicit ValueFunction(un_op_tuple_cell un, unsigned idx, bool atomized)
       : simple_type(atomized ? atomized_unary : unary)
     {

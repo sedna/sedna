@@ -180,7 +180,6 @@ void TupleJoinFilter::do_next()
             return;
         };
 
-
         if (leftValue.eos || rightValue.eos) {
             step_state = step_both;
         } else

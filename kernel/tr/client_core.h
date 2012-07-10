@@ -30,7 +30,7 @@ protected:
     enum se_output_method output_method;
 
 public:
-    //virtual ~client_core() {}
+    virtual ~client_core() {}
 
     virtual void init() = 0;
     virtual void release() = 0;

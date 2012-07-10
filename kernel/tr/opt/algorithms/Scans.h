@@ -34,7 +34,7 @@ class SchemaValueScan : public ITupleOperator {
     Node currentNode;
     schema_node_cptr snode;
     TupleCellComparison tcmpop;
-    counted_ptr<opt::MemoryTupleSequence> sequence;
+    opt::MemoryTupleSequencePtr sequence;
 
     unsigned left;
     unsigned right;
@@ -46,7 +46,7 @@ public:
     SchemaValueScan(
         schema_node_cptr _snode,
         const TupleCellComparison & _tcmpop,
-        counted_ptr<opt::MemoryTupleSequence> _sequence,
+        opt::MemoryTupleSequencePtr _sequence,
         unsigned size, unsigned left, unsigned right);
 
     virtual void reset();
