@@ -56,7 +56,6 @@ const char* UGetNameFromGlobalName(global_name globalName, char* buf, size_t buf
     snprintf(buf, bufSize, "/sedna-%08x-%s.%s", basedir_hash, globalName, instance);
 #endif /* _WIN32 */
 
-    fprintf(stderr, "obj-name: %s\n", buf);
     return buf;
 }
 
