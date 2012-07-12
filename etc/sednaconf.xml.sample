@@ -15,15 +15,6 @@
   <dataDirectory>/var/lib/sedna</dataDirectory>
 
   <!-- 
-       Left bound of range for identifiers of system resources.
-       If you run multiple Sedna instances this value MUST differ
-       between them with enough delta (e.g. +10000 for each next
-       instance)
-       Default: 1500
-  -->
-  <osObjectsOffset>1500</osObjectsOffset>
-
-  <!-- 
        The address on which the server is to listen for connections from
 	   client applications. The value takes the form of a host name or numeric
 	   IP address. The value 0.0.0.0 corresponds to all available IP

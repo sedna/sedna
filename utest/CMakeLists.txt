@@ -1,31 +1,23 @@
 include_directories(../kernel)
+include_directories(gtest-1.6.0/include/)
+
+add_subdirectory(gtest-1.6.0)
 
 add_executable(test_options xml_options_test.cpp)
 
-add_dependencies(test_options generate_error_codes)
+add_dependencies(test_options generate_error_codes gtest)
 add_dependencies(test_options aux)
 add_dependencies(test_options common)
 
-target_link_libraries(test_options u)
-target_link_libraries(test_options common)
-target_link_libraries(test_options ${sysaux_LIB})
-
-# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
-# set(u_SRC ../kernel/u/u.c ../kernel/u/uevent.c ../kernel/u/ugnames.cpp ../kernel/u/uhdd.c ../kernel/u/ushm.c ../kernel/u/ummap.c ../kernel/u/umutex.c ../kernel/u/uprocess.c ../kernel/u/usecurity.c ../kernel/u/usem.c ../kernel/u/usocket.c ../kernel/u/usystem.c ../kernel/u/uthread.c ../kernel/u/utime.c ../kernel/u/uutils.c)
-# SET_SOURCES(u_SRC 1)
+target_link_libraries(test_options u common gtest ${sysaux_LIB})
 
 add_executable(event_log_test event_log_test.cpp ../kernel/common/errdbg/event_log.c 
                ../kernel/common/errdbg/errors.c)
 
-add_dependencies(event_log_test u)
-target_link_libraries(event_log_test u)
-target_link_libraries(event_log_test ${sysaux_LIB})
+add_dependencies(event_log_test u gtest)
+target_link_libraries(event_log_test u gtest ${sysaux_LIB})
 
 add_executable(global_names_test global_names_test.cpp)
-add_dependencies(global_names_test generate_error_codes)
-add_dependencies(global_names_test u)
-add_dependencies(global_names_test common)
-target_link_libraries(global_names_test u)
-target_link_libraries(global_names_test common)
-target_link_libraries(global_names_test ${sysaux_LIB})
+add_dependencies(global_names_test generate_error_codes u common gtest)
+target_link_libraries(global_names_test u common gtest ${sysaux_LIB})
 

@@ -29,7 +29,6 @@ void setDefaultSednaOptions(SednaOptions * sednaOptions)
     sednaOptions->dataDirectory   = DEFAULT_DATA_DIR;
     sednaOptions->listenPort      = DEFAULT_LISTEN_PORT;
     sednaOptions->logLevel        = DEFAULT_LOG_LEVEL;
-    sednaOptions->osObjectsOffset = DEFAULT_OS_OBJ_OFFSET;
     sednaOptions->stackDepth      = DEFAULT_STACK_DEPTH;
     sednaOptions->keepAlive       = DEFAULT_KEEP_ALIVE;
 };
@@ -46,7 +45,6 @@ struct arg_int * cmdListenPort       = arg_int0  ("p","port-to-listen", "<int>",
 struct arg_int * cmdLogLevel         = arg_int0  ("d","event-logging-verbosity-level", NULL, "event log verbosity level: 0 - event logging is off, 1 - log only fatal errors, 2 - log all errors, 3 - system operational messages");
 struct arg_int * cmdKeepAliveTimeout = arg_int0  ("a","keep-alive-timeout", "<int>", "session keep alive timeout (default 0 - infinite timeout)");
 struct arg_int * cmdStackDepth       = arg_int0  ("d","stack-depth", "<int>", "executor stack depth");
-struct arg_int * cmdOsObjectsOffset  = arg_int0  ("m","os-min-bound", "<int>", "os min bound (default 1500)" );
 struct arg_end * end                 = arg_end(80);
 
 void * govArgtable[] =  {help, govVersion, 
@@ -56,7 +54,6 @@ void * govArgtable[] =  {help, govVersion,
                          cmdLogLevel, 
                          cmdKeepAliveTimeout,
                          cmdStackDepth, 
-                         cmdOsObjectsOffset, 
                          end};
 
 
@@ -139,10 +136,6 @@ void mergeCommandLineAndConfig(SednaOptions * sednaOptions)
     
     if (cmdLogLevel->count > 0) {
         sednaOptions->logLevel = cmdLogLevel->ival[0];
-    }
-    
-    if (cmdOsObjectsOffset->count > 0) {
-        sednaOptions->osObjectsOffset = cmdOsObjectsOffset->ival[0];
     }
     
     if (cmdStackDepth->count > 0) {

@@ -68,7 +68,6 @@ struct SednaOptions {
     std::string bindAddress;
 
     int listenPort;
-    int osObjectsOffset;
     int stackDepth;
     int logLevel;
     int keepAlive;

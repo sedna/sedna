@@ -2,6 +2,7 @@
 #include "u/ugnames.h"
 #include "u/ushm.h"
 #include "u/usem.h"
+#include "gtest/gtest.h"
 
 #include <stdio.h>
 #include <errno.h>

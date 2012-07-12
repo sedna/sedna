@@ -142,7 +142,6 @@ struct SednaOptionsXmlReader : public XmlNodeReader {
         this->readStringValue(EXPANDR(dataDirectory));
         this->readIntValue(EXPANDR(listenPort));
         this->readStringValue(EXPANDR(bindAddress));
-        this->readIntValue(EXPANDR(osObjectsOffset));
         this->readIntValue(EXPANDR(logLevel));
         this->readIntValue(EXPANDR(stackDepth));
         this->readIntValue(EXPANDR(keepAlive));
@@ -160,7 +159,6 @@ void SednaOptions::saveToXml(XMLBuilder* xmlBuilder) const
     xmlBuilder->addElement(EXPANDW(dataDirectory));
     xmlBuilder->addElement(EXPANDWC(listenPort));
     xmlBuilder->addElement(EXPANDW(bindAddress));
-    xmlBuilder->addElement(EXPANDWC(osObjectsOffset));
     xmlBuilder->addElement(EXPANDWC(logLevel));
     xmlBuilder->addElement(EXPANDWC(stackDepth));
     xmlBuilder->addElement(EXPANDWC(keepAlive));

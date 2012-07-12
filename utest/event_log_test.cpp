@@ -3,6 +3,7 @@
 #include "u/u.h"
 #include "common/base.h"
 #include "u/ugnames.h"
+#include "gtest/gtest.h"
 
 #include <iostream>
 #include <string>
