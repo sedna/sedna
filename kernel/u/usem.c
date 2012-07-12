@@ -12,13 +12,20 @@
 // Semaphore implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
-#ifdef _WIN32
-{
-	char buf[128];
-	const char *wName = UWinIPCNameFromGlobalName(name,buf,128);
+union semctl_arg_t {
+    int val;
+    struct semid_sd *buf;
+    ushort *array;
+};
 
-    *sem = CreateSemaphore(sa, init_value, max_value, wName);
+int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name gname, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
+{
+    struct gobj_info_t info = {GOBJECT_SEM, sem};
+#ifdef _WIN32
+    GLOBAL_NAME_BUFFER_DECL(objectName);
+    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+
+    *sem = CreateSemaphore(sa, init_value, max_value, objectName);
 
     if (*sem == NULL)
     {
@@ -33,55 +40,50 @@ int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name
             return 1;
         }	
     }
+#else /* _WIN32 */
+    union semctl_arg_t semctl_arg;
+    key_t key = USys5IPCKeyFromGlobalName(gname);
 
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(name, "SEM", sem, *sem, 0); };
-
-    return 0;
-}
-#else
-{
-	union {
-	    int val;
-	    struct semid_sd *buf;
-	    ushort *array;
-	} semctl_arg;
-	key_t key = IPC_PRIVATE;
-
-	key = USys5IPCKeyFromGlobalName(name);
-
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(name, "SEM", sem, *sem, 0); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(gname, info); };
 
     USECURITY_ATTRIBUTES sem_access_mode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
-    if (sa) sem_access_mode = *sa;
-    int res = semget(key, 1, IPC_CREAT | IPC_EXCL | sem_access_mode);
-    *sem = res;
 
-    if (*sem < 0)
+    if (sa) {
+        sem_access_mode = *sa;
+    }
+
+    int result = semget(key, 1, IPC_CREAT | IPC_EXCL | sem_access_mode);
+
+    if (result < 0)
     {
         sys_call_error("semget");
         return 1;
     }
-	semctl_arg.val = init_value;
 
-	if(semctl(*sem, 0, SETVAL, semctl_arg) < 0)
-	{
+    *sem = result;
+
+    semctl_arg.val = init_value;
+
+    if (semctl(*sem, 0, SETVAL, semctl_arg) < 0)
+    {
         sys_call_error("semctl");
-		return 1;
-	}
+        return 1;
+    }
+#endif /* _WIN32 */
 
-	if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(name, "SEM", sem, *sem, 0); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(gname, info); };
 
     return 0;
 }
-#endif
 
 
-int USemaphoreOpen(USemaphore *sem, global_name name, sys_call_error_fun fun)
-#ifdef _WIN32
+int USemaphoreOpen(USemaphore *sem, global_name gname, sys_call_error_fun fun)
 {
-	char buf[128];
-	const char *wName = UWinIPCNameFromGlobalName(name,buf,128);
-    *sem = OpenSemaphore(SEMAPHORE_ALL_ACCESS, FALSE, wName);
+#ifdef _WIN32
+    GLOBAL_NAME_BUFFER_DECL(objectName);
+    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+
+    *sem = OpenSemaphore(SEMAPHORE_ALL_ACCESS, FALSE, objectName);
 
     if (*sem == NULL)
     {
@@ -89,12 +91,8 @@ int USemaphoreOpen(USemaphore *sem, global_name name, sys_call_error_fun fun)
         return 1;
     }
 
-    return 0;
-}
-#else
-{
-	key_t key = IPC_PRIVATE;
-	key = USys5IPCKeyFromGlobalName(name);
+#else /* _WIN32 */
+    key_t key = USys5IPCKeyFromGlobalName(gname);
 
     *sem = semget(key, 1, 0);
 
@@ -104,13 +102,18 @@ int USemaphoreOpen(USemaphore *sem, global_name name, sys_call_error_fun fun)
         return 1;
     }
 
+#endif /* _WIN32 */
+
     return 0;
 }
-#endif
 
 int USemaphoreRelease(USemaphore sem, sys_call_error_fun fun)
-#ifdef _WIN32
 {
+    struct gobj_info_t info = {GOBJECT_SEM, &sem};
+#ifdef _WIN32
+    GLOBAL_NAME_BUFFER_DECL(objectName);
+    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+
     BOOL res =  CloseHandle(sem);
 
     if (res == 0)
@@ -118,57 +121,37 @@ int USemaphoreRelease(USemaphore sem, sys_call_error_fun fun)
         sys_call_error("CloseHandle");
         return 1;
     }
-
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, "SEM", &sem, sem, 0); };
-
-    return 0;
-}
 #else
-{
-/*    union {
-	int val;
-	struct semid_sd *buf;
-	ushort *array;
-    } semctl_arg;*/
-
-    if (sem < 0)
-    {
+    if (sem < 0) {
         return 1;
     }
-	else
-	{
-		if (semctl(sem, 0, IPC_RMID) < 0)
-		{
-            sys_call_error("semctl");
-			return 1;
-		}
-	}
 
-	if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, "SEM", &sem, sem, 0); };
+    if (semctl(sem, 0, IPC_RMID) < 0) {
+        sys_call_error("semctl");
+        return 1;
+    }
+#endif
+
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, info); };
 
     return 0;
 }
-#endif
 
 
 int USemaphoreClose(USemaphore sem, sys_call_error_fun fun)
-#ifdef _WIN32
 {
-    BOOL res =  CloseHandle(sem);
+#ifdef _WIN32
+    BOOL res = CloseHandle(sem);
 
     if (res == 0)
     {
         sys_call_error("CloseHandle");
         return 1;
     }
+#endif
 
     return 0;
 }
-#else
-{
-    return 0;
-}
-#endif
 
 int USemaphoreDown(USemaphore sem, sys_call_error_fun fun)
 #ifdef _WIN32
@@ -317,34 +300,26 @@ int USemaphoreUp(USemaphore sem, sys_call_error_fun fun)
 // Array of semaphore implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-#define SIZE_OF_BUF_FOR_ADJUSTED_NAME 128
-
-int USemaphoreArrCreate(USemaphoreArr *sem, unsigned size, const int *init_values, global_name name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
-#ifdef _WIN32
+int USemaphoreArrCreate(USemaphoreArr *sem, unsigned size, const int *init_values, global_name gname, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 {
+    struct gobj_info_t info = {GOBJECT_SEM_ARRAY, sem, size};
+#ifdef _WIN32
+    GLOBAL_NAME_BUFFER_DECL(objectName);
+    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+
     unsigned i = 0;
-    char buf[128];
-	const char *wName = NULL;
-    size_t name_len = 0;
+    size_t name_len = strlen(objectName);
 
-	wName = UWinIPCNameFromGlobalName(name,buf,128);
-	if (wName) name_len = strlen(wName);
-
-    /*
-     * We concatenate name with a number and put the result to buf. 
-     * Because int2c_str requieres 20 bytes the length of the name
-     * must not be greater than (SIZE_OF_BUF_FOR_ADJUSTED_NAME - 20)
-     */
-    *sem = (USemaphoreArr)malloc(sizeof(HANDLE) * size);
+    *sem = (USemaphoreArr) malloc(sizeof(HANDLE) * size);
 
     for (i = 0; i < size; i++)
     {
-		sprintf(buf+name_len,":%u",i);
+        sprintf(objectName + name_len,":%u", i);
 
         (*sem)[i] = CreateSemaphore(sa,
                                     init_values[i],
                                     INT_MAX,
-                                    wName);
+                                    objectName);
 
         if ((*sem)[i] == NULL)
         {
@@ -362,24 +337,12 @@ int USemaphoreArrCreate(USemaphoreArr *sem, unsigned size, const int *init_value
             }	
         }
     }
-
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(name, "WSEA", sem, *sem, size); };
-
-    return 0;
-}
 #else
-{
-	union {
-	    int val;
-	    struct semid_sd *buf;
-	    ushort *array;
-	} semctl_arg;
-	key_t key = IPC_PRIVATE;
+    union semctl_arg_t semctl_arg;
+    key_t key = USys5IPCKeyFromGlobalName(gname);
     unsigned i = 0;
 
-	key = USys5IPCKeyFromGlobalName(name);
-
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(name, "SEA", sem, *sem, size); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(gname, info); };
 
     USECURITY_ATTRIBUTES sem_access_mode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
     if (sa) sem_access_mode = *sa;
@@ -393,33 +356,28 @@ int USemaphoreArrCreate(USemaphoreArr *sem, unsigned size, const int *init_value
 
     for (i = 0; i < size; i++)
     {
-	    semctl_arg.val = init_values[i];
+        semctl_arg.val = init_values[i];
 
         if(semctl(*sem, i, SETVAL, semctl_arg) < 0)
         {
-		    //d_printf3("ERRROR: %d. Can't set initial value for %x semaphore\n", perror(semctl), (int)name);
-		    //d_printf2("Can't set initial value for %x semaphore\n", (int)name);
             sys_call_error("semctl");
-		    return 1;
-    	}
+            return 1;
+        }
     }
+#endif
 
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(name, "SEA", sem, *sem, size); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(gname, info); };
 
     return 0;
 }
-#endif
 
-int USemaphoreArrOpen(USemaphoreArr *sem, unsigned size, global_name name, sys_call_error_fun fun)
+int USemaphoreArrOpen(USemaphoreArr *sem, unsigned size, global_name gname, sys_call_error_fun fun)
 #ifdef _WIN32
 {
+    GLOBAL_NAME_BUFFER_DECL(objectName);
+    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+    size_t name_len = strlen(objectName);
     unsigned i = 0;
-    char buf[128];
-    size_t name_len = 0;
-	const char *wName = NULL;
-
-	wName = UWinIPCNameFromGlobalName(name,buf,128);
-	if (wName) name_len = strlen(wName);
 
     *sem = (USemaphoreArr)malloc(sizeof(HANDLE) * size);
 
@@ -429,7 +387,7 @@ int USemaphoreArrOpen(USemaphoreArr *sem, unsigned size, global_name name, sys_c
 
         (*sem)[i] = OpenSemaphore(SEMAPHORE_ALL_ACCESS, 
                                   FALSE, 
-                                  wName);
+                                  objectName);
 
         if ((*sem)[i] == NULL)
         {
@@ -443,8 +401,7 @@ int USemaphoreArrOpen(USemaphoreArr *sem, unsigned size, global_name name, sys_c
 }
 #else
 {
-	key_t key = IPC_PRIVATE;
-	key = USys5IPCKeyFromGlobalName(name);
+    key_t key = USys5IPCKeyFromGlobalName(gname);
 
     *sem = semget(key, (int)size, 0);
 
@@ -460,8 +417,9 @@ int USemaphoreArrOpen(USemaphoreArr *sem, unsigned size, global_name name, sys_c
 
 
 int USemaphoreArrRelease(USemaphoreArr sem, unsigned size, sys_call_error_fun fun)
-#ifdef _WIN32
 {
+    struct gobj_info_t info = {GOBJECT_SEM_ARRAY, &sem};
+#ifdef _WIN32
     unsigned i = 0;
     BOOL res;
 
@@ -477,38 +435,22 @@ int USemaphoreArrRelease(USemaphoreArr sem, unsigned size, sys_call_error_fun fu
     }
 
     free(sem);
-
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, "SEA", sem, *sem, size); };
-    return 0;
-}
 #else
-{
-/*    union {
-        int val;
-        struct semid_sd *buf;
-        ushort *array;
-    } semctl_arg;*/
-
-    if (sem < 0)
-    {
-        d_printf1("CloseHandle failed\n");
-        //d_printf2("Error %d\n", perror(semget));
+    if (sem < 0) {
         return 1;
-    }
-	else
-	{
-		//semctl_arg.val = 0;
-		if (semctl(sem, 0, IPC_RMID/*, semctl_arg*/) < 0)
-		{
+    } else {
+        if (semctl(sem, 0, IPC_RMID/*, semctl_arg*/) < 0)
+        {
             sys_call_error("semctl");
-			return 1;
-		}
-	}
+            return 1;
+        }
+    }
 
-	if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, "SEA", &sem, sem, size); };
+#endif
+
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, info); };
     return 0;
 }
-#endif
 
 
 int USemaphoreArrClose(USemaphoreArr sem, unsigned size, sys_call_error_fun fun)

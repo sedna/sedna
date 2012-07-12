@@ -60,16 +60,12 @@ private:
     void *sysinf_addr;
     int sems_num;
 
-    char g_names__buf__ [256];
-
-    global_name g_name_shmem;
-    global_name g_name_sems;
-
+    char g_name_shmem[128];
+    char g_name_sems[128];
 
     SSMMsg_server_thread_param *server_param;
 
     unsigned int millisec;
-
 
     UTHANDLE *thread_handles;
     UShMem sh_mem;

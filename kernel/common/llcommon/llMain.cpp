@@ -22,7 +22,6 @@
 #include "common/sedna.h"
 #include "common/base.h"
 #include "common/llcommon/lfsStorage.h"
-#include "common/globalobjects/sednaregistry.h"
 
 #include <assert.h>
 #include <string>
@@ -32,12 +31,6 @@
 #define LL_WRITEBUF_SIZE 1024 * 1024                          // write buffer size (for lfs)
 #define LL_READBUF_SIZE 1024                                  // read buffer size (for lfs)
 #define LL_MAX_LOG_FILES ((uint32_t)max_log_files)            // maximum files until truncate
-
-global_name logicalLogShm = "";
-global_name logicalLogSem = "";
-
-global_name checkpointFinishedSemName = "";
-global_name checkpointEventName = "";
 
 struct llRecordHead {
     LSN prev_lsn;  // lsn for previous record of the same transaction (LL_INVALID_LSN if no such record exists)
@@ -231,12 +224,6 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
 {
     lfsInit(db_files_path, db_name, "llog", LL_WRITEBUF_SIZE, LL_READBUF_SIZE);
 
-    logicalLogShm = createSednaGlobalName(GLOBAL_NAME(LOGICAL_LOG_SHM));
-    logicalLogSem = createSednaGlobalName(GLOBAL_NAME(LOGICAL_LOG_SEM));
-
-    checkpointEventName = createSednaGlobalName(GLOBAL_NAME(NEW_JOB_4_CHECKPOINT_THREAD_EVENT));
-    checkpointFinishedSemName = createSednaGlobalName(GLOBAL_NAME(CHECKPOINT_FINISHED_SEM));
-
     // sync semaphore
     if (USemaphoreCreate(&SyncSem, 1, 1, logicalLogSem, NULL, __sys_call_error) != 0) {
         LL_ERROR("internal ll error: cannot create semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
@@ -369,12 +356,6 @@ int llOpen(const char *db_files_path, const char *db_name, bool rcv_active)
 {
     lfsConnect(db_files_path, db_name, "llog", LL_READBUF_SIZE);
 
-    logicalLogShm = createSednaGlobalName(GLOBAL_NAME(LOGICAL_LOG_SHM));
-    logicalLogSem = createSednaGlobalName(GLOBAL_NAME(LOGICAL_LOG_SEM));
-
-    checkpointEventName = createSednaGlobalName(GLOBAL_NAME(NEW_JOB_4_CHECKPOINT_THREAD_EVENT));
-    checkpointFinishedSemName = createSednaGlobalName(GLOBAL_NAME(CHECKPOINT_FINISHED_SEM));
-    
     if (USemaphoreOpen(&SyncSem, logicalLogSem, __sys_call_error) != 0) {
         LL_ERROR("internal ll error: cannot open semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
     }

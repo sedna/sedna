@@ -1,1 +1,1 @@
-set(globalobjects_SRC globalnames.cpp sednaregistry.cpp)
+set(globalobjects_SRC globalnames.cpp)

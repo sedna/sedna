@@ -41,17 +41,12 @@
 #include "u/usem.h"
 #include "u/uutils.h"
 
-#include "common/globalobjects/sednaregistry.h"
-
 #include <assert.h>
 
 #include <string>
 #include <stdint.h>
 
 using namespace std;
-
-global_name lfsSyncSemName = "";
-global_name lfsSyncShmName = "";
 
 // LFS runtime info shared between processes
 struct lfsInfo_t {
@@ -657,11 +652,6 @@ int lfsInit(const char *cDataPath, const char *cPrefix, const char *cExt, int Wr
         return -1;
     }
 
-    // create semaphore for synchronization purposes and allocate shared memory
-
-    lfsSyncSemName = createSednaGlobalName(GLOBAL_NAME(LFS_SEM));
-    lfsSyncShmName = createSednaGlobalName(GLOBAL_NAME(LFS_SHM));
-
     res = _lfsInitSync(WriteBufferSize);
     if (res != 0) {
         LFS_ERROR("lfs error: cannot initiate synchronizing primitives");
@@ -739,9 +729,6 @@ int lfsConnect(const char *cDataPath, const char *cPrefix, const char *cExt, int
     }
 
     // open semaphore for synchronization purposes
-    lfsSyncSemName = createSednaGlobalName(GLOBAL_NAME(LFS_SEM));
-    lfsSyncShmName = createSednaGlobalName(GLOBAL_NAME(LFS_SHM));
-
     if (USemaphoreOpen(&SyncSem, lfsSyncSemName, __sys_call_error) != 0) {
         LFS_ERROR("lfs error: cannot open semaphore");
         return -1;

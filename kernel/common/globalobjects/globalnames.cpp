@@ -15,9 +15,8 @@
 #include <string>
 #include <map>
 
-
 typedef std::map<std::string, GlobalObjectDescriptor *> GlobalObjectMap;
-typedef std::map<std::string, GlobalObjectDescriptorFactory> GlobalObjectFactoryMap;
+typedef std::map<int, GlobalObjectDescriptorFactory> GlobalObjectFactoryMap;
 
 struct GlobalObjectsCollectorImplementation {
     UFile objectLogFile;
@@ -28,7 +27,7 @@ struct GlobalObjectsCollectorImplementation {
 static GlobalObjectsCollectorImplementation * gcimpl = NULL;
 UGlobalGarbageCollector gogc = {};
 
-void GlobalObjectsCollector::registerFactory(const char* objType, GlobalObjectDescriptorFactory factory)
+void GlobalObjectsCollector::registerFactory(int objType, GlobalObjectDescriptorFactory factory)
 {
     gcimpl->objFactoryMap.insert(GlobalObjectFactoryMap::value_type(objType, factory));
 }
@@ -57,8 +56,6 @@ public:
         id = "SEM" + cast_to_string(sem);
     };
 
-    static SemaphoreDescriptor * createSemDescriptor(const char * definition);
-
     virtual void cleanup() const;
     virtual void saveTo(std::ostream* stream) const;
 };
@@ -72,8 +69,6 @@ public:
         id = "SEA" + cast_to_string(sem);
     }
 
-    static SemaphoreArrayDescriptor * createSemArrayDescriptor(const char * definition);
-
     virtual void cleanup() const;
     virtual void saveTo(std::ostream* stream) const;
 };
@@ -86,8 +81,6 @@ public:
         id = "SHM" + cast_to_string(shm.id);
     };
 
-    static SemaphoreArrayDescriptor * createSharedMemoryDescriptor(const char * definition);
-
     virtual void cleanup() const;
     virtual void saveTo(std::ostream* stream) const;
 };
@@ -99,8 +92,6 @@ public:
         : GlobalObjectDescriptor(name), evt(*_evt) {
         id = "EVT" + cast_to_string(evt.semid);
     };
-
-    static EventDescriptor * createEventDescriptor(const char * definition);
 
     virtual void cleanup() const;
     virtual void saveTo(std::ostream* stream) const;
@@ -184,20 +175,18 @@ struct GlobalObjectsLess {
 };
 
 static
-void globalObjectCleanup(global_name name, const char * type, void * data, int arg1, int arg2)
+void globalObjectCleanup(global_name name, gobj_info_t data)
 {
     scoped_ptr<GlobalObjectDescriptor> tmp_desc;
 
-    if (strcmp(type, "SEM") == 0) {
-        tmp_desc = new SemaphoreDescriptor(name, arg1);
-    } else if (strcmp(type, "SEA") == 0) {
-        tmp_desc = new SemaphoreArrayDescriptor(name, arg1, arg2);
-    } else if (strcmp(type, "SHM") == 0) {
-        tmp_desc = new SharedMemoryDescriptor(name, (UShMem *) data);
-    } else if (strcmp(type, "EVT") == 0) {
-        tmp_desc = new EventDescriptor(name, (UEvent *) data);
-    } else {
-        return;
+    switch (data.type) {
+      case GOBJECT_EVENT:      tmp_desc = new EventDescriptor(name, (UEvent *) data.data); break;
+      case GOBJECT_SEM:        tmp_desc = new SemaphoreDescriptor(name, * (USemaphore *) data.data); break;
+      case GOBJECT_SEM_ARRAY:  tmp_desc = new SemaphoreArrayDescriptor(name, * (USemaphoreArr *) data.data, data.arg1); break;
+      case GOBJECT_SHARED_MEM: tmp_desc = new SharedMemoryDescriptor(name, (UShMem *) data.data); break;
+      default:
+        U_ASSERT(false);
+        break;
     };
 
     tmp_desc->cleanup();
@@ -205,40 +194,36 @@ void globalObjectCleanup(global_name name, const char * type, void * data, int a
 
 
 static
-void globalObjectCreate(global_name name, const char * type, void * data, int arg1, int arg2)
+void globalObjectCreate(global_name name, gobj_info_t data)
 {
     GlobalObjectDescriptor * desc;
 
-    if (strcmp(type, "SEM") == 0) {
-        desc = new SemaphoreDescriptor(name, arg1);
-    } else if (strcmp(type, "SEA") == 0) {
-        desc = new SemaphoreArrayDescriptor(name, arg1, arg2);
-    } else if (strcmp(type, "SHM") == 0) {
-        desc = new SharedMemoryDescriptor(name, (UShMem *) data);
-    } else if (strcmp(type, "EVT") == 0) {
-        desc = new EventDescriptor(name, (UEvent *) data);
-    } else {
-        return;
+    switch (data.type) {
+      case GOBJECT_EVENT:      desc = new EventDescriptor(name, (UEvent *) data.data); break;
+      case GOBJECT_SEM:        desc = new SemaphoreDescriptor(name, * (USemaphore *) data.data); break;
+      case GOBJECT_SEM_ARRAY:  desc = new SemaphoreArrayDescriptor(name, * (USemaphoreArr *) data.data, data.arg1); break;
+      case GOBJECT_SHARED_MEM: desc = new SharedMemoryDescriptor(name, (UShMem *) data.data); break;
+      default:
+        U_ASSERT(false);
+        break;
     };
 
     GlobalObjectsCollector::add(desc);
 };
 
 static
-void globalObjectDestroy(global_name name, const char * type, void * data, int arg1, int arg2)
+void globalObjectDestroy(global_name name, gobj_info_t data)
 {
     scoped_ptr<GlobalObjectDescriptor> tmp_desc;
-    
-    if (strcmp(type, "SEM") == 0) {
-        tmp_desc = new SemaphoreDescriptor(name, arg1);
-    } else if (strcmp(type, "SEA") == 0) {
-        tmp_desc = new SemaphoreArrayDescriptor(name, arg1, arg2);
-    } else if (strcmp(type, "SHM") == 0) {
-        tmp_desc = new SharedMemoryDescriptor(name, (UShMem *) data);
-    } else if (strcmp(type, "EVT") == 0) {
-        tmp_desc = new EventDescriptor(name, (UEvent *) data);
-    } else {
-        return;
+
+    switch (data.type) {
+      case GOBJECT_EVENT:      tmp_desc = new EventDescriptor(name, (UEvent *) data.data); break;
+      case GOBJECT_SEM:        tmp_desc = new SemaphoreDescriptor(name, * (USemaphore *) data.data); break;
+      case GOBJECT_SEM_ARRAY:  tmp_desc = new SemaphoreArrayDescriptor(name, * (USemaphoreArr *) data.data, data.arg1); break;
+      case GOBJECT_SHARED_MEM: tmp_desc = new SharedMemoryDescriptor(name, (UShMem *) data.data); break;
+      default:
+        U_ASSERT(false);
+        break;
     };
 
     GlobalObjectsCollector::clear(tmp_desc->getId());
@@ -254,7 +239,7 @@ void GlobalObjectsCollector::cleanup()
     gcimpl->objects.clear();
 }
 
-GlobalObjectsCollector::GlobalObjectsCollector()
+GlobalObjectsCollector::GlobalObjectsCollector(const char * sedna_base_dir)
 {
     if (gcimpl != NULL) {
         throw SYSTEM_EXCEPTION("Global object collector singleton violation");

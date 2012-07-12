@@ -108,10 +108,11 @@ struct llGlobalInfo
 	uint64_t next_arch_file;       							// file from which to archive on next increment; if 0 - then db isn't in incremental mode
 };
 
-extern global_name logicalLogShm;
-extern global_name logicalLogSem;
-extern global_name checkpointFinished;
-extern global_name checkpointEvent;
+static global_name logicalLogShm = "logical_log_shm";
+static global_name logicalLogSem = "logical_log_sem";
+
+static global_name checkpointFinishedSemName = "checkpoint_finished_sem";
+static global_name checkpointEventName = "checkpoint_finished_event";
 
 extern llGlobalInfo *llInfo; // pointer to the global info memory
 

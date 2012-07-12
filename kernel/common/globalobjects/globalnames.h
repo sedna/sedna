@@ -7,13 +7,6 @@
 #include <string>
 #include <iosfwd>
 
-#define GLOBAL_NAME(NAME) #NAME
-
-#define __GLOBAL_NAME_REGISTRY_ENTRY(NAME, PREFIX, MAX_ITEMS) \
-  {GLOBAL_NAME(NAME), PREFIX, MAX_ITEMS, -1}
-
-#define MAX_GLOBAL_NAME_LEN 128
-
 class GlobalObjectDescriptor {
 protected:
     global_name name;
@@ -34,13 +27,13 @@ typedef GlobalObjectDescriptor * (*GlobalObjectDescriptorFactory) (const std::st
 
 class GlobalObjectsCollector { 
 public:
-    static void registerFactory(const char * objType, GlobalObjectDescriptorFactory factory);
+    static void registerFactory(int objType, GlobalObjectDescriptorFactory factory);
     static void cleanupObjects(std::istream * stream);
 
     static void add(GlobalObjectDescriptor * );
     static void clear(const std::string & id);
 
-    GlobalObjectsCollector();
+    GlobalObjectsCollector(const char * sedna_base_dir);
     ~GlobalObjectsCollector();
 
     void cleanup();

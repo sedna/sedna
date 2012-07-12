@@ -23,8 +23,7 @@
  * valid object name (NULL is rejected), and UEventCloseAndUnlink
  * just calls UEventClose. */
 
-int UEventUnlink(global_name gn,
-				 sys_call_error_fun fun)
+int UEventUnlink(global_name gn, sys_call_error_fun fun)
 {
 	int status = -1;
 	if (gn == NULL)
@@ -46,17 +45,16 @@ int UEventCreate(UEvent *uEvent,
 				 sys_call_error_fun fun)
 {
 	int status = -1; 
-	char buf[128];
-	const char *wName = NULL;
+        GLOBAL_NAME_BUFFER_DECL(objectName);
 	HANDLE handle = NULL;
 
 	assert(uEvent);
-	wName = UWinIPCNameFromGlobalName(gn,buf,sizeof buf);
+        UGetNameFromGlobalName(gname, objectName, sizeof objectName);
 	if (eventType!=U_AUTORESET_EVENT && eventType!=U_MANUALRESET_EVENT)
 	{
 		d_printf1("UEventCreate: unrecognised event type requested\n");
 	}
-	else if (NULL == (handle=CreateEvent(sa, eventType==U_MANUALRESET_EVENT, isSet, wName)))
+	else if (NULL == (handle=CreateEvent(sa, eventType==U_MANUALRESET_EVENT, isSet, objectName)))
 	{
 		SYS_CALL_ERROR(fun, "CreateEvent");
 	}
@@ -73,13 +71,12 @@ int UEventOpen(UEvent *uEvent,
 			   sys_call_error_fun fun)
 {
 	int status = -1;
-	char buf[128];
-	const char *wName = NULL;
+        GLOBAL_NAME_BUFFER_DECL(objectName);
 	HANDLE handle = NULL;
 
 	assert(uEvent);
-	wName = UWinIPCNameFromGlobalName(gn,buf,sizeof buf);
-	if (NULL == (handle=OpenEvent(EVENT_ALL_ACCESS, FALSE, wName)))
+        UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+	if (NULL == (handle=OpenEvent(EVENT_ALL_ACCESS, FALSE, objectName)))
 	{
 		SYS_CALL_ERROR(fun, "OpenEvent");
 	}
@@ -223,6 +220,7 @@ int UEventCreate(UEvent *uEvent,
 				 global_name gn, 
 				 sys_call_error_fun fun)
 {
+     struct gobj_info_t info = {GOBJECT_EVENT, uEvent};
 	int status = -1;
 	int semid = -1;
 	USECURITY_ATTRIBUTES evmode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
@@ -234,7 +232,7 @@ int UEventCreate(UEvent *uEvent,
 	if (sa) evmode = *sa;
 	evmode |= IPC_CREAT | IPC_EXCL;
 
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(gn, "EVT", uEvent, 0, 0); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(gn, info); };
 
 	if (eventType != U_AUTORESET_EVENT && eventType != U_MANUALRESET_EVENT)
 	{
@@ -266,14 +264,12 @@ int UEventCreate(UEvent *uEvent,
 	}
 	if (status == 0) uEvent->semid = semid;
     
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(gn, "EVT", uEvent, 0, 0); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(gn, info); };
     
     return status;
 }
 
-int UEventOpen(UEvent *uEvent, 
-			   global_name gn, 
-			   sys_call_error_fun fun)
+int UEventOpen(UEvent *uEvent, global_name gn, sys_call_error_fun fun)
 {
 	int status = -1, semid = -1;
 	key_t key = IPC_PRIVATE;
@@ -307,6 +303,7 @@ int UEventClose(UEvent *uEvent,
 int UEventCloseAndUnlink(UEvent *uEvent,
 						 sys_call_error_fun fun)
 {
+     struct gobj_info_t info = {GOBJECT_EVENT, uEvent};
 	int status = -1;
 	
 	assert(uEvent);
@@ -314,7 +311,7 @@ int UEventCloseAndUnlink(UEvent *uEvent,
 		SYS_CALL_ERROR(fun,"semctl");
 	else status = 0;
 
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, "EVT", uEvent, 0, 0); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, info); };
 
     return (status==0) ? UEventClose(uEvent, fun) : status;
 }

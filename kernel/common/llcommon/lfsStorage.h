@@ -12,8 +12,8 @@
 #include "u/u.h"
 #include "lfsGlobals.h"
 
-extern global_name lfsSyncSemName;
-extern global_name lfsSyncShmName;
+static global_name lfsSyncSemName = "LFS_sync_sem";
+static global_name lfsSyncShmName = "LFS_sync_shm";
 
 // Init lfs subsystem; this function must be called only once to initialze lfs subsystem.
 // All additional users must call lfsConnect function.

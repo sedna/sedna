@@ -18,27 +18,29 @@
 #include <sys/mman.h>
 #endif
 
-int uCreateShMem(UShMem *id, global_name name, size_t size, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
+int uCreateShMem(UShMem *id, global_name gname, size_t size, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 {
+    struct gobj_info_t info = {GOBJECT_SHARED_MEM, id};
+    GLOBAL_NAME_BUFFER_DECL(objectName);
+    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+
 #ifdef _WIN32
-    UMMap mmap = uCreateFileMapping(U_INVALID_FD, size, name, sa, fun);
+
+    UMMap mmap = uCreateFileMapping(U_INVALID_FD, size, objectName, sa, fun);
 
     if (U_INVALID_FILEMAPPING(mmap))
         return 1;
 
     id->id = mmap.map;
     id->size = mmap.size;
-#else
-    char buf[128];
-    const char *uName = NULL;
-    uName = UPosixIPCNameFromGlobalName(name, buf, sizeof buf);
+#else /* _WIN32 */
 
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(name, "SHM", id, 0, 0); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(gname, info); };
 
     USECURITY_ATTRIBUTES mmap_access_mode = U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK;
     if (sa) mmap_access_mode = *sa;
 
-    id->id = shm_open(uName, O_RDWR | O_CREAT | O_EXCL, mmap_access_mode);
+    id->id = shm_open(objectName, O_RDWR | O_CREAT | O_EXCL, mmap_access_mode);
     id->size = size;
     id->to_guarantee =  1;
 
@@ -56,16 +58,18 @@ int uCreateShMem(UShMem *id, global_name name, size_t size, USECURITY_ATTRIBUTES
         return 1;
     }
 #endif
-
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(name, "SHM", id, 0, 0); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onCreate(gname, info); };
 
     return 0;
 }
 
-int uOpenShMem(UShMem *id, global_name name, sys_call_error_fun fun)
+int uOpenShMem(UShMem* id, global_name gname, sys_call_error_fun fun)
 {
+    GLOBAL_NAME_BUFFER_DECL(objectName);
+    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+  
 #ifdef _WIN32
-    UMMap mmap = uOpenFileMapping(U_INVALID_FD, name, fun);
+    UMMap mmap = uOpenFileMapping(U_INVALID_FD, objectName, fun);
 
     if (U_INVALID_FILEMAPPING(mmap))
         return 1;
@@ -73,13 +77,9 @@ int uOpenShMem(UShMem *id, global_name name, sys_call_error_fun fun)
     id->id = mmap.map;
     id->size = mmap.size;
 #else
-    char buf[128];
-    const char *uName = NULL;
     struct stat fbuf;
 
-    uName = UPosixIPCNameFromGlobalName(name, buf, sizeof buf);
-
-    if ((id->id = shm_open(uName, O_RDWR, 0)) == -1)
+    if ((id->id = shm_open(objectName, O_RDWR, 0)) == -1)
     {
         sys_call_error("shm_open");
         return 1;
@@ -100,33 +100,33 @@ int uOpenShMem(UShMem *id, global_name name, sys_call_error_fun fun)
     return 0;
 }
 
-int uReleaseShMem(UShMem *id, global_name name, sys_call_error_fun fun)
+int uReleaseShMem(UShMem *id, global_name gname, sys_call_error_fun fun)
 {
+    struct gobj_info_t info = {GOBJECT_SHARED_MEM, id};
+    GLOBAL_NAME_BUFFER_DECL(objectName);
+    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+    
 #ifdef _WIN32
     UMMap mmap;
 
     mmap.map = id->id;
     mmap.size = id->size;
 
-    return uReleaseFileMapping(mmap, name, fun);
+    return uReleaseFileMapping(mmap, objectName, fun);
 #else
-    char buf[128];
-    const char *uName = NULL;
-    uName = UPosixIPCNameFromGlobalName(name, buf, sizeof buf);
-
     if(id->id != -1 && close(id->id) == -1)
     {
         sys_call_error("close");
         return 1;
     }
 
-    if (shm_unlink(uName) == -1)
+    if (shm_unlink(objectName) == -1)
     {
         sys_call_error("shm_unlink");
         return 1;
     }
 
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(name, "SHM", id, 0, 0); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(gname, info); };
 
     return 0;
 #endif

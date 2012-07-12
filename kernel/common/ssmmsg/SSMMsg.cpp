@@ -42,23 +42,6 @@ using namespace std;
 #define sem_data_processed2(s)					(NAMED_SEMS_NUM + (s)->servers_amount)
 #define sem_data_read2(s)						(NAMED_SEMS_NUM + 2 * (s)->servers_amount)
 
-struct SSMMsgNames
-{
-	global_name memory;
-	global_name sems;
-};
-
-static void InitSSMMsgNames(SSMMsgNames *names, global_name name, char *buf, size_t bufSz)
-{
-	assert(names);
-	if ((names->memory = UGlobalNameFromCompoundName(name, 0, buf, bufSz)))
-	{
-		size_t consumed = strlen(names->memory)+1;
-		buf+=consumed; bufSz-=consumed;
-	}
-	names->sems = UGlobalNameFromCompoundName(name, 0, buf, bufSz);
-}
-
 SSMMsg::SSMMsg(mode _m_, 
                int _msg_size_, 
                global_name _g_name_, 
@@ -80,10 +63,8 @@ SSMMsg::SSMMsg(mode _m_,
     sysinf_addr = NULL;
     sems_num = NAMED_SEMS_NUM + 3 * servers_amount;
 
-	SSMMsgNames names = {};
-	InitSSMMsgNames(&names, _g_name_, g_names__buf__, 256);
-    g_name_shmem = names.memory;
-    g_name_sems = names.sems;
+    snprintf(g_name_shmem, 128, "%s-shm", _g_name_);
+    snprintf(g_name_sems, 128, "%s-sem", _g_name_);
 
     server_param = NULL;
 
@@ -434,22 +415,3 @@ int SSMMsg::stop_serve_clients()
 
     return 0;
 }
-
-void SSMMsg::ipc_cleanup(global_name name)
-{
-	USemaphoreArr sems;
-	UShMem memory;
-	SSMMsgNames names;
-	char buf[256];
-
-	InitSSMMsgNames(&names, name, buf, sizeof buf);
-	if (uOpenShMem(&memory, names.memory,  __sys_call_error) == 0)
-	{
-		uReleaseShMem(&memory, names.memory, __sys_call_error);
-	}	
-	if (USemaphoreArrOpen(&sems, 9, names.sems, __sys_call_error) == 0)
-	{
-		USemaphoreArrRelease(sems, 9, __sys_call_error);
-	}
-}
-

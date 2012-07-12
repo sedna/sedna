@@ -40,11 +40,11 @@ typedef struct {
 extern "C" {
 #endif
 
-int uCreateShMem(UShMem *id, global_name name, size_t size, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
+int uCreateShMem(UShMem *id, global_name gname, size_t size, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
 
-int uOpenShMem(UShMem *id, global_name key, sys_call_error_fun fun);
+int uOpenShMem(UShMem *id, global_name gname, sys_call_error_fun fun);
 
-int uReleaseShMem(UShMem *id, global_name name, sys_call_error_fun fun);
+int uReleaseShMem(UShMem *id, global_name gname, sys_call_error_fun fun);
 
 int uCloseShMem(UShMem *id, sys_call_error_fun fun);
 

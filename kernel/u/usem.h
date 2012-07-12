@@ -39,8 +39,8 @@ extern "C" {
 
 // functions return 0 on success
 // sa - Security Attributes for the new semaphore
-int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
-int USemaphoreOpen(USemaphore *sem, global_name name, sys_call_error_fun fun);
+int USemaphoreCreate(USemaphore* sem, int init_value, int max_value, global_name gname, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
+int USemaphoreOpen(USemaphore* sem, global_name gname, sys_call_error_fun fun);
 int USemaphoreRelease(USemaphore sem, sys_call_error_fun fun);
 int USemaphoreClose(USemaphore sem, sys_call_error_fun fun);
 int USemaphoreDown(USemaphore sem, sys_call_error_fun fun);
@@ -53,8 +53,8 @@ int USemaphoreUp(USemaphore sem, sys_call_error_fun fun);
 
 
 // sa - Security Attributes for the new semaphores
-int USemaphoreArrCreate(USemaphoreArr *sem, unsigned size, const int *init_values, global_name name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
-int USemaphoreArrOpen(USemaphoreArr *sem, unsigned size, global_name name, sys_call_error_fun fun);
+int USemaphoreArrCreate(USemaphoreArr* sem, unsigned int size, const int* init_values, global_name gname, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
+int USemaphoreArrOpen(USemaphoreArr* sem, unsigned int size, global_name gname, sys_call_error_fun fun);
 int USemaphoreArrRelease(USemaphoreArr sem, unsigned size, sys_call_error_fun fun);
 int USemaphoreArrClose(USemaphoreArr sem, unsigned size, sys_call_error_fun fun);
 int USemaphoreArrDown(USemaphoreArr sem, unsigned i, sys_call_error_fun fun);
