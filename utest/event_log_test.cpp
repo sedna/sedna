@@ -1,46 +1,26 @@
+#define TEST_NAME "0002.eventLogTest.xml"
+
 #include "common/sedna.h"
 #include "u/uprocess.h"
 #include "u/u.h"
 #include "common/base.h"
 #include "u/ugnames.h"
 #include "gtest/gtest.h"
+#include "common/globalobjects/globalnames.h"
 
 #include <iostream>
 #include <string>
 
 /* Attention! you need to make folder utest/data in your build directory to perform this test */
 
-static UGlobalNamesRegistryItem globalNamesRegistry[] =
-{
-  /* {% GlobalNamesRegistry */ 
-  {"SHMEM_EVENT_LOG", NULL,1}, /* event logger */ 
-  {"SEMAR_EVENT_LOG", NULL,1}, /* event logger  */ 
-  {NULL}
-};
-
-char SE_EVENT_LOG_SHARED_MEMORY_NAME__buf__[128];
-char SE_EVENT_LOG_SEMAPHORES_NAME__buf__[128];
-
 int main () {
     char * SEDNA_DATA = (char *) malloc(2048);
-  
-    std::string elog_location = uGetImageProcPath(SEDNA_DATA, __sys_call_error);
+    
+    std::string elog_location = "/tmp/";
+    
+    GlobalObjectsCollector collector(elog_location.c_str());
+    uSetGlobalNameGeneratorBase(elog_location.c_str(), "0");
     strcpy(SEDNA_DATA, elog_location.c_str());
-    
-    UInitGlobalNamesRegistry(globalNamesRegistry, NULL, NULL, 1000, 1400);
-    
-    global_name SE_EVENT_LOG_SHARED_MEMORY_NAME = 
-                UCreateGlobalName("SHMEM_EVENT_LOG", 
-                                  0, 
-                                  SE_EVENT_LOG_SHARED_MEMORY_NAME__buf__, 
-                                  128);
-                
-    global_name SE_EVENT_LOG_SEMAPHORES_NAME = 
-                UCreateGlobalName("SEMAR_EVENT_LOG", 
-                                  0, 
-                                  SE_EVENT_LOG_SEMAPHORES_NAME__buf__, 
-                                  128);
-    
     
     /* Check that event log works */ 
     for (int log_level = 1; log_level < 5; log_level++) {
@@ -48,8 +28,8 @@ int main () {
       try {
         int res = 0;
         res = event_logger_start_daemon(el_convert_log_level(log_level), 
-                                        SE_EVENT_LOG_SHARED_MEMORY_NAME, 
-                                        SE_EVENT_LOG_SEMAPHORES_NAME);
+                                        "SE_EVENT_LOG_SHARED_MEMORY_NAME", 
+                                        "SE_EVENT_LOG_SEMAPHORES_NAME");
         switch (res) {
           case 0: break;
           case 1: throw std::string("Failed to initialize event log: can not create shared memory\n");
@@ -67,7 +47,7 @@ int main () {
         elog(log_level, ("Hi, I'm log and I'm started successfully!"));
         elog_long(log_level, "Hi, I'm long message in log!", " Not really very long but I'm needed just for test"); 
         
-        res = event_logger_shutdown_daemon(SE_EVENT_LOG_SHARED_MEMORY_NAME);
+        res = event_logger_shutdown_daemon("SE_EVENT_LOG_SHARED_MEMORY_NAME");
         switch (res) {
           case 0: break;
           case 1: throw std::string("Failed to shutdown event log: can not join thread\n");
@@ -91,8 +71,8 @@ int main () {
       try {
         int res = 0;
         res = event_logger_start_daemon(el_convert_log_level(log_level), 
-                                        SE_EVENT_LOG_SHARED_MEMORY_NAME, 
-                                        SE_EVENT_LOG_SEMAPHORES_NAME);
+                                        "SE_EVENT_LOG_SHARED_MEMORY_NAME", 
+                                        "SE_EVENT_LOG_SEMAPHORES_NAME");
         switch (res) {
           case 0: break;
           case 1: throw std::string("Failed to initialize event log: can not create shared memory\n");
@@ -105,7 +85,7 @@ int main () {
                   break;
           default: break;
         }
-        event_logger_shutdown_daemon(SE_EVENT_LOG_SHARED_MEMORY_NAME);
+        event_logger_shutdown_daemon("SE_EVENT_LOG_SHARED_MEMORY_NAME");
       
       
         /* TODO: when syslog would be done we need to check it for this message */

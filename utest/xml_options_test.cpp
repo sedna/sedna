@@ -1,3 +1,5 @@
+#define TEST_NAME "0003.xmlOptionsTest.xml"
+
 #include "aux/counted_ptr.h"
 #include "aux/options/xml_options.h"
 #include "common/structures/config_data.h"
@@ -59,28 +61,73 @@ void setDefaultSednaOptions(SednaOptions * sednaOptions)
     sednaOptions->keepAlive = 0;
 };
 
-int main() {
+TEST(globalOptionsReader, correctOptions) {
     GlobalParameters globals;
 
     setDefaultDatabaseOptions(&globals.defaultDatabaseParameters);
     setDefaultSednaOptions(&globals.global);
-
-    globals.loadFromStream(scoped_ptr<std::stringstream>(new std::stringstream(normalOptions)).get());
-    globals.saveToStream(&std::cout);
-
-    std::cout << "\n";
+    try {
+        globals.loadFromStream(scoped_ptr<std::stringstream>(new std::stringstream(normalOptions)).get());
+        globals.saveToStream(&std::cout);
+    } catch (std::exception & x) {
+        std::cout << x.what() << "\n";
+        ASSERT_TRUE(false);
+        return;
+    };
     
+    ASSERT_TRUE(true);
+    std::cout << "\n";
+}
+
+TEST(globalOptionsReader, errorOptions1) {
+    GlobalParameters globals;
+
+    setDefaultDatabaseOptions(&globals.defaultDatabaseParameters);
+    setDefaultSednaOptions(&globals.global);
     try {
         globals.loadFromStream(scoped_ptr<std::stringstream>(new std::stringstream(errorOptions1)).get());
         globals.saveToStream(&std::cout);
     } catch (std::exception & x) {
         std::cout << x.what() << "\n";
+        ASSERT_TRUE(true);
+        return;
     };
     
+    ASSERT_TRUE(false);
+    std::cout << "\n";
+}
+
+TEST(globalOptionsReader, errorOptions2) {
+    GlobalParameters globals;
+
+    setDefaultDatabaseOptions(&globals.defaultDatabaseParameters);
+    setDefaultSednaOptions(&globals.global);
     try {
         globals.loadFromStream(scoped_ptr<std::stringstream>(new std::stringstream(errorOptions2)).get());
         globals.saveToStream(&std::cout);
     } catch (std::exception & x) {
         std::cout << x.what() << "\n";
+        ASSERT_TRUE(true);
+        return;
     };
+    
+    ASSERT_TRUE(false);
+    std::cout << "\n";
+}
+
+int main(int argc, char** argv) {
+
+    if(argc == 1) {
+        std::string cmd;
+#ifdef WIN32
+        cmd.append("xml:reports\\");
+#else
+        cmd.append("xml:reports/");
+#endif   
+        cmd.append(TEST_NAME);
+         ::testing::GTEST_FLAG(output) = cmd.c_str();
+    }
+    ::testing::InitGoogleTest(&argc, argv);
+    
+    return RUN_ALL_TESTS();
 };

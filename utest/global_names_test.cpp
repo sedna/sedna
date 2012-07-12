@@ -1,3 +1,5 @@
+#define TEST_NAME "0001.globalNamesTest.xml"
+
 #include "common/globalobjects/globalnames.h"
 #include "u/ugnames.h"
 #include "u/ushm.h"
@@ -7,8 +9,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <malloc.h>
-
-#define TEST_NAME "0001.globalNamesTest.xml"
 
 static
 const char * sedna_base = "/tmp";
