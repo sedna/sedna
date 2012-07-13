@@ -5,7 +5,7 @@ add_subdirectory(gtest-1.6.0)
 
 add_executable(test_options xml_options_test.cpp)
 
-add_dependencies(test_options generate_error_codes gtest aux common)
+add_dependencies(test_options generate_error_codes gtest auxiliary common)
 
 target_link_libraries(test_options u common gtest ${sysaux_LIB})
 

@@ -22,4 +22,4 @@ add_dependencies(common generate_error_codes) # build error codes before common 
 
 target_link_libraries(common u)
 target_link_libraries(common ancillary)
-target_link_libraries(common aux)
+target_link_libraries(common auxiliary)
