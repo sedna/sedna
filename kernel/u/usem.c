@@ -12,11 +12,13 @@
 // Semaphore implementation
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef _WIN32
 union semctl_arg_t {
     int val;
     struct semid_sd *buf;
     ushort *array;
 };
+#endif /* _WIN32 */
 
 int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name gname, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 {
@@ -111,9 +113,6 @@ int USemaphoreRelease(USemaphore sem, sys_call_error_fun fun)
 {
     struct gobj_info_t info = {GOBJECT_SEM, &sem};
 #ifdef _WIN32
-    GLOBAL_NAME_BUFFER_DECL(objectName);
-    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
-
     BOOL res =  CloseHandle(sem);
 
     if (res == 0)
@@ -305,10 +304,13 @@ int USemaphoreArrCreate(USemaphoreArr *sem, unsigned size, const int *init_value
     struct gobj_info_t info = {GOBJECT_SEM_ARRAY, sem, size};
 #ifdef _WIN32
     GLOBAL_NAME_BUFFER_DECL(objectName);
-    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
-
     unsigned i = 0;
-    size_t name_len = strlen(objectName);
+	size_t name_len = 0;
+
+    if (UGetNameFromGlobalName(gname, objectName, sizeof objectName) != NULL) 
+	{
+		name_len = strlen(objectName);
+	}
 
     *sem = (USemaphoreArr) malloc(sizeof(HANDLE) * size);
 
@@ -375,15 +377,20 @@ int USemaphoreArrOpen(USemaphoreArr *sem, unsigned size, global_name gname, sys_
 #ifdef _WIN32
 {
     GLOBAL_NAME_BUFFER_DECL(objectName);
-    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
-    size_t name_len = strlen(objectName);
-    unsigned i = 0;
+	size_t name_len = 0;
+	unsigned i = 0;
+
+    if (NULL != UGetNameFromGlobalName(gname, objectName, sizeof objectName))
+	{
+		name_len = strlen(objectName);
+	}
+    
 
     *sem = (USemaphoreArr)malloc(sizeof(HANDLE) * size);
 
     for (i = 0; i < size; i++)
     {
-		sprintf(buf+name_len,":%u",i);
+		sprintf(objectName+name_len,":%u",i);
 
         (*sem)[i] = OpenSemaphore(SEMAPHORE_ALL_ACCESS, 
                                   FALSE, 

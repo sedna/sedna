@@ -5,16 +5,20 @@
 #include <stdint.h>
 #include <string.h>
 
+#ifndef __cplusplus
+#define inline 
+#endif /* __cplusplus */
 
-inline static
+static inline
 int strcmpex(const char* c1, const char* c2)
 {
-  if (c1==NULL && c2==NULL) return 0;
-  if (c1==NULL || c2==NULL) return (c1==NULL) ? -1 : 1;
-  int res = strcmp(c1,c2); /// strcmp doesn't guarantee that return value either -1, 1 or 0!
-  if (res < 0) return -1;
-  if (res > 0) return 1;
-  return res;
+    int res;
+    if (c1==NULL && c2==NULL) return 0;
+    if (c1==NULL || c2==NULL) return (c1==NULL) ? -1 : 1;
+    res = strcmp(c1,c2); /// strcmp doesn't guarantee that return value either -1, 1 or 0!
+    if (res < 0) return -1;
+    if (res > 0) return 1;
+    return res;
 }
 
 inline static

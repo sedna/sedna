@@ -49,7 +49,7 @@ int UEventCreate(UEvent *uEvent,
 	HANDLE handle = NULL;
 
 	assert(uEvent);
-        UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+    UGetNameFromGlobalName(gn, objectName, sizeof objectName);
 	if (eventType!=U_AUTORESET_EVENT && eventType!=U_MANUALRESET_EVENT)
 	{
 		d_printf1("UEventCreate: unrecognised event type requested\n");
@@ -75,7 +75,7 @@ int UEventOpen(UEvent *uEvent,
 	HANDLE handle = NULL;
 
 	assert(uEvent);
-        UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+        UGetNameFromGlobalName(gn, objectName, sizeof objectName);
 	if (NULL == (handle=OpenEvent(EVENT_ALL_ACCESS, FALSE, objectName)))
 	{
 		SYS_CALL_ERROR(fun, "OpenEvent");

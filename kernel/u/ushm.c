@@ -22,11 +22,10 @@ int uCreateShMem(UShMem *id, global_name gname, size_t size, USECURITY_ATTRIBUTE
 {
     struct gobj_info_t info = {GOBJECT_SHARED_MEM, id};
     GLOBAL_NAME_BUFFER_DECL(objectName);
-    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
-
+	UMMap mmap;
 #ifdef _WIN32
-
-    UMMap mmap = uCreateFileMapping(U_INVALID_FD, size, objectName, sa, fun);
+    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+    mmap = uCreateFileMapping(U_INVALID_FD, size, objectName, sa, fun);
 
     if (U_INVALID_FILEMAPPING(mmap))
         return 1;
@@ -66,10 +65,10 @@ int uCreateShMem(UShMem *id, global_name gname, size_t size, USECURITY_ATTRIBUTE
 int uOpenShMem(UShMem* id, global_name gname, sys_call_error_fun fun)
 {
     GLOBAL_NAME_BUFFER_DECL(objectName);
-    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
-  
+	UMMap mmap;
 #ifdef _WIN32
-    UMMap mmap = uOpenFileMapping(U_INVALID_FD, objectName, fun);
+    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+    mmap = uOpenFileMapping(U_INVALID_FD, objectName, fun);
 
     if (U_INVALID_FILEMAPPING(mmap))
         return 1;
@@ -104,10 +103,10 @@ int uReleaseShMem(UShMem *id, global_name gname, sys_call_error_fun fun)
 {
     struct gobj_info_t info = {GOBJECT_SHARED_MEM, id};
     GLOBAL_NAME_BUFFER_DECL(objectName);
-    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+    UMMap mmap;
     
 #ifdef _WIN32
-    UMMap mmap;
+    UGetNameFromGlobalName(gname, objectName, sizeof objectName);
 
     mmap.map = id->id;
     mmap.size = id->size;
