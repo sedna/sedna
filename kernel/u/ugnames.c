@@ -24,7 +24,7 @@ static unsigned int basedir_hash = 0;
 #include <sys/ipc.h>
 #endif
 
-#include "aux/commutil.h"
+#include "auxiliary/commutil.h"
 
 void uSetGlobalNameGeneratorBase(const char* _basedir, const char * _instance)
 {

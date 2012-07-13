@@ -3,8 +3,8 @@
 
 #include "config_data.h"
 
-#include "aux/cppcast.h"
-#include "aux/options/xml_options.h"
+#include "auxiliary/cppcast.h"
+#include "auxiliary/options/xml_options.h"
 
 #include "common/socketutils/socketutils.h"
 

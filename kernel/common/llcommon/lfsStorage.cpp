@@ -34,7 +34,7 @@
 #include "common/sedna.h"
 #include "common/base.h"
 
-#include "aux/cppcast.h"
+#include "auxiliary/cppcast.h"
 
 #include "u/uhdd.h"
 #include "u/ushm.h"

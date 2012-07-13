@@ -17,7 +17,7 @@
 #include "u/usem.h"
 #include "u/uevent.h"
 
-#include "aux/cppcast.h"
+#include "auxiliary/cppcast.h"
 
 #include "common/sedna.h"
 #include "common/base.h"

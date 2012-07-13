@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "aux/counted_ptr.h"
+#include "auxiliary/counted_ptr.h"
 #include "gov/gov_globals.h"
 #include "common/sedna.h"
 #include "common/errdbg/d_printf.h"
-#include "aux/argtable2/argtable2.h"
+#include "auxiliary/argtable2/argtable2.h"
 #include "u/uprocess.h"
 
 #include <sstream>

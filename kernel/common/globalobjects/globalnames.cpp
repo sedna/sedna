@@ -5,8 +5,8 @@
 #include "u/uevent.h"
 #include "u/uhdd.h"
 
-#include "aux/cppcast.h"
-#include "aux/counted_ptr.h"
+#include "auxiliary/cppcast.h"
+#include "auxiliary/counted_ptr.h"
 
 #include "common/sedna.h"
 #include "common/errdbg/event_log.h"

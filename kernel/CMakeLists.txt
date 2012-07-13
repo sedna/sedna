@@ -1,4 +1,4 @@
-add_subdirectory(aux)
+add_subdirectory(auxiliary)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Werror")

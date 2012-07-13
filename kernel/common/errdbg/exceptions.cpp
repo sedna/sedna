@@ -8,7 +8,7 @@
 #include "event_log.h"
 
 #include "u/uprocess.h"
-#include "aux/cppcast.h"
+#include "auxiliary/cppcast.h"
 
 /*	SednaException is derived from std::exception, hence
 	it must implement the following method:

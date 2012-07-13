@@ -4,8 +4,8 @@
 #include "common/structures/listener_states.h"
 
 #include "common/protocol/int_sp.h"
-#include "aux/internstr.h"
-#include "aux/options/xml_options.h"
+#include "auxiliary/internstr.h"
+#include "auxiliary/options/xml_options.h"
 
 #include <set>
 

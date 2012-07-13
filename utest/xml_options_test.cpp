@@ -1,7 +1,7 @@
 #define TEST_NAME "0003.xmlOptionsTest.xml"
 
-#include "aux/counted_ptr.h"
-#include "aux/options/xml_options.h"
+#include "auxiliary/counted_ptr.h"
+#include "auxiliary/options/xml_options.h"
 #include "common/structures/config_data.h"
 #include "gtest/gtest.h"
 
