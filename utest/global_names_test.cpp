@@ -46,9 +46,9 @@ TEST(objectsCreation, Shmem)
 
     printf("Waiting to be killed\nZZZ>>>");
     fflush(stdout);
-
+#ifndef _WIN32
     sleep(5);
-
+#endif
     printf("\nPassed\n");
 };
 
@@ -73,9 +73,9 @@ TEST(objectsCreation, Semaphors)
 
     printf("Waiting to be killed\nZZZ>>>");
     fflush(stdout);
-
+#ifndef _WIN32
     sleep(5);
-
+#endif
     printf("\nPassed\n");
 };
 

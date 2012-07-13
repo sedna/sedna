@@ -146,7 +146,7 @@ int event_log_long_write_to_buffer(const char *short_str, const char *long_str);
  * (call these functions in the 'main' process)
  * 
  */
-int event_logger_start_daemon(int elevel, global_name shm_name, global_name sems_name);
+int event_logger_start_daemon(const char * a_log_base_dir, int elevel, global_name shm_name, global_name sems_name);
 int event_logger_shutdown_daemon(global_name shm_name);
 
 /*

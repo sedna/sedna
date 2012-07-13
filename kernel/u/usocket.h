@@ -14,6 +14,7 @@ extern "C"
 #endif
 
 #ifdef _WIN32
+#include <WinSock2.h>
     typedef SOCKET USOCKET;
 
 #define U_INVALID_SOCKET			INVALID_SOCKET

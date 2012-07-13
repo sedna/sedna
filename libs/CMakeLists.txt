@@ -1,7 +1,10 @@
 # pcre library
 add_subdirectory(pcre)
+
 #ancillary library
+if(UNIX)
 add_subdirectory(libancillary-0.9.1)
+endif(UNIX)
 
 # expat "external" library
 # we use internal cached variables to determine directories for -I and -L: 1) look for cache 2) then try to describe builduing expat from scratch

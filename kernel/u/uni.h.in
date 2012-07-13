@@ -19,3 +19,11 @@ size_t strnlen(const char *s, size_t max) {
     return(p - s);
 }
 #endif
+
+#ifdef _WIN32
+
+#ifndef snprintf
+#define snprintf _snprintf
+#endif /* snprintf */
+
+#endif /* _WIN32 */

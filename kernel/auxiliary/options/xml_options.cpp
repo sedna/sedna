@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include "expat.h"
+#include "u\uni.h"
 
 using namespace std;
 

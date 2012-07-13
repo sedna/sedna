@@ -21,5 +21,7 @@ endif(UNIX)
 add_dependencies(common generate_error_codes) # build error codes before common (devenv parallel build freaks out without this)
 
 target_link_libraries(common u)
+if(UNIX)
 target_link_libraries(common ancillary)
+endif(UNIX)
 target_link_libraries(common auxiliary)

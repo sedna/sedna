@@ -491,7 +491,7 @@ Before you compile
 #include <math.h>
 #include <sys/types.h>
 #ifdef _WIN32
-#include <winsock.h>
+#include <winsock2.h>
 #else
 #include <netinet/in.h>
 #endif

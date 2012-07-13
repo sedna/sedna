@@ -24,7 +24,7 @@ UMMap uCreateFileMapping(UFile fd, size_t size, const char* name, USECURITY_ATTR
     size_low = (DWORD)size;
 
     m.fd = fd;
-	uName = UWinIPCNameFromGlobalName(name, buf, sizeof buf);
+	uName = UGetNameFromGlobalName(name, buf, sizeof buf);
     m.map = CreateFileMapping(fd, sa, PAGE_READWRITE, size_high, size_low, uName);
     if (m.map == NULL) sys_call_error("CreateFileMapping");
 
@@ -55,7 +55,7 @@ UMMap uOpenFileMapping(UFile fd, const char *name, sys_call_error_fun fun)
     const char *uName = NULL;
     UMMap m;
     m.fd = INVALID_HANDLE_VALUE;
-	uName = UWinIPCNameFromGlobalName(name, buf, sizeof buf);
+	uName = UGetNameFromGlobalName(name, buf, sizeof buf);
     m.map = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, uName);
     if (m.map == NULL) sys_call_error("OpenFileMapping");
     return m;

@@ -16,6 +16,7 @@
 
 #include "common/sedna.h"
 #include "common/protocol/sp.h"
+#include "common/protocol/int_sp.h"
 
 typedef struct {
     struct cmsghdr h;
@@ -372,7 +373,7 @@ int MessageExchanger::sendSocket ( UPID dest_pid, USOCKET dest_sock, USOCKET sou
 
     LPWSAPROTOCOL_INFO client_socket_info = (LPWSAPROTOCOL_INFO) malloc( sizeof( *client_socket_info));
     if (WSADuplicateSocket(source_sock, dest_pid, client_socket_info) == SOCKET_ERROR) {
-        throw USER_EXCEPTION2(SE3035, usocket_error_translator());
+        throw SocketTransmissionException(usocket_error_translator());
     }
     writeSock ( (void *) client_socket_info );
     free(client_socket_info);

@@ -15,6 +15,10 @@
 
 #include "sp_defs.h"
 
+#ifdef _WIN32
+#define inline
+#endif /* _WIN32 */
+
 typedef struct event_log_msg {
     int  processed;
     int  global_elevel;
@@ -91,6 +95,7 @@ static const char *el_component_detail = NULL;
 static int el_sid = -1;
 static int el_trid = -1;
 static int el_pid = -1;
+static const char * log_base_dir = "";
 
 static char event_log_buffer[10240];
 static int event_log_sys_log_enabled = 0;
@@ -284,7 +289,7 @@ event_log_init_file:
     if (!el_ostr) {
         /* initialize output stream */
         char buf[SEDNA_DATA_VAR_SIZE + 128];
-        strcpy(buf, SEDNA_DATA);
+        strcpy(buf, log_base_dir);
 #ifdef _WIN32
         strcat(buf, "\\data\\");
 #else
@@ -322,7 +327,7 @@ event_log_init_file:
         el_ostr = NULL;
 
         /* backup file if needed */
-        strcpy(buf1, SEDNA_DATA);
+        strcpy(buf1, log_base_dir);
 #ifdef _WIN32
         strcat(buf1, "\\data\\");
 #else
@@ -332,7 +337,7 @@ event_log_init_file:
 
 
         if (event_log_truncate) {
-            strcpy(buf2, SEDNA_DATA);
+            strcpy(buf2, log_base_dir);
 #ifdef _WIN32
             strcat(buf2, "\\data\\");
 #else
@@ -360,7 +365,7 @@ event_log_init_file:
             if(999 == counter) {
                 counter = 0;
             }
-            strcpy(buf2, SEDNA_DATA);
+            strcpy(buf2, log_base_dir);
 #ifdef _WIN32
             strcat(buf2, "\\data\\");
 #else
@@ -701,9 +706,10 @@ int event_log_long_write_to_buffer(const char *short_str, const char *long_str)
  * Init/release functions
  * ============================================================================
  */
-int event_logger_start_daemon(int elevel, global_name shm_name, global_name sems_name)
+int event_logger_start_daemon(const char * a_log_base_dir, int elevel, global_name shm_name, global_name sems_name)
 {
     int sems_init_values[SE_EVENT_LOG_SEMS_NUM] = {1, 0, 0, 0};
+    log_base_dir = a_log_base_dir;
 
     /* create shared memory */
     if (uCreateShMem(&el_shmem, shm_name, sizeof(event_log_msg), NULL, __sys_call_error) != 0) {
@@ -901,15 +907,14 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
     const char* str = component2str(component);
     char buf[SEDNA_DATA_VAR_SIZE + 128];
 
-
     /* !TODO: get it from config as separate option */
 
-    if (SEDNA_DATA == NULL) {
+    if (log_base_dir == NULL) {
         elog(EL_FATAL, ("Can't set sedna data to write sedna fault information\n"));
         return U_INVALID_FD;
     };
 
-    strncpy(buf, SEDNA_DATA, SEDNA_DATA_VAR_SIZE);
+    strncpy(buf, log_base_dir, SEDNA_DATA_VAR_SIZE);
 
 #ifdef _WIN32
     strcat(buf, "\\data\\");

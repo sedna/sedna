@@ -90,7 +90,11 @@ class EventDescriptor : public GlobalObjectDescriptor {
 public:
     EventDescriptor(global_name name, UEvent * _evt)
         : GlobalObjectDescriptor(name), evt(*_evt) {
+#ifndef _WIN32
         id = "EVT" + cast_to_string(evt.semid);
+#else
+        id = "EVT" + cast_to_string(evt.handle);
+#endif /* _WIN32 */
     };
 
     virtual void cleanup() const;
@@ -129,7 +133,11 @@ void EventDescriptor::cleanup() const
 
 void EventDescriptor::saveTo(std::ostream* stream) const
 {
+#ifndef _WIN32
     (*stream) << "EVT " << evt.semid << "\n";
+#else
+    (*stream) << "EVT " << evt.handle << "\n";
+#endif /* _WIN32 */
 }
 
 void SemaphoreArrayDescriptor::cleanup() const
