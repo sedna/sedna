@@ -40,6 +40,16 @@ class ITupleOperator;
 typedef std::vector<IOperator *> Operators;
 typedef std::map<IOperator *, Operators::size_type> OperatorMap;
 
+class OperationFlags
+{
+private:
+    uint64_t changed_flags;
+public:
+    inline bool changed(unsigned id) const { return (changed_flags & (0x1 << id)) > 0; };
+    inline void set_changed(unsigned id) { changed_flags |= (0x1 << id); };
+    inline void clear_changed() { changed_flags = 0; };
+};
+
 class ExecutionBlock {
     static std::stack<ExecutionBlock * > blockBuildingStack;
 public:
@@ -64,6 +74,8 @@ public:
 private:
     friend class IOperator;
 public:
+    OperationFlags flags;
+
     ExecutionContext * context;
 
     Operators body;
@@ -105,8 +117,8 @@ public:
     virtual ~IOperator();
     virtual void reset() = 0;
 
+    OperationFlags & flags() { return block->flags; };
     const operation_info_t * info() const { return opinfo; };
-
     virtual XmlConstructor & toXML(XmlConstructor &) const;
 };
 

@@ -25,6 +25,7 @@
 
 namespace phop {
     class IOperator;
+    class PlanExecutor;
 }
 
 struct ContextInfo {
@@ -32,8 +33,6 @@ struct ContextInfo {
 };
 
 namespace rqp {
-
-class PlanVisitor;
 
 struct opdesc_t {
     const char * opname;
@@ -59,10 +58,13 @@ class PlanContext : public opt::IPlanDisposable {
 
     ScopeStack scopeStack;
     VarNameMap scope;
+
   public:
     PlanContext();
     ~PlanContext();
 
+    phop::PlanExecutor * executor;
+    
     const TupleDefinition * getVarDef(opt::TupleId tid) const { return &(greatTupleScheme.at(tid)); };
 
     opt::TupleId generateTupleId();
@@ -84,6 +86,7 @@ class RPBase : public opt::IPlanDisposable, public IXMLSerializable {
   protected:
     PlanContext * context;
     static int opids;
+
     int opuid;
     int resultChild;
 
@@ -102,6 +105,7 @@ class RPBase : public opt::IPlanDisposable, public IXMLSerializable {
     RPBase * result() { if (resultChild > -1) { return children[resultChild]; } else { return null_op; } };
 
     virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
+    virtual void execute() const = 0;
 
 //    virtual rewrite() const;
 //    virtual phop::IOperator * compile() const = 0;
@@ -111,8 +115,6 @@ template<class T> inline static
 bool instanceof(RPBase * op) { return op != null_op && op->info()->opType == T::opid; };
 
 /* YES! I know about typeid operator existance. */
-
-#define ABSTRACT_OPERATION \
 
 #define MAX_OPERATION_ID 0x200
 
@@ -134,7 +136,6 @@ const opdesc_t C::sopdesc = {#C, C::opid}; \
 
 /* 0r-operations */
 class ConstantOperation : public RPBase {
-    ABSTRACT_OPERATION
   protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   public:
@@ -144,7 +145,6 @@ class ConstantOperation : public RPBase {
 
 /* 1r-operations */
 class ListOperation : public RPBase {
-    ABSTRACT_OPERATION
   protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   public:
@@ -158,7 +158,6 @@ class ListOperation : public RPBase {
 
 /* 1r-operations with independent nested operation plan */
 class NestedOperation : public ListOperation {
-    ABSTRACT_OPERATION
   protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   public:
@@ -174,7 +173,6 @@ class NestedOperation : public ListOperation {
 
 /* 2r-operations */
 class BinaryOperation : public RPBase {
-    ABSTRACT_OPERATION
   private:
   protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
@@ -190,7 +188,6 @@ class BinaryOperation : public RPBase {
 };
 
 class ManyChildren : public RPBase {
-    ABSTRACT_OPERATION
   protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
   private:

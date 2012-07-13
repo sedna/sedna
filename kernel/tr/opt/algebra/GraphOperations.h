@@ -45,6 +45,8 @@ public:
 
     void joinGraph(opt::DataGraphIndex & dg);
     void leftJoinGraph(opt::DataGraphIndex & dg);
+
+    virtual void execute() const;
     
     PROPERTY_RO(List, RPBase *, children[list_id])
 };

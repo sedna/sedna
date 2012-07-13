@@ -65,3 +65,8 @@ void MapGraph::joinGraph(DataGraphIndex& rg)
     func.rebuild();
 }
 
+void MapGraph::execute() const
+{
+    context->executor->bindVarible();
+    context->executor->pushStack();
+}
