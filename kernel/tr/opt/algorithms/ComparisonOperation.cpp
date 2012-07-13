@@ -130,7 +130,7 @@ size_t GeneralCollationSerializer::serialize(const tuple& t, void* buf)
 
     c += write_cell(atomize(t.cells[idx]), c);
 
-    for (unsigned i = 0; i != t.size(); ++i) {
+    for (int i = 0; i != t.size(); ++i) {
         c += write_cell(t.cells[i], c);
     };
 
@@ -157,7 +157,7 @@ void GeneralCollationSerializer::deserialize(tuple& t, void* buf, size_t size)
 
     c += skip_cell(c);
 
-    for (unsigned i = 0; i != t.size(); ++i) {
+    for (int i = 0; i != t.size(); ++i) {
         c += read_cell(t.cells[i], c);
     };
 
@@ -207,7 +207,7 @@ void DocOrderSerializer::deserialize(tuple& t, void* buf, size_t size)
     c += sizeof(size_t);
     c += strlen;
     
-    for (unsigned i = 0; i != t.size(); ++i) {
+    for (int i = 0; i != t.size(); ++i) {
         c += read_cell(t.cells[i], c);
     };
 

@@ -12,7 +12,7 @@
 #include "tr/structures/schema.h"
 #include "tr/executor/base/sequence.h"
 #include "tr/crmutils/xdm.h"
-#include "tr/structures/producer.h"
+#include "tr/models/IElementProducer.h"
 #include "tr/strings/strings.h"
 
 #include <vector>

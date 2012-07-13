@@ -4,7 +4,7 @@
 #include "tr/crmutils/serialization.h"
 #include "tr/structures/schema.h"
 #include "common/errdbg/d_printf.h"
-#include "tr/executor/base/SCElementProducer.h"
+#include "tr/models/SCElementProducer.h"
 #include "tr/executor/base/PPBase.h"
 
 using namespace std;

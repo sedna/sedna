@@ -105,7 +105,7 @@ class RPBase : public opt::IPlanDisposable, public IXMLSerializable {
     RPBase * result() { if (resultChild > -1) { return children[resultChild]; } else { return null_op; } };
 
     virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
-    virtual void execute() const = 0;
+//    virtual void execute() const = 0;
 
 //    virtual rewrite() const;
 //    virtual phop::IOperator * compile() const = 0;

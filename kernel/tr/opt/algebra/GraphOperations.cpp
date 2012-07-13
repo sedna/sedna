@@ -67,6 +67,6 @@ void MapGraph::joinGraph(DataGraphIndex& rg)
 
 void MapGraph::execute() const
 {
-    context->executor->bindVarible();
-    context->executor->pushStack();
+//    context->executor->bindVarible();
+//    context->executor->pushStack();
 }

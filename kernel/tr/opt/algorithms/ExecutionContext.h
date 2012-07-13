@@ -16,7 +16,7 @@ namespace phop {
 
 class StaticContext {
 };
-
+/*
 struct Producer
 {
     union {
@@ -53,7 +53,7 @@ public:
 
     tuple_cell next()
     {
-        if (value.eos()) {
+        if (value.is_eos()) {
             return value;
         };
 
@@ -74,13 +74,13 @@ public:
         return get();
     };
 };
-
 class VariableMap {
     
 public:
     VarIterator & get(opt::TupleId tid);
     void bind(opt::TupleId tid, Producer * producer);
 };
+*/
 
 class DynamicContext {
 public:
@@ -92,6 +92,7 @@ public:
     CollationHandler * collation;
 };
 
+/*
 typedef std::map<opt::TupleId, Producer *> ProducerMap;
 
 class PhysicalExecutor
@@ -99,6 +100,7 @@ class PhysicalExecutor
 public:
     void execute(rqp::RPBase * base);
 };
+*/
 
 }
 
