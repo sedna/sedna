@@ -357,6 +357,8 @@ void MessageExchanger::readSock ( void* dest )
 }
 
 #ifndef _WIN32
+typedef void (*sighandler_t)(int); //mac os doesn't understand what sighandler_t is
+
 sighandler_t sigpipe_handler;
 void sighandler(int sig_num)
 {

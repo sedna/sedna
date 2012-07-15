@@ -8,7 +8,6 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include <malloc.h>
 
 static
 const char * sedna_base = "/tmp";

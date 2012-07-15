@@ -137,6 +137,7 @@ Errors could be outputted to the user in the format of <sedna-message>:
 #include <string>
 
 #include "common/errdbg/error_codes.h"
+#include "common/errdbg/event_log.h"
 
 /*	Never use catch(...), use catch(ANY_SE_EXCEPTION) instead. Catch(...) 
 	statement is missinterpreted by cl version 13 and earlier ones. It catches

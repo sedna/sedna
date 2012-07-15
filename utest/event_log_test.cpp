@@ -27,7 +27,8 @@ int main () {
       
       try {
         int res = 0;
-        res = event_logger_start_daemon(el_convert_log_level(log_level), 
+        res = event_logger_start_daemon(SEDNA_DATA,
+					el_convert_log_level(log_level),
                                         "SE_EVENT_LOG_SHARED_MEMORY_NAME", 
                                         "SE_EVENT_LOG_SEMAPHORES_NAME");
         switch (res) {
@@ -70,7 +71,8 @@ int main () {
     for (int log_level = 0; log_level < 5; log_level++) {
       try {
         int res = 0;
-        res = event_logger_start_daemon(el_convert_log_level(log_level), 
+        res = event_logger_start_daemon(SEDNA_DATA,
+					el_convert_log_level(log_level), 
                                         "SE_EVENT_LOG_SHARED_MEMORY_NAME", 
                                         "SE_EVENT_LOG_SEMAPHORES_NAME");
         switch (res) {
