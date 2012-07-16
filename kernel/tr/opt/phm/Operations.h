@@ -7,6 +7,7 @@
 
 namespace phop {
   class IFunction;
+  class PlanExecutor;
 }
 
 namespace opt {
@@ -95,6 +96,18 @@ public:
     EvaluatePrototype(PhysicalModel * model, const POProtIn & _left, const TupleRef & _right, phop::IFunction * _func);
 
     virtual void evaluateCost(CostModel* model);
+};
+
+class ExternalVarPrototype : public POProt {
+    TupleId tid;
+    phop::PlanExecutor * context;
+protected:
+    virtual XmlConstructor & __toXML(XmlConstructor & ) const;
+public:
+    ExternalVarPrototype(PhysicalModel * model, const TupleRef & tref);
+
+    virtual void evaluateCost(CostModel* model);
+    virtual phop::IOperator * compile();
 };
 
 /*

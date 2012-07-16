@@ -40,14 +40,9 @@ class ITupleOperator;
 typedef std::vector<IOperator *> Operators;
 typedef std::map<IOperator *, Operators::size_type> OperatorMap;
 
-class OperationFlags
+struct OperationFlags
 {
-private:
     uint64_t changed_flags;
-public:
-    inline bool changed(unsigned id) const { return (changed_flags & (0x1 << id)) > 0; };
-    inline void set_changed(unsigned id) { changed_flags |= (0x1 << id); };
-    inline void clear_changed() { changed_flags = 0; };
 };
 
 class ExecutionBlock {

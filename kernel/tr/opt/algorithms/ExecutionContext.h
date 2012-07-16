@@ -2,6 +2,7 @@
 #define _EXECUTION_CONTEXT_H_
 
 #include "tr/opt/OptTypes.h"
+#include "tr/opt/algebra/IndependentPlan.h"
 #include "tr/executor/base/sequence.h"
 
 namespace rqp {
@@ -10,56 +11,62 @@ class RPBase;
 
 class CollationHandler;
 
-using namespace opt;
-
 namespace phop {
+
+class ExecutionBlock;
 
 class StaticContext {
 };
-/*
-struct Producer
+
+struct VariableProducer
 {
     union {
-        ITupleOperator * top;
+        ExecutionBlock * top;
+        rqp::RPBase * op;
     };
-  
-    void map(TupleId tid, unsigned varid);
-    void reset();
-    void reset(ITupleOperator * op);
-  
-    bool next(TupleId tid)
+
+    uint64_t boundVarMask;
+
+    bool next()
     {
         return false;
     };
 };
 
+struct VarCacheInfo
+{
+    opt::TupleId tid;
+    sequence * seq;
+    VariableProducer * producer;
+};
+
 class VarIterator
 {
-    TupleId tid;
-    sequence * seq;
     int pos;
-    Producer * producer;
+    VarCacheInfo * varInfo;
     tuple_cell value;
 public:
-    VarIterator(TupleId _tid, sequence * _seq, int _pos, Producer * _producer)
-      : tid(_tid), seq(_seq), pos(_pos), producer(_producer), value(tuple_cell::eos())
+    VarIterator(VarCacheInfo * _varInfo)
+      : pos(-1), varInfo(_varInfo), value(EMPTY_TUPLE_CELL)
     {
     };
     
-    tuple_cell get()
+    tuple_cell & get()
     {
         return value;
     };
 
-    tuple_cell next()
+    tuple_cell & next()
     {
-        if (value.is_eos()) {
+        if ((pos > -1) && value.is_eos()) {
             return value;
         };
 
-        while (seq->size() == pos)
+        ++pos;
+        
+        while (varInfo->seq->size() == pos)
         {
-            if (!producer->next())
+            if (!varInfo->producer->next())
             {
                 value.set_eos();
                 break;
@@ -67,20 +74,12 @@ public:
         }
         
         tuple x(1);
-        seq->get(x, pos);
+        varInfo->seq->get(x, pos);
         value = x[0];
-        ++pos;
 
         return get();
     };
 };
-class VariableMap {
-    
-public:
-    VarIterator & get(opt::TupleId tid);
-    void bind(opt::TupleId tid, Producer * producer);
-};
-*/
 
 class DynamicContext {
 public:
@@ -92,15 +91,44 @@ public:
     CollationHandler * collation;
 };
 
-/*
-typedef std::map<opt::TupleId, Producer *> ProducerMap;
+//typedef std::map<opt::TupleId, Producer *> ProducerMap;
 
-class PhysicalExecutor
+struct result_t
+{
+    tuple_cell value;
+    rqp::RPBase * action;
+    phop::ExecutionBlock * plan;
+    unsigned tupleIndex;
+
+    result_t(const tuple_cell & _tc) : value(_tc) {};
+    result_t(rqp::RPBase * act) : action(act) {};
+    result_t(phop::ExecutionBlock * _block, unsigned _tupleIndex) : action(NULL), plan(_block), tupleIndex(_tupleIndex) {};
+};
+
+class ConstructorContext
 {
 public:
-    void execute(rqp::RPBase * base);
+    IElementProducer * producer();
+    IElementProducer * push(IElementProducer *);
+    IElementProducer * pop();
 };
-*/
+
+typedef std::list<result_t> ResultStack;
+
+class PlanExecutor
+{
+public:
+    ResultStack result;
+    ResultStack::iterator resultIterator;
+  
+    VariableProducer * getProducer(opt::TupleId var);
+    VarIterator getVarIterator(opt::TupleId var);
+    ConstructorContext * getConstructorContext();
+
+    void bind(opt::TupleId var, VariableProducer * producer);
+    void bind(const opt::TupleScheme & vars, VariableProducer * producer, const opt::TupleScheme & dependsOn);
+    void unbind(opt::TupleScheme vars);
+};
 
 }
 

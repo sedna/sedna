@@ -163,8 +163,6 @@ XmlConstructor & EvaluatePrototype::__toXML(XmlConstructor & element) const
     return POProt::__toXML(element);
 }
 
-
-
 /*
 
 MagicJoinPrototype::MagicJoinPrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, const pe::Path& _path)
@@ -394,7 +392,7 @@ struct ExecutionBlockWarden {
 
 phop::IOperator * AbsPathScanPrototype::compile()
 {
-    ExecutionBlockWarden(this);
+    ExecutionBlockWarden warden(this);
 
     SchemaNodePtrSet schemaNodes;
     phop::TupleList inTuples;
@@ -421,7 +419,7 @@ phop::IOperator * AbsPathScanPrototype::compile()
 
 phop::IOperator * PathEvaluationPrototype::compile()
 {
-    ExecutionBlockWarden(this);
+    ExecutionBlockWarden warden(this);
     // TODO : make effective evaluation
 
     ITupleOperator * opin = dynamic_cast<ITupleOperator *>(in.at(0).op->getStatement());
@@ -473,7 +471,7 @@ phop::IOperator * PathEvaluationPrototype::compile()
 
 phop::IOperator * MergeJoinPrototype::compile()
 {
-    ExecutionBlockWarden(this);
+    ExecutionBlockWarden warden(this);
 
     POProtIn left(in[0]), right(in[1]);
 
@@ -511,7 +509,7 @@ phop::IOperator * MergeJoinPrototype::compile()
 
 IOperator* FilterTuplePrototype::compile()
 {
-    ExecutionBlockWarden(this);
+    ExecutionBlockWarden warden(this);
 
     POProtIn left(in[0]), right(in[1]);
 
@@ -528,7 +526,7 @@ IOperator* FilterTuplePrototype::compile()
 
 phop::IOperator * ValueScanPrototype::compile()
 {
-    ExecutionBlockWarden(this);
+    ExecutionBlockWarden warden(this);
 
     if (in.at(0).op->getProtInfo() == OPREF(AbsPathScanPrototype)) {
         AbsPathScanPrototype * pathScan = dynamic_cast<AbsPathScanPrototype *>(in.at(0).op);
@@ -574,7 +572,7 @@ phop::IOperator * ValueScanPrototype::compile()
 
 IOperator* EvaluatePrototype::compile()
 {
-    ExecutionBlockWarden(this);
+    ExecutionBlockWarden warden(this);
 
     ITupleOperator * leftOpPtr = dynamic_cast<ITupleOperator *>(in.at(0).op->getStatement());
     // WARNING: Result is mapped after compile()
@@ -587,7 +585,7 @@ IOperator* EvaluatePrototype::compile()
 
 phop::IOperator * ValidatePathPrototype::compile()
 {
-    ExecutionBlockWarden(this);
+    ExecutionBlockWarden warden(this);
 
     return in.at(0).op->getStatement();
 }

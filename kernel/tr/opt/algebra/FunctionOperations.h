@@ -55,6 +55,8 @@ public:
         children.push_back(_name);
     };
 
+    virtual void execute();
+    
     PROPERTY_RO(Name, RPBase *, children[1])
     PROPERTY_RO(Type, t_item, type)
 };

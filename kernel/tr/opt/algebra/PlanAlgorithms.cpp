@@ -369,20 +369,59 @@ bool rule_DataGraph_try_join(PlanRewriter * pr, DataGraphOperation * op)
     return false;
 };
 
+struct DataNodeTupleLookup
+{
+    TupleId tid;
+
+    inline
+    DataNodeTupleLookup(TupleId _tid) : tid(_tid) {};
+    
+    inline
+    bool operator()(const DataNode * dnode) {
+        return dnode->varTupleId == tid;
+    };
+};
+
 static 
 bool rule_redundant_MapGraph(PlanRewriter * pr, MapGraph * op)
 {
-    if (op->graph().predicates.empty() &&
-          (rqp::instanceof<rqp::Const>(op->getList()) ||
+    if ((rqp::instanceof<rqp::Const>(op->getList()) ||
             rqp::instanceof<rqp::VarIn>(op->getList())))
     {
-        optimizer->dgm()->deleteGraph(op->graph().dg);
+        if (op->graph().predicates.empty()) {
+            optimizer->dgm()->deleteGraph(op->graph().dg);
 
-        debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), op->getList()->oid());
-        pr->replaceInParent(op, op->getList());
+            debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), op->getList()->oid());
+            pr->replaceInParent(op, op->getList());
 
-        return true;
+            return true;
+        }
+
+        if (rqp::instanceof<rqp::VarIn>(op->getList())) {
+            rqp::VarIn * var = static_cast<rqp::VarIn *>(op->getList());
+
+            DataNodeList::const_iterator it = std::find_if(op->graph().out.begin(), op->graph().out.end(), DataNodeTupleLookup(var->getTuple()));
+
+            if (it == op->graph().out.end()) {
+                // TODO : actually it may be replaced with IF statement
+                return false;
+            } else {
+                DataNode * dn = *it;
+
+                op->graph().out.clear();
+                op->graph().out.push_back(dn);
+                op->graph().rebuild();
+                op->graph().dg->operation = new DataGraphOperation(op->graph().dg);
+
+                pr->replaceInParent(op, op->graph().dg->operation);
+                return true;
+            };
+
+        };
+
+        // TODO : constant in list is replacable too
     };
+
     return false;
 };
 
@@ -458,6 +497,34 @@ bool rule_push_down_variable(PlanRewriter * pr, SequenceConcat * op)
 };
 
 static
+bool rule_remove_If(PlanRewriter * pr, If * op)
+{
+    VarIn * condition = dynamic_cast<VarIn *>(op->getCondition());
+
+    /* Replace If expression with its then part if result of
+     * the condition is known to be constant in the circumestances
+     *
+     * TODO : make a more complex check
+     * TODO : cleanup else
+     */
+    
+    if (NULL != condition)
+    {
+        VariableInfo & varInfo = optimizer->dgm()->getVariable(condition->getTuple());
+        U_ASSERT(varInfo.producer != NULL);
+
+        if (varInfo.producer->alwaysTrue)
+        {
+            pr->replaceInParent(op, op->getThen());
+            return true;
+        };
+    };
+
+    return false;
+};
+
+/*
+static
 bool rule_Select_try_join(PlanRewriter * pr, Select * op)
 {
     DataGraphOperation * condition = dynamic_cast<DataGraphOperation *>(op->getList());
@@ -483,7 +550,7 @@ bool rule_Select_try_join(PlanRewriter * pr, Select * op)
 
     return false;
 };
-
+*/
 
 void PlanRewriter::do_execute()
 {
@@ -510,7 +577,6 @@ void PlanRewriter::do_execute()
             break;
           case SequenceConcat::opid :
           case MapConcat::opid :
-          case Select::opid :
             {
               NestedOperation * nop = static_cast<NestedOperation *>(op);
 
@@ -531,9 +597,9 @@ void PlanRewriter::do_execute()
             {
                 RULE(rule_push_down_variable(this, static_cast<SequenceConcat *>(op)));
             };
-          case Select::opid :
+          case If::opid :
             {
-                RULE(rule_Select_try_join(this, static_cast<Select *>(op)));
+                RULE(rule_remove_If(this, static_cast<If *>(op)));
             };
             break;
           case Exists::opid :
@@ -553,10 +619,7 @@ void PlanRewriter::do_execute()
                 };
 
                 if (instanceof<MapGraph>(op)) {
-                    if (static_cast<MapGraph *>(op)->graph().predicates.empty()) {
-                        RULE(rule_redundant_MapGraph(this, static_cast<MapGraph *>(op)));
-                    }
-
+                    RULE(rule_redundant_MapGraph(this, static_cast<MapGraph *>(op)));
                     RULE(rule_MapGraph_remove_unused(this, static_cast<MapGraph *>(op)));
                 }
 

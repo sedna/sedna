@@ -50,7 +50,7 @@ private:
 
     DataGraphList allGraphs;
 
-/*    
+/*
     DataNode * createNode(DataGraph * dg);
     Predicate * createPredicate(DataGraph * dg, Predicate * predicate);
     DataGraph * createGraph();
@@ -91,8 +91,6 @@ public:
 
     DataGraph * join(DataGraph * left, DataGraph * right);
     DataGraph * leftOuterJoin(DataGraph * left, DataGraph * right);
-
-    phop::ITupleOperator* compile(DataGraph* dg);
 };
 
 }

@@ -105,7 +105,7 @@ class RPBase : public opt::IPlanDisposable, public IXMLSerializable {
     RPBase * result() { if (resultChild > -1) { return children[resultChild]; } else { return null_op; } };
 
     virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
-//    virtual void execute() const = 0;
+    virtual void execute() { U_ASSERT(false); };
 
 //    virtual rewrite() const;
 //    virtual phop::IOperator * compile() const = 0;
@@ -190,6 +190,8 @@ class BinaryOperation : public RPBase {
 class ManyChildren : public RPBase {
   protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
+
+    ManyChildren(_opinfo_t op) : RPBase(op) {};
   private:
   public:
     ManyChildren(_opinfo_t op, const OperationList & _oplist)

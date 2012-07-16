@@ -32,24 +32,6 @@ public:
     };
 };
 
-/*
- * Select operation binds the context variable
- *
- * Operation returns the result of _subplan_
- * if EBV of evaluation of _list_ is true for
- * each element from the _subplan_ sequence
- */
-
-class Select : public NestedOperation {
-    OPERATION(0x004)
-public:
-    Select(RPBase* _list, RPBase* _subplan, const ContextInfo & _context)
-      : NestedOperation(&sopdesc, _list, _subplan, _context.item)
-    {
-        resultChild = 1;
-    };
-};
-
 }
 
 #endif /* _MAP_OPERATIONS_H_ */

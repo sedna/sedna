@@ -68,11 +68,13 @@ struct DataNode : public IPlanDisposable, public IXMLSerializable
 
     DataGraph * parent;
     
+    bool alwaysTrue; // Hint for boolean expressions
+    
     explicit DataNode(data_node_type_t _type)
         : type(_type), replacedWith(NULL), index(0), indexBit(0),
           absoluteIndex(0), aliasFor(NULL),
           varTupleId(opt::invalidTupleId), producedFrom(NULL),
-          parent(NULL)
+          parent(NULL), alwaysTrue(false)
     { };
 
     void setIndex(int _index) {

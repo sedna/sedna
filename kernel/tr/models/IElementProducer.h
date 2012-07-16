@@ -25,6 +25,16 @@ class IElementProducer {
     virtual IElementProducer * addElement(const xsd::QName &qname, xmlscm_type type = xs_anyType) = 0;
 
     virtual tuple_cell addNode(const tuple_cell & node, bool preserveType) = 0;
+
+    tuple_cell addValue(const tuple_cell & value, bool preserveType)
+    {
+        if (value.is_node()) {
+            return addNode(value, preserveType);
+        } else {
+            return addAtomic(value);
+        }
+    };
+    
     virtual tuple_cell addAtomic(const tuple_cell & node) = 0;
 
     virtual bool hasNode(const tuple_cell & node) = 0;

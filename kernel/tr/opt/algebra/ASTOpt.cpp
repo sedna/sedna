@@ -139,7 +139,15 @@ void lr2opt::visit(ASTAxisStep &n)
         for (ASTNodesVector::iterator pred = n.preds->begin(); pred != n.preds->end(); pred++) {
             context->generateContext();
             (*pred)->accept(*this);
-            resultOp = new Select(context->popResult(), resultOp, context->context);
+
+            resultOp =
+              new MapConcat(
+                new If(
+                  /* Condition */ context->popResult(),
+                  /* If holds */ new VarIn(context->context.item),
+                  null_op),
+                resultOp,
+                context->context);
         }
 
         context->context = saveContextVariable;
@@ -172,7 +180,15 @@ void lr2opt::visit(ASTFilterStep &n) {
         for (ASTNodesVector::iterator pred = n.preds->begin(); pred != n.preds->end(); pred++) {
             context->generateContext();
             (*pred)->accept(*this);
-            resultOp = new Select(context->popResult(), resultOp, context->context);
+
+            resultOp =
+              new MapConcat(
+                new If(
+                  /* Condition */ context->popResult(),
+                  /* If holds */ new VarIn(context->context.item),
+                  null_op),
+                resultOp,
+                context->context);
         }
 
         context->context = saveContextVariable;

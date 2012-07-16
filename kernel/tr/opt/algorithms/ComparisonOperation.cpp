@@ -164,9 +164,6 @@ void GeneralCollationSerializer::deserialize(tuple& t, void* buf, size_t size)
     U_ASSERT(size == (c - (char *) buf));
 }
 
-
-
-
 size_t DocOrderSerializer::serialize(const tuple& t, void* buf)
 {
     char * c = (char *) buf;

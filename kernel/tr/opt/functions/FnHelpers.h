@@ -16,8 +16,7 @@ inline static
 bool isConditional(rqp::RPBase * parent, rqp::RPBase * child)
 {
     return
-      (rqp::instanceof<rqp::If>(parent) && static_cast<rqp::If *>(parent)->getCondition() == child) ||
-      (rqp::instanceof<rqp::Select>(parent) && static_cast<rqp::Select *>(parent)->getList() == child);
+      (rqp::instanceof<rqp::If>(parent) && static_cast<rqp::If *>(parent)->getCondition() == child);
 };
 
 inline static
@@ -36,8 +35,7 @@ bool preservesNull(rqp::RPBase * parent, rqp::RPBase * child)
     /* Condition of IF expression with only THEN branch */
       (rqp::instanceof<rqp::If>(parent) && static_cast<rqp::If *>(parent)->getCondition() == child &&
           parent->result() == static_cast<rqp::If *>(parent)->getThen()) ||
-    /* Any branch of Select or MapConcat */
-      rqp::instanceof<rqp::Select>(parent) ||
+    /* Any branch of MapConcat */
       rqp::instanceof<rqp::MapConcat>(parent);
 };
 
@@ -138,6 +136,7 @@ opt::DataNode * createTrueNode()
 {
     opt::DataNode * result = new opt::DataNode(opt::DataNode::dnConst);
     result->sequence = optimizer->dgm()->alwaysTrueSequence;
+    result->alwaysTrue = true;
     return result;
 };
 
