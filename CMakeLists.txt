@@ -279,6 +279,7 @@ endif (MAKE_DOC)
 # unit tests
 if (UNIT_TESTS)
     add_subdirectory(utest)
+    enable_testing()
 endif (UNIT_TESTS)
 
 # configure some files

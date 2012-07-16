@@ -1,3 +1,4 @@
+enable_testing()
 include_directories(../kernel)
 include_directories(gtest-1.6.0/include/)
 
@@ -20,3 +21,16 @@ add_executable(global_names_test global_names_test.cpp)
 add_dependencies(global_names_test generate_error_codes u common gtest)
 target_link_libraries(global_names_test u common gtest ${sysaux_LIB})
 
+
+add_test(NAME event_log_test COMMAND event_log_test)
+
+add_test(NAME test_options COMMAND test_options)
+
+add_test(NAME global_names_test COMMAND global_names_test)
+
+
+
+set(TEST_SET event_log_test test_options global_names_test)
+
+add_custom_target(testing COMMAND ${CMAKE_CTEST_COMMAND}
+                  DEPENDS ${TEST_SET})
