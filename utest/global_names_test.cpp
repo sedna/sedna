@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
 #else
         cmd.append("xml:reports/");
 #endif   
-        cmd.append(TEST_NAME);
+//         cmd.append(TEST_NAME);
          ::testing::GTEST_FLAG(output) = cmd.c_str();
     }
     ::testing::InitGoogleTest(&argc, argv);
