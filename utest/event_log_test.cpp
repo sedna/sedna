@@ -11,7 +11,7 @@
 #include <iostream>
 #include <string>
 
-std::string elog_location = "/tmp/";
+std::string elog_location = "/tmp";
 
 TEST(eventLog, SimpleWorkTest) {
 /* Check that event log works */ 
@@ -19,7 +19,7 @@ TEST(eventLog, SimpleWorkTest) {
       
       try {
         int res = 0;
-        res = event_logger_start_daemon(SEDNA_DATA,
+        res = event_logger_start_daemon(elog_location.c_str(),
                                         el_convert_log_level(log_level),
                                         "SE_EVENT_LOG_SHARED_MEMORY_NAME", 
                                         "SE_EVENT_LOG_SEMAPHORES_NAME");
@@ -66,7 +66,7 @@ TEST(eventLog, InfiniteLoopOnDownCheck) {
     for (int log_level = 0; log_level < 5; log_level++) {
       try {
         int res = 0;
-        res = event_logger_start_daemon(SEDNA_DATA,
+        res = event_logger_start_daemon(elog_location.c_str(),
                                         el_convert_log_level(log_level), 
                                         "SE_EVENT_LOG_SHARED_MEMORY_NAME", 
                                         "SE_EVENT_LOG_SEMAPHORES_NAME");
@@ -113,10 +113,8 @@ int main(int argc, char** argv) {
     }
     ::testing::InitGoogleTest(&argc, argv);   
     
-    char * SEDNA_DATA = (char *) malloc(2048);
     GlobalObjectsCollector collector(elog_location.c_str());
     uSetGlobalNameGeneratorBase(elog_location.c_str(), "0");
-    strcpy(SEDNA_DATA, elog_location.c_str());
 
   
     return RUN_ALL_TESTS();

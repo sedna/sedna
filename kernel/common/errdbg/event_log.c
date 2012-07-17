@@ -298,8 +298,23 @@ event_log_init_file:
         strcat(buf, SE_EVENT_LOG_FILENAME);
 
         el_ostr = fopen(buf, "at");
+        
         if (!el_ostr) {
-            return;
+/* this is needed if data dir doesn't exist */            
+            strcpy(buf, log_base_dir);
+#ifdef _WIN32
+            strcat(buf, "\\data\\");
+#else
+            strcat(buf, "/data/");
+#endif
+            uMkDir(buf, NULL, NULL) == 0;
+            
+            strcat(buf, SE_EVENT_LOG_FILENAME);
+
+            el_ostr = fopen(buf, "at");
+            if (!el_ostr) {
+                return;
+            }
         }
 
         /// We must make it non inheritable, other way sessions created by
