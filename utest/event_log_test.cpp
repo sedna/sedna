@@ -109,6 +109,7 @@ int main(int argc, char** argv) {
 #endif   
 //         cmd.append(TEST_NAME);
          ::testing::GTEST_FLAG(output) = cmd.c_str();
+         ::testing::GTEST_FLAG(stack_trace_depth) = ::testing::kMaxStackTraceDepth;
     }
     ::testing::InitGoogleTest(&argc, argv);   
     

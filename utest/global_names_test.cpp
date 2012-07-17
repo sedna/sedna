@@ -41,12 +41,7 @@ TEST(objectsCreation, Shmem)
 
     uCreateShMem(&shmem, buffer_memory_shm, 1024, NULL, test_error);
 
-    printf("Waiting to be killed\nZZZ>>>");
     fflush(stdout);
-#ifndef _WIN32
-    sleep(5);
-#endif
-    printf("\nPassed\n");
 };
 
 TEST(objectsCreation, Semaphors)
@@ -64,12 +59,7 @@ TEST(objectsCreation, Semaphors)
 
     USemaphoreArrCreate(&sem, 16, init, "sem_array_test", NULL, test_error);
 
-    printf("Waiting to be killed\nZZZ>>>");
     fflush(stdout);
-#ifndef _WIN32
-    sleep(5);
-#endif
-    printf("\nPassed\n");
 };
 
 int main(int argc, char** argv) {
@@ -82,6 +72,8 @@ int main(int argc, char** argv) {
 #endif   
 //         cmd.append(TEST_NAME);
          ::testing::GTEST_FLAG(output) = cmd.c_str();
+//         ::testing::GTEST_FLAG(color) = "yes";
+         ::testing::GTEST_FLAG(stack_trace_depth) = ::testing::kMaxStackTraceDepth;
     }
     ::testing::InitGoogleTest(&argc, argv);
     

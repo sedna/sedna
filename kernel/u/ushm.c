@@ -22,16 +22,17 @@ int uCreateShMem(UShMem *id, global_name gname, size_t size, USECURITY_ATTRIBUTE
 {
     struct gobj_info_t info = {GOBJECT_SHARED_MEM, id};
     GLOBAL_NAME_BUFFER_DECL(objectName);
-	UMMap mmap;
-#ifdef _WIN32
     UGetNameFromGlobalName(gname, objectName, sizeof objectName);
-    mmap = uCreateFileMapping(U_INVALID_FD, size, objectName, sa, fun);
+#ifdef _WIN32
+    {
+        UMMap mmap = uCreateFileMapping(U_INVALID_FD, size, objectName, sa, fun);
 
-    if (U_INVALID_FILEMAPPING(mmap))
-        return 1;
+        if (U_INVALID_FILEMAPPING(mmap))
+            return 1;
 
-    id->id = mmap.map;
-    id->size = mmap.size;
+        id->id = mmap.map;
+        id->size = mmap.size;
+    }
 #else /* _WIN32 */
 
     if (UGlobalObjectsGC) { UGlobalObjectsGC->onCleanup(gname, info); };
@@ -65,16 +66,17 @@ int uCreateShMem(UShMem *id, global_name gname, size_t size, USECURITY_ATTRIBUTE
 int uOpenShMem(UShMem* id, global_name gname, sys_call_error_fun fun)
 {
     GLOBAL_NAME_BUFFER_DECL(objectName);
-	UMMap mmap;
-#ifdef _WIN32
     UGetNameFromGlobalName(gname, objectName, sizeof objectName);
-    mmap = uOpenFileMapping(U_INVALID_FD, objectName, fun);
+#ifdef _WIN32
+    {
+        UMMap mmap = uOpenFileMapping(U_INVALID_FD, objectName, fun);
 
-    if (U_INVALID_FILEMAPPING(mmap))
-        return 1;
+        if (U_INVALID_FILEMAPPING(mmap))
+            return 1;
 
-    id->id = mmap.map;
-    id->size = mmap.size;
+        id->id = mmap.map;
+        id->size = mmap.size;
+    }
 #else
     struct stat fbuf;
 
@@ -103,15 +105,16 @@ int uReleaseShMem(UShMem *id, global_name gname, sys_call_error_fun fun)
 {
     struct gobj_info_t info = {GOBJECT_SHARED_MEM, id};
     GLOBAL_NAME_BUFFER_DECL(objectName);
-    UMMap mmap;
-    
-#ifdef _WIN32
     UGetNameFromGlobalName(gname, objectName, sizeof objectName);
+#ifdef _WIN32
+    {
+        UMMap mmap;
 
-    mmap.map = id->id;
-    mmap.size = id->size;
+        mmap.map = id->id;
+        mmap.size = id->size;
 
-    return uReleaseFileMapping(mmap, objectName, fun);
+        return uReleaseFileMapping(mmap, objectName, fun);
+    }
 #else
     if(id->id != -1 && close(id->id) == -1)
     {
