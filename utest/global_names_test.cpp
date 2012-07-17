@@ -21,7 +21,9 @@ static
 void test_error(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg)
 {
     fprintf(stderr, "Error at %s : %s; @%s:%d %s\n", sys_call, strerror(errno), filename, lineno, funcname);
+    fflush(stderr);
     errorCount++;
+    ASSERT_FALSE(true);
 //    get_current_dir_name();
 };
 
@@ -32,16 +34,12 @@ TEST(objectsCreation, Shmem)
     printf("Creating shared memory\n");
 
     uCreateShMem(&shmem, buffer_memory_shm, 1024, NULL, test_error);
-    ASSERT_EQ(0, errorCount);
     uOpenShMem(&shmem, buffer_memory_shm, test_error);
-    ASSERT_EQ(0, errorCount);
     uReleaseShMem(&shmem, buffer_memory_shm, test_error);
-    ASSERT_EQ(0, errorCount);
 
     printf("OK\nCreating shared memory once more\n");
 
     uCreateShMem(&shmem, buffer_memory_shm, 1024, NULL, test_error);
-    ASSERT_EQ(0, errorCount);
 
     printf("Waiting to be killed\nZZZ>>>");
     fflush(stdout);
@@ -59,16 +57,12 @@ TEST(objectsCreation, Semaphors)
     printf("Creating sem array\n");
 
     USemaphoreArrCreate(&sem, 16, init, "sem_array_test", NULL, test_error);
-    ASSERT_EQ(0, errorCount);
     USemaphoreArrOpen(&sem, 16, "sem_array_test", test_error);
-    ASSERT_EQ(0, errorCount);
     USemaphoreArrRelease(sem, 16, test_error);
-    ASSERT_EQ(0, errorCount);
 
     printf("OK\nCreating sem array once more\n");
 
     USemaphoreArrCreate(&sem, 16, init, "sem_array_test", NULL, test_error);
-    ASSERT_EQ(0, errorCount);
 
     printf("Waiting to be killed\nZZZ>>>");
     fflush(stdout);
@@ -94,7 +88,7 @@ int main(int argc, char** argv) {
     GlobalObjectsCollector collector(sedna_base);
     uSetGlobalNameGeneratorBase(sedna_base, "0");
 
-    errorCount = RUN_ALL_TESTS();
+    RUN_ALL_TESTS();
 
     collector.cleanup();
 

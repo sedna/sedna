@@ -11,24 +11,16 @@
 #include <iostream>
 #include <string>
 
-/* Attention! you need to make folder utest/data in your build directory to perform this test */
+std::string elog_location = "/tmp/";
 
-int main () {
-    char * SEDNA_DATA = (char *) malloc(2048);
-    
-    std::string elog_location = "/tmp/";
-    
-    GlobalObjectsCollector collector(elog_location.c_str());
-    uSetGlobalNameGeneratorBase(elog_location.c_str(), "0");
-    strcpy(SEDNA_DATA, elog_location.c_str());
-    
-    /* Check that event log works */ 
+TEST(eventLog, SimpleWorkTest) {
+/* Check that event log works */ 
     for (int log_level = 1; log_level < 5; log_level++) {
       
       try {
         int res = 0;
         res = event_logger_start_daemon(SEDNA_DATA,
-					el_convert_log_level(log_level),
+                                        el_convert_log_level(log_level),
                                         "SE_EVENT_LOG_SHARED_MEMORY_NAME", 
                                         "SE_EVENT_LOG_SEMAPHORES_NAME");
         switch (res) {
@@ -44,7 +36,6 @@ int main () {
           default: break;
         }
 
-        
         elog(log_level, ("Hi, I'm log and I'm started successfully!"));
         elog_long(log_level, "Hi, I'm long message in log!", " Not really very long but I'm needed just for test"); 
         
@@ -63,16 +54,20 @@ int main () {
                   break;
           default: break;
         }
-      } catch (std::string a) { std::cout << a; }
+      } catch (std::string a) { 
+          std::cout << a; 
+          ASSERT_FALSE(true);
+      }
     }
-    
+}
 
-    /* Check that event log isn't stuck in infinite loop if it's down*/
+TEST(eventLog, InfiniteLoopOnDownCheck) {
+/* Check that event log isn't stuck in infinite loop if it's down*/
     for (int log_level = 0; log_level < 5; log_level++) {
       try {
         int res = 0;
         res = event_logger_start_daemon(SEDNA_DATA,
-					el_convert_log_level(log_level), 
+                                        el_convert_log_level(log_level), 
                                         "SE_EVENT_LOG_SHARED_MEMORY_NAME", 
                                         "SE_EVENT_LOG_SEMAPHORES_NAME");
         switch (res) {
@@ -96,8 +91,32 @@ int main () {
         */
         elog_long(log_level, "Hi, I'm long message in log!", "And you shouldn't see me too");
         elog(log_level, ("If you are in debug mode and you see this line as active, then I'm in infinite loop!"));
-      } catch (std::string a) { std::cout << a; }
+      } catch (std::string a) { 
+          std::cout << a; 
+          ASSERT_FALSE(true);
+      }
     }
+
+}
+
+int main(int argc, char** argv) {
+    if(argc == 1) {
+        std::string cmd;
+#ifdef WIN32
+        cmd.append("xml:reports\\");
+#else
+        cmd.append("xml:reports/");
+#endif   
+//         cmd.append(TEST_NAME);
+         ::testing::GTEST_FLAG(output) = cmd.c_str();
+    }
+    ::testing::InitGoogleTest(&argc, argv);   
+    
+    char * SEDNA_DATA = (char *) malloc(2048);
+    GlobalObjectsCollector collector(elog_location.c_str());
+    uSetGlobalNameGeneratorBase(elog_location.c_str(), "0");
+    strcpy(SEDNA_DATA, elog_location.c_str());
+
   
-    return 0;
+    return RUN_ALL_TESTS();
 }
