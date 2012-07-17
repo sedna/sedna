@@ -307,7 +307,7 @@ event_log_init_file:
 #else
             strcat(buf, "/data/");
 #endif
-            uMkDir(buf, NULL, NULL) == 0;
+            uMkDir(buf, NULL, NULL);
             
             strcat(buf, SE_EVENT_LOG_FILENAME);
 

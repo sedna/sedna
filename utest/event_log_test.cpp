@@ -11,7 +11,12 @@
 #include <iostream>
 #include <string>
 
+#ifdef _WIN32
+#include <cstdlib>
+std::string elog_location(std::getenv("TEMP"));
+#else
 std::string elog_location = "/tmp";
+#endif /* _WIN32 */
 
 TEST(eventLog, SimpleWorkTest) {
 /* Check that event log works */ 
