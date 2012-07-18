@@ -313,6 +313,11 @@ XmlNodeReader* XmlNodeReader::createElementReader(const SimpleNodeTest& expr, Xm
 
 #define BUFFER_SIZE 4*1024
 
+/*
+ * NOTE: This structure is uninitialized by default. 
+ * All methods, using this structure must initialize it theirselves
+ */
+
 struct XmlParserLevel {
     std::stringstream * textBuffer;
     XmlParserTrigger * trigger;
@@ -332,7 +337,7 @@ private:
 public:
     ParserState() : currentStackPosition(-1) {};
   
-    XmlParserLevel * push() {
+    void push() {
         currentStackPosition++;
 
         if ((int) nodeStack.size() <= currentStackPosition) {
@@ -341,16 +346,18 @@ public:
         } else {
             nodeStack.at(currentStackPosition).clear();
         }
-
-        return &(nodeStack.at(currentStackPosition));
     }
 
-    XmlParserLevel * top() {
+    XmlParserLevel * current() {
         return &(nodeStack.at(currentStackPosition));
     };
 
-    XmlParserLevel * pop() {
-        return &(nodeStack.at(currentStackPosition--));
+	XmlParserLevel * parent() {
+		return &(nodeStack.at(currentStackPosition-1));
+	};
+
+	void pop() {
+		currentStackPosition--;
     };    
 };
 
@@ -371,7 +378,9 @@ public:
 
 ExpatWrapperPP::ExpatWrapperPP(XmlParserTrigger * trigger)
 {
-    XmlParserLevel * topLevel = pstate.push();
+	pstate.push();
+
+	XmlParserLevel * topLevel = pstate.current();
 
     topLevel->deep = false;
     topLevel->composite = false;
@@ -424,8 +433,11 @@ void ExpatWrapperPP::execute(istream* stream)
 void ExpatWrapperPP::elementStart(void* _p, const char* el, const char** attr)
 {
     ParserState * pstate = ((ParserState *) _p);
-    XmlParserLevel * currentLevel = pstate->top();
-    XmlParserLevel * childLevel = pstate->push();
+
+	pstate->push();
+
+    XmlParserLevel * currentLevel = pstate->parent();
+    XmlParserLevel * childLevel = pstate->current();
 
 /*
     if (currentLevel->textBuffer.tellp() > 0) {
@@ -452,8 +464,9 @@ void ExpatWrapperPP::elementStart(void* _p, const char* el, const char** attr)
 void ExpatWrapperPP::elementEnd(void* _p, const char* el)
 {
     ParserState * pstate = ((ParserState *) _p);
-    XmlParserLevel * currentLevel = pstate->pop();
-    XmlParserLevel * parentLevel = pstate->top();
+
+    XmlParserLevel * currentLevel = pstate->current();
+    XmlParserLevel * parentLevel = pstate->parent();
 
     if (currentLevel->textBuffer->tellp() > 0) {
         std::string value = currentLevel->textBuffer->str();
@@ -466,11 +479,13 @@ void ExpatWrapperPP::elementEnd(void* _p, const char* el)
             parentLevel->trigger->onValue(el, value, false, parentLevel->deep);
         }
     }
+
+	pstate->pop();
 }
 
 void ExpatWrapperPP::dataHandler(void* p, const char* data, int len)
 {
-    XmlParserLevel * currentLevel = ((ParserState *) p)->top();
+    XmlParserLevel * currentLevel = ((ParserState *) p)->current();
     currentLevel->textBuffer->write(data, len);
 }
 
