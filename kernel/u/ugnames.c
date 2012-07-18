@@ -49,7 +49,7 @@ const char* UGetNameFromGlobalName(global_name globalName, char* buf, size_t buf
     };
 
 #ifdef _WIN32
-    snprintf(buf, bufSize, "Global\\sedna-%08x/%s.%s", basedir_hash, globalName, instance);
+    snprintf(buf, bufSize, "sedna-%08x/%s.%s", basedir_hash, globalName, instance);
 #elif (defined(FreeBSD) || defined(DARWIN))
     snprintf(buf, bufSize, "/tmp/%s.%s", basedir, globalName, instance);
 #else
