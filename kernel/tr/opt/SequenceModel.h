@@ -15,7 +15,10 @@
 class XmlConstructor;
   
 namespace opt {
+  
 class POProt;
+struct DataGraphIndex;
+
 }
 
 #define PHOPQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
@@ -39,30 +42,31 @@ class ITupleOperator;
 
 typedef std::vector<IOperator *> Operators;
 typedef std::map<IOperator *, Operators::size_type> OperatorMap;
+typedef std::map<opt::TupleId, unsigned> TupleIdMap;
 
 struct OperationFlags
 {
     uint64_t changed_flags;
 };
 
-class ExecutionBlock {
-    static std::stack<ExecutionBlock * > blockBuildingStack;
+class GraphExecutionBlock {
+    static std::stack<GraphExecutionBlock * > blockBuildingStack;
 public:
-    static ExecutionBlock * current()
+    static GraphExecutionBlock * current()
     {
         return blockBuildingStack.top();
     };
 
-    static ExecutionBlock * push(ExecutionBlock * executionBlock)
+    static GraphExecutionBlock * push(GraphExecutionBlock * executionBlock)
     {
-        ExecutionBlock * result = blockBuildingStack.empty() ? NULL : blockBuildingStack.top();
+        GraphExecutionBlock * result = blockBuildingStack.empty() ? NULL : blockBuildingStack.top();
         blockBuildingStack.push(executionBlock);
         return result;
     };
 
-    static ExecutionBlock * pop()
+    static GraphExecutionBlock * pop()
     {
-        ExecutionBlock * result = blockBuildingStack.top();
+        GraphExecutionBlock * result = blockBuildingStack.top();
         blockBuildingStack.pop();
         return result;
     };
@@ -77,16 +81,23 @@ public:
     OperatorMap operatorMap;
 
     std::stack<opt::POProt *> sourceStack;
-    std::map<opt::TupleId, unsigned> resultMap;
 
-    ExecutionBlock() {};
-    ~ExecutionBlock() {};
+// TODO : this is not actual result map!!!    
+   TupleIdMap resultMap;
 
-    ExecutionBlock * copy();
+    GraphExecutionBlock() {};
+    ~GraphExecutionBlock() {};
+
+    GraphExecutionBlock * copy();
 
     virtual void setContext(ExecutionContext * __context)
       { context = __context; };
+
+    unsigned outputTupleId;
+
+    void prepare(const opt::DataGraphIndex * dgi);
     
+    inline
     ITupleOperator * top()
     {
         return (ITupleOperator *)(body.back());
@@ -102,7 +113,7 @@ class IOperator {
 private:
     const operation_info_t * opinfo;
 protected:
-    ExecutionBlock * block;
+    GraphExecutionBlock * block;
 
     IOperator(OPINFO_T _opinfo);
 

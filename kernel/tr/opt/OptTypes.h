@@ -31,6 +31,18 @@ struct FunctionInfo;
 
 #define MAX_GRAPH_SIZE 63
 
+template <typename T>
+class object_vector : public std::vector<T *>
+{
+typedef std::vector<T *> base_t;
+public:
+    ~object_vector() {
+        for (base_t::const_iterator it = base_t::begin(); it != base_t::end(); ++it) {
+            delete *it;
+        };
+    };
+};
+
 namespace opt {
 
 typedef uint64_t PlanDesc;

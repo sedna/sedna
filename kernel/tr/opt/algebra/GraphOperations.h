@@ -5,7 +5,7 @@
 #include "tr/opt/graphs/DataGraphs.h"
 
 namespace phop {
-    class ExecutionBlock;
+    class GraphExecutionBlock;
 }
 
 namespace rqp {
@@ -45,7 +45,7 @@ class MapGraph : public DataGraphOperation {
     OPERATION(0x01b)
 private:
     int list_id;
-    phop::ExecutionBlock * compiledGraph;
+    phop::GraphExecutionBlock * compiledGraph;
 public:
     MapGraph(RPBase* _list, opt::DataGraph * function_, const OperationList & _oplist)
       : DataGraphOperation(&sopdesc, function_, _oplist), compiledGraph(NULL) {

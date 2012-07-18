@@ -355,12 +355,12 @@ void PPDataGraph::do_next(tuple& t)
         IElementProducer * rootProducer = SCElementProducer::getVirtualRoot(XNULL);
 //        IElementProducer * dgElement = dg->toXML(rootProducer);
 
-        phop::ExecutionBlock * block  = new phop::ExecutionBlock();
-        phop::ExecutionBlock::push(block);
+        phop::GraphExecutionBlock * block  = new phop::GraphExecutionBlock();
+        phop::GraphExecutionBlock::push(block);
 
         phop::ITupleOperator * op = dgm.compile(dg);
         
-        idx = phop::ExecutionBlock::current()->resultMap[dg->outputNodes.at(0)->absoluteIndex];
+        idx = phop::GraphExecutionBlock::current()->resultMap[dg->outputNodes.at(0)->absoluteIndex];
 
         block->context = new phop::ExecutionContext();
         block->context->collation = cxt->get_static_context()->get_default_collation();

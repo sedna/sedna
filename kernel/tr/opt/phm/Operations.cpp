@@ -13,6 +13,7 @@
 #include "tr/executor/base/ITupleSerializer.h"
 #include "tr/opt/algorithms/ComparisonOperation.h"
 #include "tr/opt/functions/Functions.h"
+#include "tr/opt/algebra/IndependentPlan.h"
 
 using namespace opt;
 
@@ -27,6 +28,7 @@ OPINFO(StructuralJoinPrototype)
 OPINFO(ValueScanPrototype)
 OPINFO(ValidatePathPrototype)
 OPINFO(EvaluatePrototype)
+OPINFO(ExternalVarPrototype)
 
 AbsPathScanPrototype::AbsPathScanPrototype(PhysicalModel* model, const TupleRef& tref)
   : POProt(OPREF(AbsPathScanPrototype)), dataRoot(), path()
@@ -161,6 +163,22 @@ XmlConstructor & EvaluatePrototype::__toXML(XmlConstructor & element) const
 //    element.addElementValue(CDGQNAME("path"), path.toXPathString());
 
     return POProt::__toXML(element);
+}
+
+ExternalVarPrototype::ExternalVarPrototype(PhysicalModel* model, const TupleRef& tref)
+  : POProt(OPREF(ExternalVarPrototype)), tid(invalidTupleId)
+{
+    context = optimizer->context()->executor;
+    tid = tref->node->varTupleId;
+}
+
+XmlConstructor& ExternalVarPrototype::__toXML(XmlConstructor& element) const
+{
+    element.openElement(CDGQNAME("tuple"));
+    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(tid));
+    element.closeElement();
+
+    return opt::POProt::__toXML();
 }
 
 /*
@@ -376,30 +394,28 @@ void ValidatePathPrototype::evaluateCost(CostModel* model)
 using namespace phop;
 using namespace pe;
 
-
-
-struct ExecutionBlockWarden {
-    ExecutionBlockWarden(POProt * opin)
+struct GraphExecutionBlockWarden {
+    GraphExecutionBlockWarden(POProt * opin)
     {
-        phop::ExecutionBlock::current()->sourceStack.push(opin);
+        phop::GraphExecutionBlock::current()->sourceStack.push(opin);
     };
 
-    ~ExecutionBlockWarden()
+    ~GraphExecutionBlockWarden()
     {
-        phop::ExecutionBlock::current()->sourceStack.pop();
+        phop::GraphExecutionBlock::current()->sourceStack.pop();
     };
 };
 
 phop::IOperator * AbsPathScanPrototype::compile()
 {
-    ExecutionBlockWarden warden(this);
+    GraphExecutionBlockWarden warden(this);
 
     SchemaNodePtrSet schemaNodes;
     phop::TupleList inTuples;
 
     executeSchemaPathTest(dataRoot.getSchemaNode(), pe::AtomizedPath(path.getBody()->begin(), path.getBody()->end()), &schemaNodes, false);
 
-    ExecutionBlock::current()->resultMap[resultSet.at(0)] = 0;
+    GraphExecutionBlock::current()->resultMap[resultSet.at(0)] = 0;
     
     if (schemaNodes.size() == 0) {
         U_ASSERT(false);
@@ -419,11 +435,11 @@ phop::IOperator * AbsPathScanPrototype::compile()
 
 phop::IOperator * PathEvaluationPrototype::compile()
 {
-    ExecutionBlockWarden warden(this);
+    GraphExecutionBlockWarden warden(this);
     // TODO : make effective evaluation
 
     ITupleOperator * opin = dynamic_cast<ITupleOperator *>(in.at(0).op->getStatement());
-    TupleIn aopin(opin, ExecutionBlock::current()->resultMap[in.at(0).index]);
+    TupleIn aopin(opin, GraphExecutionBlock::current()->resultMap[in.at(0).index]);
 
     U_ASSERT(opin != NULL);
 
@@ -464,22 +480,22 @@ phop::IOperator * PathEvaluationPrototype::compile()
         ain = new pe::PathEvaluateTraverse(ain, pe::AtomizedPath(it, pathBody->end()));
     }
 
-    ExecutionBlock::current()->resultMap[resultSet.at(0)] = aopin->_tsize();
+    GraphExecutionBlock::current()->resultMap[resultSet.at(0)] = aopin->_tsize();
 
     return new phop::NestedEvaluation(aopin, ain, aopin->_tsize() + 1, aopin->_tsize());
 }
 
 phop::IOperator * MergeJoinPrototype::compile()
 {
-    ExecutionBlockWarden warden(this);
+    GraphExecutionBlockWarden warden(this);
 
     POProtIn left(in[0]), right(in[1]);
 
     ITupleOperator * leftPtr = dynamic_cast<ITupleOperator *>(left.op->getStatement());
-    unsigned leftIdx = ExecutionBlock::current()->resultMap[left.index];
+    unsigned leftIdx = GraphExecutionBlock::current()->resultMap[left.index];
 
     ITupleOperator * rightPtr = dynamic_cast<ITupleOperator *>(right.op->getStatement());
-    unsigned rightIdx = ExecutionBlock::current()->resultMap[right.index];
+    unsigned rightIdx = GraphExecutionBlock::current()->resultMap[right.index];
 
     TupleIn leftOp(leftPtr, leftIdx);
     TupleIn rightOp(rightPtr, rightIdx);
@@ -496,7 +512,7 @@ phop::IOperator * MergeJoinPrototype::compile()
 
     for (unsigned i = 0; i < rightScheme->tuples.size(); ++i) {
         if (rightScheme->tuples[i].status == TupleValueInfo::evaluated) {
-            ExecutionBlock::current()->resultMap[i] += leftOp->_tsize();
+            GraphExecutionBlock::current()->resultMap[i] += leftOp->_tsize();
         };
     };
 
@@ -509,14 +525,14 @@ phop::IOperator * MergeJoinPrototype::compile()
 
 IOperator* FilterTuplePrototype::compile()
 {
-    ExecutionBlockWarden warden(this);
+    GraphExecutionBlockWarden warden(this);
 
     POProtIn left(in[0]), right(in[1]);
 
     ITupleOperator * opPtr = dynamic_cast<ITupleOperator *>(left.op->getStatement());
 
-    unsigned leftIdx = ExecutionBlock::current()->resultMap[left.index];
-    unsigned rightIdx = ExecutionBlock::current()->resultMap[right.index];
+    unsigned leftIdx = GraphExecutionBlock::current()->resultMap[left.index];
+    unsigned rightIdx = GraphExecutionBlock::current()->resultMap[right.index];
     
     return new TuplePredicateFilter(
         MappedTupleIn(opPtr, 0, 0),
@@ -526,7 +542,7 @@ IOperator* FilterTuplePrototype::compile()
 
 phop::IOperator * ValueScanPrototype::compile()
 {
-    ExecutionBlockWarden warden(this);
+    GraphExecutionBlockWarden warden(this);
 
     if (in.at(0).op->getProtInfo() == OPREF(AbsPathScanPrototype)) {
         AbsPathScanPrototype * pathScan = dynamic_cast<AbsPathScanPrototype *>(in.at(0).op);
@@ -537,7 +553,7 @@ phop::IOperator * ValueScanPrototype::compile()
 
         executeSchemaPathTest(pathScan->getRoot().getSchemaNode(), path, &schemaNodes, false);
 
-        ExecutionBlock::current()->resultMap[pathScan->resultSet.at(0)] = 0;
+        GraphExecutionBlock::current()->resultMap[pathScan->resultSet.at(0)] = 0;
         
         if (schemaNodes.size() == 0) {
             U_ASSERT(false);
@@ -560,7 +576,7 @@ phop::IOperator * ValueScanPrototype::compile()
     } else {
         ITupleOperator * leftOpPtr = dynamic_cast<ITupleOperator *>(in.at(0).op->getStatement());
         // WARNING: Result is mapped after compile()
-        unsigned leftIdx = ExecutionBlock::current()->resultMap[in.at(0).index];
+        unsigned leftIdx = GraphExecutionBlock::current()->resultMap[in.at(0).index];
         MappedTupleIn leftOp(leftOpPtr, leftIdx, 0);
 
         return new CachedNestedLoop(leftOp->_tsize(), leftOp,
@@ -572,11 +588,11 @@ phop::IOperator * ValueScanPrototype::compile()
 
 IOperator* EvaluatePrototype::compile()
 {
-    ExecutionBlockWarden warden(this);
+    GraphExecutionBlockWarden warden(this);
 
     ITupleOperator * leftOpPtr = dynamic_cast<ITupleOperator *>(in.at(0).op->getStatement());
     // WARNING: Result is mapped after compile()
-    unsigned leftIdx = ExecutionBlock::current()->resultMap[in.at(0).index];
+    unsigned leftIdx = GraphExecutionBlock::current()->resultMap[in.at(0).index];
     MappedTupleIn leftOp(leftOpPtr, leftIdx, 0);
 
     return NULL;//new FunctionOp(leftOp, leftOp->_tsize() + 1, leftOp->_tsize(), func->createInstance());
@@ -585,7 +601,7 @@ IOperator* EvaluatePrototype::compile()
 
 phop::IOperator * ValidatePathPrototype::compile()
 {
-    ExecutionBlockWarden warden(this);
+    GraphExecutionBlockWarden warden(this);
 
     return in.at(0).op->getStatement();
 }

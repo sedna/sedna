@@ -10,18 +10,6 @@
 
 using namespace phop;
 
-template <typename T>
-class object_vector : public std::vector<T *>
-{
-typedef std::vector<T *> base_t;
-public:
-    ~object_vector() {
-        for (base_t::const_iterator it = base_t::begin(); it != base_t::end(); ++it) {
-            delete *it;
-        };
-    };
-};
-
 struct Block
 {
     virtual void execute();
@@ -44,7 +32,7 @@ struct Context
 struct GroupByIterateTuple : public Block
 {
     Block * next;
-    ExecutionBlock * plan = NULL;
+    GraphExecutionBlock * plan = NULL;
     unsigned tid;
 
     virtual void execute(Context * context)
@@ -62,7 +50,7 @@ struct GroupByIterateTuple : public Block
 struct VarIn : public Block
 {
     Block * next;
-    ExecutionBlock * plan = NULL;
+    GraphExecutionBlock * plan = NULL;
     unsigned tid;
 
     virtual void execute(Context * context)

@@ -35,7 +35,7 @@ void DataGraphOperation::detectOutNode()
 
 void DataGraphOperation::execute()
 {
-    phop::ExecutionBlock * plan = NULL;
+    phop::GraphExecutionBlock * plan = NULL;
 
     plan->top()->reset();
 
@@ -79,7 +79,7 @@ void MapGraph::joinGraph(DataGraphIndex& rg)
 
 void MapGraph::execute()
 {
-    phop::ExecutionBlock * plan = NULL;
+    phop::GraphExecutionBlock * plan = NULL;
 
     U_ASSERT(!tupleMask.empty());
 

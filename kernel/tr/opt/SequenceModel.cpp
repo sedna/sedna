@@ -1,12 +1,34 @@
 #include "SequenceModel.h"
 
+#include "tr/opt/graphs/DataGraphs.h"
 #include "tr/models/XmlConstructor.h"
 
 using namespace phop;
 
-std::stack<ExecutionBlock * > ExecutionBlock::blockBuildingStack;
+std::stack<GraphExecutionBlock * > GraphExecutionBlock::blockBuildingStack;
 
 OPINFO_DEF(ReduceToItemOperator)
+
+void GraphExecutionBlock::prepare(const opt::DataGraphIndex* dgi)
+{
+    U_ASSERT(sourceStack.empty());
+    operatorMap.clear();
+
+    if (dgi != NULL) {
+        TupleIdMap realMap;
+
+        for (opt::DataNodeList::const_iterator it = dgi->out.begin(); it != dgi->out.end(); ++it)
+        {
+            opt::DataNode * node = *it;
+            if (node->varTupleId != opt::invalidTupleId)
+            {
+                realMap[node->varTupleId] = resultMap[node->absoluteIndex];
+            };
+        };
+
+        resultMap = realMap;
+    };
+}
 
 void BinaryTupleOperator::reset()
 {
@@ -35,7 +57,7 @@ void ItemOperator::reset()
 
 IOperator::IOperator(OPINFO_T _opinfo) : opinfo(_opinfo), block(NULL)
 {
-    block = ExecutionBlock::current();
+    block = GraphExecutionBlock::current();
     block->body.push_back(this);
     block->operatorMap.insert(OperatorMap::value_type(this, block->body.size()-1));
 }
