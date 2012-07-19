@@ -37,7 +37,7 @@ class object_vector : public std::vector<T *>
 typedef std::vector<T *> base_t;
 public:
     ~object_vector() {
-        for (base_t::const_iterator it = base_t::begin(); it != base_t::end(); ++it) {
+        for (typename base_t::const_iterator it = base_t::begin(); it != base_t::end(); ++it) {
             delete *it;
         };
     };

@@ -49,14 +49,15 @@ class Construct : public ListOperation {
     OPERATION(0x018)
     t_item type;
 public:
+    opt::TupleId contentId;
+
     Construct(t_item _type, RPBase* _name, RPBase* list_)
       : ListOperation(&sopdesc, list_), type(_type)
     {
+        contentId = context->generateTupleId();
         children.push_back(_name);
     };
 
-    virtual void execute();
-    
     PROPERTY_RO(Name, RPBase *, children[1])
     PROPERTY_RO(Type, t_item, type)
 };

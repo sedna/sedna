@@ -168,7 +168,7 @@ XmlConstructor & EvaluatePrototype::__toXML(XmlConstructor & element) const
 ExternalVarPrototype::ExternalVarPrototype(PhysicalModel* model, const TupleRef& tref)
   : POProt(OPREF(ExternalVarPrototype)), tid(invalidTupleId)
 {
-    context = optimizer->context()->executor;
+//    context = optimizer->context()->executor;
     tid = tref->node->varTupleId;
 }
 
@@ -178,7 +178,7 @@ XmlConstructor& ExternalVarPrototype::__toXML(XmlConstructor& element) const
     element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(tid));
     element.closeElement();
 
-    return opt::POProt::__toXML();
+    return opt::POProt::__toXML(element);
 }
 
 /*
@@ -310,6 +310,12 @@ void FilterTuplePrototype::evaluateCost(CostModel* model)
     // Update sort information
 }
 
+void ExternalVarPrototype::evaluateCost(CostModel* model)
+{
+    U_ASSERT(false);
+}
+
+
 void ValueScanPrototype::evaluateCost(CostModel* model)
 {
     TupleRef inRef(in[0], NULL);
@@ -405,6 +411,12 @@ struct GraphExecutionBlockWarden {
         phop::GraphExecutionBlock::current()->sourceStack.pop();
     };
 };
+
+IOperator* ExternalVarPrototype::compile()
+{
+    U_ASSERT(false);
+}
+
 
 phop::IOperator * AbsPathScanPrototype::compile()
 {

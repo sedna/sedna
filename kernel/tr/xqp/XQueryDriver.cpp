@@ -18,7 +18,6 @@
 
 #include "tr/opt/algebra/IndependentPlan.h"
 #include "tr/models/XmlConstructor.h"
-#include "tr/debugstream.h"
 
 namespace sedna
 {

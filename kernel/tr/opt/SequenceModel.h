@@ -12,10 +12,14 @@
 #include <deque>
 #include <stack>
 
+namespace executor {
+struct DynamicContext;
+}
+
 class XmlConstructor;
-  
+
 namespace opt {
-  
+
 class POProt;
 struct DataGraphIndex;
 
@@ -75,7 +79,8 @@ private:
 public:
     OperationFlags flags;
 
-    ExecutionContext * context;
+    executor::DynamicContext * context;
+    void setContext(executor::DynamicContext * __context) { context = __context; };
 
     Operators body;
     OperatorMap operatorMap;
@@ -90,13 +95,10 @@ public:
 
     GraphExecutionBlock * copy();
 
-    virtual void setContext(ExecutionContext * __context)
-      { context = __context; };
-
     unsigned outputTupleId;
 
     void prepare(const opt::DataGraphIndex * dgi);
-    
+
     inline
     ITupleOperator * top()
     {

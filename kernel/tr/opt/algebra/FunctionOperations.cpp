@@ -42,37 +42,6 @@ XmlConstructor& Construct::__toXML(XmlConstructor& element) const
     return rqp::ListOperation::__toXML(element);
 };
 
-void Construct::execute()
-{
-    TupleId name = context->generateTupleId();
-    TupleId content = context->generateTupleId();
-    
-    context->executor->bind(name, getName());
-    context->executor->bind(content, getList());
-    
-    phop::ResultStack::iterator it = context->executor->resultIterator;
-    
-    phop::VarIterator nameIterator = context->executor->getVarIterator(name);
-    phop::VarIterator contentIterator = context->executor->getVarIterator(content);
-
-    U_ASSERT(!nameIterator.next().is_eos());
-    tuple_cell nameValue = nameIterator.get();
-    U_ASSERT(nameIterator.next().is_eos());
-
-    phop::ConstructorContext * constructorContext = context->executor->getConstructorContext();
-    constructorContext->push(constructorContext->producer()->addElement(nameValue));
-
-    while (!contentIterator.next().is_eos()) {
-        constructorContext->producer()->addValue(contentIterator.get());
-    };
-
-    context->executor->result.insert(it, constructorContext->producer()->close());
-    constructorContext->pop();
-
-    context->executor->resultIterator = it;
-}
-
-
 XmlConstructor& XPathStep::__toXML(XmlConstructor& element) const
 {
     element.addElementValue(CDGQNAME("step"), step.toXPathString());

@@ -9,6 +9,8 @@ namespace rqp {
     class PlanContext;
 }
 
+struct PlanExecutor;
+
 namespace opt {
 
 class DataGraphMaster;
@@ -18,7 +20,8 @@ class OptimizingExecutor : SednaModule
 private:
     DataGraphMaster * _dgm;
     rqp::PlanContext * _context;
-    
+    PlanExecutor * _executor;
+
     MemoryPool memoryPool;
     FastPointerArray ptrs;
 public:
@@ -44,6 +47,7 @@ public:
 
     DataGraphMaster * dgm() const { return _dgm; };
     rqp::PlanContext * context() const { return _context; };
+    PlanExecutor * executor() { return _executor; };
 };
 
 };

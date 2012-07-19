@@ -7,6 +7,9 @@
 
 namespace executor {
 
+struct ResultSequence;
+struct DynamicContext;
+
 typedef void (* ExecutorProc)(void * object, ResultSequence * executor);
   
 struct NextResultProc
@@ -17,7 +20,7 @@ struct NextResultProc
     inline
     void operator()(ResultSequence * executor)
     {
-        *proc(object, executor);
+        proc(object, executor);
     };
 
     NextResultProc() : proc(NULL) {};
@@ -39,20 +42,28 @@ struct Result
 
 typedef std::list<Result> ResultStack;
 
+struct DynamicContext;
+
 struct ResultSequence
 {
 private:
     ResultStack result;
     ResultStack::iterator position;
 public:
+    executor::DynamicContext * context;
+
+    ResultSequence(executor::DynamicContext * _context) : context(_context)
+    {
+    };
+
     void push(const Result& _result) { position = result.insert(position, _result); };
 
-    inline clear()
+    inline void clear()
     {
         result.clear();
         position = result.begin();
     };
-    
+
     inline
     tuple_cell next()
     {

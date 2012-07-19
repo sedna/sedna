@@ -4,7 +4,6 @@
 #include "tr/opt/graphs/GraphRewriter.h"
 #include "tr/opt/functions/FnHelpers.h"
 #include "tr/opt/functions/Functions.h"
-#include "tr/debugstream.h"
 
 #include <algorithm>
 #include <sstream>

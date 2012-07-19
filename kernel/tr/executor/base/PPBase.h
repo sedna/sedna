@@ -403,7 +403,7 @@ public:
              info.initialize();
         do_open();
     }
-    
+
     inline void execute() 
     { 
         if(executor_globals::profiler_mode)

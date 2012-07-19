@@ -120,7 +120,6 @@ void TupleSort::do_next()
 void TupleSort::reset()
 {
     phop::UnaryTupleOperator::reset();
-    order->setCollationHandler(block->context->collation);
     initialized = false;
 }
 
@@ -225,7 +224,6 @@ void TupleJoinFilter::reset()
     phop::BinaryTupleOperator::reset();
 
     initialized = false;
-    tcc.handler = block->context->collation;
 
     left_seq->clear();
     right_seq->clear();
@@ -247,7 +245,6 @@ TuplePredicateFilter::TuplePredicateFilter(const phop::MappedTupleIn& _in, const
 void TuplePredicateFilter::reset()
 {
     phop::UnaryTupleOperator::reset();
-    vcc.handler = block->context->collation;
 }
 
 void TuplePredicateFilter::do_next()

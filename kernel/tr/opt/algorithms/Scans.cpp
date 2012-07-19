@@ -120,7 +120,6 @@ void SchemaValueScan::reset()
 {
     phop::ITupleOperator::reset();
     currentNode = XNULL;
-    tcmpop.handler = block->context->collation;
 }
 
 BogusConstSequence::BogusConstSequence(MemoryTupleSequencePtr _sequence, unsigned _size, unsigned _resultIdx)
@@ -206,7 +205,6 @@ void CachedNestedLoop::reset()
     BinaryTupleOperator::reset();
     cacheFilled = false;
     nestedIdx = nestedSequenceCache.size();
-    tcmpop.handler = block->context->collation;
 }
 
 NestedEvaluation::NestedEvaluation(const phop::TupleIn& _in, IValueOperator* _op, unsigned int _size, unsigned int _resultIdx)

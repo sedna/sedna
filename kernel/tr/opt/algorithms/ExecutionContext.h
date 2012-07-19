@@ -3,60 +3,37 @@
 
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/algebra/IndependentPlan.h"
+#include "tr/opt/algorithms/ExecutionStack.h"
+#include "tr/opt/graphs/GraphCompiler.h"
 #include "tr/executor/base/sequence.h"
 
 namespace rqp {
 class RPBase;
 }
 
-class CollationHandler;
+namespace executor {
 
-namespace phop {
+class VariableModel;
 
-class GraphExecutionBlock;
-
-class DynamicContext {
-public:
-//    Sequence * ;
-};
-
-class ExecutionContext {
-public:
-    CollationHandler * collation;
-};
-
-class ConstructorContext
+struct DynamicContext
 {
-    std::stack<IElementProducer *> producerStack;
-public:
-    IElementProducer * producer() { return producerStack.top(); };
-    
-    IElementProducer * push(IElementProducer * producer)
-    {
-        producerStack.push(producer);
-    };
-
-    void pop()
-    {
-        delete producerStack.top();
-        producerStack.pop();
-    };
-
-    ~ConstructorContext();
+    IElementProducer * constructorContext;
+    executor::VariableModel * variables;
 };
 
-class PlanExecutor
+};
+
+struct PlanExecutor
 {
-    ConstructorContext * constructorContext;
-public:
-    ResultStack result;
-    ResultStack::iterator resultIterator;
-  
-    VariableProducer * getProducer(opt::TupleId var);
-    VarIterator getVarIterator(opt::TupleId var);
-    ConstructorContext * getConstructorContext() { return constructorContext; };
+    executor::DynamicContext baseContext;
+    opt::GraphCompiler gc;
+
+    // TODO: optimize
+    executor::DynamicContext * newContext(const executor::DynamicContext& cxt) { return new executor::DynamicContext(cxt); };
+    executor::Result getOperationResult(rqp::RPBase * op, executor::DynamicContext * context);
+
+    PlanExecutor();
 };
 
-}
 
 #endif /* _EXECUTION_CONTEXT_H_ */

@@ -29,7 +29,7 @@ void DataGraphIndex::update()
     memset(predicateIndex, 0, sizeof(predicateIndex[0]) * MAX_GRAPH_SIZE);
 
     unsigned aI = 0;
-    
+
     FOR_ALL_GRAPH_ELEMENTS(dg->dataNodes, i) {
         DataNode * n = dg->dataNodes[i];
         DataNodeIndex * nidx = nodeIndex + i;

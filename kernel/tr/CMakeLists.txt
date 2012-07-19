@@ -69,7 +69,7 @@ if (ENABLE_DTSEARCH)
     endif (UNIX)
 endif (ENABLE_DTSEARCH)
 
-set(trn_SRC ${trn_SRC} debugstream.cpp)
+#set(trn_SRC ${trn_SRC} debugstream.cpp)
 # se_trn
 add_executable(se_trn ${trn_SRC})
 target_link_libraries(se_trn ${common_libs} )

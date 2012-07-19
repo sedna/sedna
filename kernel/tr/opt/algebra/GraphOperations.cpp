@@ -33,16 +33,6 @@ void DataGraphOperation::detectOutNode()
     out = func.out.at(0);
 }
 
-void DataGraphOperation::execute()
-{
-    phop::GraphExecutionBlock * plan = NULL;
-
-    plan->top()->reset();
-
-    context->executor->resultIterator =
-      context->executor->result.insert(context->executor->resultIterator, phop::result_t(plan));
-}
-
 XmlConstructor& MapGraph::__toXML(XmlConstructor& element) const
 {
     for (TupleScheme::const_iterator it = tupleMask.begin(); it != tupleMask.end(); ++it) {
@@ -75,54 +65,4 @@ void MapGraph::joinGraph(DataGraphIndex& rg)
     func.out.insert(func.out.end(), rg.out.begin(), rg.out.end());
 
     func.rebuild();
-}
-
-void MapGraph::execute()
-{
-    phop::GraphExecutionBlock * plan = NULL;
-
-    U_ASSERT(!tupleMask.empty());
-
-    uint64_t tupleMaskInt = 0;
-    phop::VariableProducer * vp = NULL;
-
-    if (NULL != (vp = context->executor->getProducer(tupleMask))) {
-        tupleMaskInt = vp->boundVarMask;
-        plan = vp->top;
-
-        while ((plan->top()->flags().changed_flags & tupleMaskInt) == 0) {
-            plan->top()->next();
-        };
-
-        plan->top()->flags().changed_flags = 0;
-    } else {
-        if (NULL == compiledGraph)
-        {
-            compiledGraph = NULL;
-            U_ASSERT(false);
-        };
-
-        vp = new phop::VariableProducer(compiledGraph);
-
-        for (TupleScheme::const_iterator it = tupleMask.begin(); it != tupleMask.end(); ++it)
-        {
-            tupleMaskInt |= (1 << plan->resultMap.at(*it));
-        };
-
-        vp->boundVarMask = tupleMaskInt;
-        context->executor->bind(graph().outTuples, vp, graph().inTuples);
-
-        plan->top()->reset();
-        plan->top()->next();
-        plan->top()->flags().changed_flags = 0;
-    }
-
-    if (NULL != plan && !plan->top()->get().is_eos()) {
-        if (getList() != null_op) {
-            phop::ResultStack::iterator it = context->executor->resultIterator;
-            it = context->executor->result.insert(it, phop::result_t(this->getList()));
-            it = context->executor->result.insert(it, phop::result_t(this));
-            context->executor->resultIterator = it;
-        }
-    }
 }

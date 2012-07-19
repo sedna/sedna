@@ -8,7 +8,7 @@
 namespace executor {
 
 struct VariableProducer;
-  
+
 struct VarCacheInfo
 {
     opt::TupleId tid;
@@ -20,7 +20,7 @@ struct VarCacheInfo
       : tid(opt::invalidTupleId)
     {
         // TODO : add variable no cache optimization
-        seq = new sequence();
+        seq = new sequence(1, 1024);
     }
 
     ~VarCacheInfo() { if (seq != NULL) { delete seq; } };
@@ -35,10 +35,10 @@ struct VariableProducer
     int generation; /* uninitialized, just id */
     uint64_t restrictMask;
 
-    VariableProducer(const executor::Result & result, opt::TupleId varId)
+    VariableProducer(const executor::Result & result, opt::TupleId varId, executor::DynamicContext * context)
       : varCount(1)
     {
-        valueSequence = new executor::ResultSequence();
+        valueSequence = new executor::ResultSequence(context);
         valueSequence->push(result);
 
         variables = new VarCacheInfo[1];
@@ -76,15 +76,23 @@ struct VariableProducer
     {
         generation++;
 
+        for (size_t i = 0; i < varCount; ++i) {
+            variables[i].seq->clear();
+        };
+    };
+    
+    inline
+    void reset()
+    {
+        generation++;
+
         if (valueSequence != NULL) {
             valueSequence->clear();
         } else {
             graphSequence->top()->reset();
         };
 
-        for (size_t i = 0; i < varCount; ++i) {
-            variables[i].seq->clear();
-        };
+        clear();
     };
 
     void resetGraph(phop::GraphExecutionBlock * graph, const opt::DataGraphIndex * prototype)
@@ -94,7 +102,7 @@ struct VariableProducer
 
         if (graph != graphSequence) {
             U_ASSERT(varCount == prototype->out.size());
-            
+
             graphSequence = graph;
 
             for (size_t i = 0; i < varCount; ++i)
@@ -120,7 +128,7 @@ struct VariableProducer
             if (x.is_eos()) {
                 return false;
             };
-            
+
             // TODO: get rid of tuple here!
             variables->seq->add(tuple(x));
         } else {
@@ -134,7 +142,7 @@ struct VariableProducer
             {
                 return false;
             };
-            
+
             for (size_t i = 0; i < varCount; ++i) {
                 unsigned tid = variables[i].inTuple;
 
@@ -149,16 +157,14 @@ struct VariableProducer
     };
 };
 
-typedef std::map<opt::TupleId, VarCacheInfo *> VariableMap;
-
 class VarIterator
 {
     int pos;
     VarCacheInfo * varInfo;
     tuple_cell value;
-// TODO : add generation debug    
+// TODO : add generation debug
 public:
-    VarIterator(VarCacheInfo * _varInfo)
+    explicit VarIterator(VarCacheInfo * _varInfo)
       : pos(-1), varInfo(_varInfo), value(EMPTY_TUPLE_CELL)
     {
     };
@@ -193,16 +199,65 @@ public:
     };
 };
 
+typedef std::map<opt::TupleId, VarCacheInfo *> VariableMap;
+typedef std::map<phop::GraphExecutionBlock *, VariableProducer *> VariableProducerMap;
+
 class VariableModel
 {
     VariableMap variableMap;
+    VariableProducerMap graphMap;
     object_vector<VariableProducer> producers;
 public:
+    VariableProducer * bindGraph(phop::GraphExecutionBlock * graph, const opt::DataGraphIndex * prototype)
+    {
+        // TODO : make debug check for all graph variables to be bound to valid producer
+
+        if (graphMap.find(graph) == graphMap.end())
+        {
+            VariableProducer * producer = new VariableProducer(graph, prototype);
+            graphMap.insert(VariableProducerMap::value_type(graph, producer));
+            producers.push_back(producer);
+        };
+
+        VariableProducer * producer = graphMap.at(graph);
+
+        if (variableMap[producer->variables[0].tid]->producer != producer) {
+            for (size_t i = 0; i < producer->varCount; ++i)
+            {
+                variableMap[producer->variables[i].tid] = producer->variables + i;
+            };
+        }
+
+        return producer;
+    };
+
+    VarCacheInfo * getProducer(opt::TupleId var)
+    { 
+        VariableMap::const_iterator it = variableMap.find(var);
+        return (it == variableMap.end()) ? NULL : it->second;
+    };
+
     void bind(opt::TupleId var, VariableProducer * producer)
     {
+        producers.push_back(producer);
+
+        for (size_t i = 0; i < producer->varCount; ++i)
+        {
+            variableMap[producer->variables[i].tid] = producer->variables + i;
+        };
     };
-  
-    void bind(const opt::TupleScheme & vars, VariableProducer * producer);
+
+    VarIterator getIterator(opt::TupleId var)
+    {
+        VariableMap::const_iterator it = variableMap.find(var);
+
+        if (it == variableMap.end())
+        {
+        //throw USER_EXCEPTION
+        };
+
+        return VarIterator(it->second);
+    }
 };
 
 };

@@ -1,6 +1,7 @@
 #include "GraphCompiler.h"
 
 #include "tr/opt/phm/PhysicalModel.h"
+#include "tr/opt/SequenceModel.h"
 
 // ***************************** Data Graph ***************************
 /*
@@ -51,14 +52,16 @@ public:
 };
 
 
-phop::ITupleOperator* opt::GraphCompiler::compile(opt::DataGraphIndex& graph)
+phop::GraphExecutionBlock* opt::GraphCompiler::compile(opt::DataGraphIndex& graph)
 {
-    phop::ITupleOperator* result = getGraph(graph.dg);
+    phop::GraphExecutionBlock* result = getGraph(graph.dg);
     
     if (result != NULL) {
         return result;
     };
-  
+
+    GraphExecutionBlock::push(new GraphExecutionBlock());
+
 /*
     std::ofstream F("/tmp/datagraph.log");
     se_stdlib_ostream Fstream(F);
@@ -151,8 +154,11 @@ phop::ITupleOperator* opt::GraphCompiler::compile(opt::DataGraphIndex& graph)
 
 //    serializer->serialize(tuple(planMap->getLastPlan()->toXML(vrt)->close()));
 
-    result = planMap->getLastPlan()->compile();
+    ITupleOperator * checkVar = planMap->getLastPlan()->compile();
+    result = GraphExecutionBlock::pop();
+    U_ASSERT(checkVar == result->top());
     graphCache[graph.dg] = result;
+    
     return result;
 }
 

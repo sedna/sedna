@@ -23,11 +23,6 @@
 
 /* Look PlanOperationTypes for description of all operators */
 
-namespace phop {
-    class IOperator;
-    class PlanExecutor;
-}
-
 struct ContextInfo {
     opt::TupleId item, position, size;
 };
@@ -63,8 +58,6 @@ class PlanContext : public opt::IPlanDisposable {
     PlanContext();
     ~PlanContext();
 
-    phop::PlanExecutor * executor;
-    
     const TupleDefinition * getVarDef(opt::TupleId tid) const { return &(greatTupleScheme.at(tid)); };
 
     opt::TupleId generateTupleId();
@@ -105,10 +98,6 @@ class RPBase : public opt::IPlanDisposable, public IXMLSerializable {
     RPBase * result() { if (resultChild > -1) { return children[resultChild]; } else { return null_op; } };
 
     virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
-    virtual void execute() { U_ASSERT(false); };
-
-//    virtual rewrite() const;
-//    virtual phop::IOperator * compile() const = 0;
 };
 
 template<class T> inline static
