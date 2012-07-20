@@ -172,23 +172,34 @@ xptr SblobWriter::cur_ptr()
 	return last_block + (PAGE_SIZE - last_block_avail + buf_pos);
 }
 
-void SblobReader::init(const xptr pos)
+///changes current position
+//TODO: remove all assignments to cur_blk outside of this method
+void SblobReader::move_to(const xptr blk, const int pos_in_blk)
 {
-	this->cur_blk = BLOCKXPTR(pos);
-	this->pos_in_blk = pos - this->cur_blk;
+	this->cur_blk = blk;
+	this->pos_in_blk = pos_in_blk;
 
 	//check that either there are some bytes to read or cur_blk == XNULL, so that eos() and other methods that rely on it work
 	//note that currenly empty sblob's are possible (i.e. containing 0 bytes of data)
+	//TODO: also, empty blocks may be created by SblobWriter if data perfectly fits into some number of blocks
+	//      this could be fixed, but some methods of SblobWriter rely on block with some space left being always allocated,
+	//      still could be implemented as a new method like flush_and_close()
 	if (this->cur_blk != XNULL)
 	{
 		CHECKP(this->cur_blk);
-		const struct sblob_blk_hdr *hdr = (struct sblob_blk_hdr *)XADDR(cur_blk);
-		if (pos_in_blk >= hdr->cursor)
+		const struct sblob_blk_hdr *hdr = (struct sblob_blk_hdr *)XADDR(this->cur_blk);
+		if (this->pos_in_blk >= hdr->cursor)
 		{
 			cur_blk = hdr->nblk;
 			U_ASSERT(cur_blk == XNULL);
 		}
 	}
+}
+
+void SblobReader::init(const xptr pos)
+{
+	const xptr blk = BLOCKXPTR(pos);
+	this->move_to(blk, pos - blk);
 }
 
 size_t SblobReader::read_str(char *dest, size_t max_len)
@@ -215,8 +226,7 @@ size_t SblobReader::read_str(char *dest, size_t max_len)
 					cur_blk = XNULL;
 				else
 				{
-					cur_blk = hdr->nblk;
-					pos_in_blk = sizeof(struct sblob_blk_hdr);
+					move_to(hdr->nblk, sizeof(struct sblob_blk_hdr));
 				}
 			}
 			return len+sz;
@@ -237,8 +247,7 @@ size_t SblobReader::read_str(char *dest, size_t max_len)
 					cur_blk = XNULL;
 					return len;
 				}
-				cur_blk = hdr->nblk;
-				pos_in_blk = sizeof(struct sblob_blk_hdr);
+				move_to(hdr->nblk, sizeof(struct sblob_blk_hdr));
 			}
 		}
 	}
@@ -266,8 +275,7 @@ size_t SblobReader::read_bytes(char *dest, size_t cnt)
 				cur_blk = XNULL;
 				return nread;
 			}
-			cur_blk = hdr->nblk;
-			pos_in_blk = sizeof(struct sblob_blk_hdr);
+			move_to(hdr->nblk, sizeof(struct sblob_blk_hdr));
 		}
 	}
 	return nread;

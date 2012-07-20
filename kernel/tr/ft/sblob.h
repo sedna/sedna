@@ -49,6 +49,8 @@ class SblobReader
 private:
 	xptr cur_blk;     //using one xptr is inconvinient because xptr arithmetics is buggy
 	int pos_in_blk;
+
+	void move_to(const xptr blk, const int pos_in_blk);
 public:
 	SblobReader() : cur_blk(XNULL) {}
 	void init(const xptr pos);
