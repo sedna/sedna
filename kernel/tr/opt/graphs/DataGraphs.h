@@ -23,6 +23,7 @@ struct Predicate : public IPlanDisposable {
 
     PredicateList neighbours;
     PredicateList evaluateAfter;
+    PredicateList implies;
     DataNodeList dataNodeList;
 
 //    bool createContext;
@@ -43,6 +44,8 @@ struct Predicate : public IPlanDisposable {
 
 struct DataNode : public IPlanDisposable, public IXMLSerializable
 {
+    DataGraph * parent;
+
     enum data_node_type_t {
         dnConst = 1, dnExternal, dnDatabase, dnFreeNode, dnAlias, dnReplaced
     } type;
@@ -51,30 +54,24 @@ struct DataNode : public IPlanDisposable, public IXMLSerializable
 
     int index; // Index in graph 
     PlanDesc indexBit; // Shifted index in graph
-
     int absoluteIndex; // Node index used while building execution schema
 
     // Data root information and path information
     DataRoot root;
     pe::Path path;
 
-    MemoryTupleSequencePtr sequence; // Value of constant node
-
+    MemoryTupleSequencePtr constValue; // Value of constant node
     DataNode * aliasFor;
 
     TupleId varTupleId; // Variable node came from
-
-    StructuralPredicate * producedFrom; // Used in compilation
-
-    DataGraph * parent;
-    
     bool alwaysTrue; // Hint for boolean expressions
     
     explicit DataNode(data_node_type_t _type)
-        : type(_type), replacedWith(NULL), index(0), indexBit(0),
+        : parent(NULL), type(_type),
+          replacedWith(NULL), index(0), indexBit(0),
           absoluteIndex(0), aliasFor(NULL),
-          varTupleId(opt::invalidTupleId), producedFrom(NULL),
-          parent(NULL), alwaysTrue(false)
+          varTupleId(opt::invalidTupleId),
+          alwaysTrue(false)
     { };
 
     void setIndex(int _index) {
@@ -90,6 +87,7 @@ struct PredicateIndex {
     PlanDesc neighbours;
     PlanDesc dataNodeMask;
     PlanDesc evaluateAfter;
+    PlanDesc implies;
 };
 
 struct DataNodeIndex {

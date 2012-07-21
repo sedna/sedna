@@ -26,6 +26,25 @@ struct PathCostModelData : public IPlanDisposable {
 PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path& path, TupleStatistics * copyStats, PathCostModel * result, TupleStatistics * baseStats)
 {
     PathCostModelData * modelData = new PathCostModelData;
+
+    if (path.empty()) {
+        U_ASSERT(baseStats == NULL);
+
+        result->card = 1;
+        result->blockCount = 1;
+        result->nidSize = 0;
+        
+        result->schemaTraverseCost = 0;
+        result->iterationCost = 0;
+
+        if (copyStats != NULL) {
+            copyStats->pathInfo = result;
+            copyStats->distinctValues = result->card;
+        };
+
+        return result;
+    }
+    
     pe::SchemaLookup * scmLookup = new pe::SchemaLookup(path);
 
     result->data = modelData;

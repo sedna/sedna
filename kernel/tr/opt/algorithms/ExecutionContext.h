@@ -26,13 +26,17 @@ struct DynamicContext
 struct PlanExecutor
 {
     executor::DynamicContext baseContext;
+    executor::ExecutionStack * executionStack;
     opt::GraphCompiler gc;
 
     // TODO: optimize
     executor::DynamicContext * newContext(const executor::DynamicContext& cxt) { return new executor::DynamicContext(cxt); };
     executor::Result getOperationResult(rqp::RPBase * op, executor::DynamicContext * context);
 
+    void execute(rqp::RPBase * op);
+    
     PlanExecutor();
+    ~PlanExecutor();
 };
 
 

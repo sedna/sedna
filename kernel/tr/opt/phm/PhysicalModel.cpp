@@ -12,6 +12,8 @@
 #include "tr/opt/phm/ComparisonModels.h"
 #include "tr/opt/functions/Functions.h"
 
+#include <vector>
+
 using namespace opt;
 
 PlanInfo::PlanInfo(size_t initialTupleSetSize)
@@ -167,14 +169,14 @@ POProtIn PhysicalModel::doMaterialize(TupleId t, bool addToTree)
     };
 }
 
-void PhysicalModel::updateBranch(POProt* op)
+void PlanInfo::updateBranch(POProt* op)
 {
     TupleChrysalis* x = op->result;
 
     x->_width = 0;
     for (unsigned i = 0; i != x->tuples.size(); ++i) {
         if (x->get(i)->status == TupleValueInfo::evaluated) {
-            plan->branchList.at(i) = op;
+            branchList.at(i) = op;
             x->_width++;
         };
     };
@@ -188,12 +190,6 @@ bool isConst(const TupleRef &x) { return AVAILABLE(x) && x->node->type == DataNo
 
 inline static
 bool isPath(const TupleRef &x) { return AVAILABLE(x) && x->node->type == DataNode::dnDatabase; };
-
-void* PhysicalModel::compile(PhantomPredicate* pred)
-{
-    U_ASSERT(false);
-    return NULL;
-}
 
 void* PhysicalModel::compile(ValuePredicate* pred)
 {
@@ -233,135 +229,215 @@ void* PhysicalModel::compile(ValuePredicate* pred)
         return NULL;
     };
 
-    updateBranch(result);
-    plan->opList.push_back(result);
+    pushOp(result);
 
     return result;
 }
+
+enum strategy_t {
+    impossible_to_evaluate,
+    join,
+    evaluate_Right_from_Left,
+    evaluate_Left_from_Right,
+    evaluate_Right_then_Left,
+    evaluate_Left_then_Right,
+};
+
+namespace opt {
+  
+struct Candidate
+{
+    int strategy;
+    double cost;
+    OperationList opList;
+
+    explicit Candidate(int _strategy) : strategy(_strategy) {};
+};
+
+}
+
+inline static
+bool setOp(POProtIn & op, POProt* can, OperationList & opList)
+{
+    if (op.op == NULL) {
+        if (can == NULL) {
+            return false;
+        } else {
+            opList.push_back(can);
+            op.op = can;
+        };
+    };
+
+    return true;
+};
+
+struct StructuralCandidateSelector
+{
+    PhysicalModel * model;
+    StructuralPredicate* pred;
+    
+    POProtIn leftOp;
+    POProtIn rightOp;
+    
+    POProt* leftCandidate;
+    POProt* rightCandidate;
+
+    void * evaluate(Candidate* candidate);
+};
+
+void* StructuralCandidateSelector::evaluate(Candidate* candidate)
+{
+    switch(candidate->strategy) {
+        case join:
+            if (!setOp(leftOp, leftCandidate, candidate->opList)) {
+                return NULL;
+            }
+
+            if (!setOp(rightOp, rightCandidate, candidate->opList)) {
+                return NULL;
+            }
+            
+            if (leftOp.op == rightOp.op) {
+                candidate->opList.push_back(
+                  new FilterTuplePrototype(model,
+                    leftOp, rightOp, new PathComparisonPrototype(pred->path)));
+            } else {
+                candidate->opList.push_back(
+                  new MergeJoinPrototype(model,
+                    leftOp, rightOp, new PathComparisonPrototype(pred->path)));
+            };
+
+            break;
+        case evaluate_Left_then_Right:
+            if (!setOp(leftOp, leftCandidate, candidate->opList)) {
+                return NULL;
+            }
+        case evaluate_Right_from_Left:
+            U_ASSERT(rightOp.op == NULL);
+
+            candidate->opList.push_back(
+              new PathEvaluationPrototype(model,
+                leftOp, model->initialRef(rightOp.index), pred->path));
+            // TODO :: maybe we should validate path here
+            break;
+        case evaluate_Right_then_Left:
+            if (!setOp(leftOp, leftCandidate, candidate->opList)) {
+                return NULL;
+            }
+        case evaluate_Left_from_Right:
+            U_ASSERT(pred->path.inversable());
+            U_ASSERT(leftOp.op == NULL);
+
+            candidate->opList.push_back(
+              new PathEvaluationPrototype(model,
+                rightOp, model->initialRef(leftOp.index),
+                pred->path.inverse(pe::StepTest(pe::nt_any_kind, xsd::QNameAny))));
+            // TODO :: maybe we should validate path here
+            break;
+        case impossible_to_evaluate:
+            return NULL;
+//                break;
+    };
+
+    if (candidate->opList.size() > 0) {
+        candidate->cost = candidate->opList.back()->getCost()->fullCost.avg();
+        return candidate->opList.back();
+    } else {
+        return NULL;
+    };
+}
+
 
 void* PhysicalModel::compile(StructuralPredicate* pred)
 {
-    enum strategy_t {
-        impossible_to_evaluate,
-        join,
-        magic_join,
-        evaluate_Right,
-        evaluate_Left,
-        evaluate_Left_then_Right,
-        evaluate_Right_then_Left,
-        evaluate_Left_then_join,
-    };
+    StructuralCandidateSelector sel;
+    
+    bool evaluatable = !pred->path.horizontal();
+    bool inversablePath = pred->path.inversable();
+    
+    std::vector<Candidate> candidates;
+    candidates.reserve(3);
+
+    sel.model = this;
+    sel.pred = pred;
 
     result = NULL;
-    
-    if (pred->path.horizontal()) {
-        POProtIn leftOp = materialize(plan->getRef(pred->left()->absoluteIndex));
-        POProtIn rightOp = materialize(plan->getRef(pred->right()->absoluteIndex));
 
-        if (leftOp.op != NULL && rightOp.op != NULL) {
-            if (leftOp.op == rightOp.op) {
-                result = new FilterTuplePrototype(this, leftOp, rightOp, new PathComparisonPrototype(pred->path));
-            } else {
-                result = new MergeJoinPrototype(this, leftOp, rightOp, new PathComparisonPrototype(pred->path));
-            };
-//        } else
-        // TODO: if free node available, make horizontal scan
-        } else {
-            return NULL;
-        }
+    if (evaluatable) {
+        sel.leftOp = materialize(plan->getRef(pred->left()->absoluteIndex));
+        sel.rightOp = materialize(plan->getRef(pred->right()->absoluteIndex));
+
+       // Just for a nice code
+        sel.leftCandidate = sel.leftOp.op;
+        sel.rightCandidate = sel.rightOp.op;
     } else {
-        strategy_t strategy = impossible_to_evaluate;
+        sel.leftOp = plan->getRef(pred->left()->absoluteIndex);
+        sel.rightOp = plan->getRef(pred->right()->absoluteIndex);
 
-        POProtIn leftOp = plan->getRef(pred->left()->absoluteIndex);
-        POProtIn rightOp = plan->getRef(pred->right()->absoluteIndex);
+        if (sel.leftOp.op == NULL) {
+            sel.leftCandidate = doMaterialize(sel.leftOp.index, false).op;
+        } else {
+            sel.leftCandidate = sel.leftOp.op;
+        };
 
-        POProtIn leftCandidate, rightCandidate;
-
-        do {
-            if (leftOp.op != NULL && rightOp.op != NULL) {
-                strategy = join;
-            } else if (leftOp.op != NULL) {
-                strategy = evaluate_Right;
-            } else {
-                bool pathInversable = pred->path.inversable();
-                leftCandidate = doMaterialize(leftOp.index, false);
-
-                if (rightOp.op != NULL) {
-                    if (pathInversable) {
-                        strategy = evaluate_Left;
-                    } else {
-                        strategy = evaluate_Left_then_join;
-                    };
-                } else {
-                    U_ASSERT(leftOp.op == NULL && rightOp.op == NULL);
-                    rightCandidate = doMaterialize(rightOp.index, false);
-
-                    if (!pathInversable || rightCandidate.op == NULL) {
-                        strategy = evaluate_Left_then_Right;
-                    } else if (leftCandidate.op == NULL) {
-                        strategy = evaluate_Right_then_Left;
-                    } else {
-                        strategy = magic_join;
-                    };
-                };
-            }
-        } while (false);
-
-        switch(strategy) {
-            case evaluate_Left_then_join:
-                U_ASSERT(leftCandidate.op != NULL);
-                plan->opList.push_back(leftCandidate.op);
-                leftOp = leftCandidate;
-            case join:
-                if (leftOp.op == rightOp.op) {
-                    result = new FilterTuplePrototype(this, leftOp, rightOp, new PathComparisonPrototype(pred->path));
-                } else {
-                    result = new MergeJoinPrototype(this, leftOp, rightOp, new PathComparisonPrototype(pred->path));
-                };
-                break;
-            case magic_join:
-/*              
-                U_ASSERT(leftCandidate.op != NULL && rightCandidate.op != NULL);
-                result = new MagicJoinPrototype(this, initialRef(leftOp.index), initialRef(rightOp.index), pred->path);
-                break;
-*/
-            case evaluate_Left_then_Right:
-                U_ASSERT(leftCandidate.op != NULL);
-                plan->opList.push_back(leftCandidate.op);
-                leftOp = leftCandidate;
-            case evaluate_Right:
-                result = new PathEvaluationPrototype(this, leftOp, initialRef(rightOp.index), pred->path);
-
-                if (initialRef(rightOp.index)->node->producedFrom != pred) {
-                    updateBranch(result);
-                    plan->opList.push_back(result);
-                    result = new ValidatePathPrototype(this, POProtIn(result, rightOp.index));
-                }
-
-                break;
-            case evaluate_Right_then_Left:
-                U_ASSERT(rightCandidate.op != NULL);
-                plan->opList.push_back(rightCandidate.op);
-                rightOp = rightCandidate;
-            case evaluate_Left:
-                U_ASSERT(pred->path.inversable());
-                result = new PathEvaluationPrototype(this, rightOp, initialRef(leftOp.index), pred->path.inverse(pe::StepTest(pe::nt_any_kind, xsd::QNameAny)));
-                updateBranch(result);
-                plan->opList.push_back(result);
-                result = new ValidatePathPrototype(this, POProtIn(result, leftOp.index));
-                break;
-            case impossible_to_evaluate:
-                return NULL;
-//                break;
+        if (sel.rightOp.op == NULL) {
+            sel.rightCandidate = doMaterialize(sel.rightOp.index, false).op;
+        } else {
+            sel.rightCandidate = sel.rightOp.op;
         };
     }
 
-    updateBranch(result);
-    plan->opList.push_back(result);
+    // Join is always an option!
+    if (sel.leftCandidate != NULL || sel.rightCandidate != NULL) {
+        candidates.push_back(Candidate(join));
+    }
 
+    if (evaluatable) {
+        if (sel.leftOp.op == NULL && sel.rightOp.op == NULL) {
+            if (sel.rightCandidate != NULL && inversablePath) {
+                candidates.push_back(Candidate(evaluate_Right_then_Left));
+            }
+            
+            if (sel.leftCandidate != NULL) {
+                candidates.push_back(Candidate(evaluate_Left_then_Right));
+            }
+        } else if (sel.leftOp.op != NULL) {
+            candidates.push_back(Candidate(evaluate_Right_from_Left));
+        } else if (sel.rightOp.op != NULL && inversablePath) {
+            candidates.push_back(Candidate(evaluate_Left_from_Right));
+        }
+    };
+
+    if (candidates.size() == 0) {
+        return NULL;
+    };
+
+    // TODO: actially, we should minimize cost here, but we just
+    // take the last option 
+
+    Candidate * minCandidate = NULL;
+    
+    for (std::vector<Candidate>::iterator cand = candidates.begin(); cand != candidates.end(); ++cand) {
+        Candidate * candidate = &(*cand);
+
+        if (sel.evaluate(candidate) != NULL) {
+            if (minCandidate == NULL || candidate->cost < minCandidate->cost) {
+                minCandidate = candidate;
+            }
+        };
+    };
+
+    if (minCandidate != NULL) {
+        for (OperationList::iterator it = minCandidate->opList.begin(); it != minCandidate->opList.end(); ++it) {
+            result = *it;
+            pushOp(result);
+        };
+    };
+    
     return result;
 }
 
+/*
 void* PhysicalModel::compile(FPredicate* pred)
 {
     POProtIn leftOp = materialize(plan->getRef(pred->left()->absoluteIndex));
@@ -382,6 +458,7 @@ void* PhysicalModel::compile(FPredicate* pred)
     
     return NULL;
 }
+*/
 
 phop::ITupleOperator* PlanInfo::compile()
 {

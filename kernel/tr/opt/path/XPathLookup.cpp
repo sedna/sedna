@@ -23,7 +23,7 @@ OPINFO_DEF(PathSchemaResolve)
 
 SchemaLookup& SchemaLookup::compile()
 {
-    if (atomizedPath.empty()) {
+    if (atomizedPath.empty() && !path.empty()) {
         atomizedPath = AtomizedPath(path.getBody()->begin(), path.getBody()->end());
     }
 

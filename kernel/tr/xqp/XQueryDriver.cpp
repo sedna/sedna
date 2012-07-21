@@ -443,8 +443,6 @@ namespace sedna
 
         if (!tr_globals::first_transaction) {
             res->optimizedPlan = (mods[ind])->getOPT(is_subquery);
-            res->optimizedPlan = selectDataGraphs(res->optimizedPlan);
-
 //            debug_xml("opt.g", res->optimizedPlan->toXML(xmlConstructor).getLastChild());
         }
 

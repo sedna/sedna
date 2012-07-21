@@ -116,7 +116,7 @@ ValueScanPrototype::ValueScanPrototype(PhysicalModel* model, const POProtIn& _le
     result = model->updateOne(_left.op->result, POProtIn(this, _left.index));
     resultSet.push_back(_left.index);
 
-    value = _right->node->sequence;
+    value = _right->node->constValue;
 
     evaluateCost(publicCostModel);
 }

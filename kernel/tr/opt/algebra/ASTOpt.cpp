@@ -68,6 +68,12 @@ lr2opt::~lr2opt()
     delete context;
 }
 
+void lr2opt::visit(ASTLoadFile& n)
+{
+    context->resultStack.push(ResultInfo(NULL));
+}
+
+
 /*
  * NOTE: Context item can be ONLY overwritten
  * during evaluation of path expressions and predicates!!!
@@ -86,7 +92,7 @@ void lr2opt::visit(ASTQuery &n)
     if (n.type == ASTQuery::QUERY) {
         n.query->accept(*this);
     } else {
-      //
+        context->resultStack.push(ResultInfo(NULL));
     }
 }
 

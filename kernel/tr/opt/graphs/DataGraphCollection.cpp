@@ -264,7 +264,19 @@ void DataGraphMaster::removeVariable(DataNode* dn)
         info = variableMap.at(info.pointsTo);
     };
 
-    info.nodes.erase(dn);
+    if (info.producer == dn) {
+        U_ASSERT(info.nodes.size() == 0);
+
+        TupleId tid = dn->varTupleId;
+
+        do {
+            TupleId ntid = variableMap.at(tid).pointsTo;
+            variableMap.erase(tid);
+            tid = ntid;
+        } while (tid != opt::invalidTupleId);
+    } else {
+        info.nodes.erase(dn);
+    };
 }
 
 DataGraph* DataGraphMaster::join(DataGraph* left, DataGraph* right)

@@ -28,17 +28,17 @@ struct VarCacheInfo
 
 struct VariableProducer
 {
-    executor::ResultSequence * valueSequence;
+    executor::ExecutionStack * valueSequence;
     phop::GraphExecutionBlock * graphSequence;
     VarCacheInfo * variables;
     size_t varCount;
     int generation; /* uninitialized, just id */
     uint64_t restrictMask;
 
-    VariableProducer(const executor::Result & result, opt::TupleId varId, executor::DynamicContext * context)
+    VariableProducer(const executor::Result & result, opt::TupleId varId)
       : varCount(1)
     {
-        valueSequence = new executor::ResultSequence(context);
+        valueSequence = new executor::ExecutionStack();
         valueSequence->push(result);
 
         variables = new VarCacheInfo[1];
@@ -253,6 +253,7 @@ public:
 
         if (it == variableMap.end())
         {
+            U_ASSERT(false);
         //throw USER_EXCEPTION
         };
 

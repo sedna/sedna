@@ -2,6 +2,7 @@
 
 #include "tr/opt/phm/PhysicalModel.h"
 #include "tr/opt/SequenceModel.h"
+#include "tr/opt/phm/Operations.h"
 
 // ***************************** Data Graph ***************************
 /*
@@ -87,21 +88,28 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(opt::DataGraphIndex& grap
 
     PlanInfo * nullPlan = new PlanInfo(graph.nodes.size());
 
-    int branchLimit = 4;
+    {
+        PhysicalModel nullPlanPhm(nullPlan);
 
-    FOR_ALL_GRAPH_ELEMENTS(graph.dg->dataNodes, i) {
-        // TODO: External nodes MUST become evaluated initially.
-        DataNode * dn = graph.dg->dataNodes[i];
-        TupleRef ref = nullPlan->initTupleSet(dn);
+        int branchLimit = 4;
 
-        if (dn->type == opt::DataNode::dnExternal) {
-//            ref->z
+        FOR_ALL_GRAPH_ELEMENTS(graph.dg->dataNodes, i) {
+            DataNode * dn = graph.dg->dataNodes[i];
+            TupleRef ref = nullPlan->initTupleSet(dn);
+
+            if (dn->type == opt::DataNode::dnExternal) {
+                nullPlanPhm.pushOp(
+                  new ExternalVarPrototype(&nullPlanPhm, ref));
+//                U_ASSERT(ref->status == opt::TupleValueInfo::evaluated);
+            };
         };
-    };
+    }
 
     planMap->update(nullPlan);
     currentStepSet->insert(0);
 
+    int branchLimit = 3;
+    
     while (!currentStepSet->empty()) {
         nextStepSet->clear();
 

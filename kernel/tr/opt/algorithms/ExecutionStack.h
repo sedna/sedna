@@ -7,18 +7,26 @@
 
 namespace executor {
 
-struct ResultSequence;
+struct ExecutionStack;
 struct DynamicContext;
 
-typedef void (* ExecutorProc)(void * object, ResultSequence * executor);
-  
+//typedef void (* ExecutorProc)(void * object, ExecutionStack * executor);
+
+class IExecuteProc
+{
+public:
+    virtual ~IExecuteProc() {};
+    virtual void execute(ExecutionStack * executor) = 0;
+};
+
+/*
 struct NextResultProc
 {
     ExecutorProc proc;
     void * object;
 
     inline
-    void operator()(ResultSequence * executor)
+    void operator()(ExecutionStack * executor)
     {
         proc(object, executor);
     };
@@ -30,32 +38,29 @@ struct NextResultProc
 
     inline bool is_null() const { return proc == NULL; }
 };
-  
+*/
+
 struct Result
 {
-    NextResultProc next;
+    IExecuteProc * next;
     tuple_cell value;
 
-    explicit Result(const tuple_cell & _tc) : value(_tc) {};
-    explicit Result(const NextResultProc & _next) : next(_next) {};
+    explicit Result(const tuple_cell & _tc) : next(NULL), value(_tc) {};
+    explicit Result(IExecuteProc * _next) : next(_next) {};
+
+//    ~Result() { delete next; } TODO : should somehow delete itself
 };
+
+// TODO : optimize result stack as it will be one of the most critical elements
 
 typedef std::list<Result> ResultStack;
 
-struct DynamicContext;
-
-struct ResultSequence
+struct ExecutionStack
 {
 private:
     ResultStack result;
     ResultStack::iterator position;
 public:
-    executor::DynamicContext * context;
-
-    ResultSequence(executor::DynamicContext * _context) : context(_context)
-    {
-    };
-
     void push(const Result& _result) { position = result.insert(position, _result); };
 
     inline void clear()
@@ -70,10 +75,11 @@ public:
         U_ASSERT(position == result.begin());
 
         while (position != result.end()) {
-            if (!position->next.is_null()) {
-                NextResultProc proc = position->next;
+            if (NULL != position->next) {
+                IExecuteProc * proc = position->next;
                 position = result.erase(position);
-                proc(this);
+                proc->execute(this);
+                delete proc;
             } else if (position->value.is_eos()) {
                 position = result.erase(position);
             } else {

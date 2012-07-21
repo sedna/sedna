@@ -205,6 +205,60 @@ void DataGraphRewriter::doPathExpansion()
 /* Static optimization phase */
 
 /*
+void DataGraphRewriter::expandAbsolutePath()
+{
+    DataNodeList list1, list2;
+    DataNodeList *frontList = &list1, *backList = &list2;
+
+    typedef std::set< std::pair<DataNode *, DataNode *> > RemovalList;
+    RemovalList removalCandidates;
+
+    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
+        if (dataNodes[i]->type == DataNode::dnDatabase) {
+            frontList->push_back(dataNodes[i]);
+        };
+    };
+
+    while (!frontList->empty()) {
+        backList->clear();
+
+        for (DataNodeList::iterator d = frontList->begin(); d != frontList->end(); ++d) {
+            DataNode * dn = *d;
+            PlanDescIterator it((*d)->predicates);
+            int i;
+
+            while (-1 != (i = it.next())) {
+                StructuralPredicate * pred = dynamic_cast<StructuralPredicate*>(predicates[i]);
+
+                // TODO : not every path can be concatinated, some should be broken
+                if (NULL != pred && pred->left() == dn &&
+                  pred->right()->type == DataNode::dnFreeNode)
+                {
+                    pe::Path path = pred->left()->path + pred->path;
+
+                    if (!path.inversable()) {
+                        continue;
+                    }
+
+                    pred->right()->type = DataNode::dnDatabase;
+                    pred->right()->root = pred->left()->root;
+                    pred->right()->path = path;
+                    pred->right()->producedFrom = pred;
+
+                    backList->push_back(pred->right());
+                }
+            }
+        };
+
+        DataNodeList* swp = frontList;
+        frontList = backList;
+        backList = swp;
+    }
+
+    updateIndex();
+}
+
+/*
 void DataGraph::precompile()
 {
     DataNodeList list1, list2;

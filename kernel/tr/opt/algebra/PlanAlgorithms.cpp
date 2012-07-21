@@ -156,7 +156,15 @@ bool rule_post_MapConcat_to_MapGraph(PlanRewriter * pr, MapConcat * op)
         U_ASSERT(dgo->out != NULL);
         U_ASSERT(std::find(dgo->graph().out.begin(), dgo->graph().out.end(), dgo->out) != dgo->graph().out.end());
 
+        if (dgo->out->varTupleId != invalidTupleId) {
+            VariableInfo & varinfo = optimizer->dgm()->getVariable(dgo->out->varTupleId);
+            U_ASSERT(varinfo.nodes.size() == 0);
+
+            optimizer->dgm()->removeVariable(dgo->out);
+        }
+
         dgo->out->varTupleId = op->tid;
+        optimizer->dgm()->addVariable(dgo->out);
 
         MapGraph * mg = new MapGraph(op->getList(), dgo->graph().dg, dgo->children);
         mg->tupleMask.insert(op->tid);

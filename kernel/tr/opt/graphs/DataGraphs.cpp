@@ -75,6 +75,11 @@ void DataGraphIndex::update()
             pidx->evaluateAfter |= (*it)->indexBit;
         }
 
+        pidx->implies = 0;
+        for (PredicateList::const_iterator it = p->implies.begin(); it != p->implies.end(); ++it) {
+            pidx->implies |= (*it)->indexBit;
+        }
+        
         pidx->neighbours = 0;
 
         predicateMask |= p->indexBit;
@@ -238,8 +243,8 @@ XmlConstructor & DataNode::toXML(XmlConstructor& element) const
             element.addElementValue(CDGQNAME("with"), tuple_cell::atomic_int(replacedWith->index));
             break;
         case dnConst :
-            U_ASSERT(!sequence.isnull());
-            for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
+            U_ASSERT(!constValue.isnull());
+            for (MemoryTupleSequence::const_iterator it = constValue->begin(); it != constValue->end(); ++it) {
                 element.addElementValue(CDGQNAME("value"), *it);
             };
             break;

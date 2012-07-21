@@ -176,6 +176,8 @@ public:
         return *this;
     };
 
+    bool empty() const { return body.isnull() || body->empty(); };
+    
     bool forall(const StepPredicate & sp) const;
     bool exist(const StepPredicate & sp) const;
 

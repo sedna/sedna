@@ -107,7 +107,7 @@ opt::DataNode * addGraphToJoin(BuilderType & builder, rqp::RPBase * op)
     } else if (rqp::instanceof<rqp::Const>(op))
     {
         opt::DataNode * node = new opt::DataNode(opt::DataNode::dnConst);
-        node->sequence = static_cast<rqp::Const *>(op)->getSequence();
+        node->constValue = static_cast<rqp::Const *>(op)->getSequence();
 
         builder.nodes.push_back(node);
         builder.out.push_back(node);
@@ -135,7 +135,7 @@ inline static
 opt::DataNode * createTrueNode()
 {
     opt::DataNode * result = new opt::DataNode(opt::DataNode::dnConst);
-    result->sequence = optimizer->dgm()->alwaysTrueSequence;
+    result->constValue = optimizer->dgm()->alwaysTrueSequence;
     result->alwaysTrue = true;
     return result;
 };

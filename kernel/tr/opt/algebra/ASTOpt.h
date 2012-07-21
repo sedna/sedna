@@ -63,7 +63,7 @@ class lr2opt : public lr2por
     void visit(ASTMetaSchemaCol &n) {};
     void visit(ASTMetaSchemaDoc &n) {};
 
-    void visit(ASTLoadFile &n) {};
+    void visit(ASTLoadFile &n);
 
     /* Sedna update language updates */
 

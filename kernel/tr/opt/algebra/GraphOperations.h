@@ -4,10 +4,6 @@
 #include "IndependentPlan.h"
 #include "tr/opt/graphs/DataGraphs.h"
 
-namespace executor {
-class VariableProducer;
-}
-
 namespace rqp {
 
 class DataGraphOperation : public ManyChildren {
@@ -44,8 +40,6 @@ class MapGraph : public DataGraphOperation {
 private:
     int list_id;
 public:
-    executor::VariableProducer * tag;
-
     MapGraph(RPBase* _list, opt::DataGraph * function_, const OperationList & _oplist)
       : DataGraphOperation(&sopdesc, function_, _oplist) {
         list_id = children.size();

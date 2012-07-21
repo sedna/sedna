@@ -40,7 +40,6 @@ static const struct phop::operation_info_t op_info; \
 
 namespace phop {
 
-class ExecutionContext;
 class IOperator;
 class ITupleOperator;
 

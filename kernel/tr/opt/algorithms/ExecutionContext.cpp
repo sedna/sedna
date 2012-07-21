@@ -8,6 +8,7 @@
 #include "tr/opt/algebra/FunctionOperations.h"
 #include "tr/opt/graphs/DataGraphCollection.h"
 #include "tr/opt/SequenceModel.h"
+#include "tr/models/SCElementProducer.h"
 
 #include <stack>
 #include <queue>
@@ -17,18 +18,40 @@ using namespace opt;
 using namespace rqp;
 using namespace executor;
 
-static
-void constructorExecute(void * object, executor::ResultSequence * result)
+class ConstructorImplementation : public IExecuteProc
 {
-    rqp::Construct * ths = (rqp::Construct *) object;
-    xsd::QName nameValue;
-    VariableModel * varmodel = result->context->variables; 
+public:
+    DynamicContext * context;
+    rqp::Construct * op;
 
-    if (ths->getType() == element || ths->getType() == attribute || ths->getType() == pr_ins)
+    explicit ConstructorImplementation(DynamicContext * _context, Construct * _op) : context(_context), op(_op) {};
+    virtual void execute(ExecutionStack* executor);
+};
+
+class GroupNextImplementation : public IExecuteProc
+{
+public:
+    DynamicContext * context;
+    VariableProducer * producer;
+    rqp::RPBase * nextOp;
+    uint64_t tupleMask;
+    
+    explicit GroupNextImplementation(DynamicContext * _context, VariableProducer * _producer, RPBase * _nextOp, uint64_t _tupleMask)
+      : context(_context), producer(_producer), nextOp(_nextOp), tupleMask(_tupleMask) {};
+
+    virtual void execute(ExecutionStack* executor);
+};
+
+void ConstructorImplementation::execute(ExecutionStack* result)
+{
+    xsd::QName nameValue;
+    VariableModel * varmodel = context->variables;
+
+    if (op->getType() == element || op->getType() == attribute || op->getType() == pr_ins)
     {
-        ResultSequence nameEvaluation(result->context);
+        ExecutionStack nameEvaluation;
         nameEvaluation.push(
-          optimizer->executor()->getOperationResult(ths->getName(), result->context));
+          optimizer->executor()->getOperationResult(op->getName(), context));
         tuple_cell qname_tc = nameEvaluation.next();
 
         if (qname_tc.get_atomic_type() != xs_QName)
@@ -46,34 +69,29 @@ void constructorExecute(void * object, executor::ResultSequence * result)
         };
     }
 
-    VarIterator contentIterator = varmodel->getIterator(ths->contentId);
+    VarIterator contentIterator = varmodel->getIterator(op->contentId);
 
-    if (ths->getType() == element) {
-        IElementProducer * parent = result->context->constructorContext;
-        DynamicContext * newContext;
-
-        VarCacheInfo * varInfo = varmodel->getProducer(ths->contentId);
-
+    if (op->getType() == element) {
+        IElementProducer * parent = context->constructorContext;
+        VarCacheInfo * varInfo = varmodel->getProducer(op->contentId);
+        context->constructorContext = parent->addElement(nameValue);
+        
         if (varInfo == NULL) {
-            newContext = optimizer->executor()->newContext(*result->context);
-            newContext->constructorContext = parent->addElement(nameValue);
-
-            varmodel->bind(ths->contentId,
+            varmodel->bind(op->contentId,
                 new VariableProducer(
-                    optimizer->executor()->getOperationResult(ths->getList(), newContext),
-                    ths->contentId, newContext));
+                    optimizer->executor()->getOperationResult(op->getList(), context),
+                      op->contentId));
         } else {
-            newContext = varInfo->producer->valueSequence->context;
-            newContext->constructorContext = parent->addElement(nameValue);
             varInfo->producer->resetResult(
-                optimizer->executor()->getOperationResult(ths->getList(), newContext));
+                optimizer->executor()->getOperationResult(op->getList(), context));
         };
 
         while (!contentIterator.next().is_eos()) {
-            newContext->constructorContext->addValue(contentIterator.get(), false);
+            context->constructorContext->addValue(contentIterator.get(), false);
         };
 
         result->push(Result(parent->close()));
+        context->constructorContext = parent;
     } else {
         U_ASSERT(false);
     };
@@ -91,24 +109,20 @@ uint64_t getRestrictMask(const TupleScheme & tscheme)
     return result;
 };
 
-
-static
-void mapGraphNext(void * object, executor::ResultSequence * result)
+void GroupNextImplementation::execute(ExecutionStack* result)
 {
-    MapGraph * mapGraph = static_cast<MapGraph *>(object);
-    VariableProducer * producer = mapGraph->tag;
     uint64_t saveRestrickMask = producer->restrictMask;
 
     if (saveRestrickMask == 0) {
-        saveRestrickMask = getRestrictMask(mapGraph->tupleMask);
+        saveRestrickMask = tupleMask;
     };
 
     producer->restrictMask = 0;
     producer->next();
     producer->restrictMask = saveRestrickMask;
 
-    result->push(Result(NextResultProc(mapGraphNext, mapGraph)));
-    result->push(optimizer->executor()->getOperationResult(mapGraph->getList(), result->context));
+    result->push(Result(new GroupNextImplementation(*this)));
+    result->push(optimizer->executor()->getOperationResult(nextOp, context));
 };
 
 Result PlanExecutor::getOperationResult(RPBase* op, DynamicContext* context)
@@ -116,16 +130,17 @@ Result PlanExecutor::getOperationResult(RPBase* op, DynamicContext* context)
     switch (op->info()->opType) {
       case Construct::opid :
         {
-            return Result(NextResultProc(constructorExecute, op));
+            return Result(new ConstructorImplementation(context, static_cast<Construct *>(op)));
         }
         break;
       case MapGraph::opid :
         {
-            MapGraph * m = static_cast<MapGraph *>(op);
+            MapGraph * mapGraph = static_cast<MapGraph *>(op);
+            uint64_t tupleMask = getRestrictMask(mapGraph->tupleMask);
             // TODO: optimize graph execution. There is no need in most cases to rebuild the graph
-            GraphExecutionBlock * geb = gc.compile(m->graph());
-            m->tag = context->variables->bindGraph(geb, &(m->graph()));
-            return Result(NextResultProc(mapGraphNext, m));
+            GraphExecutionBlock * geb = gc.compile(mapGraph->graph());
+            VariableProducer * producer = context->variables->bindGraph(geb, &(mapGraph->graph()));
+            return Result(new GroupNextImplementation(context, producer, mapGraph->getList(), tupleMask));
         }
         break;
 /*
@@ -146,6 +161,19 @@ Result PlanExecutor::getOperationResult(RPBase* op, DynamicContext* context)
 
 PlanExecutor::PlanExecutor()
 {
-    //
+    executionStack = new ExecutionStack();
+//    baseContext.constructorContext = SCElementProducer::getVirtualRoot(XNULL);
+    baseContext.variables = new VariableModel;
 }
 
+PlanExecutor::~PlanExecutor()
+{
+    delete executionStack;
+    delete baseContext.variables;
+//    delete baseContext.constructorContext;
+}
+
+void PlanExecutor::execute(RPBase* op)
+{
+    executionStack->push(getOperationResult(op, &baseContext));
+}

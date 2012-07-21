@@ -16,6 +16,14 @@ class XmlConstructor;
 
 namespace opt {
 
+/*
+struct PathPredicate : public opt::Predicate {
+    // Data root information and path information
+    DataRoot root;
+    pe::Path path;
+};
+*/
+
 struct BinaryPredicate : public opt::Predicate {
     BinaryPredicate(DataNode * left, DataNode * right);
     
@@ -27,7 +35,7 @@ struct BinaryPredicate : public opt::Predicate {
  * Predicate is used for test and switch expressions
  * Returns a constant boolean value (the result of comparison)
  */
-
+/*
 struct PhantomPredicate : public opt::Predicate {
     DataNode * goalNode;
     tuple_cell value;
@@ -35,10 +43,12 @@ struct PhantomPredicate : public opt::Predicate {
     virtual void * compile(PhysicalModel * model);
     virtual XmlConstructor & toXML(XmlConstructor & ) const;
 };
+*/
 
 /*
  * Predicate for function evaluation
  */
+/*
 struct FPredicate : public BinaryPredicate {
     phop::IFunction * func;
 
@@ -47,6 +57,7 @@ struct FPredicate : public BinaryPredicate {
     virtual void * compile(PhysicalModel * model);
     virtual XmlConstructor & toXML(XmlConstructor & ) const;
 };
+*/
 
 /*
  * Predicate for value operations

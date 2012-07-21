@@ -13,7 +13,10 @@
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"
 #include "tr/opt/algebra/IndependentPlan.h"
+#include "tr/opt/algebra/PlanRewriter.h"
 #include "tr/models/XmlConstructor.h"
+
+#include "tr/opt/algorithms/ExecutionContext.h"
 
 PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
                          PPOpIn _child_) :       PPQueryEssence("PPQueryRoot"),
@@ -103,7 +106,18 @@ bool PPQueryRoot::do_next()
 
         tr_globals::serializer->prepare(tr_globals::client->get_se_ostream(), options);
 
+//        optimizer->executor()->execute(optimizedPlan);
+//        data.cells[0] = optimizer->executor()->executionStack->next();
+        
         XmlConstructor xmlConstructor(VirtualRootConstructor(0));
+
+        data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
+        tr_globals::serializer->serialize(data);
+        
+        if (optimizedPlan != NULL) {
+            optimizedPlan = selectDataGraphs(optimizedPlan);
+        }
+
         data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
         tr_globals::serializer->serialize(data);
 

@@ -26,12 +26,6 @@ ValuePredicate::ValuePredicate(DataNode* left, DataNode* right, const Comparison
 
 }
 
-FPredicate::FPredicate(DataNode* left, DataNode* right, phop::IFunction* f)
-    : BinaryPredicate(left, right), func(f)
-{
-
-}
-
 void * StructuralPredicate::compile(PhysicalModel* model)
 {
     return model->compile(this);
@@ -41,16 +35,6 @@ void * ValuePredicate::compile(PhysicalModel* model)
 {
     return model->compile(this);
 }
-
-void* FPredicate::compile(PhysicalModel* model)
-{
-    return model->compile(this);
-}
-
-
-
-
-
 
 /* Serialization */
 
@@ -98,20 +82,6 @@ std::string ValuePredicate::toLRString() const
     return stream.str();
 }
 */
-
-XmlConstructor& FPredicate::toXML(XmlConstructor& element) const
-{
-    element.openElement(CDGQNAME("Function"));
-
-    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(index));
-//    element.addElementValue(CDGQNAME("path"), path.toXPathString());
-    element.addElementValue(CDGQNAME("left"), tuple_cell::atomic_int(left()->index));
-    element.addElementValue(CDGQNAME("right"), tuple_cell::atomic_int(right()->index));
-
-    element.closeElement();
-
-    return element;
-}
 
 XmlConstructor & StructuralPredicate::toXML(XmlConstructor & element) const
 {

@@ -29,7 +29,6 @@ struct OperationCost;
 struct PhantomPredicate;
 struct ValuePredicate;
 struct StructuralPredicate;
-struct FPredicate;
 
 class POProt;
 
@@ -148,20 +147,20 @@ class TupleRef { public:
     TupleValueInfo * operator->() const { return tupleDesc->get(tid); }
 };
 
+typedef std::vector<POProt *> OperationList;
+
 class PlanInfo : public IPlanDisposable {
 friend class PhysicalModel;
 protected:
-    typedef std::vector<POProt *> OperationList;
-
     PlanDesc desc, parent;
-    OperationList opList;
     mutable double totalCost;
+    double evaluateTotalCost() const;
+
+    OperationList opList;
     OperationList branchList;
     TupleChrysalis * initialTupleSet;
-
-    double evaluateTotalCost() const;
 public:
-    PlanInfo(size_t initialTupleSetSize);
+    explicit PlanInfo(size_t initialTupleSetSize);
     explicit PlanInfo(const PlanInfo * parent, PlanDesc _desc);
 
     TupleRef initTupleSet(DataNode * node);
@@ -178,12 +177,16 @@ public:
         return POProtIn(branchList.at(i), i);
     };
 
+    void updateBranch(POProt * op);
+
     PlanDesc getDesc() const { return desc; };
     PlanInfo * extend(Predicate * what) const;
     phop::ITupleOperator * compile();
 
     XmlConstructor & toXML(XmlConstructor &) const;
 };
+
+struct Candidate;
 
 class PhysicalModel {
     POProtIn doMaterialize(TupleId t, bool addToTree);
@@ -203,16 +206,18 @@ public:
             return tref;
         };
     };
-    
-    void updateBranch(POProt * op);
+
+    inline void pushOp(POProt * op)
+    {
+        plan->updateBranch(op);
+        plan->opList.push_back(op);
+    }
     
     TupleChrysalis * updateOne(TupleChrysalis* parent, const POProtIn& op);
     TupleChrysalis * updateTwo(TupleChrysalis* x, TupleChrysalis* y, POProt* op, TupleId ind1, TupleId ind2);
 
-    void * compile(PhantomPredicate * pred);
     void * compile(ValuePredicate * pred);
     void * compile(StructuralPredicate * pred);
-    void * compile(FPredicate * pred);
 };
 
 }
