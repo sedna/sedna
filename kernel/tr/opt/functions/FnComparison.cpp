@@ -16,10 +16,6 @@ bool rule_general_comparison_to_graph(PlanRewriter * pr, rqp::FunCall * op)
 
     ComparisonData * data = dynamic_cast<ComparisonData *>(op->getData());
 
-    if (data->cmp.op == opt::Comparison::do_before) {
-        return false;
-    };
-
     if (isGraphExpr(left) && isGraphExpr(right)) {
         DataGraphBuilder joinBuilder;
 

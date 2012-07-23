@@ -88,8 +88,11 @@ bool PPQueryRoot::next()
 
 bool PPQueryRoot::do_next()
 {
+    static int hui = 0;
+
     if (first) {
         first = false;
+        hui = 0;
 
         tr_globals::create_serializer(tr_globals::client->get_result_type());
         tr_globals::client->begin_item(false, xs_untyped, element, "");
@@ -106,26 +109,37 @@ bool PPQueryRoot::do_next()
 
         tr_globals::serializer->prepare(tr_globals::client->get_se_ostream(), options);
 
-//        optimizer->executor()->execute(optimizedPlan);
-//        data.cells[0] = optimizer->executor()->executionStack->next();
-        
         XmlConstructor xmlConstructor(VirtualRootConstructor(0));
 
         data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
         tr_globals::serializer->serialize(data);
-        
-        if (optimizedPlan != NULL) {
-            optimizedPlan = selectDataGraphs(optimizedPlan);
-        }
 
-        data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
-        tr_globals::serializer->serialize(data);
+        hui = 1;
 
     //    data.cells[0].set_eos();
 
         return true;
     } else {
-        return false;
+        if (hui == 1) {
+            if (optimizedPlan != NULL) {
+                optimizedPlan = selectDataGraphs(optimizedPlan);
+            }
+
+            XmlConstructor xmlConstructor(VirtualRootConstructor(0));
+            data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
+            tr_globals::serializer->serialize(data);
+
+            hui = 2;
+
+            return true;
+        } else if (hui == 2) {
+            optimizer->executor()->execute(optimizedPlan);
+            data.cells[0] = optimizer->executor()->executionStack->next();
+            tr_globals::serializer->serialize(data);
+            return true;
+        } else {
+            return false;
+        };
     };
 
     if (first) {

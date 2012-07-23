@@ -11,14 +11,22 @@
 using namespace rqp;
 using namespace opt;
 
+#include <fstream>
+#include <iostream>
+
+using std::fstream;
+static std::ofstream tmpDebug("/tmp/replaces.log", fstream::app | fstream::ate);
+
 inline static
 void debug_op_replace(const char * rule, const char * op, uint op1, uint op2)
 {
-/*
     std::stringstream str;
     str << op << " " << rule << " " << op1 << " " << op2 << "\n";
-    debug_string("opt.rule", str.str());
-*/    
+    tmpDebug << str.str();
+    tmpDebug.flush();
+/*
+ *    debug_string("opt.rule", str.str());
+ */    
 };
 
 /*
@@ -61,6 +69,11 @@ void PlanRewriter::execute()
     try {
         traverseStack.push_back(root);
         do_execute();
+/*
+        root->toStream(tmpDebug);
+        tmpDebug << "\n";
+        tmpDebug.flush();
+*/
     } catch (std::exception & e) {
         throw USER_EXCEPTION(2303);
     };
@@ -158,7 +171,11 @@ bool rule_post_MapConcat_to_MapGraph(PlanRewriter * pr, MapConcat * op)
 
         if (dgo->out->varTupleId != invalidTupleId) {
             VariableInfo & varinfo = optimizer->dgm()->getVariable(dgo->out->varTupleId);
-            U_ASSERT(varinfo.nodes.size() == 0);
+
+            if (varinfo.nodes.size() != 0) {
+                U_ASSERT(false);
+                return false;
+            };
 
             optimizer->dgm()->removeVariable(dgo->out);
         }
@@ -272,6 +289,7 @@ void detachGraph(DataGraphIndex & to, DataGraphIndex & from)
     to.nodes.insert(to.nodes.end(), from.nodes.begin(), from.nodes.end());
     to.out.insert(to.out.end(), from.out.begin(), from.out.end());
     to.predicates.insert(to.predicates.end(), from.predicates.begin(), from.predicates.end());
+    to.rebuild();
 
     DataNodeList varList;
     TupleScheme::iterator it = from.outTuples.begin();
@@ -292,18 +310,17 @@ void detachGraph(DataGraphIndex & to, DataGraphIndex & from)
     from.nodes.insert(from.nodes.end(), varList.begin(), varList.end());
 
     from.rebuild();
-
-    to.rebuild();
 };
 
 static
 bool rule_DataGraph_do_rewritings(PlanRewriter * pr, DataGraphOperation * op)
 {
+    op->graph().rebuild();
     DataGraphRewriter dgw(op->graph());
 
-    dgw.doPathExpansion();
     dgw.aliasResolution();
     dgw.selfReferenceResolution();
+    dgw.doPathExpansion();
 
     return false;
 }
@@ -343,6 +360,7 @@ bool rule_DataGraph_try_join(PlanRewriter * pr, DataGraphOperation * op)
 
             if (instanceof<MapGraph>(op)) {
                 detachGraph(candidate->graph(), dgRight);
+                debug_op_replace(__PRETTY_FUNCTION__, "detach", op->oid(), candidate->oid());
 
                 /* Not replaced, proceed rewriting */
                 return false; 
@@ -351,14 +369,17 @@ bool rule_DataGraph_try_join(PlanRewriter * pr, DataGraphOperation * op)
 
                 if (op->out == NULL) {
                     U_ASSERT(dgRight.out.empty());
+                    debug_op_replace(__PRETTY_FUNCTION__, "replace with const", op->oid(), 0);
                     pr->replaceInParent(op, new Const(tuple_cell::atomic(true)));
                 } else if (op->out->varTupleId != invalidTupleId) {
+                    debug_op_replace(__PRETTY_FUNCTION__, "replace with varid", op->oid(), op->out->varTupleId);
                     pr->replaceInParent(op, new VarIn(op->out->varTupleId));
                 } else {
     /* We must introduce new bogus variable to propagade graph to the parent,
      * this variable should be declared in rewriter first */
                     TupleId varId = optimizer->context()->generateTupleId();
                     op->out->varTupleId = varId;
+                    debug_op_replace(__PRETTY_FUNCTION__, "replace with varid", op->oid(), varId);
                     pr->replaceInParent(op, new VarIn(varId));
                 };
 
@@ -368,7 +389,7 @@ bool rule_DataGraph_try_join(PlanRewriter * pr, DataGraphOperation * op)
         };
 
         preserveNull = preserveNull && preservesNull(*parentOp, *cop);
-        
+
         cop++;
         parentOp++;
     }
@@ -392,42 +413,59 @@ struct DataNodeTupleLookup
 static 
 bool rule_redundant_MapGraph(PlanRewriter * pr, MapGraph * op)
 {
-    if ((rqp::instanceof<rqp::Const>(op->getList()) ||
-            rqp::instanceof<rqp::VarIn>(op->getList())))
-    {
-        if (op->graph().predicates.empty()) {
-            optimizer->dgm()->deleteGraph(op->graph().dg);
+    if (op->graph().predicates.empty()) {
+        DataNodeList & dnl = op->graph().nodes;
 
-            debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), op->getList()->oid());
-            pr->replaceInParent(op, op->getList());
+        for (DataNodeList::const_iterator it = dnl.begin(); it != dnl.end(); ++it)
+        {
+            DataNode * n = *it;
 
-            return true;
-        }
-
-        if (rqp::instanceof<rqp::VarIn>(op->getList())) {
-            rqp::VarIn * var = static_cast<rqp::VarIn *>(op->getList());
-
-            DataNodeList::const_iterator it = std::find_if(op->graph().out.begin(), op->graph().out.end(), DataNodeTupleLookup(var->getTuple()));
-
-            if (it == op->graph().out.end()) {
-                // TODO : actually it may be replaced with IF statement
+            if (n->type != opt::DataNode::dnExternal) {
                 return false;
-            } else {
-                DataNode * dn = *it;
+            }
 
-                op->graph().out.clear();
-                op->graph().out.push_back(dn);
-                op->graph().rebuild();
-                op->graph().dg->operation = new DataGraphOperation(op->graph().dg);
+            VariableInfo & varinfo = optimizer->dgm()->getVariable(n->varTupleId);
 
-                pr->replaceInParent(op, op->graph().dg->operation);
-                return true;
+            if (!varinfo.producer->notNull) {
+                return false;
             };
-
         };
 
-        // TODO : constant in list is replacable too
+        optimizer->dgm()->deleteGraph(op->graph().dg);
+
+        debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), op->getList()->oid());
+        pr->replaceInParent(op, op->getList());
+
+        return true;
+    }
+
+    if (rqp::instanceof<rqp::VarIn>(op->getList())) {
+        rqp::VarIn * var = static_cast<rqp::VarIn *>(op->getList());
+
+        DataNodeList::const_iterator it = std::find_if(op->graph().out.begin(), op->graph().out.end(), DataNodeTupleLookup(var->getTuple()));
+
+        if (it == op->graph().out.end()) {
+            // TODO : actually it may be replaced with IF statement
+            return false;
+        } else {
+            DataNode * dn = *it;
+
+            op->graph().out.clear();
+            op->graph().out.push_back(dn);
+            op->graph().rebuild();
+            op->graph().dg->operation = new DataGraphOperation(op->graph().dg);
+
+            /* We should delete var variable from variable table, as it is deleted! */
+            optimizer->dgm()->removeVariable(var->dnode);
+
+            debug_op_replace(__PRETTY_FUNCTION__, "replace MapGraph_to_DataGraph", op->oid(), op->graph().dg->operation->oid());
+            pr->replaceInParent(op, op->graph().dg->operation);
+            return true;
+        };
+
     };
+
+    // TODO : constant in list is replacable too
 
     return false;
 };
@@ -459,6 +497,7 @@ bool rule_MapGraph_remove_unused(PlanRewriter * pr, MapGraph * op)
 
         if (op->tupleMask.find(tid) == op->tupleMask.end() && dgm->getVariable(tid).nodes.empty())
         {
+            debug_op_replace(__PRETTY_FUNCTION__, "erase var", tid, 0);
             it = dgw.out.erase(it);
             modified = true;
         } else {
@@ -486,20 +525,29 @@ bool rule_push_down_variable(PlanRewriter * pr, SequenceConcat * op)
 
         if (dgs.size() == 1) {
             DataGraph * dg = *dgs.begin();
-            U_ASSERT(dg != NULL);
-            
-            U_ASSERT(plan->graph().out.size() == 1);
+            DataGraphOperation * rop = dynamic_cast<DataGraphOperation *>(dg->operation);
+            DataNode * out = plan->graph().out.at(0);
 
-            plan->graph().out.at(0)->varTupleId = op->tid;
+            U_ASSERT(plan->graph().out.size() == 1);
+            U_ASSERT(dg != NULL);
+            U_ASSERT(rop != NULL);
+
+            out->varTupleId = op->tid;
+
             // TODO : not in any possible case
-            dgm->join(dg, plan->graph().dg);
+            DataGraphIndex & lg = rop->graph();
+            DataGraphIndex & rg = plan->graph();
+
+            lg.nodes.insert(lg.nodes.end(), rg.nodes.begin(), rg.nodes.end());
+            lg.predicates.insert(lg.predicates.end(), rg.predicates.begin(), rg.predicates.end());
+            lg.rebuild();
 
             debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), op->getList()->oid());
             pr->replaceInParent(op, op->getList());
             return true;
         };
     };
-    
+
     return false;
 };
 
@@ -514,7 +562,7 @@ bool rule_remove_If(PlanRewriter * pr, If * op)
      * TODO : make a more complex check
      * TODO : cleanup else
      */
-    
+
     if (NULL != condition)
     {
         VariableInfo & varInfo = optimizer->dgm()->getVariable(condition->getTuple());
@@ -522,6 +570,8 @@ bool rule_remove_If(PlanRewriter * pr, If * op)
 
         if (varInfo.producer->alwaysTrue)
         {
+            optimizer->dgm()->removeVariable(condition->dnode);
+            debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), op->getThen()->oid());
             pr->replaceInParent(op, op->getThen());
             return true;
         };
@@ -530,39 +580,11 @@ bool rule_remove_If(PlanRewriter * pr, If * op)
     return false;
 };
 
-/*
-static
-bool rule_Select_try_join(PlanRewriter * pr, Select * op)
-{
-    DataGraphOperation * condition = dynamic_cast<DataGraphOperation *>(op->getList());
-    DataGraphOperation * result = dynamic_cast<DataGraphOperation *>(op->getSubplan());
-
-    if (instanceof<DataGraphOperation>(result) && instanceof<DataGraphOperation>(condition)) {
-        TupleScheme & condDep = condition->graph().inTuples;
-
-        if (condDep.find(op->tid) != condDep.end()) {
-            result->graph().update();
-            addGraphToJoin(result->graph(), condition);
-            result->graph().out.clear();
-            result->graph().out.push_back(result->out);
-            result->out->varTupleId = op->tid;
-            result->graph().rebuild();
-
-            debug_op_replace(__PRETTY_FUNCTION__, "remove", condition->oid(), 0);
-            debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), result->oid());
-            pr->replaceInParent(op, result);
-            return true;
-        };
-    };
-
-    return false;
-};
-*/
-
 void PlanRewriter::do_execute()
 {
-#define RULE(x) do { if (x) { goto _end_label; } } while (false)
+#define RULE(x) do { if (x) { rule_worked = true; goto _end_label; } } while (false)
     do {
+        bool rule_worked = false;
         RPBase * op = traverseStack.back();
 
         /* Before or instead traverse */
@@ -635,8 +657,7 @@ void PlanRewriter::do_execute()
             break;
           case VarIn::opid :
             {
-                optimizer->dgm()->getVariable(static_cast<VarIn *>(op)->getTuple())
-                  .nodes.insert(static_cast<VarIn *>(op)->dnode);
+                optimizer->dgm()->addVariable(static_cast<VarIn *>(op)->dnode);
 /*
                 if (varMap.find(static_cast<VarIn *>(op)->getTuple()) != varMap.end()) {
                     varMap.at(static_cast<VarIn *>(op)->getTuple()).used = true;
@@ -675,6 +696,13 @@ void PlanRewriter::do_execute()
 
 // This is far better then break. To be sure all is ok.
 _end_label:
+
+        if (rule_worked) {
+            root->toStream(tmpDebug);
+            tmpDebug << "\n";
+            tmpDebug.flush();
+        };
+
         if (traverseStack.back() == op) {
             traverseStack.pop_back();
             break;

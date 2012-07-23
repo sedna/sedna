@@ -4,11 +4,24 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/models/SCElementProducer.h"
 
+#include "tr/crmutils/serialization.h"
+#include "tr/crmutils/exec_output.h"
+
 tuple_cell IXMLSerializable::serialize() const
 {
     XmlConstructor constructor(VirtualRootConstructor(0));
     return this->toXML(constructor).getLastChild();
 }
+
+void IXMLSerializable::toStream(std::ostream& stream) const
+{
+    se_stdlib_ostream tmpDebug_se_stream(stream);
+    GlobalSerializationOptions opt;
+    scoped_ptr<Serializer> serializer(Serializer::createSerializer(se_output_method_xml));
+    serializer->prepare(&tmpDebug_se_stream, &opt);
+    serializer->serialize(tuple(serialize()));
+}
+
 
 void XmlConstructor::openElement(const xsd::QName& qname, xmlscm_type type)
 {
@@ -76,3 +89,4 @@ XmlConstructor::XmlConstructor(const VirtualRootConstructor& )
 {
     producers.push(SCElementProducer::getVirtualRoot(XNULL));
 }
+

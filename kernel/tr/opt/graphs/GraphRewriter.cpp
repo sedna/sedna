@@ -82,7 +82,7 @@ void opt::DataGraphRewriter::selfReferenceResolution()
         if (dn->type == DataNode::dnExternal) {
             DataNode * producerPtr = graph.dg->owner->getVariable(dn->varTupleId).producer;
 
-            if (producerPtr != NULL && dataNodes[producerPtr->index] ==  producerPtr) {
+            if (producerPtr != NULL && dataNodes[producerPtr->index] == producerPtr) {
                 mergeNodes(
                     graph.nodeIndex[producerPtr->index],
                     graph.nodeIndex[dn->index]);

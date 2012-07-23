@@ -24,7 +24,7 @@ PlanInfo::PlanInfo(size_t initialTupleSetSize)
 };
 
 PlanInfo::PlanInfo(const PlanInfo* parent, PlanDesc _desc)
-    : desc(_desc), parent(parent->desc), opList(parent->opList), totalCost(0),
+    : desc(_desc), parent(parent->desc), totalCost(0), opList(parent->opList),
     branchList(parent->branchList), initialTupleSet(parent->initialTupleSet)
 {
 }

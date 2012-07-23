@@ -135,21 +135,15 @@ DataGraph* DataGraphBuilder::make(DataGraphMaster* master, DataGraph* graph)
 
     memset(graph->dataNodes, 0, sizeof(graph->dataNodes[0]) * MAX_GRAPH_SIZE);
     memset(graph->predicates, 0, sizeof(graph->predicates[0]) * MAX_GRAPH_SIZE);
-    
-    graph->outputNodes = 0;
+
     graph->inputNodes = 0;
-    
-    for (DataNodeList::const_iterator it = nodes.begin(); it != nodes.end(); ++it) {
+    for (DataNodeList::const_iterator it = nodes.begin(); it != nodes.end(); ++it)
+    {
         DataNode * n = (*it);
         n->setIndex(lastIndex);
         n->parent = graph;
         graph->dataNodes[lastIndex] = n;
         
-        if (std::binary_search(out.begin(), out.end(), n))
-        {
-            graph->outputNodes |= n->indexBit;
-        };
-
         if (n->type == opt::DataNode::dnExternal) {
             graph->inputNodes |= n->indexBit;
         }
@@ -159,6 +153,13 @@ DataGraph* DataGraphBuilder::make(DataGraphMaster* master, DataGraph* graph)
         }
         
         lastIndex++;
+    };
+
+    graph->outputNodes = 0;
+    for (DataNodeList::const_iterator it = out.begin(); it != out.end(); ++it)
+    {
+        DataNode * n = (*it);
+        graph->outputNodes |= n->indexBit;
     };
 
     for (PredicateList::const_iterator it = predicates.begin(); it != predicates.end(); ++it) {

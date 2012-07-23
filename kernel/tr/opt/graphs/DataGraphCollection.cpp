@@ -248,10 +248,10 @@ void DataGraphMaster::deleteGraph(DataGraph* dg)
     FOR_ALL_GRAPH_ELEMENTS(dg->dataNodes, i)
     {
         DataNode * dn = dg->dataNodes[i];
-        
-        if (dn->varTupleId != invalidTupleId && dn->type == opt::DataNode::dnExternal)
+
+        if (dn->varTupleId != invalidTupleId)
         {
-            getVariable(dn->varTupleId).nodes.erase(dn);
+            removeVariable(dn);
         };
     };
 }

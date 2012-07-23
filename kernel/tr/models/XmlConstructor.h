@@ -40,6 +40,7 @@ class IXMLSerializable {
 public:
     virtual XmlConstructor& toXML(XmlConstructor& constructor) const = 0;
     tuple_cell serialize() const;
+    void toStream(std::ostream & stream) const;
 };
 
 #endif /* _XML_CONSTRUCTOR_H_ */
