@@ -35,11 +35,10 @@ struct VariableProducer
     int generation; /* uninitialized, just id */
     uint64_t restrictMask;
 
-    VariableProducer(const executor::Result & result, opt::TupleId varId)
+    VariableProducer(opt::TupleId varId)
       : varCount(1)
     {
         valueSequence = new executor::ExecutionStack();
-        valueSequence->push(result);
 
         variables = new VarCacheInfo[1];
         variables[0].producer = this;
@@ -55,7 +54,7 @@ struct VariableProducer
         for (size_t i = 0; i < varCount; ++i)
         {
             variables[i].producer = this;
-            variables[i].tid = prototype->out.at(i)->varTupleId;
+            variables[i].tid = prototype->out[i]->varTupleId;
             variables[i].inTuple = graph->resultMap.at(variables[i].tid);
         };
     };
@@ -113,10 +112,9 @@ struct VariableProducer
         };
     }
 
-    void resetResult(const executor::Result & result)
+    void resetResult()
     {
         clear();
-        valueSequence->push(result);
     }
 
     inline
@@ -212,32 +210,41 @@ public:
     {
         // TODO : make debug check for all graph variables to be bound to valid producer
 
+        VariableProducer * producer;
+        
+        /* Create or find producer map for a graph.
+         * Kind of optimization.
+         */
+
         if (graphMap.find(graph) == graphMap.end())
         {
-            VariableProducer * producer = new VariableProducer(graph, prototype);
+            producer = new VariableProducer(graph, prototype);
             graphMap.insert(VariableProducerMap::value_type(graph, producer));
             producers.push_back(producer);
+        } else {
+            producer = graphMap.at(graph);
         };
 
-        VariableProducer * producer = graphMap.at(graph);
+        /* Rebind all variables
+         * TODO : do not rebind variables if they are bound already
+         */
 
-        if (variableMap[producer->variables[0].tid]->producer != producer) {
-            for (size_t i = 0; i < producer->varCount; ++i)
-            {
-                variableMap[producer->variables[i].tid] = producer->variables + i;
-            };
-        }
+        for (size_t i = 0; i < producer->varCount; ++i)
+        {
+            variableMap[producer->variables[i].tid] = producer->variables + i;
+        };
 
         return producer;
     };
 
+    /* Get variable descriptor for variable producer */
     VarCacheInfo * getProducer(opt::TupleId var)
     { 
         VariableMap::const_iterator it = variableMap.find(var);
         return (it == variableMap.end()) ? NULL : it->second;
     };
 
-    void bind(opt::TupleId var, VariableProducer * producer)
+    void bind(VariableProducer * producer)
     {
         producers.push_back(producer);
 
@@ -247,6 +254,7 @@ public:
         };
     };
 
+    /* Generate Iterator for a variable */
     VarIterator getIterator(opt::TupleId var)
     {
         VariableMap::const_iterator it = variableMap.find(var);

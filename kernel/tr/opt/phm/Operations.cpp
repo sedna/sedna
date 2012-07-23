@@ -41,7 +41,7 @@ AbsPathScanPrototype::AbsPathScanPrototype(PhysicalModel* model, const TupleRef&
     result = model->updateOne(tref.tupleDesc, POProtIn(this, tref.tid));
     resultSet.push_back(tref.tid);
 
-    evaluateCost(publicCostModel);
+    evaluateCost(optimizer->costModel());
 }
 
 XmlConstructor & AbsPathScanPrototype::__toXML(XmlConstructor & element) const
@@ -59,7 +59,7 @@ PathEvaluationPrototype::PathEvaluationPrototype(PhysicalModel* model, const POP
     result = model->updateOne(_left.op->result, POProtIn(this, _right.tid));
     resultSet.push_back(_right.tid);
 
-    evaluateCost(publicCostModel);
+    evaluateCost(optimizer->costModel());
 }
 
 XmlConstructor & PathEvaluationPrototype::__toXML(XmlConstructor & element) const
@@ -83,7 +83,7 @@ MergeJoinPrototype::MergeJoinPrototype(PhysicalModel* model, const POProtIn& _le
         needRightSort = false;
     };
 
-    evaluateCost(publicCostModel);
+    evaluateCost(optimizer->costModel());
 }
 
 XmlConstructor & MergeJoinPrototype::__toXML(XmlConstructor & element) const
@@ -99,7 +99,7 @@ FilterTuplePrototype::FilterTuplePrototype(PhysicalModel* model, const POProtIn&
     resultSet.push_back(_left.index);
     resultSet.push_back(_right.index);
 
-    evaluateCost(publicCostModel);
+    evaluateCost(optimizer->costModel());
 }
 
 XmlConstructor & FilterTuplePrototype::__toXML(XmlConstructor & element) const
@@ -118,7 +118,7 @@ ValueScanPrototype::ValueScanPrototype(PhysicalModel* model, const POProtIn& _le
 
     value = _right->node->constValue;
 
-    evaluateCost(publicCostModel);
+    evaluateCost(optimizer->costModel());
 }
 
 ValidatePathPrototype::ValidatePathPrototype(PhysicalModel* model, const POProtIn& _tuple)
@@ -136,7 +136,7 @@ ValidatePathPrototype::ValidatePathPrototype(PhysicalModel* model, const POProtI
         dataRoot = dn->root;
     }
 
-    evaluateCost(publicCostModel);
+    evaluateCost(optimizer->costModel());
 }
 
 XmlConstructor & ValidatePathPrototype::__toXML(XmlConstructor & element) const
@@ -154,7 +154,7 @@ EvaluatePrototype::EvaluatePrototype(PhysicalModel* model, const opt::POProtIn& 
     result = model->updateOne(_left.op->result, POProtIn(this, _right.tid));
     resultSet.push_back(_right.tid);
 
-    evaluateCost(publicCostModel);
+    evaluateCost(optimizer->costModel());
 }
 
 XmlConstructor & EvaluatePrototype::__toXML(XmlConstructor & element) const
@@ -328,7 +328,7 @@ void ValueScanPrototype::evaluateCost(CostModel* model)
     model->getValueCost(inRef->statistics->pathInfo, inRef->statistics);
     outRef->statistics = new TupleStatistics(inRef->statistics);
 
-    EvaluationInfo * cmpInfo = model->getCmpInfo(inRef->statistics, model->getConstInfo(value.get()), cmp);
+    EvaluationInfo * cmpInfo = model->getCmpInfo(inRef->statistics, model->getConstInfo(value), cmp);
 
     outRef->statistics->distinctValues *= cmpInfo->selectivity;
     result->rowCount = outRef->statistics->distinctValues;

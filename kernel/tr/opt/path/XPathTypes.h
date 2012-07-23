@@ -153,19 +153,15 @@ public:
 typedef std::vector<Step> PathVector;
 typedef counted_ptr<PathVector> PathVectorPtr;
 
-
 class Path {
 private:
     PathVectorPtr body;
     mutable size_t hash;
+    static PathVectorPtr emptyPath;
 private:
     void modify();
 public:
-    struct EmptyPath {};
-
-    Path() : body(NULL), hash(0) {};
-
-    explicit Path(const EmptyPath &) : body(new PathVector()), hash(0) {};
+    Path() : body(emptyPath), hash(0) {};
 
     Path(const scheme_list * lst);
     Path(const Step & x);

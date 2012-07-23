@@ -63,6 +63,8 @@ private:
 public:
     void push(const Result& _result) { position = result.insert(position, _result); };
 
+    ExecutionStack() { position = result.begin(); };
+    
     inline void clear()
     {
         result.clear();

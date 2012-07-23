@@ -6,6 +6,7 @@
 #include "tr/opt/algebra/GraphOperations.h"
 #include "tr/opt/algebra/MapOperations.h"
 #include "tr/opt/algebra/FunctionOperations.h"
+#include "tr/opt/algebra/ElementaryOperations.h"
 #include "tr/opt/graphs/DataGraphCollection.h"
 #include "tr/opt/SequenceModel.h"
 #include "tr/models/SCElementProducer.h"
@@ -42,6 +43,15 @@ public:
     virtual void execute(ExecutionStack* executor);
 };
 
+class GraphNext : public IExecuteProc
+{
+public:
+    GraphExecutionBlock * geb;
+
+    explicit GraphNext(GraphExecutionBlock * _geb) : geb(_geb) {};
+    virtual void execute(ExecutionStack* executor);
+};
+
 void ConstructorImplementation::execute(ExecutionStack* result)
 {
     xsd::QName nameValue;
@@ -50,8 +60,7 @@ void ConstructorImplementation::execute(ExecutionStack* result)
     if (op->getType() == element || op->getType() == attribute || op->getType() == pr_ins)
     {
         ExecutionStack nameEvaluation;
-        nameEvaluation.push(
-          optimizer->executor()->getOperationResult(op->getName(), context));
+        optimizer->executor()->push(&nameEvaluation, context, op->getName());
         tuple_cell qname_tc = nameEvaluation.next();
 
         if (qname_tc.get_atomic_type() != xs_QName)
@@ -69,29 +78,29 @@ void ConstructorImplementation::execute(ExecutionStack* result)
         };
     }
 
-    VarIterator contentIterator = varmodel->getIterator(op->contentId);
-
     if (op->getType() == element) {
-        IElementProducer * parent = context->constructorContext;
+        IElementProducer * parent = context->constructorContext();
         VarCacheInfo * varInfo = varmodel->getProducer(op->contentId);
-        context->constructorContext = parent->addElement(nameValue);
-        
+        context->setConstructorContext(parent->addElement(nameValue));
+        VariableProducer * producer;
+
         if (varInfo == NULL) {
-            varmodel->bind(op->contentId,
-                new VariableProducer(
-                    optimizer->executor()->getOperationResult(op->getList(), context),
-                      op->contentId));
+            producer = new VariableProducer(op->contentId);
+            varmodel->bind(producer);
         } else {
-            varInfo->producer->resetResult(
-                optimizer->executor()->getOperationResult(op->getList(), context));
+            producer = varInfo->producer;
+            producer->resetResult();
         };
 
+        optimizer->executor()->push(producer->valueSequence, context, op->getList());
+        VarIterator contentIterator = varmodel->getIterator(op->contentId);
+
         while (!contentIterator.next().is_eos()) {
-            context->constructorContext->addValue(contentIterator.get(), false);
+            context->constructorContext()->addValue(contentIterator.get(), false);
         };
 
         result->push(Result(parent->close()));
-        context->constructorContext = parent;
+        context->setConstructorContext(parent);
     } else {
         U_ASSERT(false);
     };
@@ -122,25 +131,57 @@ void GroupNextImplementation::execute(ExecutionStack* result)
     producer->restrictMask = saveRestrickMask;
 
     result->push(Result(new GroupNextImplementation(*this)));
-    result->push(optimizer->executor()->getOperationResult(nextOp, context));
+    optimizer->executor()->push(result, context, nextOp);
 };
 
-Result PlanExecutor::getOperationResult(RPBase* op, DynamicContext* context)
+void GraphNext::execute(ExecutionStack* result)
+{
+    geb->top()->next();
+    result->push(Result(geb->top()->get().cells[geb->outputTupleId]));
+    result->push(Result(new GraphNext(*this)));
+};
+
+
+#define CASE_TYPE(TYPE, V, I) \
+   case TYPE::opid : if (TYPE * V = static_cast<TYPE *>(I))
+
+void PlanExecutor::push(ExecutionStack* executionStack, DynamicContext* context, RPBase* op)
 {
     switch (op->info()->opType) {
-      case Construct::opid :
+      CASE_TYPE(Construct, vop, op)
         {
-            return Result(new ConstructorImplementation(context, static_cast<Construct *>(op)));
+            executionStack->push(Result(new ConstructorImplementation(context, vop)));
         }
         break;
-      case MapGraph::opid :
+      CASE_TYPE(MapGraph, vop, op)
         {
-            MapGraph * mapGraph = static_cast<MapGraph *>(op);
-            uint64_t tupleMask = getRestrictMask(mapGraph->tupleMask);
             // TODO: optimize graph execution. There is no need in most cases to rebuild the graph
-            GraphExecutionBlock * geb = gc.compile(mapGraph->graph());
-            VariableProducer * producer = context->variables->bindGraph(geb, &(mapGraph->graph()));
-            return Result(new GroupNextImplementation(context, producer, mapGraph->getList(), tupleMask));
+            GraphExecutionBlock * geb = gc.compile(vop->graph());
+            geb->context = context;
+
+            VariableProducer * producer =
+              context->variables->bindGraph(geb, &(vop->graph()));
+
+            executionStack->push(Result(
+              new GroupNextImplementation(
+                context, producer, vop->getList(), getRestrictMask(vop->tupleMask))));
+        }
+        break;
+      CASE_TYPE(Const, vop, op)
+        {
+            MemoryTupleSequencePtr values = vop->getSequence();
+
+            for (MemoryTupleSequence::const_iterator it = values->begin(); it != values->end(); ++it) {
+                executionStack->push(Result(*it));
+            };
+        }
+        break;
+      CASE_TYPE(DataGraphOperation, vop, op)
+        {
+            GraphExecutionBlock * geb = gc.compile(vop->graph());
+            geb->context = context;
+            geb->outputTupleId = geb->resultMap[vop->out->varTupleId];
+            executionStack->push(Result(new GraphNext(geb)));
         }
         break;
 /*
@@ -154,15 +195,19 @@ Result PlanExecutor::getOperationResult(RPBase* op, DynamicContext* context)
       default:
         {
             U_ASSERT(false);
-            return Result(EMPTY_TUPLE_CELL);
         } break;
     }
+}
+
+void DynamicContext::createVirtualRoot()
+{
+    _constructorContext = SCElementProducer::getVirtualRoot(XNULL);
 }
 
 PlanExecutor::PlanExecutor()
 {
     executionStack = new ExecutionStack();
-//    baseContext.constructorContext = SCElementProducer::getVirtualRoot(XNULL);
+    baseContext.setConstructorContext(NULL);
     baseContext.variables = new VariableModel;
 }
 
@@ -175,5 +220,5 @@ PlanExecutor::~PlanExecutor()
 
 void PlanExecutor::execute(RPBase* op)
 {
-    executionStack->push(getOperationResult(op, &baseContext));
+    push(executionStack, &baseContext, op);
 }

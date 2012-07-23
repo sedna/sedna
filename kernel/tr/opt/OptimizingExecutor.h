@@ -13,6 +13,7 @@ struct PlanExecutor;
 
 namespace opt {
 
+class CostModel;
 class DataGraphMaster;
 
 class OptimizingExecutor : SednaModule
@@ -21,6 +22,7 @@ private:
     DataGraphMaster * _dgm;
     rqp::PlanContext * _context;
     PlanExecutor * _executor;
+    CostModel * _costModel;
 
     MemoryPool memoryPool;
     FastPointerArray ptrs;
@@ -47,7 +49,8 @@ public:
 
     DataGraphMaster * dgm() const { return _dgm; };
     rqp::PlanContext * context() const { return _context; };
-    PlanExecutor * executor() { return _executor; };
+    PlanExecutor * executor() const { return _executor; };
+    CostModel * costModel() const { return _costModel; };
 };
 
 };

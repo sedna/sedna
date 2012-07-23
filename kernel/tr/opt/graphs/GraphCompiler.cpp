@@ -1,4 +1,5 @@
 #include "GraphCompiler.h"
+#include "GraphRewriter.h"
 
 #include "tr/opt/phm/PhysicalModel.h"
 #include "tr/opt/SequenceModel.h"
@@ -55,6 +56,9 @@ public:
 
 phop::GraphExecutionBlock* opt::GraphCompiler::compile(opt::DataGraphIndex& graph)
 {
+    opt::DataGraphRewriter dgr(graph);
+    dgr.structuralComparison();
+  
     phop::GraphExecutionBlock* result = getGraph(graph.dg);
     
     if (result != NULL) {
@@ -166,6 +170,7 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(opt::DataGraphIndex& grap
     result = GraphExecutionBlock::pop();
     U_ASSERT(checkVar == result->top());
     graphCache[graph.dg] = result;
+    result->prepare(&graph);
     
     return result;
 }

@@ -5,6 +5,7 @@
 #include "tr/opt/graphs/DataGraphCollection.h"
 #include "tr/opt/algebra/IndependentPlan.h"
 #include "tr/opt/algorithms/ExecutionContext.h"
+#include "tr/opt/cost/Statistics.h"
 
 using namespace opt;
 using namespace rqp;
@@ -27,13 +28,15 @@ void opt::OptimizingExecutor::onTransactionBegin()
     _dgm = new DataGraphMaster();
     _context = new PlanContext();
     _executor = new PlanExecutor();
+    _costModel = new CostModel();
 }
 
 void opt::OptimizingExecutor::onTransactionEnd()
 {
+    delete _costModel;
+    delete _executor;
     delete _context;
     delete _dgm;
-    delete _executor;
 
     elog(EL_LOG, ("Optimizer used : %llu / %llu", memoryPool.totalAllocated(), memoryPool.total()));
 

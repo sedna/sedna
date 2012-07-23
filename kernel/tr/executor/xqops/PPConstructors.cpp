@@ -253,7 +253,9 @@ void PPConstructor::clear_virtual_root()
         delete constructorContext.virtualElementRoot;
         constructorContext.virtualElementRoot = NULL;
 
-        SCElementProducer::deleteVirtualRoot();
+#warning: do something with virtual root!
+        // TODO:
+//        SCElementProducer::deleteVirtualRoot();
         constructorContext.virtualRoot = NULL;
     }
 }

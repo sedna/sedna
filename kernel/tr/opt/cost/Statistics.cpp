@@ -5,7 +5,6 @@
 
 using namespace opt;
 
-CostModel * opt::publicCostModel = NULL;
 const double opt::C_CPU_Cost = 0.1;
 const double opt::C_IO_Cost = 10.0;
 

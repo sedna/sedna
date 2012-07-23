@@ -17,7 +17,25 @@ class VariableModel;
 
 struct DynamicContext
 {
-    IElementProducer * constructorContext;
+private:
+    IElementProducer * _constructorContext;
+    void createVirtualRoot();
+public:
+    void setConstructorContext(IElementProducer * constructorContext)
+    {
+        _constructorContext = constructorContext;
+    }
+    
+    IElementProducer * constructorContext()
+    {
+        if (_constructorContext == NULL)
+        {
+            createVirtualRoot();
+        };
+
+        return _constructorContext;
+    };
+
     executor::VariableModel * variables;
 };
 
@@ -31,7 +49,14 @@ struct PlanExecutor
 
     // TODO: optimize
     executor::DynamicContext * newContext(const executor::DynamicContext& cxt) { return new executor::DynamicContext(cxt); };
-    executor::Result getOperationResult(rqp::RPBase * op, executor::DynamicContext * context);
+
+    /* Pushes operation to execution context */
+
+    void push(
+        executor::ExecutionStack * executionStack,
+        executor::DynamicContext * context,
+        rqp::RPBase * op
+    );
 
     void execute(rqp::RPBase * op);
     

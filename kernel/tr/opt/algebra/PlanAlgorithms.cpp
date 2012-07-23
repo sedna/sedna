@@ -11,20 +11,22 @@
 using namespace rqp;
 using namespace opt;
 
+/*
 #include <fstream>
 #include <iostream>
 
 using std::fstream;
 static std::ofstream tmpDebug("/tmp/replaces.log", fstream::app | fstream::ate);
+*/
 
 inline static
 void debug_op_replace(const char * rule, const char * op, uint op1, uint op2)
 {
+/*
     std::stringstream str;
     str << op << " " << rule << " " << op1 << " " << op2 << "\n";
     tmpDebug << str.str();
     tmpDebug.flush();
-/*
  *    debug_string("opt.rule", str.str());
  */    
 };
@@ -696,13 +698,13 @@ void PlanRewriter::do_execute()
 
 // This is far better then break. To be sure all is ok.
 _end_label:
-
+/*
         if (rule_worked) {
             root->toStream(tmpDebug);
             tmpDebug << "\n";
             tmpDebug.flush();
         };
-
+*/
         if (traverseStack.back() == op) {
             traverseStack.pop_back();
             break;

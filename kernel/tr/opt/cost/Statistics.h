@@ -91,8 +91,6 @@ public:
 //    void endProfile();
 };
 
-extern CostModel * publicCostModel;
-
 };
 
 #endif /* COST_MODEL_H */

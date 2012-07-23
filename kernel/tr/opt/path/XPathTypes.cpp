@@ -138,6 +138,8 @@ Step::Step(const scheme_list* lst) : axis(axis_error), test(nt_error, xsd::QName
     }
 }
 
+PathVectorPtr Path::emptyPath(new PathVector());
+
 Path::Path(const scheme_list* lst)
 {
     std::size_t len = lst->size();
