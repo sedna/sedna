@@ -5,21 +5,13 @@
 #include "tr/opt/path/DataSources.h"
 #include "tr/models/XmlConstructor.h"
 
-namespace rqp {
-  class RPBase;
-  class DataGraphOperation;
-}
-
-class XmlConstructor;
-
 namespace opt {
-
-class DataGraph;
-class StructuralPredicate;
 
 struct Predicate : public IPlanDisposable {
     int index;
     PlanDesc indexBit;
+
+    rqp::RPBase * opInfo;
 
     PredicateList neighbours;
     PredicateList evaluateAfter;

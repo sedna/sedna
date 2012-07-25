@@ -159,6 +159,8 @@ EvaluatePrototype::EvaluatePrototype(PhysicalModel* model, const opt::POProtIn& 
 
 XmlConstructor & EvaluatePrototype::__toXML(XmlConstructor & element) const
 {
+    /* Here we evaluate cost, based on the last 
+     */
 //    element.addElementValue(CDGQNAME("root"), dataRoot.toLRString());
 //    element.addElementValue(CDGQNAME("path"), path.toXPathString());
 
@@ -166,46 +168,24 @@ XmlConstructor & EvaluatePrototype::__toXML(XmlConstructor & element) const
 }
 
 ExternalVarPrototype::ExternalVarPrototype(PhysicalModel* model, const TupleRef& tref)
-  : POProt(OPREF(ExternalVarPrototype)), tid(invalidTupleId)
+  : POProt(OPREF(ExternalVarPrototype)), varTupleId(invalidTupleId)
 {
-//    context = optimizer->context()->executor;
-    tid = tref->node->varTupleId;
+    result = model->updateOne(tref.tupleDesc, POProtIn(this, tref.tid));
+    resultSet.push_back(tref.tid);
+
+    varTupleId = tref->node->varTupleId;
+
+    evaluateCost(optimizer->costModel());
 }
 
 XmlConstructor& ExternalVarPrototype::__toXML(XmlConstructor& element) const
 {
     element.openElement(CDGQNAME("tuple"));
-    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(tid));
+    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(varTupleId));
     element.closeElement();
 
     return opt::POProt::__toXML(element);
 }
-
-/*
-
-MagicJoinPrototype::MagicJoinPrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, const pe::Path& _path)
-  : BinaryOpPrototype(model, _left, _right), path(_path)
-{
-    U_ASSERT(_left.op == NULL || _right.op == NULL);
-  
-    result = model->updateTwo(_left.op->result, _right.op->result, this, _left.index, _right.index);
-    resultSet.push_back(_left.index);
-    resultSet.push_back(_right.index);
-
-    evaluateCost(publicCostModel);
-}
-
-XmlConstructor & MagicJoinPrototype::__toXML(XmlConstructor & ) const
-{
-    POProt::__toXML(element);
-
-    XmlConstructor & child = element->addElement(CDGQNAME("path"));
-    child->addText(text_source_cstr(path.toXPathString().c_str()));
-    child->close();
-
-    return element;
-}
-*/
 
 struct XLogXOp { double operator() (double x) { return x*log(1+x); } };
 
@@ -312,9 +292,16 @@ void FilterTuplePrototype::evaluateCost(CostModel* model)
 
 void ExternalVarPrototype::evaluateCost(CostModel* model)
 {
-    U_ASSERT(false);
-}
+    TupleRef outRef(result, resultSet[0]);
+    cost = new OperationCost();
 
+    outRef->statistics = new TupleStatistics();
+    model->getVarCost(phop::GraphExecutionBlock::current()->context, varTupleId, outRef->statistics);
+
+    cost->firstCost = 0;
+    cost->fullCost = 0;
+    cost->nextCost = 0;
+}
 
 void ValueScanPrototype::evaluateCost(CostModel* model)
 {
@@ -414,7 +401,9 @@ struct GraphExecutionBlockWarden {
 
 IOperator* ExternalVarPrototype::compile()
 {
-    U_ASSERT(false);
+    GraphExecutionBlockWarden warden(this);
+    GraphExecutionBlock::current()->resultMap[resultSet.at(0)] = 0;
+    return new phop::VariableIn(this->varTupleId, 1, 1);
 }
 
 

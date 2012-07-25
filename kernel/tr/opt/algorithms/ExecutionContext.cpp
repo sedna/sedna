@@ -136,9 +136,12 @@ void GroupNextImplementation::execute(ExecutionStack* result)
 
 void GraphNext::execute(ExecutionStack* result)
 {
-    geb->top()->next();
-    result->push(Result(geb->top()->get().cells[geb->outputTupleId]));
-    result->push(Result(new GraphNext(*this)));
+    ITupleOperator * top = geb->top();
+
+    if (top->next()) {
+        result->push(Result(new GraphNext(*this)));
+        result->push(Result(top->get().cells[geb->outputTupleId]));
+    }
 };
 
 
@@ -156,8 +159,9 @@ void PlanExecutor::push(ExecutionStack* executionStack, DynamicContext* context,
       CASE_TYPE(MapGraph, vop, op)
         {
             // TODO: optimize graph execution. There is no need in most cases to rebuild the graph
-            GraphExecutionBlock * geb = gc.compile(vop->graph());
-            geb->context = context;
+            GraphExecutionBlock * geb = gc.compile(vop->graph(), context);
+            geb->prepare(&(vop->graph()));
+            geb->top()->reset();
 
             VariableProducer * producer =
               context->variables->bindGraph(geb, &(vop->graph()));
@@ -178,9 +182,10 @@ void PlanExecutor::push(ExecutionStack* executionStack, DynamicContext* context,
         break;
       CASE_TYPE(DataGraphOperation, vop, op)
         {
-            GraphExecutionBlock * geb = gc.compile(vop->graph());
-            geb->context = context;
-            geb->outputTupleId = geb->resultMap[vop->out->varTupleId];
+            GraphExecutionBlock * geb = gc.compile(vop->graph(), context);
+            // WARNING: No prepare needed, absolute index used to determine output tuple
+            geb->outputTupleId = geb->resultMap[vop->out->absoluteIndex];
+            geb->top()->reset();
             executionStack->push(Result(new GraphNext(geb)));
         }
         break;

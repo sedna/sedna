@@ -4,16 +4,9 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/phm/PhysicalModel.h"
 #include "tr/opt/graphs/Predicates.h"
-
-namespace phop {
-  class IFunction;
-  class PlanExecutor;
-}
+#include "tr/opt/algorithms/VariableMap.h"
 
 namespace opt {
-
-struct ComparisonPrototype;
-struct Statistics;
 
 class BinaryOpPrototype : public POProt {
 public:
@@ -99,12 +92,11 @@ public:
 };
 
 class ExternalVarPrototype : public POProt {
-    TupleId tid;
-    phop::PlanExecutor * context;
+    TupleId varTupleId;
 protected:
     virtual XmlConstructor & __toXML(XmlConstructor & ) const;
 public:
-    ExternalVarPrototype(PhysicalModel * model, const TupleRef & tref);
+    ExternalVarPrototype(opt::PhysicalModel* model, const opt::TupleRef& tref);
 
     virtual void evaluateCost(CostModel* model);
     virtual phop::IOperator * compile();

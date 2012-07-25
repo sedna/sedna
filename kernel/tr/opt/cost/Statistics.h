@@ -14,11 +14,8 @@
 
 namespace opt {
 
-class POProt;
-class TupleRef;
-
-struct PathCostModel : public IPlanDisposable {
-    IPlanDisposable * data;
+struct PathCostModel : public ICostModelDisposable {
+    ICostModelDisposable * data;
 
     Range card;
     Range blockCount;
@@ -28,25 +25,25 @@ struct PathCostModel : public IPlanDisposable {
     Range schemaTraverseCost;
 };
 
-struct ValueCostModel : public IPlanDisposable {
-    IPlanDisposable * data;
+struct ValueCostModel : public ICostModelDisposable {
+    ICostModelDisposable * data;
 
     Range size;
     Range atomizationCost;
 };
 
-struct SequenceInfo : public IPlanDisposable {
+struct SequenceInfo : public ICostModelDisposable {
     Range card;
     Range blockCount;
     Range sortCost;
 };
 
-struct EvaluationInfo : public IPlanDisposable {
+struct EvaluationInfo : public ICostModelDisposable {
     Range opCost;
     Range selectivity;
 };
 
-struct TupleStatistics : public IPlanDisposable {
+struct TupleStatistics : public ICostModelDisposable {
     Range distinctValues;
     Range valueSize;
 
@@ -59,7 +56,7 @@ struct TupleStatistics : public IPlanDisposable {
         : distinctValues(_x->distinctValues), valueSize(_x->valueSize), pathInfo(_x->pathInfo), valueInfo(_x->valueInfo) {};
 };
 
-struct OperationCost : public IPlanDisposable {
+struct OperationCost : public ICostModelDisposable {
     Range firstCost;
     Range nextCost;
     Range fullCost;
@@ -74,6 +71,8 @@ public:
     PathCostModel * getAbsPathCost(const DataRoot& root, const pe::Path & path, TupleStatistics * result);
     PathCostModel * getPathCost(const TupleRef & base, const pe::Path & path, TupleStatistics * result);
     ValueCostModel * getValueCost(PathCostModel * m, TupleStatistics * result);
+
+    void getVarCost(executor::DynamicContext* m, opt::TupleId varTupleId, opt::TupleStatistics* result);
 
     SequenceInfo * getDocOrderSequenceCost(const TupleRef & tuple);
     SequenceInfo * getValueSequenceCost(const TupleRef & tuple);

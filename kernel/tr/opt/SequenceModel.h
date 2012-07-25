@@ -7,23 +7,11 @@
 #define SEQUENCE_MODEL_H
 
 #include "tr/executor/base/tuple.h"
+#include "tr/models/XmlConstructor.h"
 #include "tr/opt/OptTypes.h"
 
 #include <deque>
 #include <stack>
-
-namespace executor {
-struct DynamicContext;
-}
-
-class XmlConstructor;
-
-namespace opt {
-
-class POProt;
-struct DataGraphIndex;
-
-}
 
 #define PHOPQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
 
@@ -39,9 +27,6 @@ static const struct phop::operation_info_t op_info; \
 #define OPINFO_REF &op_info
 
 namespace phop {
-
-class IOperator;
-class ITupleOperator;
 
 typedef std::vector<IOperator *> Operators;
 typedef std::map<IOperator *, Operators::size_type> OperatorMap;
@@ -110,7 +95,7 @@ struct operation_info_t {
     int id;
 };
 
-class IOperator {
+class IOperator : public IXMLSerializable {
 private:
     const operation_info_t * opinfo;
 protected:
@@ -206,7 +191,7 @@ struct TupleIn {
             };
         }
     };
-    
+
     void assignTo(tuple & result, const TupleMap & tmap) const {
         tupleAssignTo(result, op->get(), tmap);
     };

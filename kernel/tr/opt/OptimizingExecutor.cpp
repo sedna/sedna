@@ -1,6 +1,5 @@
 #include "OptimizingExecutor.h"
 
-#include "tr/opt/OptSpace.h"
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/graphs/DataGraphCollection.h"
 #include "tr/opt/algebra/IndependentPlan.h"
@@ -38,9 +37,12 @@ void opt::OptimizingExecutor::onTransactionEnd()
     delete _context;
     delete _dgm;
 
-    elog(EL_LOG, ("Optimizer used : %llu / %llu", memoryPool.totalAllocated(), memoryPool.total()));
+    elog(EL_LOG, ("Optimizer used : %llu / %llu", planGenerationPool.totalAllocated(), planGenerationPool.total()));
+    elog(EL_LOG, ("Cost model used : %llu / %llu", costModelPool.totalAllocated(), costModelPool.total()));
 
-    ptrs.destroyAll<opt::IPlanDisposable>(NULL);
-    ptrs.clear();
-    memoryPool.clear();
+//    ptrs.destroyAll<opt::IPlanDisposable>(NULL);
+//    ptrs.clear();
+
+    planGenerationPool.clear();
+    costModelPool.clear();
 }

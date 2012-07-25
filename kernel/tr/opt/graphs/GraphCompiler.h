@@ -1,11 +1,8 @@
 #ifndef _GRAPH_COMPILER_H_
 #define _GRAPH_COMPILER_H_
 
+#include "tr/opt/OptTypes.h"
 #include "tr/opt/graphs/DataGraphs.h"
-
-namespace phop {
-    class GraphExecutionBlock;
-}
 
 namespace opt {
 
@@ -26,7 +23,7 @@ class GraphCompiler
 
 public:
 //    GraphCompiler(DataGraphMaster * dgm);
-    phop::GraphExecutionBlock* compile(DataGraphIndex & graph);
+    phop::GraphExecutionBlock* compile(opt::DataGraphIndex& graph, executor::DynamicContext* context);
 };
 
 };

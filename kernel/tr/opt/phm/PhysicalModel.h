@@ -9,28 +9,12 @@
 
 #include "common/sedna.h"
 #include "tr/opt/OptTypes.h"
-
-class XmlConstructor;
-class IElementProducer;
+#include "tr/models/XmlConstructor.h"
 
 namespace phop {
-    class IOperator;
-    class ITupleOperator;
 }
 
 namespace opt {
-
-class PlanInfo;
-class CostModel;
-
-struct TupleStatistics;
-struct OperationCost;
-
-struct PhantomPredicate;
-struct ValuePredicate;
-struct StructuralPredicate;
-
-class POProt;
 
 struct TupleValueInfo {
     enum element_status_t {
@@ -53,7 +37,7 @@ struct TupleValueInfo {
 };
 
 /* This structure describe tuple the raw */
-class TupleChrysalis : public IPlanDisposable {
+class TupleChrysalis : public IPlanDisposable, IXMLSerializable {
 public:
     explicit TupleChrysalis(size_t size);
     explicit TupleChrysalis(const TupleChrysalis * parent);
@@ -70,7 +54,7 @@ public:
 
     TupleValueInfo * get(TupleId i) { return &(tuples.at(i)); };
 
-    XmlConstructor & __toXML(XmlConstructor &) const;
+    virtual XmlConstructor & toXML(XmlConstructor &) const;
 };
 
 class POProtIn { public:
@@ -87,7 +71,7 @@ struct prot_info_t
     const char * name;
 };
 
-class POProt : public IPlanDisposable {
+class POProt : public IPlanDisposable, IXMLSerializable {
     const prot_info_t * protInfo;
     phop::IOperator * op;
 protected:
@@ -124,8 +108,7 @@ public:
     POProt(const prot_info_t * pinfo) : protInfo(pinfo), op(NULL), cost(NULL), result(NULL) {};
 
     virtual void evaluateCost(CostModel * model) = 0;
-
-    XmlConstructor & toXML(XmlConstructor &) const;
+    virtual XmlConstructor & toXML(XmlConstructor &) const;
 };
 
 class TupleRef { public:
@@ -149,7 +132,7 @@ class TupleRef { public:
 
 typedef std::vector<POProt *> OperationList;
 
-class PlanInfo : public IPlanDisposable {
+class PlanInfo : public IPlanDisposable, IXMLSerializable {
 friend class PhysicalModel;
 protected:
     PlanDesc desc, parent;
@@ -183,7 +166,7 @@ public:
     PlanInfo * extend(Predicate * what) const;
     phop::ITupleOperator * compile();
 
-    XmlConstructor & toXML(XmlConstructor &) const;
+    virtual XmlConstructor & toXML(XmlConstructor& constructor) const;
 };
 
 struct Candidate;

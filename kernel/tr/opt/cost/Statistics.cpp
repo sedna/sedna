@@ -2,6 +2,7 @@
 
 #include "tr/opt/phm/Operations.h"
 #include "tr/opt/path/XPathLookup.h"
+#include "tr/opt/algorithms/ExecutionContext.h"
 
 using namespace opt;
 
@@ -17,7 +18,7 @@ const double opt::C_IO_Cost = 10.0;
 
 // TODO : MAKE CACHE AT MUST !!!
 
-struct PathCostModelData : public IPlanDisposable {
+struct PathCostModelData : public ICostModelDisposable {
     std::vector<schema_node_xptr> snodes;
     scoped_ptr<pe::SchemaLookup> lookup;
 };
@@ -74,8 +75,12 @@ PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path&
     result->iterationCost = scmLookup->atomizedPath.cost();
     result->schemaTraverseCost = scmLookup->atomizedPath.cost();
 
-    if (baseStats == NULL) {
-        scmLookup->execute(root.getSchemaNode(), &modelData->snodes);
+    if (baseStats == NULL || baseStats->pathInfo == NULL) {
+        if (root.empty()) {
+            modelData->snodes.clear();
+        } else {
+            scmLookup->execute(root.getSchemaNode(), &modelData->snodes);
+        }
     } else if (baseStats->pathInfo->data == NULL) {
         if (path.getBody()->rbegin()->getAxis() != pe::axis_parent) {
             double error = scmLookup->findSomething(root, &modelData->snodes, 0) * 100;
@@ -123,6 +128,7 @@ PathCostModel* CostModel::getAbsPathCost(const DataRoot& root, const pe::Path& p
 
     cm->card = 1;
     cm->blockCount = 1;
+    cm->nidSize = 1;
 
     return evaluatePathCost(root, path, result, cm, NULL);
 }
@@ -133,14 +139,17 @@ PathCostModel* CostModel::getPathCost(const TupleRef& base, const pe::Path& path
 
     U_ASSERT(base.tupleDesc != NULL);
 
+    cm->card = 1;
+    cm->blockCount = 1;
+    cm->nidSize = 1;
+
     if (base->statistics != NULL) {
         cm->card = base->statistics->distinctValues;
-        U_ASSERT(base->statistics->pathInfo != NULL);
-        cm->blockCount = base->statistics->pathInfo->blockCount;
-        cm->nidSize = base->statistics->pathInfo->nidSize;
-    } else {
-        cm->card = 1;
-        cm->blockCount = 1;
+
+        if (base->statistics->pathInfo != NULL) {
+            cm->blockCount = base->statistics->pathInfo->blockCount;
+            cm->nidSize = base->statistics->pathInfo->nidSize;
+        };
     };
 
     return evaluatePathCost(base->node->root, path, _result, cm, base->statistics);
@@ -253,3 +262,16 @@ SequenceInfo* CostModel::getValueSequenceCost(const TupleRef& tuple)
     return result;
 }
 
+void CostModel::getVarCost(executor::DynamicContext* m, TupleId varTupleId, TupleStatistics* result)
+{
+    TupleStatistics * stats = m->variables->getProducer(varTupleId)->statistics;
+
+    if (stats != NULL) {
+        *result = *stats;
+    } else {
+        result->distinctValues = Range(1, 1000);
+        result->pathInfo = NULL;
+        result->valueInfo = NULL;
+        result->valueSize = Range(1, 10);
+    };
+}

@@ -16,6 +16,8 @@ using namespace opt;
 
 OPINFO_DEF(SchemaScan)
 OPINFO_DEF(SchemaValueScan)
+OPINFO_DEF(VariableIn)
+
 OPINFO_DEF(BogusConstSequence)
 OPINFO_DEF(CachedNestedLoop)
 OPINFO_DEF(NestedEvaluation)
@@ -121,6 +123,35 @@ void SchemaValueScan::reset()
     phop::ITupleOperator::reset();
     currentNode = XNULL;
 }
+
+phop::VariableIn::VariableIn(TupleId _tid, unsigned int size, unsigned int _idx)
+  : ITupleOperator(OPINFO_REF, size), tid(_tid), varIt(NULL), idx(_idx)
+{
+    
+}
+
+void phop::VariableIn::do_next()
+{
+   // TODO : remove;
+    if (varIt.info() == NULL) {
+        varIt = block->context->variables->getIterator(tid);
+    };
+
+    tuple_cell tc = varIt.next();
+    
+    if (tc.is_eos()) {
+        seteos();
+    };
+
+    value().cells[idx] = tc;
+};
+
+void phop::VariableIn::reset()
+{
+    phop::ITupleOperator::reset();
+    varIt = block->context->variables->getIterator(tid);
+};
+
 
 BogusConstSequence::BogusConstSequence(MemoryTupleSequencePtr _sequence, unsigned _size, unsigned _resultIdx)
   : ITupleOperator(OPINFO_REF, _size), sequence(_sequence), resultIdx(_resultIdx), idx(0)
@@ -292,6 +323,15 @@ XmlConstructor & SchemaValueScan::__toXML(XmlConstructor & producer) const
     };
     
     return producer;
+};
+
+XmlConstructor & VariableIn::__toXML(XmlConstructor & producer) const
+{
+    producer.openElement(PHOPQNAME("variable"));
+    producer.addAttributeValue(PHOPQNAME("variable"), tuple_cell::atomic_int(tid));
+    producer.closeElement();
+    
+    return  producer;
 };
 
 XmlConstructor & BogusConstSequence::__toXML(XmlConstructor & producer) const

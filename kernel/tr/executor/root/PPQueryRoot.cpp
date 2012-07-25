@@ -86,6 +86,25 @@ bool PPQueryRoot::next()
     return result;
 }
 
+static
+std::string schemaPath(schema_node_cptr snode) {
+    std::stringstream path;
+    std::stack<schema_node_cptr> path_sn;
+
+    while (snode.found()) {
+        path_sn.push(snode);
+        snode = snode->parent;
+    };
+
+    while (!path_sn.empty()) {
+        path << path_sn.top()->get_qname().getColonizedName().c_str() << "/";
+        path_sn.pop();
+    }
+
+    return path.str();
+};
+
+
 bool PPQueryRoot::do_next()
 {
     static int hui = 0;
@@ -130,14 +149,26 @@ bool PPQueryRoot::do_next()
             tr_globals::serializer->serialize(data);
 
             hui = 2;
+            return true;
+        } else if (hui == 2 || hui == 3) {
+            if (hui == 2) {
+                optimizer->executor()->execute(optimizedPlan);
+                hui = 3;
+            }
 
-            return true;
-        } else if (hui == 2) {
-            optimizer->executor()->execute(optimizedPlan);
             data.cells[0] = optimizer->executor()->executionStack->next();
-            tr_globals::serializer->serialize(data);
-            return true;
-        } else {
+            if (!data.cells[0].is_eos()) {
+/*
+                if (data.cells[0].is_node()) {
+                    data.cells[0] =
+                      tuple_cell::atomic_deep(xs_string, schemaPath(getSchemaNode(data.cells[0].get_node())).c_str());
+                };
+*/
+                tr_globals::serializer->serialize(data);
+                return true;
+            }
+
+            first = true;
             return false;
         };
     };

@@ -7,17 +7,16 @@
 
 namespace executor {
 
-struct VariableProducer;
-
 struct VarCacheInfo
 {
     opt::TupleId tid;
     sequence * seq;
     VariableProducer * producer;
     unsigned inTuple;
+    opt::TupleStatistics * statistics;
 
     VarCacheInfo()
-      : tid(opt::invalidTupleId)
+      : tid(opt::invalidTupleId), statistics(NULL)
     {
         // TODO : add variable no cache optimization
         seq = new sequence(1, 1024);
@@ -162,6 +161,8 @@ class VarIterator
     tuple_cell value;
 // TODO : add generation debug
 public:
+    const VarCacheInfo * info() const { return varInfo; }
+
     explicit VarIterator(VarCacheInfo * _varInfo)
       : pos(-1), varInfo(_varInfo), value(EMPTY_TUPLE_CELL)
     {
@@ -185,7 +186,7 @@ public:
             if (!varInfo->producer->next())
             {
                 value.set_eos();
-                break;
+                return get();
             };
         }
 

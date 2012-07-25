@@ -7,9 +7,6 @@
 
 namespace executor {
 
-struct ExecutionStack;
-struct DynamicContext;
-
 //typedef void (* ExecutorProc)(void * object, ExecutionStack * executor);
 
 class IExecuteProc

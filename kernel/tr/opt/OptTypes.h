@@ -1,35 +1,21 @@
 #ifndef OPTTYPES_H
 #define OPTTYPES_H
 
-#include <vector>
-#include <set>
-#include <map>
-
 #include "common/sedna.h"
 
-#include <cstddef>
+#include "tr/executor/base/tuple.h"
 
-#include "tr/opt/OptimizingExecutor.h"
-#include "tr/opt/OptSpace.h"
 #include "tr/opt/types/Range.h"
 #include "tr/opt/types/Comparison.h"
 #include "tr/opt/types/IntBitIterator.h"
-#include "tr/executor/base/tuple.h"
+#include "tr/opt/OptForewards.h"
 
-class DataRoot;
-class XmlConstructor;
+#include "tr/opt/OptimizingExecutor.h"
 
-namespace pe {
-class Step;
-class Path;
-};
-
-namespace phop {
-class ITupleOperator;
-struct FunctionInfo;
-}
-
-#define MAX_GRAPH_SIZE 63
+#include <vector>
+#include <set>
+#include <map>
+#include <cstddef>
 
 template <typename T>
 class object_vector : public std::vector<T *>
@@ -56,14 +42,6 @@ static const opt::TupleId worldDataTupleId = 1;
 typedef ::IntBitIterator<PlanDesc> PlanDescIterator;
 
 #define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
-
-struct Predicate;
-struct DataNode;
-struct Variable;
-struct DataGraph;
-struct DataGraphMaster;
-
-class PhysicalModel;
 
 template <typename T>
 struct opt_allocator
@@ -93,7 +71,7 @@ struct opt_allocator
 
     inline pointer allocate(size_type cnt, const_pointer hint = 0)
     {
-        return reinterpret_cast<pointer>(optimizer->alloc(cnt * sizeof (T)));
+        return reinterpret_cast<pointer>(optimizer->planGenerationPool.alloc(cnt * sizeof (T)));
     }
     
     inline void deallocate(pointer p, size_type) { }
@@ -132,12 +110,24 @@ TupleScheme singleTupleScheme(opt::TupleId tid)
     return a;
 }
 
+struct ICostModelDisposable
+{
+public:
+    virtual ~ICostModelDisposable() {};
+    void * operator new(size_t n)
+    {
+        return optimizer->costModelPool.alloc(n);
+    };
+
+    void operator delete(void *) { return; };
+};
+
 class IPlanDisposable {
 public:
     virtual ~IPlanDisposable() {};
     void * operator new(size_t n)
     {
-        return optimizer->createObject(n);
+        return optimizer->planGenerationPool.alloc(n);
     };
     
     void operator delete(void *) { return; };

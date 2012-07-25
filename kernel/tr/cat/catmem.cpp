@@ -107,45 +107,6 @@ void cat_free_(void *p)
     free(p);
 }
 
-void *FastPointerArray::search_for_chunk_addr(uint32_t cust_chunk_size, void *addr)
-{
-    FastPointerArrayChunk *i = chunks;
-    unsigned c = lastPtr;
-
-    while (i != NULL)
-    {
-        for (unsigned j = 0; j < c; j++)
-        {
-            uintptr_t chunk_start = (uintptr_t)i->data[j];
-            uintptr_t chunk_boundary = chunk_start + cust_chunk_size;
-
-            if ((uintptr_t)addr >= chunk_start && (uintptr_t)addr < chunk_boundary)
-                return i->data[j];
-        }
-
-        c = FPA_SIZE;
-        i = i->next;
-    }
-
-    return NULL;
-}
-
-void *FastPointerArray::get_elem(uint32_t ind)
-{
-    unsigned i, j;
-    FastPointerArrayChunk *chunk = chunks;
-
-    i = chunk_num - ind / FPA_SIZE - 1;
-    j = ind % FPA_SIZE;
-
-    U_ASSERT(i <= chunk_num);
-
-    while (i--)
-        chunk = chunk->next;
-
-    return chunk->data[j];
-}
-
 int CatalogMemoryContext::allocate_chunk()
 {
     chunk_head *header;

@@ -25,6 +25,8 @@ public:
     DataRoot(data_root_type_t type, const char * name);
     DataRoot(const scheme_list * x);
 
+    inline bool empty() const { return type == drt_null; };
+    
     inline schema_node_cptr getSchemaNode() const {
         if (snode == XNULL) {
             snode = _getSchemaNode();

@@ -53,8 +53,7 @@ public:
     };
 };
 
-
-phop::GraphExecutionBlock* opt::GraphCompiler::compile(opt::DataGraphIndex& graph)
+phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph, executor::DynamicContext * context)
 {
     opt::DataGraphRewriter dgr(graph);
     dgr.structuralComparison();
@@ -62,10 +61,14 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(opt::DataGraphIndex& grap
     phop::GraphExecutionBlock* result = getGraph(graph.dg);
     
     if (result != NULL) {
+        result->context = context;
         return result;
     };
 
-    GraphExecutionBlock::push(new GraphExecutionBlock());
+    result = new GraphExecutionBlock();
+    result->context = context;
+
+    GraphExecutionBlock::push(result);
 
 /*
     std::ofstream F("/tmp/datagraph.log");
@@ -104,7 +107,6 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(opt::DataGraphIndex& grap
             if (dn->type == opt::DataNode::dnExternal) {
                 nullPlanPhm.pushOp(
                   new ExternalVarPrototype(&nullPlanPhm, ref));
-//                U_ASSERT(ref->status == opt::TupleValueInfo::evaluated);
             };
         };
     }
@@ -167,10 +169,8 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(opt::DataGraphIndex& grap
 //    serializer->serialize(tuple(planMap->getLastPlan()->toXML(vrt)->close()));
 
     ITupleOperator * checkVar = planMap->getLastPlan()->compile();
-    result = GraphExecutionBlock::pop();
     U_ASSERT(checkVar == result->top());
     graphCache[graph.dg] = result;
-    result->prepare(&graph);
     
     return result;
 }

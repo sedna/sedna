@@ -467,20 +467,20 @@ phop::ITupleOperator* PlanInfo::compile()
 
 #define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
 
-XmlConstructor & PlanInfo::toXML(XmlConstructor & element) const
+XmlConstructor & PlanInfo::toXML(XmlConstructor& constructor) const
 {
-    element.openElement(CDGQNAME("plan"));
+    constructor.openElement(CDGQNAME("plan"));
 
-    element.addAttributeValue(CDGQNAME("desc"), tuple_cell::atomic_int(desc));
-    element.addAttributeValue(CDGQNAME("parent"), tuple_cell::atomic_int(parent));
+    constructor.addAttributeValue(CDGQNAME("desc"), tuple_cell::atomic_int(desc));
+    constructor.addAttributeValue(CDGQNAME("parent"), tuple_cell::atomic_int(parent));
     
     for (OperationList::const_iterator i = opList.begin(); i != opList.end(); ++i) {
-        (*i)->toXML(element);
+        (*i)->toXML(constructor);
     };
 
-    element.closeElement();
+    constructor.closeElement();
 
-    return element;
+    return constructor;
 }
 
 inline static
@@ -515,41 +515,41 @@ XmlConstructor & POProt::__commonToXML(XmlConstructor & element) const
     return element;
 }
 
-XmlConstructor & TupleChrysalis::__toXML(XmlConstructor & element) const
+XmlConstructor & TupleChrysalis::toXML(XmlConstructor & constructor) const
 {
-    element.openElement(CDGQNAME("tuple"));
+    constructor.openElement(CDGQNAME("tuple"));
 
-    element.addAttributeValue(CDGQNAME("count"), tuple_cell::atomic(rowCount.avg()));
-    element.addAttributeValue(CDGQNAME("size"), tuple_cell::atomic(rowSize.avg()));
-    element.addAttributeValue(CDGQNAME("width"), tuple_cell::atomic_int(_width));
+    constructor.addAttributeValue(CDGQNAME("count"), tuple_cell::atomic(rowCount.avg()));
+    constructor.addAttributeValue(CDGQNAME("size"), tuple_cell::atomic(rowSize.avg()));
+    constructor.addAttributeValue(CDGQNAME("width"), tuple_cell::atomic_int(_width));
 
-    element.closeElement();
+    constructor.closeElement();
     
-    return element;
+    return constructor;
 };
 
-XmlConstructor & POProt::__toXML(XmlConstructor & element) const
+XmlConstructor & POProt::__toXML(XmlConstructor & constructor) const
 {
-    this->result->__toXML(element);
+    this->result->toXML(constructor);
 
-    return element;
+    return constructor;
 }
 
-XmlConstructor & POProt::toXML(XmlConstructor & element) const
+XmlConstructor & POProt::toXML(XmlConstructor & constructor) const
 {
-    element.openElement(CDGQNAME(this->getProtInfo()->name));
-    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int((ptrdiff_t) (this)));
+    constructor.openElement(CDGQNAME(this->getProtInfo()->name));
+    constructor.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int((ptrdiff_t) (this)));
 
-    __commonToXML(element);
-    __toXML(element);
+    __commonToXML(constructor);
+    __toXML(constructor);
 
-    element.openElement(CDGQNAME("cost"));
+    constructor.openElement(CDGQNAME("cost"));
 
-    rangeToElement(this->cost->firstCost, element, "first");
-    rangeToElement(this->cost->nextCost, element, "next");
-    rangeToElement(this->cost->fullCost, element, "total");
+    rangeToElement(this->cost->firstCost, constructor, "first");
+    rangeToElement(this->cost->nextCost, constructor, "next");
+    rangeToElement(this->cost->fullCost, constructor, "total");
     
-    element.closeElement();
-    element.closeElement();
-    return element;
+    constructor.closeElement();
+    constructor.closeElement();
+    return constructor;
 }

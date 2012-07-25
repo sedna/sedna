@@ -24,7 +24,7 @@ protected:
     virtual void do_next();
 public:
     OPINFO_DECL(0x301)
-  
+
     DocOrderMerge(unsigned int _size, const TupleList & _tin);
     virtual void reset();
 };

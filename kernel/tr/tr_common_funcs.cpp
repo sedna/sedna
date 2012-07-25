@@ -27,8 +27,7 @@
 #include "tr/crmutils/serialization.h"
 #include "tr/executor/base/xsd.h"
 
-#include "tr/opt/OptSpace.h"
-#include "tr/opt/OptTypes.h"
+#include "tr/opt/OptimizingExecutor.h"
 // #include "tr/debugstream.h"
 
 #ifdef SE_ENABLE_FTSEARCH

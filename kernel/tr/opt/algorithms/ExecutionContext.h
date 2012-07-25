@@ -7,13 +7,7 @@
 #include "tr/opt/graphs/GraphCompiler.h"
 #include "tr/executor/base/sequence.h"
 
-namespace rqp {
-class RPBase;
-}
-
 namespace executor {
-
-class VariableModel;
 
 struct DynamicContext
 {

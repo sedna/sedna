@@ -5,10 +5,11 @@
 #include "tr/opt/SequenceModel.h"
 #include "tr/opt/graphs/Predicates.h"
 #include "tr/opt/algorithms/ComparisonOperation.h"
+#include "tr/opt/algorithms/VariableMap.h"
 
 namespace phop {
 
-struct IFunctionOpInstance;
+// TODO swap size and idx in constructors, initialize them with 1
 
 class SchemaScan : public ITupleOperator {
 private:
@@ -48,6 +49,21 @@ public:
         const TupleCellComparison & _tcmpop,
         opt::MemoryTupleSequencePtr _sequence,
         unsigned size, unsigned left, unsigned right);
+
+    virtual void reset();
+};
+
+class VariableIn : public ITupleOperator {
+private:
+    opt::TupleId tid;
+    executor::VarIterator varIt;
+    unsigned idx;
+protected:
+    virtual void do_next();
+public:
+    OPINFO_DECL(0x203)
+
+    VariableIn(opt::TupleId _tid, unsigned size, unsigned idx);
 
     virtual void reset();
 };

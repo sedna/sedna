@@ -2,19 +2,12 @@
 #define _OPTIMIZING_EXECUTOR_H_
 
 #include "tr/models/SednaModule.h"
-#include "tr/cat/catmem.h"
-#include "tr/opt/OptSpace.h"
+#include "tr/models/MemoryPool.h"
+#include "tr/models/PointerArray.h"
 
-namespace rqp {
-    class PlanContext;
-}
-
-struct PlanExecutor;
+#include "tr/opt/OptForewards.h"
 
 namespace opt {
-
-class CostModel;
-class DataGraphMaster;
 
 class OptimizingExecutor : SednaModule
 {
@@ -24,22 +17,17 @@ private:
     PlanExecutor * _executor;
     CostModel * _costModel;
 
-    MemoryPool memoryPool;
-    FastPointerArray ptrs;
 public:
-    inline 
-    void * alloc(size_t n)
-    {
-        return memoryPool.alloc(n);
-    };
+    MemoryPool planGenerationPool;
+    MemoryPool costModelPool;
+//    MemoryPool gataGraphPool;
+//    MemoryPool executionPool;
 
-    inline 
-    void * createObject(size_t n)
-    {
-        void * ptr = memoryPool.alloc(n);
-        ptrs.add(ptr);
-        return ptr;
-    };
+    OptimizingExecutor()
+      : _dgm(NULL), _context(NULL), _executor(NULL), _costModel(NULL),
+        planGenerationPool(MEMORY_BLOCK_SIZE),
+        costModelPool(MEMORY_BLOCK_SIZE)
+          {};
   
     virtual void onSessionBegin();
     virtual void onSessionEnd();
