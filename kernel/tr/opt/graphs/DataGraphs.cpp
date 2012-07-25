@@ -181,7 +181,7 @@ DataGraph* DataGraphBuilder::build(DataGraphMaster* master)
 
 XmlConstructor & DataGraph::toXML(XmlConstructor & producer) const
 {
-    producer.openElement(CDGQNAME("datagraph"));
+    producer.openElement(SE_EL_NAME("datagraph"));
 
     FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
         dataNodes[i]->toXML(producer);
@@ -209,44 +209,44 @@ XmlConstructor & DataNode::toXML(XmlConstructor& element) const
         case dnReplaced : nodetype = "REMOVED"; break;
     };
 
-    element.openElement(CDGQNAME("node"));
+    element.openElement(SE_EL_NAME("node"));
 
-    element.addAttributeValue(CDGQNAME("type"), nodetype);
-    element.addAttributeValue(CDGQNAME("index"), tuple_cell::atomic_int(index));
+    element.addAttributeValue(SE_EL_NAME("type"), nodetype);
+    element.addAttributeValue(SE_EL_NAME("index"), tuple_cell::atomic_int(index));
 
     if (varTupleId != opt::invalidTupleId) {
-        element.addAttributeValue(CDGQNAME("varId"), tuple_cell::atomic_int(varTupleId));
+        element.addAttributeValue(SE_EL_NAME("varId"), tuple_cell::atomic_int(varTupleId));
 
         if (parent->owner->variableMap.find(varTupleId) == parent->owner->variableMap.end()) {
-            element.addAttributeValue(CDGQNAME("bad"), tuple_cell::atomic(true));
+            element.addAttributeValue(SE_EL_NAME("bad"), tuple_cell::atomic(true));
         } else {
             VariableInfo & vinfo = parent->owner->getVariable(varTupleId);
 
             if (!vinfo.name.empty()) {
-                element.addAttributeValue(CDGQNAME("varName"), vinfo.name);
+                element.addAttributeValue(SE_EL_NAME("varName"), vinfo.name);
             };
         }
     };
 
     if ((parent->outputNodes & this->indexBit) > 0) {
-        element.addAttributeValue(CDGQNAME("output"), tuple_cell::atomic(true));
+        element.addAttributeValue(SE_EL_NAME("output"), tuple_cell::atomic(true));
     };
 
     switch(type) {
         case dnDatabase :
-            element.addElementValue(CDGQNAME("root"), root.toLRString());
-            element.addElementValue(CDGQNAME("path"), path.toXPathString());
+            element.addElementValue(SE_EL_NAME("root"), root.toLRString());
+            element.addElementValue(SE_EL_NAME("path"), path.toXPathString());
             break;
         case dnAlias :
-            element.addElementValue(CDGQNAME("source"), tuple_cell::atomic_int(aliasFor->index));
+            element.addElementValue(SE_EL_NAME("source"), tuple_cell::atomic_int(aliasFor->index));
             break;
         case dnReplaced :
-            element.addElementValue(CDGQNAME("with"), tuple_cell::atomic_int(replacedWith->index));
+            element.addElementValue(SE_EL_NAME("with"), tuple_cell::atomic_int(replacedWith->index));
             break;
         case dnConst :
             U_ASSERT(!constValue.isnull());
             for (MemoryTupleSequence::const_iterator it = constValue->begin(); it != constValue->end(); ++it) {
-                element.addElementValue(CDGQNAME("value"), *it);
+                element.addElementValue(SE_EL_NAME("value"), *it);
             };
             break;
         case dnFreeNode :

@@ -41,7 +41,7 @@ static const opt::TupleId worldDataTupleId = 1;
 
 typedef ::IntBitIterator<PlanDesc> PlanDescIterator;
 
-#define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
+#define SE_EL_NAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
 
 template <typename T>
 struct opt_allocator

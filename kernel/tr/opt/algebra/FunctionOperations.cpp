@@ -6,20 +6,20 @@
 using namespace rqp;
 using namespace opt;
 
-OPERATION_INFO(FunCall)
-OPERATION_INFO(Construct)
-OPERATION_INFO(XPathStep)
+RTTI_DEF(FunCall)
+RTTI_DEF(Construct)
+RTTI_DEF(XPathStep)
 
 XmlConstructor& FunCall::__toXML(XmlConstructor& element) const
 {
-    element.addAttributeValue(CDGQNAME("name"), function->getQName().getColonizedName());
+    element.addAttributeValue(SE_EL_NAME("name"), function->getQName().getColonizedName());
 
     int i = 0;
     for (OperationList::const_iterator it = children.begin(); it != children.end(); ++it) {
-        element.openElement(CDGQNAME("param"));
-        element.addAttributeValue(CDGQNAME("index"), tuple_cell::atomic_int(i++));
+        element.openElement(SE_EL_NAME("param"));
+        element.addAttributeValue(SE_EL_NAME("index"), tuple_cell::atomic_int(i++));
 
-        if (*it != null_op) {
+        if (*it != null_obj) {
             (*it)->toXML(element);
         }
 
@@ -31,10 +31,10 @@ XmlConstructor& FunCall::__toXML(XmlConstructor& element) const
 
 XmlConstructor& Construct::__toXML(XmlConstructor& element) const
 {
-    element.addElementValue(CDGQNAME("type"), type2string(type));
+    element.addElementValue(SE_EL_NAME("type"), type2string(type));
 
-    if (getName() != null_op) {
-        element.openElement(CDGQNAME("name"));
+    if (getName() != null_obj) {
+        element.openElement(SE_EL_NAME("name"));
         getName()->toXML(element);
         element.closeElement();
     }
@@ -44,7 +44,7 @@ XmlConstructor& Construct::__toXML(XmlConstructor& element) const
 
 XmlConstructor& XPathStep::__toXML(XmlConstructor& element) const
 {
-    element.addElementValue(CDGQNAME("step"), step.toXPathString());
+    element.addElementValue(SE_EL_NAME("step"), step.toXPathString());
     return rqp::ListOperation::__toXML(element);
 };
 

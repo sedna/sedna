@@ -1,5 +1,5 @@
 /*
- * File:  PlanOperationTypes.h
+ * File:  PlanOperations.h
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
@@ -7,26 +7,37 @@
 #define _PLAN_OP_MINIMAL_H_
 
 #include "common/sedna.h"
+#include "tr/opt/OptForewards.h"
 
 namespace rqp {
-  
-class PlanContext;
 
 struct TupleDefinition;
 
-class RPBase;
+enum op_list_t {
+  op_base,
 
-class ConstantOperation;
-class NestedOperation;
-class ListOperation;
-class BinaryOperation;
+  op_nil,
+  op_uni,
+  op_nested,
+  op_multi,
 
-static RPBase * const null_op = (RPBase *)(NULL);
+  op_const,
+  op_varin,
+  op_exists, // Important: differs from effective boolean value
+  op_sequence,
 
-/**** Logical operations ****/
+  op_map,
+  op_sequence_map,
+  op_map_graph,
 
-class MapGraph;
-class MapConcat;
+  op_if,
+  op_funcall,
+
+  op_xpath, // TODO : will be a fun call
+  op_constructor, 
+
+  op_datagraph, // TODO : delete
+};
 
 };
 

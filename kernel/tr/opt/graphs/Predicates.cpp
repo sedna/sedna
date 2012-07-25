@@ -85,12 +85,12 @@ std::string ValuePredicate::toLRString() const
 
 XmlConstructor & StructuralPredicate::toXML(XmlConstructor & element) const
 {
-    element.openElement(CDGQNAME("StructurePredicate"));
+    element.openElement(SE_EL_NAME("StructurePredicate"));
   
-    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(index));
-    element.addElementValue(CDGQNAME("path"), path.toXPathString());
-    element.addElementValue(CDGQNAME("left"), tuple_cell::atomic_int(left()->index));
-    element.addElementValue(CDGQNAME("right"), tuple_cell::atomic_int(right()->index));
+    element.addAttributeValue(SE_EL_NAME("id"), tuple_cell::atomic_int(index));
+    element.addElementValue(SE_EL_NAME("path"), path.toXPathString());
+    element.addElementValue(SE_EL_NAME("left"), tuple_cell::atomic_int(left()->index));
+    element.addElementValue(SE_EL_NAME("right"), tuple_cell::atomic_int(right()->index));
     
     element.closeElement();
 
@@ -99,12 +99,12 @@ XmlConstructor & StructuralPredicate::toXML(XmlConstructor & element) const
 
 XmlConstructor & ValuePredicate::toXML(XmlConstructor & element) const
 {
-    element.openElement(CDGQNAME("ValuePredicate"));
+    element.openElement(SE_EL_NAME("ValuePredicate"));
 
-    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(index));
-    element.addElementValue(CDGQNAME("cmp"), cmp.toLRString());
-    element.addElementValue(CDGQNAME("left"), tuple_cell::atomic_int(left()->index));
-    element.addElementValue(CDGQNAME("right"), tuple_cell::atomic_int(right()->index));
+    element.addAttributeValue(SE_EL_NAME("id"), tuple_cell::atomic_int(index));
+    element.addElementValue(SE_EL_NAME("cmp"), cmp.toLRString());
+    element.addElementValue(SE_EL_NAME("left"), tuple_cell::atomic_int(left()->index));
+    element.addElementValue(SE_EL_NAME("right"), tuple_cell::atomic_int(right()->index));
 
     element.closeElement();
 

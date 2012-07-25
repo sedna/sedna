@@ -144,47 +144,43 @@ void GraphNext::execute(ExecutionStack* result)
     }
 };
 
-
-#define CASE_TYPE(TYPE, V, I) \
-   case TYPE::opid : if (TYPE * V = static_cast<TYPE *>(I))
-
 void PlanExecutor::push(ExecutionStack* executionStack, DynamicContext* context, RPBase* op)
 {
-    switch (op->info()->opType) {
-      CASE_TYPE(Construct, vop, op)
+    switch (op->info()->clsid) {
+      CASE_TYPE_CAST(Construct, typed_op, op)
         {
-            executionStack->push(Result(new ConstructorImplementation(context, vop)));
+            executionStack->push(Result(new ConstructorImplementation(context, typed_op)));
         }
         break;
-      CASE_TYPE(MapGraph, vop, op)
+      CASE_TYPE_CAST(MapGraph, typed_op, op)
         {
             // TODO: optimize graph execution. There is no need in most cases to rebuild the graph
-            GraphExecutionBlock * geb = gc.compile(vop->graph(), context);
-            geb->prepare(&(vop->graph()));
+            GraphExecutionBlock * geb = gc.compile(typed_op->graph(), context);
+            geb->prepare(&(typed_op->graph()));
             geb->top()->reset();
 
             VariableProducer * producer =
-              context->variables->bindGraph(geb, &(vop->graph()));
+              context->variables->bindGraph(geb, &(typed_op->graph()));
 
             executionStack->push(Result(
               new GroupNextImplementation(
-                context, producer, vop->getList(), getRestrictMask(vop->tupleMask))));
+                context, producer, typed_op->getList(), getRestrictMask(typed_op->tupleMask))));
         }
         break;
-      CASE_TYPE(Const, vop, op)
+      CASE_TYPE_CAST(Const, typed_op, op)
         {
-            MemoryTupleSequencePtr values = vop->getSequence();
+            MemoryTupleSequencePtr values = typed_op->getSequence();
 
             for (MemoryTupleSequence::const_iterator it = values->begin(); it != values->end(); ++it) {
                 executionStack->push(Result(*it));
             };
         }
         break;
-      CASE_TYPE(DataGraphOperation, vop, op)
+      CASE_TYPE_CAST(DataGraphOperation, typed_op, op)
         {
-            GraphExecutionBlock * geb = gc.compile(vop->graph(), context);
+            GraphExecutionBlock * geb = gc.compile(typed_op->graph(), context);
             // WARNING: No prepare needed, absolute index used to determine output tuple
-            geb->outputTupleId = geb->resultMap[vop->out->absoluteIndex];
+            geb->outputTupleId = geb->resultMap[typed_op->out->absoluteIndex];
             geb->top()->reset();
             executionStack->push(Result(new GraphNext(geb)));
         }

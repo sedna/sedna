@@ -3,29 +3,29 @@
 using namespace rqp;
 using namespace opt;
 
-OPERATION_INFO(If)
+RTTI_DEF(If)
 
 XmlConstructor& If::__toXML(XmlConstructor& element) const
 {
-    element.openElement(CDGQNAME("condition"));
+    element.openElement(SE_EL_NAME("condition"));
 
-    if (getCondition() != null_op) {
+    if (getCondition() != null_obj) {
         getCondition()->toXML(element);
     }
 
     element.closeElement();
 
-    element.openElement(CDGQNAME("then"));
+    element.openElement(SE_EL_NAME("then"));
 
-    if (getThen() != null_op) {
+    if (getThen() != null_obj) {
         getThen()->toXML(element);
     }
 
     element.closeElement();
 
-    element.openElement(CDGQNAME("else"));
+    element.openElement(SE_EL_NAME("else"));
 
-    if (getElse() != null_op) {
+    if (getElse() != null_obj) {
         getElse()->toXML(element);
     }
 

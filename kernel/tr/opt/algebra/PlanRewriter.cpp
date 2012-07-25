@@ -402,7 +402,7 @@ void DataGraphReduction::selectPossibleJoins(DataGraphIndex& dgw, RPBase* op, RP
         if (!it->graph.isnull()) {
             // TODO : make the best candidate selection
             if (tryJoin(*it->graph, dgw)) {
-                if (substOp == null_op && resultTuple != invalidTupleId) {
+                if (substOp == null_obj && resultTuple != invalidTupleId) {
                     substOp = new rqp::VarIn(resultTuple);
                 };
 
@@ -426,7 +426,7 @@ void DataGraphReduction::findJoinsRec(RPBase* op)
 
         dataGraphStack.reset(new GraphContext(dataGraphStack, false, mapG->getGraph()));
 
-        if (mapG->getList() != null_op) {
+        if (mapG->getList() != null_obj) {
             findJoinsRec(mapG->getList());
         }
 
@@ -443,13 +443,13 @@ void DataGraphReduction::findJoinsRec(RPBase* op)
         TupleId resultTuple = *dgw.outTuples.begin();
 
         U_ASSERT(dgop->getOperations().empty());
-        selectPossibleJoins(dgw, dgop, null_op, resultTuple);
+        selectPossibleJoins(dgw, dgop, null_obj, resultTuple);
     } else {
         bool preservesNull = true;
 
         switch (op->info()->opType) {
           case rqp::If::opid : {
-              preservesNull = (static_cast<rqp::If *>(op)->getElse() == null_op);
+              preservesNull = (static_cast<rqp::If *>(op)->getElse() == null_obj);
           } break;
           case rqp::Construct::opid :
               preservesNull = false;

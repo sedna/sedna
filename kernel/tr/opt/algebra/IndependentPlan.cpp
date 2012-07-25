@@ -10,6 +10,13 @@
 using namespace rqp;
 using namespace opt;
 
+RTTI_DEF_BASE(RPBase)
+
+RTTI_DEF(ConstantOperation)
+RTTI_DEF(ListOperation)
+RTTI_DEF(NestedOperation)
+RTTI_DEF(ManyChildren)
+
 int RPBase::opids = 0;
 const opt::TupleScheme empty_tuple_set;
 
@@ -27,23 +34,10 @@ void RPBase::replace(RPBase* op, RPBase* with)
 
 XmlConstructor& RPBase::toXML(XmlConstructor& element) const
 {
-    element.openElement(CDGQNAME(info()->opname));
-    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(opuid));
+    element.openElement(SE_EL_NAME(info()->name));
+    element.addAttributeValue(SE_EL_NAME("id"), tuple_cell::atomic_int(opuid));
     __toXML(element);
     element.closeElement();
-
-    return element;
-}
-
-XmlConstructor& BinaryOperation::__toXML(XmlConstructor& element) const
-{
-    if (getLeft() != null_op) {
-        getLeft()->toXML(element);
-    }
-
-    if (getRight() != null_op) {
-        getRight()->toXML(element);
-    }
 
     return element;
 }
@@ -55,7 +49,7 @@ XmlConstructor& ConstantOperation::__toXML(XmlConstructor& element) const
 
 XmlConstructor& ListOperation::__toXML(XmlConstructor& element) const
 {
-    if (getList() != null_op) {
+    if (getList() != null_obj) {
         getList()->toXML(element);
     }
 
@@ -64,12 +58,12 @@ XmlConstructor& ListOperation::__toXML(XmlConstructor& element) const
 
 XmlConstructor& NestedOperation::__toXML(XmlConstructor& element) const
 {
-    element.addAttributeValue(CDGQNAME("tuple"), tuple_cell::atomic_int(tid));
-    element.addAttributeValue(CDGQNAME("name"), getContext()->getVarDef(tid)->getVarLabel() );
+    element.addAttributeValue(SE_EL_NAME("tuple"), tuple_cell::atomic_int(tid));
+    element.addAttributeValue(SE_EL_NAME("name"), getContext()->getVarDef(tid)->getVarLabel() );
 
-    element.openElement(CDGQNAME("nested"));
+    element.openElement(SE_EL_NAME("nested"));
     
-    if (getSubplan() != null_op) {
+    if (getSubplan() != null_obj) {
         getSubplan()->toXML(element);
     }
 
@@ -81,7 +75,7 @@ XmlConstructor& NestedOperation::__toXML(XmlConstructor& element) const
 XmlConstructor& ManyChildren::__toXML(XmlConstructor& element) const
 {
     for (OperationList::const_iterator it = children.begin(); it != children.end(); ++it) {
-        if (*it != null_op) {
+        if (*it != null_obj) {
             (*it)->toXML(element);
         }
     };

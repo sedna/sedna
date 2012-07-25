@@ -9,50 +9,59 @@ struct IFunctionData;
 namespace rqp {
 
 class XPathStep : public ListOperation {
-    OPERATION(0x013)
+    RTTI_DECL(op_xpath, ListOperation)
+
     pe::Step step;
+protected:
+    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
-    XPathStep(RPBase* _in, const pe::Step & _step)
-      : ListOperation(&sopdesc, _in), step(_step) { };
+    explicit XPathStep(RPBase* _in, const pe::Step & _step)
+      : ListOperation(SELF_RTTI_REF, _in), step(_step) { };
 
     PROPERTY_RO(Step, pe::Step, step)
 };
 
 class FunCall : public ManyChildren {
-    OPERATION(0x017)
+    RTTI_DECL(op_funcall, ManyChildren)
+
     IFunctionData * function_data;
     phop::FunctionInfo * function;
+protected:
+    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
-    FunCall(phop::FunctionInfo * func, IFunctionData * _fd, const OperationList & _oplist)
-      : ManyChildren(&sopdesc, _oplist), function_data(_fd), function(func) {
+    explicit FunCall(phop::FunctionInfo * func, IFunctionData * _fd, const OperationList & _oplist)
+      : ManyChildren(SELF_RTTI_REF, _oplist), function_data(_fd), function(func) {
         U_ASSERT(func != NULL);
     };
 
-    FunCall(phop::FunctionInfo * func, IFunctionData * _fd, RPBase* _in)
-      : ManyChildren(&sopdesc, _in), function_data(_fd), function(func) {
+    explicit FunCall(phop::FunctionInfo * func, IFunctionData * _fd, RPBase* _in)
+      : ManyChildren(SELF_RTTI_REF, _in), function_data(_fd), function(func) {
         U_ASSERT(func != NULL);
     };
 
-    FunCall(phop::FunctionInfo * func, IFunctionData * _fd, RPBase* _in1, RPBase* _in2)
-      : ManyChildren(&sopdesc, _in1), function_data(_fd), function(func) {
+    explicit FunCall(phop::FunctionInfo * func, IFunctionData * _fd, RPBase* _in1, RPBase* _in2)
+      : ManyChildren(SELF_RTTI_REF, _in1), function_data(_fd), function(func) {
         children.push_back(_in2);
         U_ASSERT(func != NULL);
     };
 
     ~FunCall() { delete function_data; }
-    
+
     PROPERTY_RO(Function, phop::FunctionInfo * , function)
     PROPERTY_RO(Data, IFunctionData * , function_data)
 };
 
 class Construct : public ListOperation {
-    OPERATION(0x018)
+    RTTI_DECL(op_constructor, ListOperation)
+
     t_item type;
+protected:
+    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
     opt::TupleId contentId;
 
-    Construct(t_item _type, RPBase* _name, RPBase* list_)
-      : ListOperation(&sopdesc, list_), type(_type)
+    explicit Construct(t_item _type, RPBase* _name, RPBase* list_)
+      : ListOperation(SELF_RTTI_REF, list_), type(_type)
     {
         contentId = context->generateTupleId();
         children.push_back(_name);

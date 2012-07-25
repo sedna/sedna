@@ -6,19 +6,20 @@
 namespace rqp {
 
 class If : public RPBase {
-    OPERATION(0x015)
+    RTTI_DECL(op_if, RPBase)
 private:
+    virtual XmlConstructor& __toXML ( XmlConstructor& ) const;
 public:
     If(RPBase* _condition, RPBase* _then, RPBase* _else)
-      : RPBase(&sopdesc)
+      : RPBase(SELF_RTTI_REF)
     {
         children.push_back(_condition);
         children.push_back(_then);
         children.push_back(_else);
 
-        if (_else == null_op) {
+        if (_else == null_obj) {
             resultChild = 1;
-        } else if (_then == null_op) {
+        } else if (_then == null_obj) {
             resultChild = 2;
         };
     };

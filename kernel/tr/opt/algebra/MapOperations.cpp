@@ -3,8 +3,8 @@
 using namespace rqp;
 using namespace opt;
 
-OPERATION_INFO(MapConcat)
-OPERATION_INFO(SequenceConcat)
+RTTI_DEF(MapConcat)
+RTTI_DEF(SequenceConcat)
 
 XmlConstructor& MapConcat::__toXML(XmlConstructor& element) const
 {

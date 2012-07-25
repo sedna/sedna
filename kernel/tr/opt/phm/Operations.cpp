@@ -19,7 +19,7 @@ using namespace opt;
 
 #define OPINFO(OP) static const prot_info_t OP##_info = {#OP, };
 #define OPREF(OP) (&(OP##_info))
-#define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
+#define SE_EL_NAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
 
 OPINFO(AbsPathScanPrototype)
 OPINFO(PathEvaluationPrototype)
@@ -46,8 +46,8 @@ AbsPathScanPrototype::AbsPathScanPrototype(PhysicalModel* model, const TupleRef&
 
 XmlConstructor & AbsPathScanPrototype::__toXML(XmlConstructor & element) const
 {
-    element.addElementValue(CDGQNAME("root"), dataRoot.toLRString());
-    element.addElementValue(CDGQNAME("path"), path.toXPathString());
+    element.addElementValue(SE_EL_NAME("root"), dataRoot.toLRString());
+    element.addElementValue(SE_EL_NAME("path"), path.toXPathString());
     return POProt::__toXML(element);
 }
 
@@ -64,7 +64,7 @@ PathEvaluationPrototype::PathEvaluationPrototype(PhysicalModel* model, const POP
 
 XmlConstructor & PathEvaluationPrototype::__toXML(XmlConstructor & element) const
 {
-    element.addElementValue(CDGQNAME("path"), path.toXPathString());
+    element.addElementValue(SE_EL_NAME("path"), path.toXPathString());
     return POProt::__toXML(element);
 }
 
@@ -141,8 +141,8 @@ ValidatePathPrototype::ValidatePathPrototype(PhysicalModel* model, const POProtI
 
 XmlConstructor & ValidatePathPrototype::__toXML(XmlConstructor & element) const
 {
-    element.addElementValue(CDGQNAME("root"), dataRoot.toLRString());
-    element.addElementValue(CDGQNAME("path"), path.toXPathString());
+    element.addElementValue(SE_EL_NAME("root"), dataRoot.toLRString());
+    element.addElementValue(SE_EL_NAME("path"), path.toXPathString());
 
     return POProt::__toXML(element);
 }
@@ -161,8 +161,8 @@ XmlConstructor & EvaluatePrototype::__toXML(XmlConstructor & element) const
 {
     /* Here we evaluate cost, based on the last 
      */
-//    element.addElementValue(CDGQNAME("root"), dataRoot.toLRString());
-//    element.addElementValue(CDGQNAME("path"), path.toXPathString());
+//    element.addElementValue(SE_EL_NAME("root"), dataRoot.toLRString());
+//    element.addElementValue(SE_EL_NAME("path"), path.toXPathString());
 
     return POProt::__toXML(element);
 }
@@ -180,8 +180,8 @@ ExternalVarPrototype::ExternalVarPrototype(PhysicalModel* model, const TupleRef&
 
 XmlConstructor& ExternalVarPrototype::__toXML(XmlConstructor& element) const
 {
-    element.openElement(CDGQNAME("tuple"));
-    element.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int(varTupleId));
+    element.openElement(SE_EL_NAME("tuple"));
+    element.addAttributeValue(SE_EL_NAME("id"), tuple_cell::atomic_int(varTupleId));
     element.closeElement();
 
     return opt::POProt::__toXML(element);

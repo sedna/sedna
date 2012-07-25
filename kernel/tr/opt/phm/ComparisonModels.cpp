@@ -4,7 +4,7 @@
 
 using namespace opt;
 
-#define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
+#define SE_EL_NAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
 
 SequenceInfo* GeneralComparisonPrototype::getSequenceCost(CostModel* model, TupleRef in)
 {
@@ -26,7 +26,7 @@ EvaluationInfo* GeneralComparisonPrototype::getComparisonCost(CostModel* model, 
 
 XmlConstructor& GeneralComparisonPrototype::__toXML(XmlConstructor& element) const
 {
-    element.addElementValue(CDGQNAME("path"), cmp.toLRString());
+    element.addElementValue(SE_EL_NAME("path"), cmp.toLRString());
     return element;
 }
 
@@ -78,7 +78,7 @@ SequenceInfo* PathComparisonPrototype::getSequenceCost(CostModel* model, TupleRe
 
 XmlConstructor& PathComparisonPrototype::__toXML(XmlConstructor& element) const
 {
-    element.addElementValue(CDGQNAME("path"), path.toLRString());
+    element.addElementValue(SE_EL_NAME("path"), path.toLRString());
     return element;
 }
 

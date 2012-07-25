@@ -465,14 +465,14 @@ phop::ITupleOperator* PlanInfo::compile()
     return dynamic_cast<phop::ITupleOperator*>(opList.back()->getStatement());
 }
 
-#define CDGQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
+#define SE_EL_NAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
 
 XmlConstructor & PlanInfo::toXML(XmlConstructor& constructor) const
 {
-    constructor.openElement(CDGQNAME("plan"));
+    constructor.openElement(SE_EL_NAME("plan"));
 
-    constructor.addAttributeValue(CDGQNAME("desc"), tuple_cell::atomic_int(desc));
-    constructor.addAttributeValue(CDGQNAME("parent"), tuple_cell::atomic_int(parent));
+    constructor.addAttributeValue(SE_EL_NAME("desc"), tuple_cell::atomic_int(desc));
+    constructor.addAttributeValue(SE_EL_NAME("parent"), tuple_cell::atomic_int(parent));
     
     for (OperationList::const_iterator i = opList.begin(); i != opList.end(); ++i) {
         (*i)->toXML(constructor);
@@ -486,11 +486,11 @@ XmlConstructor & PlanInfo::toXML(XmlConstructor& constructor) const
 inline static
 XmlConstructor & rangeToElement(Range x, XmlConstructor & element, const char * name)
 {
-    element.openElement(CDGQNAME(name));
+    element.openElement(SE_EL_NAME(name));
 
-    element.addAttributeValue(CDGQNAME("low"), tuple_cell::atomic(x.lower));
-    element.addAttributeValue(CDGQNAME("up"), tuple_cell::atomic(x.upper));
-    element.addAttributeValue(CDGQNAME("avg"), tuple_cell::atomic(x.avg()));
+    element.addAttributeValue(SE_EL_NAME("low"), tuple_cell::atomic(x.lower));
+    element.addAttributeValue(SE_EL_NAME("up"), tuple_cell::atomic(x.upper));
+    element.addAttributeValue(SE_EL_NAME("avg"), tuple_cell::atomic(x.avg()));
 
     element.closeElement();
 
@@ -500,15 +500,15 @@ XmlConstructor & rangeToElement(Range x, XmlConstructor & element, const char * 
 XmlConstructor & POProt::__commonToXML(XmlConstructor & element) const
 {
     for (std::vector<POProtIn>::const_iterator i = in.begin(); i != in.end(); ++i) {
-        element.openElement(CDGQNAME("in"));
-        element.addAttributeValue(CDGQNAME("ref"), tuple_cell::atomic_int((ptrdiff_t) (i->op)));
+        element.openElement(SE_EL_NAME("in"));
+        element.addAttributeValue(SE_EL_NAME("ref"), tuple_cell::atomic_int((ptrdiff_t) (i->op)));
         element.closeElement();
     };
 
     for (std::vector<int>::const_iterator i = resultSet.begin(); i != resultSet.end(); ++i) {
         TupleRef tref(result, *i);
-        element.openElement(CDGQNAME("result"));
-        element.addAttributeValue(CDGQNAME("var"), tuple_cell::atomic_int(tref->node->index));
+        element.openElement(SE_EL_NAME("result"));
+        element.addAttributeValue(SE_EL_NAME("var"), tuple_cell::atomic_int(tref->node->index));
         element.closeElement();
     };
 
@@ -517,11 +517,11 @@ XmlConstructor & POProt::__commonToXML(XmlConstructor & element) const
 
 XmlConstructor & TupleChrysalis::toXML(XmlConstructor & constructor) const
 {
-    constructor.openElement(CDGQNAME("tuple"));
+    constructor.openElement(SE_EL_NAME("tuple"));
 
-    constructor.addAttributeValue(CDGQNAME("count"), tuple_cell::atomic(rowCount.avg()));
-    constructor.addAttributeValue(CDGQNAME("size"), tuple_cell::atomic(rowSize.avg()));
-    constructor.addAttributeValue(CDGQNAME("width"), tuple_cell::atomic_int(_width));
+    constructor.addAttributeValue(SE_EL_NAME("count"), tuple_cell::atomic(rowCount.avg()));
+    constructor.addAttributeValue(SE_EL_NAME("size"), tuple_cell::atomic(rowSize.avg()));
+    constructor.addAttributeValue(SE_EL_NAME("width"), tuple_cell::atomic_int(_width));
 
     constructor.closeElement();
     
@@ -537,13 +537,13 @@ XmlConstructor & POProt::__toXML(XmlConstructor & constructor) const
 
 XmlConstructor & POProt::toXML(XmlConstructor & constructor) const
 {
-    constructor.openElement(CDGQNAME(this->getProtInfo()->name));
-    constructor.addAttributeValue(CDGQNAME("id"), tuple_cell::atomic_int((ptrdiff_t) (this)));
+    constructor.openElement(SE_EL_NAME(this->getProtInfo()->name));
+    constructor.addAttributeValue(SE_EL_NAME("id"), tuple_cell::atomic_int((ptrdiff_t) (this)));
 
     __commonToXML(constructor);
     __toXML(constructor);
 
-    constructor.openElement(CDGQNAME("cost"));
+    constructor.openElement(SE_EL_NAME("cost"));
 
     rangeToElement(this->cost->firstCost, constructor, "first");
     rangeToElement(this->cost->nextCost, constructor, "next");

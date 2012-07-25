@@ -85,7 +85,7 @@ void PlanRewriter::execute()
 static
 bool rule_post_XPathStep_to_DataGraph(PlanRewriter * pr, XPathStep * op)
 {
-    U_ASSERT(op->getList() != null_op);
+    U_ASSERT(op->getList() != null_obj);
 
     if (instanceof<XPathStep>(op->getList()))
     {
@@ -441,7 +441,7 @@ bool rule_redundant_MapGraph(PlanRewriter * pr, MapGraph * op)
         return true;
     }
 
-    if (rqp::instanceof<rqp::VarIn>(op->getList())) {
+    if (instanceof<rqp::VarIn>(op->getList())) {
         rqp::VarIn * var = static_cast<rqp::VarIn *>(op->getList());
 
         DataNodeList::const_iterator it = std::find_if(op->graph().out.begin(), op->graph().out.end(), DataNodeTupleLookup(var->getTuple()));
@@ -590,24 +590,23 @@ void PlanRewriter::do_execute()
         RPBase * op = traverseStack.back();
 
         /* Before or instead traverse */
-        switch (op->info()->opType) {
-          case MapGraph::opid :
+        switch (op->info()->clsid) {
+        CASE_TYPE_CAST(MapGraph, mapGraphOp, op)
             {
-              MapGraph * mg = static_cast<MapGraph *>(op);
-              mg->graph().update();
+              mapGraphOp->graph().update();
 
-              traverseChildren(OperationList(mg->children.begin(), mg->children.end() - 1));
+              traverseChildren(OperationList(mapGraphOp->children.begin(), mapGraphOp->children.end() - 1));
 
-              for (TupleScheme::const_iterator it = mg->tupleMask.begin(); it != mg->tupleMask.end(); ++it)
+              for (TupleScheme::const_iterator it = mapGraphOp->tupleMask.begin(); it != mapGraphOp->tupleMask.end(); ++it)
               {
                   optimizer->dgm()->addVariableDecl(*it, op);
               };
 
-              traverse(mg->getList());
+              traverse(mapGraphOp->getList());
             }
             break;
-          case SequenceConcat::opid :
-          case MapConcat::opid :
+        CASE_TYPE(SequenceConcat)
+        CASE_TYPE(MapConcat)
             {
               NestedOperation * nop = static_cast<NestedOperation *>(op);
 
@@ -623,30 +622,29 @@ void PlanRewriter::do_execute()
         }
 
         /* After traverse */
-        switch (op->info()->opType) {
-          case SequenceConcat::opid :
+        switch (op->info()->clsid) {
+        CASE_TYPE_CAST(SequenceConcat, typed_op, op)
             {
-                RULE(rule_push_down_variable(this, static_cast<SequenceConcat *>(op)));
+                RULE(rule_push_down_variable(this, typed_op));
             };
-          case If::opid :
+        CASE_TYPE_CAST(If, typed_op, op)
             {
-                RULE(rule_remove_If(this, static_cast<If *>(op)));
-            };
-            break;
-          case Exists::opid :
-            {
-                RULE(rule_conditional_Exists(this, static_cast<Exists *>(op)));
+                RULE(rule_remove_If(this, typed_op));
             };
             break;
-          case MapGraph::opid :
-          case DataGraphOperation::opid :
+        CASE_TYPE_CAST(Exists, typed_op, op)
             {
-                DataGraphOperation * dgo = static_cast<DataGraphOperation *>(op);
+                RULE(rule_conditional_Exists(this, typed_op));
+            };
+            break;
+        CASE_TYPE(MapGraph)
+        CASE_TYPE_CAST(DataGraphOperation, typed_op, op)
+            {
                 /* Set parent operation */
-                dgo->graph().dg->operation = dgo;
+                typed_op->graph().dg->operation = typed_op;
 
                 if (!instanceof<MapConcat>(getParent())) {
-                    RULE(rule_DataGraph_try_join(this, static_cast<DataGraphOperation *>(op)));
+                    RULE(rule_DataGraph_try_join(this, typed_op));
                 };
 
                 if (instanceof<MapGraph>(op)) {
@@ -654,12 +652,12 @@ void PlanRewriter::do_execute()
                     RULE(rule_MapGraph_remove_unused(this, static_cast<MapGraph *>(op)));
                 }
 
-                RULE(rule_DataGraph_do_rewritings(this, static_cast<DataGraphOperation *>(op)));
+                RULE(rule_DataGraph_do_rewritings(this, typed_op));
             };
             break;
-          case VarIn::opid :
+        CASE_TYPE_CAST(VarIn, typed_op, op)
             {
-                optimizer->dgm()->addVariable(static_cast<VarIn *>(op)->dnode);
+                optimizer->dgm()->addVariable(typed_op->dnode);
 /*
                 if (varMap.find(static_cast<VarIn *>(op)->getTuple()) != varMap.end()) {
                     varMap.at(static_cast<VarIn *>(op)->getTuple()).used = true;
@@ -667,28 +665,26 @@ void PlanRewriter::do_execute()
 */
             };
             break;
-          case Sequence::opid :
+        CASE_TYPE_CAST(Sequence, typed_op, op)
             {
-                RULE(rule_delete_Singleton_Sequence(this, static_cast<Sequence *>(op)));
+                RULE(rule_delete_Singleton_Sequence(this, typed_op));
             }
             break;
-          case FunCall::opid :
+        CASE_TYPE_CAST(FunCall, typed_op, op)
             {
-                FunCall * fun = static_cast<FunCall *>(op);
-
-                if (fun->getFunction()->finfo->rule_func != NULL) {
-                    RULE(fun->getFunction()->finfo->rule_func(this, static_cast<FunCall *>(op)));
+                if (typed_op->getFunction()->finfo->rule_func != NULL) {
+                    RULE(typed_op->getFunction()->finfo->rule_func(this, typed_op));
                 };
             }
             break;
-          case MapConcat::opid :
+        CASE_TYPE_CAST(MapConcat, typed_op, op)
             {
-                RULE(rule_post_MapConcat_to_MapGraph(this, static_cast<MapConcat *>(op)));
+                RULE(rule_post_MapConcat_to_MapGraph(this, typed_op));
             }
             break;
-          case XPathStep::opid :
+        CASE_TYPE_CAST(XPathStep, typed_op, op)
             {
-                RULE(rule_post_XPathStep_to_DataGraph(this, static_cast<XPathStep *>(op)));
+                RULE(rule_post_XPathStep_to_DataGraph(this, typed_op));
             }
             break;
           default : break;

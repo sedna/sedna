@@ -7,26 +7,28 @@
 namespace rqp {
 
 class DataGraphOperation : public ManyChildren {
-    OPERATION(0x01a)
-  protected:
+    RTTI_DECL(op_datagraph, ManyChildren)
+protected:
+    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
+protected:
     opt::DataGraphIndex func;
 
-    DataGraphOperation(_opinfo_t op, opt::DataGraph * function_, const OperationList & _oplist)
+    DataGraphOperation(clsinfo_t op, opt::DataGraph * function_, const OperationList & _oplist)
       : ManyChildren(op, _oplist), func(function_) {
     };
 
     void detectOutNode();
-  public:
+public:
     opt::DataNode * out;
 
     DataGraphOperation(opt::DataGraph * function_)
-      : ManyChildren(&sopdesc), func(function_), out(NULL)
+      : ManyChildren(SELF_RTTI_REF), func(function_), out(NULL)
     {
         detectOutNode();
     };
 
     DataGraphOperation(opt::DataGraph * function_, const OperationList & _oplist)
-      : ManyChildren(&sopdesc, _oplist), func(function_), out(NULL)
+      : ManyChildren(SELF_RTTI_REF, _oplist), func(function_), out(NULL)
     {
         detectOutNode();
     };
@@ -36,12 +38,14 @@ class DataGraphOperation : public ManyChildren {
 };
 
 class MapGraph : public DataGraphOperation {
-    OPERATION(0x01b)
+    RTTI_DECL(op_map_graph, DataGraphOperation)
+protected:
+    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 private:
     int list_id;
 public:
     MapGraph(RPBase* _list, opt::DataGraph * function_, const OperationList & _oplist)
-      : DataGraphOperation(&sopdesc, function_, _oplist) {
+      : DataGraphOperation(SELF_RTTI_REF, function_, _oplist) {
         list_id = children.size();
         children.push_back(_list);
         resultChild = list_id;

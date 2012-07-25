@@ -13,20 +13,24 @@ namespace rqp {
  */
 
 class MapConcat : public NestedOperation {
-    OPERATION(0x002)
+    RTTI_DECL(op_map, NestedOperation)
+protected:
+    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
     MapConcat(RPBase* _list, RPBase* _subplan, const ContextInfo & _context)
-      : NestedOperation(&sopdesc, _list, _subplan, _context.item)
+      : NestedOperation(SELF_RTTI_REF, _list, _subplan, _context.item)
     {
         resultChild = 0;
     };
 };
 
 class SequenceConcat : public NestedOperation {
-    OPERATION(0x003)
+    RTTI_DECL(op_sequence_map, NestedOperation)
+protected:
+    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
     SequenceConcat(RPBase* _list, RPBase* _subplan, opt::TupleId _tid)
-      : NestedOperation(&sopdesc, _list, _subplan, _tid)
+      : NestedOperation(SELF_RTTI_REF, _list, _subplan, _tid)
     {
         resultChild = 0;
     };

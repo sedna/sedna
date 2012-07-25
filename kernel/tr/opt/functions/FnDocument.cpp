@@ -17,7 +17,7 @@ bool rule_fn_doc(PlanRewriter * pr, rqp::FunCall * op)
 
     RPBase * arg = op->children[0];
 
-    if (arg == null_op)
+    if (arg == null_obj)
     {
         pr->replaceInParent(op, null_op);
         return true;

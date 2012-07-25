@@ -8,16 +8,16 @@
 using namespace rqp;
 using namespace opt;
 
-OPERATION_INFO(DataGraphOperation)
-OPERATION_INFO(MapGraph)
+RTTI_DEF(DataGraphOperation)
+RTTI_DEF(MapGraph)
 
 XmlConstructor& DataGraphOperation::__toXML(XmlConstructor& element) const
 {
     graph().dg->toXML(element);
 
-    element.openElement(CDGQNAME("suboperations"));
+    element.openElement(SE_EL_NAME("suboperations"));
     for (OperationList::const_iterator it = children.begin(); it != children.end(); ++it) {
-        if (*it != null_op) {
+        if (*it != null_obj) {
             (*it)->toXML(element);
         }
     };
@@ -36,22 +36,22 @@ void DataGraphOperation::detectOutNode()
 XmlConstructor& MapGraph::__toXML(XmlConstructor& element) const
 {
     for (TupleScheme::const_iterator it = tupleMask.begin(); it != tupleMask.end(); ++it) {
-        element.openElement(CDGQNAME("tuple"));
-        element.addAttributeValue(CDGQNAME("tid"), tuple_cell::atomic_int(*it));
+        element.openElement(SE_EL_NAME("tuple"));
+        element.addAttributeValue(SE_EL_NAME("tid"), tuple_cell::atomic_int(*it));
         element.closeElement();
     };
 
     graph().dg->toXML(element);
 
-    element.openElement(CDGQNAME("suboperations"));
+    element.openElement(SE_EL_NAME("suboperations"));
     for (OperationList::const_iterator it = children.begin(); it != children.end()-1; ++it) {
-        if (*it != null_op) {
+        if (*it != null_obj) {
             (*it)->toXML(element);
         }
     };
     element.closeElement();
 
-    if (getList() != null_op) {
+    if (getList() != null_obj) {
         getList()->toXML(element);
     }
 

@@ -8,12 +8,6 @@
 #include "tr/opt/types/Comparison.h"
 #include "tr/executor/base/tuple.h"
 
-namespace phop {
-    class IFunction;
-}
-
-class XmlConstructor;
-
 namespace opt {
 
 /*
@@ -26,7 +20,7 @@ struct PathPredicate : public opt::Predicate {
 
 struct BinaryPredicate : public opt::Predicate {
     BinaryPredicate(DataNode * left, DataNode * right);
-    
+
     DataNode * left() const { return dataNodeList[0]; };
     DataNode * right() const { return dataNodeList[1]; };
 };

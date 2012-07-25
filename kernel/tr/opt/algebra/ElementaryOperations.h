@@ -8,26 +8,31 @@ namespace rqp {
 struct EmptySequenceConst { explicit EmptySequenceConst(int x = 0) {}; };
 
 class Const : public ConstantOperation {
-    OPERATION(0x012)
+    RTTI_DECL(op_const, ConstantOperation)
+protected:
+    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
+private:
     opt::MemoryTupleSequencePtr sequence;
 public:
     explicit Const(opt::MemoryTupleSequencePtr _sequence)
-      : ConstantOperation(&sopdesc), sequence(_sequence)
+       : ConstantOperation(SELF_RTTI_REF), sequence(_sequence)
     {};
 
     explicit Const(tuple_cell _value)
-      : ConstantOperation(&sopdesc), sequence(new opt::MemoryTupleSequence())
+      : ConstantOperation(SELF_RTTI_REF), sequence(new opt::MemoryTupleSequence())
     { sequence->push_back(_value); };
 
     explicit Const(const EmptySequenceConst &)
-      : ConstantOperation(&sopdesc), sequence(new opt::MemoryTupleSequence())
+      : ConstantOperation(SELF_RTTI_REF), sequence(new opt::MemoryTupleSequence())
     { };
 
     PROPERTY_RO(Sequence, opt::MemoryTupleSequencePtr, sequence)
 };
 
 class VarIn : public ConstantOperation {
-    OPERATION(0x011)
+    RTTI_DECL(op_varin, ConstantOperation)
+protected:
+    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 private:
     opt::TupleId tid;
 
@@ -36,8 +41,8 @@ public:
     /* Phantom datanode */
     opt::DataNode * dnode;
 
-    VarIn(opt::TupleId _tid)
-      : ConstantOperation(&sopdesc), tid(_tid)
+    explicit VarIn(opt::TupleId _tid)
+      : ConstantOperation(SELF_RTTI_REF), tid(_tid)
     {
         setDataNode(_tid);
     };
@@ -46,14 +51,18 @@ public:
 };
 
 class Exists : public ListOperation {
-    OPERATION(0x01d)
+    RTTI_DECL(op_exists, ListOperation)
+protected:
+    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
-    Exists(RPBase * list)
-      : ListOperation(&sopdesc, list) {};
+    explicit Exists(RPBase * list)
+      : ListOperation(SELF_RTTI_REF, list) {};
 };
 
 class Sequence : public ManyChildren {
-    OPERATION(0x019)
+    RTTI_DECL(op_sequence, ManyChildren)
+protected:
+    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
     enum space_t {
         none,
@@ -64,11 +73,11 @@ public:
 private:
     space_t spaces;
 public:
-    Sequence(const OperationList & _oplist)
-      : ManyChildren(&sopdesc, _oplist), spaces(none) { };
+    explicit Sequence(const OperationList & _oplist)
+      : ManyChildren(SELF_RTTI_REF, _oplist), spaces(none) { };
 
-    Sequence(RPBase* _in)
-      : ManyChildren(&sopdesc, _in), spaces(none) { };
+    explicit Sequence(RPBase* _in)
+      : ManyChildren(SELF_RTTI_REF, _in), spaces(none) { };
 
     PROPERTY(Spaces, space_t, spaces)
 };

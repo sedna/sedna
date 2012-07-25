@@ -573,7 +573,7 @@ void lr2opt::visit(ASTFLWOR &n) {
 
         operationStack.push(context->resultStack.top());
         context->resultStack.pop();
-        operationStack.top().opid = If::opid;
+        operationStack.top().opid = If::clsid;
     }
 
     if (n.order_by) {
@@ -584,14 +584,17 @@ void lr2opt::visit(ASTFLWOR &n) {
 
     while (!operationStack.empty()) {
         switch (operationStack.top().opid) {
-          case MapConcat::opid :
-            context->resultStack.top().op = new MapConcat(context->resultStack.top().op, operationStack.top().op, operationStack.top().variable);
+          case MapConcat::clsid :
+            context->resultStack.top().op =
+              new MapConcat(context->resultStack.top().op, operationStack.top().op, operationStack.top().variable);
             break;
-          case SequenceConcat::opid :
-            context->resultStack.top().op = new SequenceConcat(context->resultStack.top().op, operationStack.top().op, operationStack.top().variable.item);
+          case SequenceConcat::clsid :
+            context->resultStack.top().op =
+              new SequenceConcat(context->resultStack.top().op, operationStack.top().op, operationStack.top().variable.item);
             break;
-          case If::opid :
-            context->resultStack.top().op = new If(operationStack.top().op, context->resultStack.top().op, null_op);
+          case If::clsid :
+            context->resultStack.top().op =
+              new If(operationStack.top().op, context->resultStack.top().op, null_op);
             break;
           default:
             U_ASSERT(false);
@@ -612,7 +615,7 @@ void lr2opt::visit(ASTFor &n) {
     // TODO : process type info, important step, make type assert
     // TODO : process pos var
 
-    context->resultStack.top().opid = MapConcat::opid;
+    context->resultStack.top().opid = MapConcat::clsid;
 
     if (n.usesPosVar()) {
         U_ASSERT(false);
@@ -626,7 +629,7 @@ void lr2opt::visit(ASTLet &n) {
 
     // TODO : process type info, important step, make type assert
     
-    context->resultStack.top().opid = SequenceConcat::opid;
+    context->resultStack.top().opid = SequenceConcat::clsid;
 }
 
 void lr2opt::visit(ASTOrder &n) {

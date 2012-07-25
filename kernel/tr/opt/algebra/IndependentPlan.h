@@ -19,7 +19,9 @@
 #include "tr/opt/algebra/PlanOperations.h"
 #include "tr/opt/types/TupleScheme.h"
 #include "tr/opt/path/XPathTypes.h"
+
 #include "tr/models/XmlConstructor.h"
+#include "tr/models/rtti.h"
 
 /* Look PlanOperationTypes for description of all operators */
 
@@ -28,13 +30,6 @@ struct ContextInfo {
 };
 
 namespace rqp {
-
-struct opdesc_t {
-    const char * opname;
-    int opType;
-};
-
-typedef const opdesc_t * _opinfo_t;
 
 typedef int ScopeMarker;
 typedef std::stack<opt::TupleId> ScopeStack;
@@ -45,7 +40,7 @@ typedef std::vector< RPBase * > OperationList;
 typedef VarNameMap::value_type VarMapRecord;
 typedef GreatTupleScheme::value_type GreatMapRecord;
 
-class PlanContext : public opt::IPlanDisposable {
+class PlanContext {
   private:
     ScopeMarker lastScopeMarker;
     opt::TupleId currentTupleId;
@@ -71,12 +66,11 @@ class PlanContext : public opt::IPlanDisposable {
     void clearScopesToMarker(ScopeMarker marker);
 };
 
-class RPBase : public opt::IPlanDisposable, public IXMLSerializable {
-  protected:
-    _opinfo_t opdesc;
-  public:
+class RPBase : public ObjectBase, public opt::IPlanDisposable, public IXMLSerializable {
+    RTTI_DECL(op_base, ObjectBase)
+public:
     virtual ~RPBase() {};
-  protected:
+protected:
     PlanContext * context;
     static int opids;
 
@@ -84,39 +78,23 @@ class RPBase : public opt::IPlanDisposable, public IXMLSerializable {
     int resultChild;
 
     virtual XmlConstructor & __toXML(XmlConstructor &) const = 0;
-  public:
+public:
     inline int oid() const { return opuid; };
-    inline const opdesc_t * info() const { return opdesc; };
-  public:
+
     OperationList children;
 
-    RPBase(_opinfo_t op) : opdesc(op), context(optimizer->context()), opuid(opids++), resultChild(-1) {};
+    RPBase(clsinfo_t op) : ObjectBase(op), context(optimizer->context()), opuid(opids++), resultChild(-1) {};
 
     /* Replace child operation op with another operation */
     void replace(RPBase * op, RPBase * with);
     PlanContext * getContext() const { return context; };
-    RPBase * result() { if (resultChild > -1) { return children[resultChild]; } else { return null_op; } };
+    RPBase * result() { if (resultChild > -1) { return children[resultChild]; } else { return static_cast<RPBase *>(null_obj); } };
 
     virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
 };
 
-template<class T> inline static
-bool instanceof(RPBase * op) { return op != null_op && op->info()->opType == T::opid; };
+static RPBase * const null_op = (RPBase *)(NULL);
 
-/* YES! I know about typeid operator existance. */
-
-#define MAX_OPERATION_ID 0x200
-
-#define OPERATION(ID) \
-public:\
-  static const opdesc_t sopdesc; \
-  enum _opid_t { opid = (ID) }; \
-protected: virtual XmlConstructor& __toXML(XmlConstructor& ) const; \
-private:
-
-#define OPERATION_INFO(C) \
-const opdesc_t C::sopdesc = {#C, C::opid}; \
-  
 #define PROPERTY(name, t, member) t get##name() const { return member; } void set##name(t value) { member = value; }
 #define PROPERTY_RO(name, t, member) t get##name() const { return member; }
 #define PROPERTY_WO(name, t, member) void set##name(t value) { member = value; }
@@ -125,19 +103,21 @@ const opdesc_t C::sopdesc = {#C, C::opid}; \
 
 /* 0r-operations */
 class ConstantOperation : public RPBase {
-  protected:
+   RTTI_DECL(op_nil, RPBase)
+protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
-  public:
-    ConstantOperation(_opinfo_t op)
+public:
+    ConstantOperation(clsinfo_t op)
       : RPBase(op) {};
 };
 
 /* 1r-operations */
 class ListOperation : public RPBase {
-  protected:
+   RTTI_DECL(op_uni, RPBase)
+protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
-  public:
-    ListOperation(_opinfo_t op, RPBase * list_)
+public:
+    ListOperation(clsinfo_t op, RPBase * list_)
       : RPBase(op) {
         children.push_back(list_);
     };
@@ -147,12 +127,13 @@ class ListOperation : public RPBase {
 
 /* 1r-operations with independent nested operation plan */
 class NestedOperation : public ListOperation {
-  protected:
+    RTTI_DECL(op_nested, ListOperation)
+protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
-  public:
+public:
     opt::TupleId tid;
 
-    NestedOperation(_opinfo_t op, RPBase * list_, RPBase * subplan_, opt::TupleId _tid)
+    NestedOperation(clsinfo_t op, RPBase * list_, RPBase * subplan_, opt::TupleId _tid)
       : ListOperation(op, list_), tid(_tid) {
         children.push_back(subplan_);
     };
@@ -160,30 +141,15 @@ class NestedOperation : public ListOperation {
     PROPERTY_RO(Subplan, RPBase *, children[1])
 };
 
-/* 2r-operations */
-class BinaryOperation : public RPBase {
-  private:
-  protected:
-    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
-  public:
-    BinaryOperation(_opinfo_t op, RPBase * ltItem_, RPBase * rtItem_)
-      : RPBase(op) {
-        children.push_back(ltItem_);
-        children.push_back(rtItem_);
-    };
-
-    PROPERTY_RO(Left, RPBase *, children[0])
-    PROPERTY_RO(Right, RPBase *, children[1])
-};
-
 class ManyChildren : public RPBase {
-  protected:
+    RTTI_DECL(op_multi, ListOperation)
+protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 
-    ManyChildren(_opinfo_t op) : RPBase(op) {};
-  private:
-  public:
-    ManyChildren(_opinfo_t op, const OperationList & _oplist)
+    ManyChildren(clsinfo_t op) : RPBase(op) {};
+private:
+public:
+    ManyChildren(clsinfo_t op, const OperationList & _oplist)
       : RPBase(op)
     {
         for (OperationList::const_iterator it = _oplist.begin(); it != _oplist.end(); ++it) {
@@ -191,7 +157,7 @@ class ManyChildren : public RPBase {
         };
     };
 
-    ManyChildren(_opinfo_t op, RPBase* _in)
+    ManyChildren(clsinfo_t op, RPBase* _in)
       : RPBase(op) { children.push_back(_in); };
 };
 
