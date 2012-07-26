@@ -12,6 +12,14 @@ struct PlanRewriter {
     rqp::RPBase* root;
     rqp::OperationList traverseStack;
 
+    static
+    RPBase * rewrite(RPBase * op) 
+    {
+        PlanRewriter rewriter(op);
+        rewriter.execute();
+        return rewriter.root;
+    };
+    
     RPBase * getParent()
     {
         if (traverseStack.size() < 2) {

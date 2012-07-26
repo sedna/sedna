@@ -16,7 +16,6 @@ private:
     rqp::PlanContext * _context;
     PlanExecutor * _executor;
     CostModel * _costModel;
-
 public:
     MemoryPool planGenerationPool;
     MemoryPool costModelPool;

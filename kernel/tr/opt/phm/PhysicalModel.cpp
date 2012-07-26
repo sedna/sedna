@@ -403,9 +403,9 @@ void* PhysicalModel::compile(StructuralPredicate* pred)
             if (sel.leftCandidate != NULL) {
                 candidates.push_back(Candidate(evaluate_Left_then_Right));
             }
-        } else if (sel.leftOp.op != NULL) {
+        } else if (sel.rightOp.op == NULL) {
             candidates.push_back(Candidate(evaluate_Right_from_Left));
-        } else if (sel.rightOp.op != NULL && inversablePath) {
+        } else if (sel.leftOp.op == NULL && inversablePath) {
             candidates.push_back(Candidate(evaluate_Left_from_Right));
         }
     };

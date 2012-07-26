@@ -24,7 +24,6 @@ namespace pe {
 
 namespace phop {
 /* Physical operations for cost based execution */
-
     struct FunctionInfo;
 
     class ITupleOperator;

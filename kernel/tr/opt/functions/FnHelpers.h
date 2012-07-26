@@ -1,9 +1,8 @@
 #ifndef _FN_HELPERS_H
 #define _FN_HELPERS_H
 
-#include "tr/opt/algebra/FunctionOperations.h"
-#include "tr/opt/algebra/GraphOperations.h"
-#include "tr/opt/algebra/PlanRewriter.h"
+#include "tr/opt/algebra/AllOperations.h"
+#include "tr/opt/graphs/DataGraphCollection.h"
 
 inline static
 bool isConstExpr(rqp::RPBase * op)

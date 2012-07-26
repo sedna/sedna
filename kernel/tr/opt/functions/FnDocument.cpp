@@ -2,7 +2,7 @@
 #include "FnHelpers.h"
 
 #include "tr/opt/algebra/ElementaryOperations.h"
-
+#include "tr/opt/algebra/PlanAlgorithms.h"
 #include "tr/executor/base/PPUtils.h"
 
 using namespace phop;
@@ -34,7 +34,7 @@ bool rule_fn_doc(PlanRewriter * pr, rqp::FunCall * op)
             return true;
         };
 
-// TODO : resolve uri        std::string uri = optimizer->context()->staticContext()->resolveUri(atomize(seq->at(0)));
+// TODO : resolve uri std::string uri = optimizer->context()->staticContext()->resolveUri(atomize(seq->at(0)));
         std::string uri = atomize(seq->at(0)).get_str_mem();
 
         DataGraphBuilder builder;

@@ -13,7 +13,7 @@
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"
 #include "tr/opt/algebra/IndependentPlan.h"
-#include "tr/opt/algebra/PlanRewriter.h"
+#include "tr/opt/algebra/PlanAlgorithms.h"
 #include "tr/models/XmlConstructor.h"
 
 #include "tr/opt/algorithms/ExecutionContext.h"
@@ -141,7 +141,7 @@ bool PPQueryRoot::do_next()
     } else {
         if (hui == 1) {
             if (optimizedPlan != NULL) {
-                optimizedPlan = selectDataGraphs(optimizedPlan);
+                optimizedPlan = rqp::PlanRewriter::rewrite(optimizedPlan);
             }
 
             XmlConstructor xmlConstructor(VirtualRootConstructor(0));

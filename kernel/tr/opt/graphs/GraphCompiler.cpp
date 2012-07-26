@@ -57,6 +57,7 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph, ex
 {
     opt::DataGraphRewriter dgr(graph);
     dgr.structuralComparison();
+    dgr.expandAbsolutePath();
   
     phop::GraphExecutionBlock* result = getGraph(graph.dg);
     

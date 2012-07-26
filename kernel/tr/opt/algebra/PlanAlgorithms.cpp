@@ -41,31 +41,6 @@ bool PlanRewriter::__debug_trace_replace(uint op1, uint op2)
 }
 */
 
-/*
-void PlanRewriter::traverseVariableContext(TupleScheme& scheme)
-{
-    for (TupleScheme::iterator it = scheme.begin(); it != scheme.end(); ++it)
-    {
-        varMap.insert(*it, VarStatInfo());
-    };
-
-    traverseAll(traverseStack.back().children);
-
-    for (TupleScheme::iterator it = scheme.begin(); it != scheme.end(); ++it)
-    {
-        if (!varMap[cinfo.item].used) { cinfo.item = invalidTupleId; };
-        varMap.insert(*it, VarStatInfo());
-    };
-
-    if (!varMap[cinfo.position].used) { cinfo.item = invalidTupleId; };
-    if (!varMap[cinfo.size].used) { cinfo.item = invalidTupleId; };
-
-    varMap.erase(cinfo.item);
-    varMap.erase(cinfo.position);
-    varMap.erase(cinfo.size);
-}
-*/
-
 void PlanRewriter::execute()
 {
     try {

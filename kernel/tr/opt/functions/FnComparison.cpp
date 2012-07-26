@@ -2,6 +2,7 @@
 #include "FnHelpers.h"
 
 #include "tr/opt/graphs/Predicates.h"
+#include "tr/opt/algebra/PlanAlgorithms.h"
 
 using namespace rqp;
 using namespace opt;
