@@ -39,10 +39,10 @@ TupleCellComparison GeneralComparisonPrototype::getTupleCellComparison()
 {
     switch (cmp.op) {
       case Comparison::g_eq :
-        return TupleCellComparison(op_lt, op_eq, true);
+        return TupleCellComparison(op_lt, op_eq, true, cmp.collation);
       default :
         U_ASSERT(false);
-        return TupleCellComparison(NULL, NULL, false);
+        return TupleCellComparison(NULL, NULL, false, cmp.collation);
     };
 }
 
@@ -50,10 +50,10 @@ ValueFunction GeneralComparisonPrototype::getValueFunction(unsigned idxL, unsign
 {
     switch (cmp.op) {
       case Comparison::g_eq :
-        return ValueFunction(op_eq, idxL, idxR, true);
+        return ValueFunction(op_eq, idxL, idxR, true, cmp.collation);
       default :
         U_ASSERT(false);
-        return ValueFunction(NULL, 0, false);
+        return ValueFunction(NULL, 0, false, cmp.collation);
     };
 }
 
@@ -61,7 +61,10 @@ ValueFunction GeneralComparisonPrototype::getValueFunction(unsigned idxL, unsign
 
 EvaluationInfo* PathComparisonPrototype::getComparisonCost(CostModel* model, TupleRef left, TupleRef right)
 {
-    return model->getDocOrderInfo(left->statistics->pathInfo, right->statistics->pathInfo, path);
+    return model->getDocOrderInfo(
+        left->statistics->pathInfo,
+        right->statistics->pathInfo,
+        path);
 }
 
 SequenceInfo* PathComparisonPrototype::getSequenceCost(CostModel* model, TupleRef in)
@@ -90,19 +93,19 @@ ValueFunction PathComparisonPrototype::getValueFunction(unsigned int idxL, unsig
 
     switch (step.getAxis()) {
       case pe::axis_preceding :
-        return ValueFunction(op_doc_order_lt, idxL, idxR, false);
+        return ValueFunction(op_doc_order_lt, idxL, idxR, false, NULL);
       case pe::axis_following :
-        return ValueFunction(op_doc_order_gt, idxL, idxR, false);
+        return ValueFunction(op_doc_order_gt, idxL, idxR, false, NULL);
       case pe::axis_child :
       case pe::axis_descendant :
       case pe::axis_attribute :
-        return ValueFunction(op_doc_order_ancestor, idxL, idxR, false);
+        return ValueFunction(op_doc_order_ancestor, idxL, idxR, false, NULL);
       case pe::axis_ancestor :
       case pe::axis_parent :
-        return ValueFunction(op_doc_order_descendant, idxL, idxR, false);
+        return ValueFunction(op_doc_order_descendant, idxL, idxR, false, NULL);
       default:
         U_ASSERT(false);
-        return ValueFunction(op_doc_order_lt, idxL, idxR, false);
+        return ValueFunction(op_doc_order_lt, idxL, idxR, false, NULL);
     }
 }
 
@@ -120,19 +123,24 @@ TupleCellComparison PathComparisonPrototype::getTupleCellComparison()
 
     switch (step.getAxis()) {
       case pe::axis_preceding :
-        return TupleCellComparison(op_doc_order_lt, op_doc_order_lt, false);
+        return TupleCellComparison(
+          op_doc_order_lt, op_doc_order_lt, false, NULL);
       case pe::axis_following :
-        return TupleCellComparison(op_doc_order_lt, op_doc_order_gt, false);
+        return TupleCellComparison(
+          op_doc_order_lt, op_doc_order_gt, false, NULL);
       case pe::axis_child :
       case pe::axis_descendant :
       case pe::axis_attribute :
-        return TupleCellComparison(op_doc_order_lt, op_doc_order_ancestor, false);
+        return TupleCellComparison(
+          op_doc_order_lt, op_doc_order_ancestor, false, NULL);
       case pe::axis_ancestor :
       case pe::axis_parent :
-        return TupleCellComparison(op_doc_order_lt, op_doc_order_descendant, false);
+        return TupleCellComparison(
+          op_doc_order_lt, op_doc_order_descendant, false, NULL);
       default:
         U_ASSERT(false);
-        return TupleCellComparison(op_doc_order_lt, op_doc_order_lt, false);
+        return TupleCellComparison(
+          op_doc_order_lt, op_doc_order_lt, false, NULL);
     }
 }
 

@@ -204,18 +204,16 @@ void DataGraphRewriter::doPathExpansion()
 
 /* Static optimization phase */
 
-/*
 void DataGraphRewriter::expandAbsolutePath()
 {
     DataNodeList list1, list2;
     DataNodeList *frontList = &list1, *backList = &list2;
+    DataGraph * dg = graph.dg;
 
-    typedef std::set< std::pair<DataNode *, DataNode *> > RemovalList;
-    RemovalList removalCandidates;
-
-    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
-        if (dataNodes[i]->type == DataNode::dnDatabase) {
-            frontList->push_back(dataNodes[i]);
+    FOR_ALL_GRAPH_ELEMENTS(dg->dataNodes, i) {
+        // TODO : External propagade external 
+        if (dg->dataNodes[i]->type == DataNode::dnDatabase) {
+            frontList->push_back(dg->dataNodes[i]);
         };
     };
 
@@ -224,11 +222,12 @@ void DataGraphRewriter::expandAbsolutePath()
 
         for (DataNodeList::iterator d = frontList->begin(); d != frontList->end(); ++d) {
             DataNode * dn = *d;
-            PlanDescIterator it((*d)->predicates);
+            PlanDescIterator it(graph.nodeIndex[dn->index].predicates);
             int i;
 
             while (-1 != (i = it.next())) {
-                StructuralPredicate * pred = dynamic_cast<StructuralPredicate*>(predicates[i]);
+                StructuralPredicate * pred =
+                  dynamic_cast<StructuralPredicate*>(graph.dg->predicates[i]);
 
                 // TODO : not every path can be concatinated, some should be broken
                 if (NULL != pred && pred->left() == dn &&
@@ -243,7 +242,6 @@ void DataGraphRewriter::expandAbsolutePath()
                     pred->right()->type = DataNode::dnDatabase;
                     pred->right()->root = pred->left()->root;
                     pred->right()->path = path;
-                    pred->right()->producedFrom = pred;
 
                     backList->push_back(pred->right());
                 }
@@ -255,7 +253,7 @@ void DataGraphRewriter::expandAbsolutePath()
         backList = swp;
     }
 
-    updateIndex();
+    // NOTE: No need to update anything for we 
 }
 
 /*

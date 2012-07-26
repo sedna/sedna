@@ -1,1 +1,1 @@
-set(algorithms_SRC Scans.cpp Joins.cpp ComparisonOperation.cpp ExecutionContext.cpp)
+set(algorithms_SRC Scans.cpp Joins.cpp ComparisonOperation.cpp ExecutionContext.cpp SequenceModel.cpp)

@@ -9,12 +9,14 @@
 namespace opt {
 
 class BinaryOpPrototype : public POProt {
+    RTTI_DECL(physical_model_BinaryOpPrototype, POProt)
 public:
-    BinaryOpPrototype(const prot_info_t* pinfo, const POProtIn & _left, const POProtIn & _right)
+    BinaryOpPrototype(clsinfo_t pinfo, const POProtIn & _left, const POProtIn & _right)
       : POProt(pinfo) { in.push_back(_left); in.push_back(_right); };
 };
 
 class MergeJoinPrototype : public BinaryOpPrototype {
+    RTTI_DECL(physical_model_MergeJoinPrototype, BinaryOpPrototype)
 protected:
     ComparisonPrototype * comparison;
 
@@ -30,6 +32,7 @@ public:
 };
 
 class FilterTuplePrototype : public BinaryOpPrototype {
+    RTTI_DECL(physical_model_FilterTuplePrototype, BinaryOpPrototype)
 protected:
     ComparisonPrototype * comparison;
 
@@ -42,6 +45,8 @@ public:
 };
 
 class AbsPathScanPrototype : public POProt {
+    RTTI_DECL(physical_model_AbsPathScanPrototype, POProt)
+    
     DataRoot dataRoot;
     pe::Path path;
 protected:
@@ -59,6 +64,8 @@ public:
 };
 
 class PathEvaluationPrototype : public POProt {
+    RTTI_DECL(physical_model_PathEvaluationPrototype, POProt)
+    
     pe::Path path;
 protected:
     virtual XmlConstructor & __toXML(XmlConstructor & ) const;
@@ -70,6 +77,8 @@ public:
 };
 
 class ValueScanPrototype : public POProt {
+    RTTI_DECL(physical_model_ValueScanPrototype, POProt)
+    
     const Comparison cmp;
     MemoryTupleSequencePtr value;
 protected:
@@ -81,6 +90,8 @@ public:
 };
 
 class EvaluatePrototype : public POProt {
+    RTTI_DECL(physical_model_EvaluatePrototype, POProt)
+    
     phop::IFunction * func;
 protected:
     virtual XmlConstructor & __toXML(XmlConstructor & ) const;
@@ -92,6 +103,8 @@ public:
 };
 
 class ExternalVarPrototype : public POProt {
+    RTTI_DECL(physical_model_ExternalVarPrototype, POProt)
+    
     TupleId varTupleId;
 protected:
     virtual XmlConstructor & __toXML(XmlConstructor & ) const;
@@ -102,23 +115,9 @@ public:
     virtual phop::IOperator * compile();
 };
 
-/*
- * This operation should decide how to join its operands in the best way possible
- */
-/*
-class MagicJoinPrototype : public BinaryOpPrototype {
-    pe::Path path;
-protected:
-    virtual XmlConstructor & __toXML(XmlConstructor & ) const;
-public:
-    MagicJoinPrototype(PhysicalModel * model, const POProtIn & _left, const POProtIn & _right, const pe::Path& _path);
-
-    virtual void evaluateCost(CostModel* model);
-    virtual phop::IOperator * compile();
-};
-*/
-
 class ValidatePathPrototype : public POProt {
+    RTTI_DECL(physical_model_ValidatePathPrototype, POProt)
+    
     DataRoot dataRoot;
     pe::Path path;
 protected:

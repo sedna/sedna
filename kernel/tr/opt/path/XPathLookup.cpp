@@ -17,9 +17,9 @@
 
 using namespace pe;
 
-OPINFO_DEF(PathSchemaCheck)
-OPINFO_DEF(PathEvaluateTraverse)
-OPINFO_DEF(PathSchemaResolve)
+RTTI_DEF(PathSchemaCheck)
+RTTI_DEF(PathEvaluateTraverse)
+RTTI_DEF(PathSchemaResolve)
 
 SchemaLookup& SchemaLookup::compile()
 {
@@ -105,7 +105,7 @@ void SchemaLookup::executeAll(const SchemaNodePtrList* in, SchemaNodePtrList* ou
 
 
 PathSchemaCheck::PathSchemaCheck(phop::IValueOperator* _in, const pe::AtomizedPath& apath)
-    : ItemOperator(OPINFO_REF, _in), scnLookup(apath) { }
+    : ItemOperator(SELF_RTTI_REF, _in), scnLookup(apath) { }
 
 void PathSchemaCheck::reset()
 {
@@ -145,7 +145,7 @@ void PathSchemaCheck::do_next()
 }
 
 PathSchemaResolve::PathSchemaResolve(phop::IValueOperator* _in, const pe::AtomizedPath& apath)
-    : ItemOperator(OPINFO_REF, _in), scnLookup(apath)
+    : ItemOperator(SELF_RTTI_REF, _in), scnLookup(apath)
 {
     merge = new PathSchemaMerge();
 }
@@ -202,7 +202,7 @@ void PathSchemaResolve::reset()
 }
 
 PathEvaluateTraverse::PathEvaluateTraverse(phop::IValueOperator* _in, const pe::AtomizedPath& apath)
-    : ItemOperator(OPINFO_REF, _in), traverse(NULL)
+    : ItemOperator(SELF_RTTI_REF, _in), traverse(NULL)
 {
     traverse = new PathTraverse(apath);
 }
@@ -246,18 +246,18 @@ void PathEvaluateTraverse::reset()
 
 XmlConstructor & PathSchemaCheck::__toXML(XmlConstructor & element) const
 {
-    element.addElementValue(PHOPQNAME("path"), scnLookup.atomizedPath.__toString());
+    element.addElementValue(SE_EL_NAME("path"), scnLookup.atomizedPath.__toString());
     return element;
 };
 
 XmlConstructor & PathEvaluateTraverse::__toXML(XmlConstructor & element) const
 {
-    element.addElementValue(PHOPQNAME("path"), traverse->getPath().__toString());
+    element.addElementValue(SE_EL_NAME("path"), traverse->getPath().__toString());
     return element;
 };
 
 XmlConstructor & PathSchemaResolve::__toXML(XmlConstructor & element) const
 {
-    element.addElementValue(PHOPQNAME("path"), scnLookup.atomizedPath.__toString());
+    element.addElementValue(SE_EL_NAME("path"), scnLookup.atomizedPath.__toString());
     return element;
 };

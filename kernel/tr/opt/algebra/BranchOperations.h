@@ -6,7 +6,7 @@
 namespace rqp {
 
 class If : public RPBase {
-    RTTI_DECL(op_if, RPBase)
+    RTTI_DECL(plan_operation_If, RPBase)
 private:
     virtual XmlConstructor& __toXML ( XmlConstructor& ) const;
 public:

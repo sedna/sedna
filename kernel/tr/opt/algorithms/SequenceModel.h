@@ -6,25 +6,15 @@
 #ifndef SEQUENCE_MODEL_H
 #define SEQUENCE_MODEL_H
 
-#include "tr/executor/base/tuple.h"
 #include "tr/models/XmlConstructor.h"
+#include "tr/models/rtti.h"
+
 #include "tr/opt/OptTypes.h"
+
+#include "tr/executor/base/tuple.h"
 
 #include <deque>
 #include <stack>
-
-#define PHOPQNAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
-
-#define OPINFO_T const phop::operation_info_t *
-#define OPINFO_DECL(ID) \
-static const struct phop::operation_info_t op_info; \
-  static const int opid = ID; \
-  virtual XmlConstructor & __toXML(XmlConstructor &) const;
-
-#define OPINFO_DEF(TT) \
-  const struct phop::operation_info_t TT::op_info = {#TT, TT::opid}; 
-
-#define OPINFO_REF &op_info
 
 namespace phop {
 
@@ -90,37 +80,33 @@ public:
     };
 };
 
-struct operation_info_t {
-    const char * name;
-    int id;
-};
-
-class IOperator : public IXMLSerializable {
-private:
-    const operation_info_t * opinfo;
+class IOperator : public ObjectBase, public IXMLSerializable {
+    RTTI_DECL(sequence_operator_IOperator, ObjectBase)
+protected:    
+    virtual XmlConstructor & __toXML(XmlConstructor &) const = 0;
 protected:
     GraphExecutionBlock * block;
 
-    IOperator(OPINFO_T _opinfo);
+    IOperator(clsinfo_t _opinfo);
 
     virtual void do_next() = 0;
-    virtual XmlConstructor & __toXML(XmlConstructor &) const = 0;
 public:
-    virtual ~IOperator();
+    virtual ~IOperator() {};
     virtual void reset() = 0;
 
     OperationFlags & flags() { return block->flags; };
-    const operation_info_t * info() const { return opinfo; };
     virtual XmlConstructor & toXML(XmlConstructor &) const;
 };
 
 class IValueOperator : public IOperator {
+    RTTI_DECL(sequence_operator_IValueOperator, IOperator)
+
     std::deque<tuple_cell> valueCache;
 protected:
     void seteos() { valueCache.push_back(tuple_cell()); };
     void push(const tuple_cell & tc) { valueCache.push_back(tc); };
 
-    IValueOperator(OPINFO_T _opinfo) : IOperator(_opinfo) {};
+    IValueOperator(clsinfo_t _opinfo) : IOperator(_opinfo) {};
 public:
     virtual void reset()
       { valueCache.clear(); };
@@ -146,6 +132,8 @@ public:
 };
 
 class ITupleOperator : public IOperator {
+    RTTI_DECL(sequence_operator_ITupleOperator, IOperator)
+
     tuple _value;
 protected:
     void seteos() { _value.set_eos(); };
@@ -153,7 +141,7 @@ protected:
 
     virtual void do_next() = 0;
     
-    ITupleOperator(OPINFO_T _opinfo, unsigned _size)
+    ITupleOperator(clsinfo_t _opinfo, unsigned _size)
       : IOperator(_opinfo), _value(_size) {};
 public:
     virtual void reset()
@@ -232,6 +220,7 @@ struct MappedTupleIn : public TupleIn {
 };
 
 class ReduceToItemOperator : public IValueOperator {
+    RTTI_DECL(sequence_operator_ReduceToItemOperator, IValueOperator)
 private:
     Operators::size_type inIdx;
 protected:
@@ -239,9 +228,8 @@ protected:
     bool nested;
 
     virtual void do_next();
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
-    OPINFO_DECL(0x002)
-
     ReduceToItemOperator(const TupleIn & op, bool nested);
 
     virtual void reset();
@@ -249,12 +237,13 @@ public:
 };
 
 class BinaryTupleOperator : public ITupleOperator {
+    RTTI_DECL(sequence_operator_BinaryTupleOperator, ITupleOperator)
 private:
     Operators::size_type leftIdx, rightIdx;
 protected:
     MappedTupleIn left, right;
 
-    BinaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right);
+    BinaryTupleOperator(clsinfo_t _opinfo, unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right);
     
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
@@ -265,12 +254,13 @@ public:
 };
 
 class UnaryTupleOperator : public ITupleOperator {
+    RTTI_DECL(sequence_operator_UnaryTupleOperator, ITupleOperator)
 private:
     Operators::size_type inIdx;
 protected:
     MappedTupleIn in;
 
-    UnaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _in);
+    UnaryTupleOperator(clsinfo_t _opinfo, unsigned _size, const MappedTupleIn & _in);
 
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
@@ -280,12 +270,13 @@ public:
 };
 
 class ItemOperator : public IValueOperator {
+    RTTI_DECL(sequence_operator_ItemOperator, IValueOperator)
 private:
     Operators::size_type inIdx;
 protected:
     IValueOperator * in;
     
-    ItemOperator(OPINFO_T _opinfo, IValueOperator * _in);
+    ItemOperator(clsinfo_t _opinfo, IValueOperator * _in);
 
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:

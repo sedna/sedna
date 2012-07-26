@@ -12,7 +12,6 @@
 
 namespace opt {
 
-class CostModel;
 struct SequenceInfo;
 struct EvaluationInfo;
 

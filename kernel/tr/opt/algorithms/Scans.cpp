@@ -14,17 +14,17 @@
 using namespace phop;
 using namespace opt;
 
-OPINFO_DEF(SchemaScan)
-OPINFO_DEF(SchemaValueScan)
-OPINFO_DEF(VariableIn)
+RTTI_DEF(phop::SchemaScan)
+RTTI_DEF(phop::SchemaValueScan)
+RTTI_DEF(phop::VariableIn)
 
-OPINFO_DEF(BogusConstSequence)
-OPINFO_DEF(CachedNestedLoop)
-OPINFO_DEF(NestedEvaluation)
+RTTI_DEF(phop::BogusConstSequence)
+RTTI_DEF(phop::CachedNestedLoop)
+RTTI_DEF(phop::NestedEvaluation)
 //OPINFO_DEF(FunctionOp)
 
 SchemaScan::SchemaScan(schema_node_cptr _snode, unsigned int size, unsigned int idx)
-    : ITupleOperator(OPINFO_REF, size),
+    : ITupleOperator(SELF_RTTI_REF, size),
         _cachePtr(_cache.begin()), _idx(idx), snode(_snode), currentBlock(XNULL)
 {
 
@@ -79,7 +79,7 @@ SchemaValueScan::SchemaValueScan(
     MemoryTupleSequencePtr _sequence,
     unsigned int _size, unsigned int _left, unsigned int _right)
 
-    : ITupleOperator(OPINFO_REF, _size),
+    : ITupleOperator(SELF_RTTI_REF, _size),
       currentNode(XNULL), snode(_snode),
       tcmpop(_tcmpop), sequence(_sequence),
       left(_left), right(_right)
@@ -125,7 +125,7 @@ void SchemaValueScan::reset()
 }
 
 phop::VariableIn::VariableIn(TupleId _tid, unsigned int size, unsigned int _idx)
-  : ITupleOperator(OPINFO_REF, size), tid(_tid), varIt(NULL), idx(_idx)
+  : ITupleOperator(SELF_RTTI_REF, size), tid(_tid), varIt(NULL), idx(_idx)
 {
     
 }
@@ -154,7 +154,7 @@ void phop::VariableIn::reset()
 
 
 BogusConstSequence::BogusConstSequence(MemoryTupleSequencePtr _sequence, unsigned _size, unsigned _resultIdx)
-  : ITupleOperator(OPINFO_REF, _size), sequence(_sequence), resultIdx(_resultIdx), idx(0)
+  : ITupleOperator(SELF_RTTI_REF, _size), sequence(_sequence), resultIdx(_resultIdx), idx(0)
 {
   
 }
@@ -176,7 +176,7 @@ void BogusConstSequence::do_next()
 }
 
 CachedNestedLoop::CachedNestedLoop(unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right, const TupleCellComparison & _tcmpop, CachedNestedLoop::flags_t _flags)
-  : BinaryTupleOperator(OPINFO_REF, _size, _left, _right),
+  : BinaryTupleOperator(SELF_RTTI_REF, _size, _left, _right),
     tcmpop(_tcmpop), cacheFilled(false), flags(_flags)
 {
   
@@ -239,7 +239,7 @@ void CachedNestedLoop::reset()
 }
 
 NestedEvaluation::NestedEvaluation(const phop::TupleIn& _in, IValueOperator* _op, unsigned int _size, unsigned int _resultIdx)
-  : ITupleOperator(OPINFO_REF, _size), in(_in), nestedOperator(_op), resultIdx(_resultIdx)
+  : ITupleOperator(SELF_RTTI_REF, _size), in(_in), nestedOperator(_op), resultIdx(_resultIdx)
 {
     nestedOperatorIdx = block->operatorMap.at(_op);
 }
@@ -266,7 +266,7 @@ void NestedEvaluation::reset()
 
 /*
 FunctionOp::FunctionOp(const phop::MappedTupleIn& _in, unsigned int _size, unsigned int _resultIdx, IFunctionOpInstance* _inst)
-    : ITupleOperator(OPINFO_REF, _size), func(_inst), in(_in), resultIdx(_resultIdx)
+    : ITupleOperator(SELF_RTTI_REF, _size), func(_inst), in(_in), resultIdx(_resultIdx)
 {
     
 }
@@ -310,16 +310,16 @@ std::string schemaPath(schema_node_cptr snode) {
 
 XmlConstructor & SchemaScan::__toXML(XmlConstructor & producer) const
 {
-    producer.addElementValue(PHOPQNAME("path"), schemaPath(snode));
+    producer.addElementValue(SE_EL_NAME("path"), schemaPath(snode));
     return  producer;
 };
 
 XmlConstructor & SchemaValueScan::__toXML(XmlConstructor & producer) const
 {
-    producer.addElementValue(PHOPQNAME("path"), schemaPath(snode));
+    producer.addElementValue(SE_EL_NAME("path"), schemaPath(snode));
 
     for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
-        producer.addElementValue(PHOPQNAME("value"), *it);
+        producer.addElementValue(SE_EL_NAME("value"), *it);
     };
     
     return producer;
@@ -327,8 +327,8 @@ XmlConstructor & SchemaValueScan::__toXML(XmlConstructor & producer) const
 
 XmlConstructor & VariableIn::__toXML(XmlConstructor & producer) const
 {
-    producer.openElement(PHOPQNAME("variable"));
-    producer.addAttributeValue(PHOPQNAME("variable"), tuple_cell::atomic_int(tid));
+    producer.openElement(SE_EL_NAME("variable"));
+    producer.addAttributeValue(SE_EL_NAME("variable"), tuple_cell::atomic_int(tid));
     producer.closeElement();
     
     return  producer;
@@ -337,7 +337,7 @@ XmlConstructor & VariableIn::__toXML(XmlConstructor & producer) const
 XmlConstructor & BogusConstSequence::__toXML(XmlConstructor & producer) const
 {
     for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
-        producer.addElementValue(PHOPQNAME("value"), *it);
+        producer.addElementValue(SE_EL_NAME("value"), *it);
     };
     
     return  producer;

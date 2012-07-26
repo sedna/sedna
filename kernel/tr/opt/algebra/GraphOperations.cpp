@@ -3,7 +3,7 @@
 #include "tr/opt/graphs/DataGraphs.h"
 #include "tr/opt/graphs/DataGraphCollection.h"
 #include "tr/opt/algorithms/ExecutionContext.h"
-#include "tr/opt/SequenceModel.h"
+#include "tr/opt/algorithms/SequenceModel.h"
 
 using namespace rqp;
 using namespace opt;

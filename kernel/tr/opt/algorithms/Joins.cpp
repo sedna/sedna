@@ -15,10 +15,10 @@
 
 using namespace phop;
 
-OPINFO_DEF(DocOrderMerge)
-OPINFO_DEF(TupleSort)
-OPINFO_DEF(TupleJoinFilter)
-OPINFO_DEF(TuplePredicateFilter)
+RTTI_DEF(DocOrderMerge)
+RTTI_DEF(TupleSort)
+RTTI_DEF(TupleJoinFilter)
+RTTI_DEF(TuplePredicateFilter)
 
 struct NidStringCmp {
     bool operator()(const NIDMergeHeap::value_type & x, const NIDMergeHeap::value_type& y) const
@@ -31,7 +31,7 @@ phop::NIDMergeHeap::value_type getMergeValue(const MappedTupleIn & t, TupleList:
 };
 
 DocOrderMerge::DocOrderMerge(unsigned int _size, const phop::TupleList& _tin)
-    : ITupleOperator(OPINFO_REF, _size), tin(_tin)
+    : ITupleOperator(SELF_RTTI_REF, _size), tin(_tin)
 {
     mergeHeap.reserve(_tin.size());
 };
@@ -82,7 +82,7 @@ void DocOrderMerge::reset()
 }
 
 TupleSort::TupleSort( unsigned int _size, MappedTupleIn _in, ICollationTupleSerializer* _order)
-    : UnaryTupleOperator(OPINFO_REF, _size, _in),
+    : UnaryTupleOperator(SELF_RTTI_REF, _size, _in),
         initialized(false), order(_order), _sorted_sequence(NULL)
 {
 
@@ -124,7 +124,7 @@ void TupleSort::reset()
 }
 
 TupleJoinFilter::TupleJoinFilter(unsigned int _size, const phop::MappedTupleIn& _left, const phop::MappedTupleIn& _right, const TupleCellComparison& _tcc)
-    : BinaryTupleOperator(OPINFO_REF, _size, _left, _right),
+    : BinaryTupleOperator(SELF_RTTI_REF, _size, _left, _right),
       initialized(false), tcc(_tcc), left_seq(NULL), right_seq(NULL),
       left_seq_pos(0), right_seq_pos(0),
       initial_left_seq_pos(0), initial_right_seq_pos(0),
@@ -238,7 +238,7 @@ void TupleJoinFilter::reset()
 
 
 TuplePredicateFilter::TuplePredicateFilter(const phop::MappedTupleIn& _in, const ValueFunction& _vcc)
-    : UnaryTupleOperator(OPINFO_REF, _in.tmap.size(), _in), vcc(_vcc)
+    : UnaryTupleOperator(SELF_RTTI_REF, _in.tmap.size(), _in), vcc(_vcc)
 {
 }
 

@@ -24,13 +24,14 @@ struct StepInfo {
     xsd::TemplateQName tqname;
 };
 
-struct OptimizationContext {
+struct StaticContext {
     ContextInfo context;
 
     std::stack<ResultInfo> resultStack;
     std::stack<StepInfo> stepStack;
 
     StaticallyKnownNamespaces skn;
+    CollationHandler * collation;
 
     void generateContext()
     {
@@ -59,8 +60,10 @@ RPBase* lr2opt::getPlan() const
 lr2opt::lr2opt(XQueryDriver* drv_, XQueryModule* mod_, dynamic_context* dyn_cxt_, bool is_subquery_)
     : lr2por(drv_, mod_, dyn_cxt_, is_subquery_), context(NULL)
 {
-    context = new OptimizationContext;
+    context = new StaticContext;
     context->context = invalidContext;
+    // TODO : remove this hack
+    context->collation = static_context::collation_manager.get_default_collation_handler();
 }
 
 lr2opt::~lr2opt()
@@ -444,7 +447,9 @@ void lr2opt::visit(ASTBop &n) {
     context->resultStack.pop();
     
     if (n.op >= ASTBop::IS && n.op <= ASTBop::GE_G) {
-        opt::Comparison cmp;
+        opt::Comparison cmp(
+          opt::Comparison::invalid,
+          context->collation);
 
         switch (n.op) {
           case ASTBop::PREC :
@@ -465,7 +470,8 @@ void lr2opt::visit(ASTBop &n) {
 
         context->resultStack.push(ResultInfo(
             new FunCall(general_comparison_function,
-                        new ComparisonData(cmp), leftSequence, rightSequence)));
+                new ComparisonData(cmp),
+                leftSequence, rightSequence)));
     } else {
         U_ASSERT(false);
     };

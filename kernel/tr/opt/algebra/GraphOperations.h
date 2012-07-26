@@ -7,7 +7,7 @@
 namespace rqp {
 
 class DataGraphOperation : public ManyChildren {
-    RTTI_DECL(op_datagraph, ManyChildren)
+    RTTI_DECL(plan_operation_DataGraphOperation, ManyChildren)
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 protected:
@@ -38,7 +38,7 @@ public:
 };
 
 class MapGraph : public DataGraphOperation {
-    RTTI_DECL(op_map_graph, DataGraphOperation)
+    RTTI_DECL(plan_operation_MapGraph, DataGraphOperation)
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 private:

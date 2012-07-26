@@ -3,7 +3,7 @@
 
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/algebra/IndependentPlan.h"
-#include "tr/opt/SequenceModel.h"
+#include "tr/opt/algorithms/SequenceModel.h"
 
 namespace executor {
 

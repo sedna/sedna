@@ -18,17 +18,16 @@ struct TupleCellComparison {
     bin_op_tuple_cell_tuple_cell_collation lessop;
     bin_op_tuple_cell_tuple_cell_collation predop;
 
-    // TODO : delete this
-    bool generalComparison;
-
+    bool generalComparison; // TODO : delete this
     CollationHandler * handler;
 
     TupleCellComparison(
         bin_op_tuple_cell_tuple_cell_collation _lessop,
         bin_op_tuple_cell_tuple_cell_collation _predop,
-        bool gcmp
+        bool gcmp,
+        CollationHandler * _handler
     )
-      : lessop(_lessop), predop(_predop), generalComparison(gcmp), handler(NULL) {};
+      : lessop(_lessop), predop(_predop), generalComparison(gcmp), handler(_handler) {};
 
     bool less(const tuple_cell & a, const tuple_cell & b) {
         if (generalComparison) {

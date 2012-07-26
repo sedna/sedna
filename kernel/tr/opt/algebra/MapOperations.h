@@ -13,7 +13,7 @@ namespace rqp {
  */
 
 class MapConcat : public NestedOperation {
-    RTTI_DECL(op_map, NestedOperation)
+    RTTI_DECL(plan_operation_MapConcat, NestedOperation)
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
@@ -25,7 +25,7 @@ public:
 };
 
 class SequenceConcat : public NestedOperation {
-    RTTI_DECL(op_sequence_map, NestedOperation)
+    RTTI_DECL(plan_operation_SequenceConcat, NestedOperation)
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:

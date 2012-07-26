@@ -2,7 +2,7 @@
 #include "GraphRewriter.h"
 
 #include "tr/opt/phm/PhysicalModel.h"
-#include "tr/opt/SequenceModel.h"
+#include "tr/opt/algorithms/SequenceModel.h"
 #include "tr/opt/phm/Operations.h"
 
 // ***************************** Data Graph ***************************

@@ -8,13 +8,15 @@
 #include "tr/opt/phm/Operations.h"
 #include "tr/models/XmlConstructor.h"
 #include "tr/strings/strings.h"
-#include "tr/opt/SequenceModel.h"
+#include "tr/opt/algorithms/SequenceModel.h"
 #include "tr/opt/phm/ComparisonModels.h"
 #include "tr/opt/functions/Functions.h"
 
 #include <vector>
 
 using namespace opt;
+
+RTTI_DEF_BASE(POProt)
 
 PlanInfo::PlanInfo(size_t initialTupleSetSize)
   : desc(0), parent(0), totalCost(0)
@@ -537,7 +539,7 @@ XmlConstructor & POProt::__toXML(XmlConstructor & constructor) const
 
 XmlConstructor & POProt::toXML(XmlConstructor & constructor) const
 {
-    constructor.openElement(SE_EL_NAME(this->getProtInfo()->name));
+    constructor.openElement(SE_EL_NAME(this->info()->name));
     constructor.addAttributeValue(SE_EL_NAME("id"), tuple_cell::atomic_int((ptrdiff_t) (this)));
 
     __commonToXML(constructor);

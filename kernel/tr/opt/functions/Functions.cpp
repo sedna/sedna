@@ -1,5 +1,5 @@
 #include "tr/opt/functions/Functions.h"
-#include "tr/opt/SequenceModel.h"
+#include "tr/opt/algorithms/SequenceModel.h"
 #include "tr/executor/base/namespaces.h"
 
 using namespace phop;

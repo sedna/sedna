@@ -29,12 +29,7 @@ protected:
         un_op_tuple_cell unary;
         unsigned idx;
     };
-/*    
-    struct unary_t {
-        un_op_tuple_cell unary;
-        unsigned idx;
-    };
-*/
+
     union {
         binary_t b;
         unary_t u;
@@ -45,22 +40,27 @@ protected:
 public:
     CollationHandler * handler;
 
-    explicit ValueFunction(bin_op_tuple_cell_tuple_cell_collation bin, unsigned idxL, unsigned idxR, bool atomized)
-      : simple_type(atomized ? atomized_binary : binary)
+    explicit ValueFunction(
+        bin_op_tuple_cell_tuple_cell_collation bin,
+        unsigned idxL,
+        unsigned idxR,
+        bool atomized,
+        CollationHandler * _handler)
+      : simple_type(atomized ? atomized_binary : binary), handler(_handler)
     {
         params.b.binary = bin;
         params.b.idxL = idxL;
         params.b.idxR = idxR;
     };
 
-    explicit ValueFunction(un_op_tuple_cell un, unsigned idx, bool atomized)
-      : simple_type(atomized ? atomized_unary : unary)
+    explicit ValueFunction(un_op_tuple_cell un, unsigned idx, bool atomized, CollationHandler * _handler)
+      : simple_type(atomized ? atomized_unary : unary), handler(_handler)
     {
         params.u.unary = un;
         params.u.idx = idx;
     };
 
-    explicit ValueFunction(unsigned idx, bool atomized)
+    explicit ValueFunction(unsigned idx, bool atomized, CollationHandler * _handler)
       : simple_type(atomized ? atomized_value : nid_value) { params.u.idx = idx; }
 
     tuple_cell evaluate(const tuple & x) {

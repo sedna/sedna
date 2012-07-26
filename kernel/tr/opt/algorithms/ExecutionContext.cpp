@@ -8,7 +8,7 @@
 #include "tr/opt/algebra/FunctionOperations.h"
 #include "tr/opt/algebra/ElementaryOperations.h"
 #include "tr/opt/graphs/DataGraphCollection.h"
-#include "tr/opt/SequenceModel.h"
+#include "tr/opt/algorithms/SequenceModel.h"
 #include "tr/models/SCElementProducer.h"
 
 #include <stack>

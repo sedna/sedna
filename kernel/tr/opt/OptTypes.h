@@ -138,4 +138,72 @@ PlanDesc singlePlanDesc(uint8_t item) { return 1ULL << item; };
 
 }
 
+enum {
+    plan_operation_base,
+
+    plan_operation_ConstantOperation,
+    plan_operation_ListOperation,
+    plan_operation_NestedOperation,
+    plan_operation_ManyChildren,
+
+    plan_operation_Const,
+    plan_operation_VarIn,
+    plan_operation_Exists, // Important: differs from effective boolean value
+    plan_operation_Sequence,
+
+    plan_operation_XPathStep,
+    plan_operation_FunCall,
+    plan_operation_Construct,
+
+    plan_operation_DataGraphOperation,
+    plan_operation_MapGraph,
+
+    plan_operation_MapConcat,
+    plan_operation_SequenceConcat,
+
+    plan_operation_If
+};
+
+
+enum {
+    physical_model_POProt,
+    physical_model_BinaryOpPrototype,
+    physical_model_MergeJoinPrototype,
+    physical_model_FilterTuplePrototype,
+    physical_model_AbsPathScanPrototype,
+    physical_model_PathEvaluationPrototype,
+    physical_model_ValueScanPrototype,
+    physical_model_EvaluatePrototype,
+    physical_model_ExternalVarPrototype,
+    physical_model_ValidatePathPrototype,
+};
+
+enum {
+    sequence_operator_IOperator,
+    sequence_operator_IValueOperator,
+    sequence_operator_ITupleOperator,
+
+    sequence_operator_ReduceToItemOperator,
+    sequence_operator_BinaryTupleOperator,
+    sequence_operator_UnaryTupleOperator,
+    sequence_operator_ItemOperator,
+
+    sequence_operator_DocOrderMerge,
+    sequence_operator_TupleSort,
+
+    sequence_operator_TupleJoinFilter,
+    sequence_operator_TuplePredicateFilter,
+    sequence_operator_SchemaScan,
+    sequence_operator_SchemaValueScan,
+    sequence_operator_VariableIn,
+    sequence_operator_NestedEvaluation,
+    sequence_operator_BogusConstSequence,
+    sequence_operator_CachedNestedLoop,
+
+    sequence_operator_PathSchemaCheck,
+    sequence_operator_PathEvaluateTraverse,
+    sequence_operator_PathSchemaResolve,
+};
+
+
 #endif /* OPTTYPES_H */

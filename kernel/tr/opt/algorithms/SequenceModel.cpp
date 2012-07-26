@@ -7,7 +7,13 @@ using namespace phop;
 
 std::stack<GraphExecutionBlock * > GraphExecutionBlock::blockBuildingStack;
 
-OPINFO_DEF(ReduceToItemOperator)
+RTTI_DEF_BASE(IOperator)
+RTTI_DEF(ITupleOperator)
+RTTI_DEF(IValueOperator)
+RTTI_DEF(ReduceToItemOperator)
+RTTI_DEF(BinaryTupleOperator)
+RTTI_DEF(UnaryTupleOperator)
+RTTI_DEF(ItemOperator)
 
 void GraphExecutionBlock::prepare(const opt::DataGraphIndex* dgi)
 {
@@ -55,20 +61,15 @@ void ItemOperator::reset()
     in->reset();
 }
 
-IOperator::IOperator(OPINFO_T _opinfo) : opinfo(_opinfo), block(NULL)
+IOperator::IOperator(clsinfo_t _opinfo) : ObjectBase(_opinfo), block(NULL)
 {
     block = GraphExecutionBlock::current();
     block->body.push_back(this);
     block->operatorMap.insert(OperatorMap::value_type(this, block->body.size()-1));
 }
 
-IOperator::~IOperator()
-{
-    //
-}
-
 ReduceToItemOperator::ReduceToItemOperator(const phop::TupleIn& op, bool _nested)
-    : IValueOperator(OPINFO_REF), in(op), nested(_nested)
+    : IValueOperator(SELF_RTTI_REF), in(op), nested(_nested)
 {
     inIdx = block->operatorMap.at(op.op);
 }
@@ -94,26 +95,26 @@ void ReduceToItemOperator::reset()
 
 XmlConstructor & IOperator::toXML(XmlConstructor & element) const
 {
-    element.openElement(PHOPQNAME(info()->name));
+    element.openElement(SE_EL_NAME(info()->name));
     __toXML(element);
     element.closeElement();
     return element;
 }
 
-BinaryTupleOperator::BinaryTupleOperator(OPINFO_T _opinfo, unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right)
+BinaryTupleOperator::BinaryTupleOperator(clsinfo_t _opinfo, unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right)
     : ITupleOperator(_opinfo, _size), left(_left), right(_right)
 {
     leftIdx = block->operatorMap.at(_left.op);
     rightIdx = block->operatorMap.at(_right.op);
 };
 
-UnaryTupleOperator::UnaryTupleOperator(const phop::operation_info_t* _opinfo, unsigned int _size, const phop::MappedTupleIn& _in)
+UnaryTupleOperator::UnaryTupleOperator(clsinfo_t _opinfo, unsigned int _size, const phop::MappedTupleIn& _in)
     : ITupleOperator(_opinfo, _size), in(_in)
 {
     inIdx = block->operatorMap.at(_in.op);
 }
 
-ItemOperator::ItemOperator(const phop::operation_info_t* _opinfo, IValueOperator* _in)
+ItemOperator::ItemOperator(clsinfo_t _opinfo, IValueOperator* _in)
     : IValueOperator(_opinfo), in(_in)
 {
     inIdx = block->operatorMap.at(_in);
@@ -142,7 +143,7 @@ XmlConstructor & ReduceToItemOperator::__toXML(XmlConstructor & element) const
 XmlConstructor & ReduceToItemOperator::toXML(XmlConstructor & element) const
 {
     if (!nested) {
-//        element = element->addElement(PHOPQNAME(info()->name));
+//        element = element->addElement(SE_EL_NAME(info()->name));
         return in.op->toXML(element);
 //        element->close();
     }

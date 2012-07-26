@@ -4,6 +4,8 @@
 #include <string>
 #include "tr/executor/por2qep/scheme_tree.h"
 
+class CollationHandler;
+
 extern const int reverseComparisonMap[];
 
 namespace opt {
@@ -15,9 +17,16 @@ struct Comparison {
         do_before = 0x11, do_after = 0x12,
     } op;
 
-    Comparison() : op(invalid) {};
-    explicit Comparison(enum comp_t _op) : op(_op) {};
-    Comparison(const Comparison & x) : op(x.op) {};
+    CollationHandler * collation;
+
+    Comparison() : op(invalid), collation(NULL) {};
+
+    explicit Comparison(enum comp_t _op, CollationHandler * _collation)
+      : op(_op), collation(_collation) {};
+
+    Comparison(const Comparison & x)
+      : op(x.op), collation(x.collation) {};
+
     Comparison(const scheme_list * lst);
 
     bool inversable() const { return op == g_eq; };
@@ -27,7 +36,7 @@ struct Comparison {
             return *this;
         };
 
-        return Comparison(invalid);
+        return Comparison();
     };
 
     std::string toString() const;

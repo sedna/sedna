@@ -9,9 +9,9 @@
 
 #include "XPathTypes.h"
 #include "AtomizedPath.h"
-#include "tr/structures/nodeinterface.h"
 
-#include "tr/opt/SequenceModel.h"
+#include "tr/structures/nodeinterface.h"
+#include "tr/opt/algorithms/SequenceModel.h"
 
 #include <string>
 #include <map>
@@ -52,37 +52,41 @@ public:
 
 
 class PathSchemaCheck : public phop::ItemOperator {
+    RTTI_DECL(sequence_operator_PathSchemaCheck, phop::ItemOperator)
+
     typedef std::map<schema_node_xptr, bool> SchemaCache;
     SchemaLookup scnLookup;
     SchemaCache cache;
 protected:
     virtual void do_next();
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
-    OPINFO_DECL(0x101)
     PathSchemaCheck(IValueOperator * _in, const AtomizedPath& apath);
     virtual void reset();
 };
 
 class PathEvaluateTraverse : public phop::ItemOperator {
+    RTTI_DECL(sequence_operator_PathEvaluateTraverse, phop::ItemOperator)
     PathTraverse * traverse;
 protected:
     virtual void do_next();
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
-    OPINFO_DECL(0x102)
     PathEvaluateTraverse(IValueOperator * _in, const AtomizedPath& apath);
     virtual ~PathEvaluateTraverse();
     virtual void reset();
 };
 
 class PathSchemaResolve : public phop::ItemOperator {
+    RTTI_DECL(sequence_operator_PathSchemaResolve, phop::ItemOperator)
     typedef std::map<schema_node_xptr, SchemaNodeList> SchemaCache;
     SchemaLookup scnLookup;
     SchemaCache cache;
     PathSchemaMerge * merge;
 protected:
     virtual void do_next();
+    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
-    OPINFO_DECL(0x103)
     PathSchemaResolve(IValueOperator * _in, const AtomizedPath& apath);
     virtual ~PathSchemaResolve();
     virtual void reset();

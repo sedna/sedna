@@ -165,6 +165,7 @@ bool PPQueryRoot::do_next()
                 };
 */
                 tr_globals::serializer->serialize(data);
+                (* tr_globals::client->get_se_ostream()) << "\n"; // separate tuples!
                 return true;
             }
 

@@ -67,7 +67,7 @@ class PlanContext {
 };
 
 class RPBase : public ObjectBase, public opt::IPlanDisposable, public IXMLSerializable {
-    RTTI_DECL(op_base, ObjectBase)
+    RTTI_DECL(plan_operation_base, ObjectBase)
 public:
     virtual ~RPBase() {};
 protected:
@@ -103,7 +103,7 @@ static RPBase * const null_op = (RPBase *)(NULL);
 
 /* 0r-operations */
 class ConstantOperation : public RPBase {
-   RTTI_DECL(op_nil, RPBase)
+   RTTI_DECL(plan_operation_ConstantOperation, RPBase)
 protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
@@ -113,7 +113,7 @@ public:
 
 /* 1r-operations */
 class ListOperation : public RPBase {
-   RTTI_DECL(op_uni, RPBase)
+   RTTI_DECL(plan_operation_ListOperation, RPBase)
 protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
@@ -127,7 +127,7 @@ public:
 
 /* 1r-operations with independent nested operation plan */
 class NestedOperation : public ListOperation {
-    RTTI_DECL(op_nested, ListOperation)
+  RTTI_DECL(plan_operation_NestedOperation, ListOperation)
 protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
@@ -142,7 +142,7 @@ public:
 };
 
 class ManyChildren : public RPBase {
-    RTTI_DECL(op_multi, ListOperation)
+    RTTI_DECL(plan_operation_ManyChildren, RPBase)
 protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 

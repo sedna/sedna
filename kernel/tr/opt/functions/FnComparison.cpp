@@ -53,11 +53,13 @@ phop::function_info_t cmp_function = {rule_general_comparison_to_graph };
 
 FunctionInfo * general_comparison_function = NULL;
 
+/*
 FunctionInfo * g_eq_function = NULL;
 FunctionInfo * g_ge_function = NULL;
 FunctionInfo * g_gt_function = NULL;
 FunctionInfo * g_le_function = NULL;
 FunctionInfo * g_lt_function = NULL;
+*/
 
 REGISTER_FUNCTIONS_BEGIN(CMP)
     FunctionLibrary * lib = getFunctionLibrary();
@@ -67,13 +69,13 @@ REGISTER_FUNCTIONS_BEGIN(CMP)
 #define CMP_FUNCTION(OP) \
     OP##_function = lib->registerFunction(NULL, "internal", #OP, &cmp_function); \
     OP##_function->default_data = new ComparisonData(Comparison(opt::Comparison::OP));
-
+/*
     CMP_FUNCTION(g_eq)
     CMP_FUNCTION(g_ge)
     CMP_FUNCTION(g_gt)
     CMP_FUNCTION(g_le)
     CMP_FUNCTION(g_lt)
-
+*/
 #undef CMP_FUNCTION
 
 REGISTER_FUNCTIONS_END(CMP)

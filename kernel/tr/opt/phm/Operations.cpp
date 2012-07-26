@@ -6,7 +6,7 @@
 #include "tr/models/XmlConstructor.h"
 
 #include "tr/opt/path/XPathExecution.h"
-#include "tr/opt/SequenceModel.h"
+#include "tr/opt/algorithms/SequenceModel.h"
 #include "tr/opt/algorithms/Scans.h"
 #include "tr/opt/algorithms/Joins.h"
 #include "tr/opt/path/XPathLookup.h"
@@ -17,21 +17,18 @@
 
 using namespace opt;
 
-#define OPINFO(OP) static const prot_info_t OP##_info = {#OP, };
-#define OPREF(OP) (&(OP##_info))
-#define SE_EL_NAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
-
-OPINFO(AbsPathScanPrototype)
-OPINFO(PathEvaluationPrototype)
-OPINFO(MergeJoinPrototype)
-OPINFO(StructuralJoinPrototype)
-OPINFO(ValueScanPrototype)
-OPINFO(ValidatePathPrototype)
-OPINFO(EvaluatePrototype)
-OPINFO(ExternalVarPrototype)
+RTTI_DEF(BinaryOpPrototype)
+RTTI_DEF(AbsPathScanPrototype)
+RTTI_DEF(PathEvaluationPrototype)
+RTTI_DEF(MergeJoinPrototype)
+RTTI_DEF(ValueScanPrototype)
+RTTI_DEF(ValidatePathPrototype)
+RTTI_DEF(EvaluatePrototype)
+RTTI_DEF(ExternalVarPrototype)
+RTTI_DEF(FilterTuplePrototype)
 
 AbsPathScanPrototype::AbsPathScanPrototype(PhysicalModel* model, const TupleRef& tref)
-  : POProt(OPREF(AbsPathScanPrototype)), dataRoot(), path()
+  : POProt(SELF_RTTI_REF), dataRoot(), path()
 {
     U_ASSERT(tref->node->type == DataNode::dnDatabase);
 
@@ -51,9 +48,8 @@ XmlConstructor & AbsPathScanPrototype::__toXML(XmlConstructor & element) const
     return POProt::__toXML(element);
 }
 
-
 PathEvaluationPrototype::PathEvaluationPrototype(PhysicalModel* model, const POProtIn& _left, const TupleRef& _right, const pe::Path& _path)
-  : POProt(OPREF(PathEvaluationPrototype)), path(_path)
+  : POProt(SELF_RTTI_REF), path(_path)
 {
     in.push_back(_left);
     result = model->updateOne(_left.op->result, POProtIn(this, _right.tid));
@@ -69,7 +65,7 @@ XmlConstructor & PathEvaluationPrototype::__toXML(XmlConstructor & element) cons
 }
 
 MergeJoinPrototype::MergeJoinPrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, ComparisonPrototype * _comparison)
-  : BinaryOpPrototype(OPREF(MergeJoinPrototype), _left, _right), comparison(_comparison)
+  : BinaryOpPrototype(SELF_RTTI_REF, _left, _right), comparison(_comparison)
 {
     result = model->updateTwo(_left.op->result, _right.op->result, this, _left.index, _right.index);
     resultSet.push_back(_left.index);
@@ -93,7 +89,7 @@ XmlConstructor & MergeJoinPrototype::__toXML(XmlConstructor & element) const
 }
 
 FilterTuplePrototype::FilterTuplePrototype(PhysicalModel* model, const POProtIn& _left, const POProtIn& _right, ComparisonPrototype* _comparison)
-  : BinaryOpPrototype(OPREF(MergeJoinPrototype), _left, _right), comparison(_comparison)
+  : BinaryOpPrototype(SELF_RTTI_REF, _left, _right), comparison(_comparison)
 {
     result = model->updateTwo(_left.op->result, _right.op->result, this, _left.index, _right.index);
     resultSet.push_back(_left.index);
@@ -109,7 +105,7 @@ XmlConstructor & FilterTuplePrototype::__toXML(XmlConstructor & element) const
 }
 
 ValueScanPrototype::ValueScanPrototype(PhysicalModel* model, const POProtIn& _left, const TupleRef& _right, const Comparison& _cmp)
-  : POProt(OPREF(ValueScanPrototype)), cmp(_cmp)
+  : POProt(SELF_RTTI_REF), cmp(_cmp)
 {
     in.push_back(_left);
   
@@ -122,7 +118,7 @@ ValueScanPrototype::ValueScanPrototype(PhysicalModel* model, const POProtIn& _le
 }
 
 ValidatePathPrototype::ValidatePathPrototype(PhysicalModel* model, const POProtIn& _tuple)
-  : POProt(OPREF(ValidatePathPrototype))
+  : POProt(SELF_RTTI_REF)
 {
     in.push_back(_tuple);
     
@@ -148,7 +144,7 @@ XmlConstructor & ValidatePathPrototype::__toXML(XmlConstructor & element) const
 }
 
 EvaluatePrototype::EvaluatePrototype(PhysicalModel* model, const opt::POProtIn& _left, const opt::TupleRef& _right, phop::IFunction* _func)
-    : POProt(OPREF(EvaluatePrototype)), func(_func)
+    : POProt(SELF_RTTI_REF), func(_func)
 {
     in.push_back(_left);
     result = model->updateOne(_left.op->result, POProtIn(this, _right.tid));
@@ -168,7 +164,7 @@ XmlConstructor & EvaluatePrototype::__toXML(XmlConstructor & element) const
 }
 
 ExternalVarPrototype::ExternalVarPrototype(PhysicalModel* model, const TupleRef& tref)
-  : POProt(OPREF(ExternalVarPrototype)), varTupleId(invalidTupleId)
+  : POProt(SELF_RTTI_REF), varTupleId(invalidTupleId)
 {
     result = model->updateOne(tref.tupleDesc, POProtIn(this, tref.tid));
     resultSet.push_back(tref.tid);
@@ -545,7 +541,7 @@ phop::IOperator * ValueScanPrototype::compile()
 {
     GraphExecutionBlockWarden warden(this);
 
-    if (in.at(0).op->getProtInfo() == OPREF(AbsPathScanPrototype)) {
+    if (instanceof<AbsPathScanPrototype>(in.at(0).op)) {
         AbsPathScanPrototype * pathScan = dynamic_cast<AbsPathScanPrototype *>(in.at(0).op);
 
         SchemaNodePtrSet schemaNodes;

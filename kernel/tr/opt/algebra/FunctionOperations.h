@@ -9,7 +9,7 @@ struct IFunctionData;
 namespace rqp {
 
 class XPathStep : public ListOperation {
-    RTTI_DECL(op_xpath, ListOperation)
+    RTTI_DECL(plan_operation_XPathStep, ListOperation)
 
     pe::Step step;
 protected:
@@ -22,7 +22,7 @@ public:
 };
 
 class FunCall : public ManyChildren {
-    RTTI_DECL(op_funcall, ManyChildren)
+    RTTI_DECL(plan_operation_FunCall, ManyChildren)
 
     IFunctionData * function_data;
     phop::FunctionInfo * function;
@@ -52,7 +52,7 @@ public:
 };
 
 class Construct : public ListOperation {
-    RTTI_DECL(op_constructor, ListOperation)
+    RTTI_DECL(plan_operation_Construct, ListOperation)
 
     t_item type;
 protected:

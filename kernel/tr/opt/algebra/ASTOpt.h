@@ -14,7 +14,7 @@
 
 /* Reduced query plan generation */
 
-struct OptimizationContext;
+struct StaticContext;
 
 namespace sedna
 {
@@ -22,7 +22,7 @@ namespace sedna
 class lr2opt : public lr2por
 {
   private:
-    OptimizationContext * context;
+    StaticContext * context;
   public:
     lr2opt(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_, dynamic_context *dyn_cxt_, bool is_subquery_);
     ~lr2opt();

@@ -8,7 +8,7 @@ namespace rqp {
 struct EmptySequenceConst { explicit EmptySequenceConst(int x = 0) {}; };
 
 class Const : public ConstantOperation {
-    RTTI_DECL(op_const, ConstantOperation)
+    RTTI_DECL(plan_operation_Const, ConstantOperation)
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 private:
@@ -30,7 +30,7 @@ public:
 };
 
 class VarIn : public ConstantOperation {
-    RTTI_DECL(op_varin, ConstantOperation)
+    RTTI_DECL(plan_operation_VarIn, ConstantOperation)
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 private:
@@ -51,7 +51,7 @@ public:
 };
 
 class Exists : public ListOperation {
-    RTTI_DECL(op_exists, ListOperation)
+    RTTI_DECL(plan_operation_Exists, ListOperation)
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
@@ -60,7 +60,7 @@ public:
 };
 
 class Sequence : public ManyChildren {
-    RTTI_DECL(op_sequence, ManyChildren)
+    RTTI_DECL(plan_operation_Sequence, ManyChildren)
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:

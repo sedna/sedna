@@ -7,12 +7,11 @@
 #ifndef PHYSICAL_MODEL_H
 #define PHYSICAL_MODEL_H
 
+#include "tr/models/XmlConstructor.h"
+#include "tr/models/rtti.h"
+
 #include "common/sedna.h"
 #include "tr/opt/OptTypes.h"
-#include "tr/models/XmlConstructor.h"
-
-namespace phop {
-}
 
 namespace opt {
 
@@ -66,13 +65,9 @@ class POProtIn { public:
     POProtIn(const POProtIn& _other) : op(_other.op), index(_other.index) { };
 };
 
-struct prot_info_t
-{
-    const char * name;
-};
+class POProt : public ObjectBase, public IPlanDisposable, IXMLSerializable {
+    RTTI_DECL(physical_model_POProt, ObjectBase)
 
-class POProt : public IPlanDisposable, IXMLSerializable {
-    const prot_info_t * protInfo;
     phop::IOperator * op;
 protected:
     OperationCost * cost;
@@ -85,8 +80,6 @@ public:
     std::vector<POProtIn> in;
     TupleChrysalis * result;
     std::vector<TupleId> resultSet;
-
-    const prot_info_t * getProtInfo() const { return protInfo; };
 
     OperationCost * getCost() {
         if (cost == NULL) { evaluateCost(NULL); }
@@ -105,7 +98,7 @@ public:
         return op;
     };
 
-    POProt(const prot_info_t * pinfo) : protInfo(pinfo), op(NULL), cost(NULL), result(NULL) {};
+    POProt(clsinfo_t pinfo) : ObjectBase(pinfo), op(NULL), cost(NULL), result(NULL) {};
 
     virtual void evaluateCost(CostModel * model) = 0;
     virtual XmlConstructor & toXML(XmlConstructor &) const;
