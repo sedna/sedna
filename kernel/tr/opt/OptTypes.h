@@ -88,16 +88,17 @@ struct opt_allocator
     inline bool operator!=(opt_allocator const& a) { return !operator==(a); }
 };
 
-typedef std::vector<Predicate *, opt_allocator<Predicate *> > PredicateList;
-typedef std::vector<DataNode *, opt_allocator<DataNode *> > DataNodeList;
-typedef std::set<DataNode *, std::less<DataNode *>, opt_allocator<DataNode *> > DataNodeSet;
-typedef std::vector<DataGraph *, opt_allocator<DataGraph *> > DataGraphList;
-typedef std::set<DataGraph *, std::less<DataGraph *>, opt_allocator<DataGraph *> > DataGraphSet;
+typedef std::vector<Predicate *> PredicateList;
+typedef std::vector<DataNode *> DataNodeList;
+
+typedef std::set<DataNode *, std::less<DataNode *> > DataNodeSet;
+typedef std::vector<DataGraph *> DataGraphList;
+typedef std::set<DataGraph *, std::less<DataGraph *> > DataGraphSet;
 
 typedef std::multimap<TupleId, DataNode *> VariableMap;
 typedef std::map<std::string, DataNode *> VariableNameMap;
 
-typedef std::set<TupleId, std::less<TupleId>, opt_allocator<TupleId> > TupleScheme;
+typedef std::set<TupleId, std::less<TupleId> > TupleScheme;
 
 typedef std::vector<tuple_cell> MemoryTupleSequence;
 typedef counted_ptr< std::vector<tuple_cell> > MemoryTupleSequencePtr;
@@ -149,13 +150,13 @@ enum {
     plan_operation_Const,
     plan_operation_VarIn,
     plan_operation_Exists, // Important: differs from effective boolean value
+    plan_operation_FalseIfNull,
     plan_operation_Sequence,
 
     plan_operation_XPathStep,
     plan_operation_FunCall,
     plan_operation_Construct,
 
-    plan_operation_DataGraphOperation,
     plan_operation_MapGraph,
 
     plan_operation_MapConcat,

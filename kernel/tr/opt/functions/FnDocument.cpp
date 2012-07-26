@@ -3,14 +3,16 @@
 
 #include "tr/opt/algebra/ElementaryOperations.h"
 #include "tr/opt/algebra/PlanAlgorithms.h"
+#include "tr/opt/graphs/Predicates.h"
 #include "tr/executor/base/PPUtils.h"
 
 using namespace phop;
 using namespace opt;
 using namespace rqp;
 
-static
 /* Preserves null */
+
+static
 bool rule_fn_doc(PlanRewriter * pr, rqp::FunCall * op)
 {
     U_ASSERT(op->children.size() == 1);
@@ -23,38 +25,30 @@ bool rule_fn_doc(PlanRewriter * pr, rqp::FunCall * op)
         return true;
     };
 
-    if (isConstExpr(arg))
-    {
-        Const * c = static_cast<Const *>(arg);
-        MemoryTupleSequencePtr seq = c->getSequence();
-
-        if (seq->size() == 0)
-        {
-            pr->replaceInParent(op, null_op);
-            return true;
-        };
-
-// TODO : resolve uri std::string uri = optimizer->context()->staticContext()->resolveUri(atomize(seq->at(0)));
-        std::string uri = atomize(seq->at(0)).get_str_mem();
-
-        DataGraphBuilder builder;
-        DataNode * result = new DataNode(opt::DataNode::dnDatabase);
-        result->root = DataRoot(DataRoot::drt_document, uri.c_str());
-
-        builder.nodes.push_back(result);
-        builder.out.push_back(result);
-
-        RPBase * newop = new DataGraphOperation(
-            builder.build(optimizer->dgm()), OperationList());
-
-        pr->replaceInParent(op, newop);
-
-        return true;
-    } else if (isGraphExpr(arg)) {
+    if (!instanceof<Const>(arg)) {
         U_ASSERT(false);
     };
-    
-    return false;
+
+    DataGraphIndex builder(new DataGraph(optimizer->dgm()));
+//    DataNode * left = addGraphToJoin(builder, arg);
+//    DataNode * result = new DataNode(opt::DataNode::dnFreeNode, optimizer->context()->generateTupleId());
+    DataNode * result = new DataNode(opt::DataNode::dnDatabase, optimizer->context()->generateTupleId());
+    tuple_cell name = static_cast<Const *>(arg)->getSequence()->at(0);
+    result->root = DataRoot(DataRoot::drt_document, atomize(name).get_str_mem());
+
+    optimizer->dgm()->addVariable(result);
+
+//    builder.nodes.push_back(left);
+    builder.addOutNode(result);
+    builder.rebuild();
+
+    RPBase * newop =
+      new MapGraph(
+        new VarIn(result->varTupleId), builder.dg, TupleScheme());
+
+    pr->replaceInParent(op, newop);
+
+    return true;
 };
 
 phop::function_info_t doc_function = {rule_fn_doc };

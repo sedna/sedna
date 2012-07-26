@@ -8,48 +8,17 @@
 using namespace rqp;
 using namespace opt;
 
-RTTI_DEF(DataGraphOperation)
 RTTI_DEF(MapGraph)
-
-XmlConstructor& DataGraphOperation::__toXML(XmlConstructor& element) const
-{
-    graph().dg->toXML(element);
-
-    element.openElement(SE_EL_NAME("suboperations"));
-    for (OperationList::const_iterator it = children.begin(); it != children.end(); ++it) {
-        if (*it != null_obj) {
-            (*it)->toXML(element);
-        }
-    };
-    element.closeElement();
-
-    return element;
-};
-
-void DataGraphOperation::detectOutNode()
-{
-    U_ASSERT(func.out.size() == 1);
-
-    out = func.out.at(0);
-}
 
 XmlConstructor& MapGraph::__toXML(XmlConstructor& element) const
 {
-    for (TupleScheme::const_iterator it = tupleMask.begin(); it != tupleMask.end(); ++it) {
-        element.openElement(SE_EL_NAME("tuple"));
+    for (TupleScheme::const_iterator it = groupBy.begin(); it != groupBy.end(); ++it) {
+        element.openElement(SE_EL_NAME("group-by"));
         element.addAttributeValue(SE_EL_NAME("tid"), tuple_cell::atomic_int(*it));
         element.closeElement();
     };
 
     graph().dg->toXML(element);
-
-    element.openElement(SE_EL_NAME("suboperations"));
-    for (OperationList::const_iterator it = children.begin(); it != children.end()-1; ++it) {
-        if (*it != null_obj) {
-            (*it)->toXML(element);
-        }
-    };
-    element.closeElement();
 
     if (getList() != null_obj) {
         getList()->toXML(element);

@@ -16,27 +16,6 @@ public:
     virtual void execute(ExecutionStack * executor) = 0;
 };
 
-/*
-struct NextResultProc
-{
-    ExecutorProc proc;
-    void * object;
-
-    inline
-    void operator()(ExecutionStack * executor)
-    {
-        proc(object, executor);
-    };
-
-    NextResultProc() : proc(NULL) {};
-
-    NextResultProc(ExecutorProc _proc, void * _object)
-      : proc(_proc), object(_object) {};
-
-    inline bool is_null() const { return proc == NULL; }
-};
-*/
-
 struct Result
 {
     IExecuteProc * next;

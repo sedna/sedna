@@ -1,5 +1,7 @@
 #include "DataGraphs.h"
 #include "DataGraphCollection.h"
+
+#include "tr/opt/algebra/IndependentPlan.h"
 #include "tr/models/XmlConstructor.h"
 
 #include <algorithm>
@@ -116,18 +118,11 @@ DataGraphIndex::DataGraphIndex(DataGraph* _dg)
 
 void DataGraphIndex::rebuild()
 {
-    DataGraphBuilder builder;
-    
-    builder.nodes = nodes;
-    builder.out = out;
-    builder.predicates = predicates;
-
-    builder.make(dg->owner, dg);
-
+    make(dg->owner, dg);
     update();
 }
 
-DataGraph* DataGraphBuilder::make(DataGraphMaster* master, DataGraph* graph)
+DataGraph* DataGraphIndex::make(DataGraphMaster* master, DataGraph* graph)
 {
     PlanDesc lastIndex = 0;
 
@@ -143,7 +138,7 @@ DataGraph* DataGraphBuilder::make(DataGraphMaster* master, DataGraph* graph)
         n->setIndex(lastIndex);
         n->parent = graph;
         graph->dataNodes[lastIndex] = n;
-        
+
         if (n->type == opt::DataNode::dnExternal) {
             graph->inputNodes |= n->indexBit;
         }
@@ -151,7 +146,7 @@ DataGraph* DataGraphBuilder::make(DataGraphMaster* master, DataGraph* graph)
         if (n->varTupleId != invalidTupleId) {
             master->addVariable(n);
         }
-        
+
         lastIndex++;
     };
 
@@ -159,6 +154,7 @@ DataGraph* DataGraphBuilder::make(DataGraphMaster* master, DataGraph* graph)
     for (DataNodeList::const_iterator it = out.begin(); it != out.end(); ++it)
     {
         DataNode * n = (*it);
+        U_ASSERT(n->varTupleId != invalidTupleId);
         graph->outputNodes |= n->indexBit;
     };
 
@@ -171,23 +167,17 @@ DataGraph* DataGraphBuilder::make(DataGraphMaster* master, DataGraph* graph)
     return graph;
 }
 
-DataGraph* DataGraphBuilder::build(DataGraphMaster* master)
-{
-    DataGraph * result = new DataGraph(master);
-    make(master, result);
-    master->allGraphs.push_back(result);
-    return result;
-}
-
 XmlConstructor & DataGraph::toXML(XmlConstructor & producer) const
 {
     producer.openElement(SE_EL_NAME("datagraph"));
 
-    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
+    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i)
+    {
         dataNodes[i]->toXML(producer);
     };
 
-    FOR_ALL_GRAPH_ELEMENTS(predicates, i) {
+    FOR_ALL_GRAPH_ELEMENTS(predicates, i)
+    {
         predicates[i]->toXML(producer);
     };
 
@@ -214,6 +204,12 @@ XmlConstructor & DataNode::toXML(XmlConstructor& element) const
     element.addAttributeValue(SE_EL_NAME("type"), nodetype);
     element.addAttributeValue(SE_EL_NAME("index"), tuple_cell::atomic_int(index));
 
+    if (parent == NULL) {
+        element.addAttributeValue(SE_EL_NAME("detached"), tuple_cell::atomic(true));
+        element.closeElement();
+        return element;
+    }
+
     if (varTupleId != opt::invalidTupleId) {
         element.addAttributeValue(SE_EL_NAME("varId"), tuple_cell::atomic_int(varTupleId));
 
@@ -226,6 +222,10 @@ XmlConstructor & DataNode::toXML(XmlConstructor& element) const
                 element.addAttributeValue(SE_EL_NAME("varName"), vinfo.name);
             };
         }
+    };
+
+    if (parent != NULL && parent->operation != NULL) {
+        element.addAttributeValue(SE_EL_NAME("op-id"), tuple_cell::atomic_int(parent->operation->oid()));
     };
 
     if ((parent->outputNodes & this->indexBit) > 0) {

@@ -73,22 +73,20 @@ public:
 protected:
     PlanContext * context;
     static int opids;
-
     int opuid;
-    int resultChild;
 
     virtual XmlConstructor & __toXML(XmlConstructor &) const = 0;
 public:
-    inline int oid() const { return opuid; };
-
     OperationList children;
+    int resultChild;
 
     RPBase(clsinfo_t op) : ObjectBase(op), context(optimizer->context()), opuid(opids++), resultChild(-1) {};
+    inline int oid() const { return opuid; };
 
     /* Replace child operation op with another operation */
     void replace(RPBase * op, RPBase * with);
     PlanContext * getContext() const { return context; };
-    RPBase * result() { if (resultChild > -1) { return children[resultChild]; } else { return static_cast<RPBase *>(null_obj); } };
+    RPBase * result() { if (resultChild > -1) { return children[resultChild]; } else { return (RPBase *)(NULL); } };
 
     virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
 };
@@ -122,7 +120,7 @@ public:
         children.push_back(list_);
     };
 
-    PROPERTY_RO(List, RPBase *, children[0])
+    PROPERTY(List, RPBase *, children[0])
 };
 
 /* 1r-operations with independent nested operation plan */
@@ -138,7 +136,7 @@ public:
         children.push_back(subplan_);
     };
 
-    PROPERTY_RO(Subplan, RPBase *, children[1])
+    PROPERTY(Subplan, RPBase *, children[1])
 };
 
 class ManyChildren : public RPBase {

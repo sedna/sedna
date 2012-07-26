@@ -15,15 +15,10 @@
 
 #include "tr/opt/OptTypes.h"
 #include "tr/executor/por2qep/scheme_tree.h"
-
-namespace rqp {
-    class RPBase;
-}
+#include "tr/models/XmlConstructor.h"
 
 namespace opt {
 
-struct DataGraphBuilder;
- 
 struct VariableInfo {
     TupleId id;
     std::string name;
@@ -39,35 +34,21 @@ struct VariableInfo {
 
 typedef std::map<TupleId, VariableInfo> VariableInfoMap;
 
-class DataGraphMaster {
+class DataGraphMaster : public IXMLSerializable {
     friend class DataGraph;
-    friend class DataGraphBuilder;
 public:
     DataGraphMaster();
-    ~DataGraphMaster();
+    virtual ~DataGraphMaster();
 private:
     TupleId lastIndex;
-
-    DataGraphList allGraphs;
-
-/*
-    DataNode * createNode(DataGraph * dg);
-    Predicate * createPredicate(DataGraph * dg, Predicate * predicate);
-    DataGraph * createGraph();
-    
-    DataNode * createNodeFromLR(DataGraph * dg, const scheme_list * vf, VariableNameMap * vmap);
-    Predicate * createPredicateFromLR(DataGraph * dg, const scheme_list * vf, VariableNameMap * vmap);
-*/    
 public:
     VariableInfoMap variableMap;
     MemoryTupleSequencePtr alwaysTrueSequence;
 
-    /* Factory functions */
-//    DataGraph * createGraphFromLR(const scheme_list * vf);
-
     void addVariable(DataNode * dn);
     void addVariableDecl(TupleId tid, rqp::RPBase * op);
     void removeVariable(DataNode * dn);
+    void resetVariable(DataNode * dn, TupleId tid);
     void mergeVariables(TupleId t1, TupleId t2);
 
     void deleteGraph(DataGraph* dg);
@@ -81,7 +62,7 @@ public:
         while (info.pointsTo != opt::invalidTupleId) {
             info = variableMap.at(info.pointsTo);
         };
-        
+
         return info;
     };
 
@@ -91,6 +72,8 @@ public:
 
     DataGraph * join(DataGraph * left, DataGraph * right);
     DataGraph * leftOuterJoin(DataGraph * left, DataGraph * right);
+
+    virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
 };
 
 }

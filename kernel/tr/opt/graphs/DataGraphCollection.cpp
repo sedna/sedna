@@ -9,6 +9,7 @@
 #include "tr/opt/phm/PhysicalModel.h"
 #include "tr/opt/graphs/Predicates.h"
 #include "tr/opt/graphs/DataGraphs.h"
+#include "tr/opt/algebra/IndependentPlan.h"
 
 #include "tr/structures/nodetypes.h"
 
@@ -195,6 +196,13 @@ void DataGraphMaster::addVariable(DataNode* dn)
     };
 }
 
+void DataGraphMaster::resetVariable(DataNode* dn, TupleId tid)
+{
+    removeVariable(dn);
+    dn->varTupleId = tid;
+    addVariable(dn);
+}
+
 void DataGraphMaster::setVarName(TupleId varTupleId, const string& name)
 {
     if (variableMap.find(varTupleId) == variableMap.end()) {
@@ -292,5 +300,37 @@ DataGraph* DataGraphMaster::join(DataGraph* left, DataGraph* right)
 
     return left;
 }
+
+XmlConstructor& DataGraphMaster::toXML(XmlConstructor& constructor) const
+{
+    constructor.openElement(SE_EL_NAME("var-map"));
+
+    for (VariableInfoMap::const_iterator it = variableMap.begin(); it != variableMap.end(); ++it)
+    {
+        constructor.openElement(SE_EL_NAME("var"));
+        constructor.addAttributeValue(SE_EL_NAME("varId"), tuple_cell::atomic_int(it->first));
+
+        if (it->second.pointsTo != invalidTupleId) {
+            constructor.addAttributeValue(SE_EL_NAME("replaced by"), tuple_cell::atomic_int(it->second.pointsTo));
+        } else {
+            if (it->second.producer != NULL) {
+                constructor.openElement(SE_EL_NAME("producer"));
+                it->second.producer->toXML(constructor);
+                constructor.closeElement();
+            }
+
+            for (DataNodeSet::const_iterator jt = it->second.nodes.begin(); jt != it->second.nodes.end(); ++jt) {
+                (*jt)->toXML(constructor);
+            };
+        };
+
+        constructor.closeElement();
+    };
+
+    constructor.closeElement();
+
+    return constructor;
+}
+
 
 

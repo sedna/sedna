@@ -129,7 +129,6 @@ bool PPQueryRoot::do_next()
         tr_globals::serializer->prepare(tr_globals::client->get_se_ostream(), options);
 
         XmlConstructor xmlConstructor(VirtualRootConstructor(0));
-
         data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
         tr_globals::serializer->serialize(data);
 
@@ -145,11 +144,15 @@ bool PPQueryRoot::do_next()
             }
 
             XmlConstructor xmlConstructor(VirtualRootConstructor(0));
-            data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
+            xmlConstructor.openElement(SE_EL_NAME("plan"));
+            optimizedPlan->toXML(xmlConstructor);
+            optimizer->dgm()->toXML(xmlConstructor);
+            xmlConstructor.closeElement();
+            data.cells[0] = xmlConstructor.getLastChild();
             tr_globals::serializer->serialize(data);
 
             hui = 2;
-            return true;
+            return false;
         } else if (hui == 2 || hui == 3) {
             if (hui == 2) {
                 optimizer->executor()->execute(optimizedPlan);

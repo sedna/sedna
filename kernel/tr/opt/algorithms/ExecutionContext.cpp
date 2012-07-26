@@ -43,15 +43,6 @@ public:
     virtual void execute(ExecutionStack* executor);
 };
 
-class GraphNext : public IExecuteProc
-{
-public:
-    GraphExecutionBlock * geb;
-
-    explicit GraphNext(GraphExecutionBlock * _geb) : geb(_geb) {};
-    virtual void execute(ExecutionStack* executor);
-};
-
 void ConstructorImplementation::execute(ExecutionStack* result)
 {
     xsd::QName nameValue;
@@ -134,16 +125,6 @@ void GroupNextImplementation::execute(ExecutionStack* result)
     optimizer->executor()->push(result, context, nextOp);
 };
 
-void GraphNext::execute(ExecutionStack* result)
-{
-    ITupleOperator * top = geb->top();
-
-    if (top->next()) {
-        result->push(Result(new GraphNext(*this)));
-        result->push(Result(top->get().cells[geb->outputTupleId]));
-    }
-};
-
 void PlanExecutor::push(ExecutionStack* executionStack, DynamicContext* context, RPBase* op)
 {
     switch (op->info()->clsid) {
@@ -164,7 +145,7 @@ void PlanExecutor::push(ExecutionStack* executionStack, DynamicContext* context,
 
             executionStack->push(Result(
               new GroupNextImplementation(
-                context, producer, typed_op->getList(), getRestrictMask(typed_op->tupleMask))));
+                context, producer, typed_op->getList(), getRestrictMask(typed_op->groupBy))));
         }
         break;
       CASE_TYPE_CAST(Const, typed_op, op)
@@ -174,15 +155,6 @@ void PlanExecutor::push(ExecutionStack* executionStack, DynamicContext* context,
             for (MemoryTupleSequence::const_iterator it = values->begin(); it != values->end(); ++it) {
                 executionStack->push(Result(*it));
             };
-        }
-        break;
-      CASE_TYPE_CAST(DataGraphOperation, typed_op, op)
-        {
-            GraphExecutionBlock * geb = gc.compile(typed_op->graph(), context);
-            // WARNING: No prepare needed, absolute index used to determine output tuple
-            geb->outputTupleId = geb->resultMap[typed_op->out->absoluteIndex];
-            geb->top()->reset();
-            executionStack->push(Result(new GraphNext(geb)));
         }
         break;
 /*

@@ -13,8 +13,11 @@ struct PlanExecutor;
 
 namespace rqp {
     class RPBase;
-    class DataGraphOperation;
+    class MapGraph;
     class PlanContext;
+    class FunCall;
+
+    struct PlanRewriter;
 }
 
 namespace pe {
@@ -47,6 +50,7 @@ namespace opt
 {
 /* Data graph */
     struct DataGraphMaster;
+
     struct DataNode;
     struct Variable;
     struct DataGraph;

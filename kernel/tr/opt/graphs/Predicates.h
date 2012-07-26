@@ -54,6 +54,16 @@ struct FPredicate : public BinaryPredicate {
 */
 
 /*
+ * Predicate for fn:doc, fn:col, etc.
+ */
+struct FnDocPredicate : public BinaryPredicate {
+    FnDocPredicate(opt::DataNode* left, opt::DataNode* right);
+
+    virtual void * compile(PhysicalModel * model);
+    virtual XmlConstructor & toXML(XmlConstructor & ) const;
+};
+
+/*
  * Predicate for value operations
  */
 struct ValuePredicate : public BinaryPredicate {

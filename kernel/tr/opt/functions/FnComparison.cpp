@@ -7,6 +7,28 @@
 using namespace rqp;
 using namespace opt;
 
+bool do_ebv_operation_push_down(rqp::PlanRewriter * pr, rqp::RPBase * op, unsigned idx)
+{
+    RPBase * child = op->children[idx];
+
+    if (child == null_op) {
+        return false;
+    };
+
+    if (child->resultChild != -1)
+    {
+        RPBase * grandChild = child->result();
+
+        child->children[child->resultChild] = op;
+        op->children[idx] = grandChild;
+
+        pr->replaceInParent(op, new FalseIfNull(child));
+        return true;
+    };
+
+    return false;
+};
+
 static
 bool rule_general_comparison_to_graph(PlanRewriter * pr, rqp::FunCall * op)
 {
@@ -15,31 +37,39 @@ bool rule_general_comparison_to_graph(PlanRewriter * pr, rqp::FunCall * op)
     RPBase * left = op->children[0];
     RPBase * right = op->children[1];
 
+    /* Push down left */
+    if (do_ebv_operation_push_down(pr, op, 0)) {
+        return true;
+    };
+
+    /* Push down right */
+    if (do_ebv_operation_push_down(pr, op, 1)) {
+        return true;
+    };
+
+    return false;
+    
     ComparisonData * data = dynamic_cast<ComparisonData *>(op->getData());
 
     if (isGraphExpr(left) && isGraphExpr(right)) {
-        DataGraphBuilder joinBuilder;
+        DataGraphIndex joinBuilder(new DataGraph(optimizer->dgm()));
 
-        DataNode * nodeLeft  = addGraphToJoin(joinBuilder, left);
-        DataNode * nodeRight = addGraphToJoin(joinBuilder, right);
-        DataNode * result = createTrueNode();
+        DataNode  * nodeLeft  = addGraphToJoin(joinBuilder, left);
+        DataNode  * nodeRight = addGraphToJoin(joinBuilder, right);
+        DataNode  * result = createTrueNode();
+        Predicate * predicate = new ValuePredicate(nodeLeft, nodeRight, data->cmp);
 
-        ValuePredicate * predicate = new ValuePredicate(nodeLeft, nodeRight, data->cmp);
+        result->varTupleId = optimizer->context()->generateTupleId();
 
         joinBuilder.predicates.push_back(predicate);
         joinBuilder.nodes.push_back(result);
-        joinBuilder.out.clear();
         joinBuilder.out.push_back(result);
 
-        OperationList oplist;
-        addSuboperations(oplist, left);
-        addSuboperations(oplist, right);
-
-        RPBase * newop = new rqp::Exists(
-          new DataGraphOperation(
-            joinBuilder.build(optimizer->dgm()),
-            oplist
-          ));
+        RPBase * newop =
+          new rqp::FalseIfNull(
+            new MapGraph(
+              new VarIn(result->varTupleId), joinBuilder.dg,
+              singleTupleScheme(result->varTupleId)));
 
         pr->replaceInParent(op, newop);
 

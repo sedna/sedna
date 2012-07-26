@@ -4,17 +4,6 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/executor/base/tuple.h"
 
-namespace rqp {
-    struct PlanRewriter;
-    class FunCall;
-}
-
-namespace opt {
-    class FPredicate;
-}
-
-class dynamic_context;
-
 struct IFunctionData {
     virtual ~IFunctionData() {};
 };

@@ -3,6 +3,10 @@
 
 #include "tr/opt/algebra/AllOperations.h"
 #include "tr/opt/graphs/DataGraphCollection.h"
+#include "tr/opt/graphs/DataGraphs.h"
+
+bool do_operation_push_down(rqp::PlanRewriter * pr, rqp::RPBase * op, unsigned idx);
+bool do_outer_bind_parameter(rqp::PlanRewriter * pr, rqp::RPBase * op, unsigned idx, bool preserveNull);
 
 inline static
 bool isConstExpr(rqp::RPBase * op)
@@ -41,93 +45,28 @@ bool preservesNull(rqp::RPBase * parent, rqp::RPBase * child)
 inline static
 bool isGraphExpr(rqp::RPBase * op)
 {
-    return
-      instanceof<rqp::Const>(op) ||
-      instanceof<rqp::DataGraphOperation>(op) ||
-//      (instanceof<rqp::DataGraphOperation>(op) && static_cast<rqp::DataGraphOperation *>(op)->out != NULL) ||
-      instanceof<rqp::VarIn>(op);
+    return instanceof<rqp::Const>(op) || instanceof<rqp::VarIn>(op);
 };
 
-//inline static
-//void 
-
-/*
 inline static
-void deleteOperation(rqp::RPBase * op)
-{
-    switch (op->info()->opType) {
-      case rqp::VarIn :
-        {
-            op->getContext()->dgm()->deleteGraph(static_cast<rqp::VarIn *>(op)->dnode->parent);
-        }; break;
-      case rqp::DataGraphOperation :
-        {
-            op->getContext()->dgm()->deleteGraph(static_cast<rqp::DataGraphOperation *>(op)->graph().dg);
-        }; break;
-      case rqp::MapGraph :
-        U_ASSERT(false);
-      default :
-        break;      
-    };
-};
-*/
-
-inline static
-opt::DataNode * initGraphNode(rqp::VarIn * invar)
-{
-    return invar->dnode;
-};
-
-template<typename BuilderType>
-inline static
-opt::DataNode * addGraphToJoin(BuilderType & builder, rqp::RPBase * op)
+opt::DataNode * addGraphToJoin(opt::DataGraphIndex & builder, rqp::RPBase * op)
 {
     opt::DataGraphMaster * master = optimizer->dgm();
+    opt::DataNode * node = NULL;
 
-    if (instanceof<rqp::DataGraphOperation>(op))
-    {
-        rqp::DataGraphOperation * dgo = static_cast<rqp::DataGraphOperation *>(op);
-        U_ASSERT(dgo->out != NULL);
-        opt::DataGraphIndex & dgw = dgo->graph();
-
-        builder.nodes.insert(builder.nodes.end(), dgw.nodes.begin(), dgw.nodes.end());
-        builder.out.insert(builder.out.end(), dgw.out.begin(), dgw.out.end());
-        builder.predicates.insert(builder.predicates.end(), dgw.predicates.begin(), dgw.predicates.end());
-
-        return dgo->out;
-    } else if (instanceof<rqp::VarIn>(op))
-    {
-        opt::DataNode * node = initGraphNode(static_cast<rqp::VarIn *>(op));
-
-        builder.nodes.push_back(node);
-        builder.out.push_back(node);
-
-        return node;
-    } else if (instanceof<rqp::Const>(op))
-    {
-        opt::DataNode * node = new opt::DataNode(opt::DataNode::dnConst);
+    if (instanceof<rqp::VarIn>(op)) {
+        node = static_cast<rqp::VarIn *>(op)->dnode;
+    } else if (instanceof<rqp::Const>(op)) {
+        node = new opt::DataNode(opt::DataNode::dnConst);
         node->constValue = static_cast<rqp::Const *>(op)->getSequence();
-
-        builder.nodes.push_back(node);
-        builder.out.push_back(node);
-
-        return node;
-    } else {
-        U_ASSERT(false);
-        return NULL;
-    };   
-};
-
-inline static
-rqp::OperationList & addSuboperations(rqp::OperationList & oplist, rqp::RPBase * op)
-{
-    if (instanceof<rqp::DataGraphOperation>(op))
-    {
-        rqp::DataGraphOperation * dgo = static_cast<rqp::DataGraphOperation *>(op);
-        oplist.insert(oplist.end(), dgo->children.begin(), dgo->children.end());
     }
 
-    return oplist;
+    U_ASSERT(node != NULL);
+
+    builder.nodes.push_back(node);
+    builder.out.push_back(node);
+
+    return node;
 };
 
 inline static

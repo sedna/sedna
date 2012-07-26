@@ -22,6 +22,12 @@ public:
     {
         resultChild = 0;
     };
+
+    MapConcat(RPBase* _list, RPBase* _subplan, opt::TupleId _context)
+      : NestedOperation(SELF_RTTI_REF, _list, _subplan, _context)
+    {
+        resultChild = 0;
+    };
 };
 
 class SequenceConcat : public NestedOperation {

@@ -59,11 +59,11 @@ struct DataNode : public IPlanDisposable, public IXMLSerializable
     bool alwaysTrue; // Hint for boolean expressions
     bool notNull; // Hint for boolean expressions
 
-    explicit DataNode(data_node_type_t _type)
+    explicit DataNode(data_node_type_t _type, TupleId _varTupleId = opt::invalidTupleId)
         : parent(NULL), type(_type),
           replacedWith(NULL), index(0), indexBit(0),
           absoluteIndex(0), aliasFor(NULL),
-          varTupleId(opt::invalidTupleId),
+          varTupleId(_varTupleId),
           alwaysTrue(false), notNull(true)
     { };
 
@@ -106,16 +106,6 @@ struct DataGraph : public IPlanDisposable {
     XmlConstructor & toXML(XmlConstructor & ) const;
 };
 
-struct DataGraphBuilder {
-    DataNodeList nodes;
-    DataNodeList out;
-
-    PredicateList predicates;
-
-    DataGraph * build(DataGraphMaster * master);
-    DataGraph * make(DataGraphMaster * master, DataGraph * graph);
-};
-
 struct DataGraphIndex {
     DataGraph * dg;
 
@@ -127,10 +117,10 @@ struct DataGraphIndex {
     TupleScheme outTuples;
 
     PredicateList predicates;
-    
+
     PredicateIndex predicateIndex[MAX_GRAPH_SIZE];
     DataNodeIndex nodeIndex[MAX_GRAPH_SIZE];
-    
+
     PlanDesc predicateMask;
 
     explicit DataGraphIndex(DataGraph * _dg);
@@ -149,6 +139,10 @@ struct DataGraphIndex {
 
     void update();
     void rebuild();
+
+    void addOutNode(DataNode * node) { nodes.push_back(node); out.push_back(node); };
+private:
+    DataGraph * make(DataGraphMaster * master, DataGraph * graph);
 };
 
 };

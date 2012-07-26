@@ -2,6 +2,7 @@
 #define _ELEMENTARY_OPERATIONS_H_
 
 #include "IndependentPlan.h"
+#include "tr/opt/graphs/DataGraphs.h"
 
 namespace rqp {
 
@@ -34,28 +35,37 @@ class VarIn : public ConstantOperation {
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 private:
-    opt::TupleId tid;
-
     void setDataNode(opt::TupleId _tid);
 public:
     /* Phantom datanode */
     opt::DataNode * dnode;
 
     explicit VarIn(opt::TupleId _tid)
-      : ConstantOperation(SELF_RTTI_REF), tid(_tid)
+      : ConstantOperation(SELF_RTTI_REF)
     {
         setDataNode(_tid);
     };
 
-    PROPERTY_RO(Tuple, opt::TupleId, tid)
+    opt::TupleId tuple() const { return dnode->varTupleId; }
 };
 
+/**
+ * @brief Special logical operation for Exists function
+ */
 class Exists : public ListOperation {
     RTTI_DECL(plan_operation_Exists, ListOperation)
-protected:
-    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
     explicit Exists(RPBase * list)
+      : ListOperation(SELF_RTTI_REF, list) {};
+};
+
+/**
+ * @brief Special logical operation for EBV function
+ */
+class FalseIfNull : public ListOperation {
+    RTTI_DECL(plan_operation_FalseIfNull, ListOperation)
+public:
+    explicit FalseIfNull(RPBase * list)
       : ListOperation(SELF_RTTI_REF, list) {};
 };
 
