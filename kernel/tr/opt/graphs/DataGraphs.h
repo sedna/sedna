@@ -113,8 +113,7 @@ struct DataGraphIndex {
     DataNodeList in;
     DataNodeList out;
 
-    TupleScheme inTuples;
-    TupleScheme outTuples;
+    void tuplesInOut(TupleScheme * in, TupleScheme * out);
 
     PredicateList predicates;
 

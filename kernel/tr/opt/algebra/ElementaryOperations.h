@@ -35,10 +35,10 @@ class VarIn : public ConstantOperation {
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 private:
-    void setDataNode(opt::TupleId _tid);
 public:
     /* Phantom datanode */
     opt::DataNode * dnode;
+    void setDataNode(opt::TupleId _tid);
 
     explicit VarIn(opt::TupleId _tid)
       : ConstantOperation(SELF_RTTI_REF)

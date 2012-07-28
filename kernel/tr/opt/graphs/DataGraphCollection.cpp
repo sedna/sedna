@@ -155,23 +155,6 @@ DataGraph* DataGraphMaster::createGraphFromLR(const scheme_list* vf)
 }
 */
 
-void DataGraphMaster::addVariableDecl(TupleId tid, rqp::RPBase* op)
-{
-    U_ASSERT(tid != opt::invalidTupleId);
-    
-    if (variableMap.find(tid) == variableMap.end()) {
-        variableMap.insert(VariableInfoMap::value_type(tid, VariableInfo(tid)));
-    };
-
-    VariableInfo & info = variableMap.at(tid);
-
-    while (info.pointsTo != opt::invalidTupleId) {
-        info = variableMap.at(info.pointsTo);
-    };
-
-    info.declaredIn = op;
-}
-
 void DataGraphMaster::addVariable(DataNode* dn)
 {
     if (dn->varTupleId != opt::invalidTupleId) {
@@ -242,7 +225,7 @@ void DataGraphMaster::mergeVariables(TupleId t1, TupleId t2)
         }
     };
 
-    for (DataNodeSet::iterator it = var1.nodes.begin(); it != var1.nodes.end(); ++it) {
+    for (DataNodeSet::iterator it = var2.nodes.begin(); it != var2.nodes.end(); ++it) {
         (*it)->varTupleId = var1.id;
     };
 
@@ -273,7 +256,10 @@ void DataGraphMaster::removeVariable(DataNode* dn)
     };
 
     if (info.producer == dn) {
-        U_ASSERT(info.nodes.size() == 0);
+        if (info.nodes.size() != 0) {
+            info.producer = NULL;
+            return;
+        };
 
         TupleId tid = dn->varTupleId;
 

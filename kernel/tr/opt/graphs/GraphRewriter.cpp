@@ -185,6 +185,7 @@ void DataGraphRewriter::doPathExpansion()
         left->path = path;
 
         dg->predicates[right->index] = NULL;
+        dg->owner->removeVariable(dg->dataNodes[i]);
         dg->dataNodes[i]->type = opt::DataNode::dnReplaced;
         dg->dataNodes[i]->replacedWith = NULL;
         dg->dataNodes[i] = NULL;

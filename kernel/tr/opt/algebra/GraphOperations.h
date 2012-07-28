@@ -20,6 +20,7 @@ public:
       : ManyChildren(SELF_RTTI_REF, _list), func(function_), groupBy(_groupBy)
     {
         list_id = children.size() - 1;
+        function_->operation = this;
         resultChild = list_id;
     };
 
@@ -29,6 +30,8 @@ public:
     void joinGraph(opt::DataGraphIndex & dg);
     void leftJoinGraph(opt::DataGraphIndex & dg);
 
+    executor::IExecuteProc * getExecutor();
+    
     PROPERTY_RO(List, RPBase *, children[list_id])
 };
 

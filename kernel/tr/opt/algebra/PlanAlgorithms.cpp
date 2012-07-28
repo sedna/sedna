@@ -158,7 +158,7 @@ bool TreePathAnalisys::findDeclaration(const TupleScheme & tuplesToSearch)
         /* If dependent variable is defined on the path, we cannot   */
         if (NestedOperation * nop = dynamic_cast<NestedOperation *>(*parentOp)) {
             if (nop->getList() == *cop &&
-                  tuplesToSearch.find(nop->tid) != tuplesToSearch.end())
+                  tuplesToSearch.find(nop->tuple()) != tuplesToSearch.end())
             {
               // TODO : try to push down to declaration
                 result = nop;
@@ -168,13 +168,16 @@ bool TreePathAnalisys::findDeclaration(const TupleScheme & tuplesToSearch)
 
         MapGraph * candidate = dynamic_cast<MapGraph *>(*parentOp);
 
-        if (NULL != candidate &&
-              candidate->getList() == *cop &&
-              intersection_size(candidate->graph().outTuples, tuplesToSearch) > 0)
-        {
-            result = candidate;
-            return true;
-        };
+        if (NULL != candidate) {
+            TupleScheme candidateOut;
+            candidate->graph().tuplesInOut(NULL, &candidateOut);
+
+            if (intersection_size(candidateOut, tuplesToSearch) > 0) {
+                result = candidate;
+                return true;
+            };
+        }
+
 
         preserveNull = preserveNull && preservesNull(*parentOp, *cop);
 
@@ -232,9 +235,7 @@ bool rule_XPathStep_to_DataGraph(PlanRewriter * pr, XPathStep * op)
             nodeIn = varop->dnode;
             dgi->nodes.push_back(nodeIn);
 
-            varop->dnode = new DataNode(opt::DataNode::dnExternal);
-            varop->dnode->varTupleId = nodeOut->varTupleId;
-            optimizer->dgm()->addVariable(varop->dnode);
+            varop->setDataNode(nodeOut->varTupleId);
 
             result = new MapGraph(varop, dgi->dg, TupleScheme());
         };
@@ -256,6 +257,7 @@ bool rule_XPathStep_to_DataGraph(PlanRewriter * pr, XPathStep * op)
     return false;
 };
 
+/*
 static
 void detachGraph(DataGraphIndex & to, DataGraphIndex & from)
 {
@@ -284,14 +286,17 @@ void detachGraph(DataGraphIndex & to, DataGraphIndex & from)
 
     from.rebuild();
 };
+*/
 
 static
 bool rule_Graph_try_join(PlanRewriter * pr, MapGraph * op)
 {
     DataGraphIndex & dgRight = static_cast<MapGraph *>(op)->graph();
+    TupleScheme inTuples;
     TreePathAnalisys treeAnalisys(pr);
 
-    treeAnalisys.findDeclaration(dgRight.inTuples);
+    dgRight.tuplesInOut(&inTuples, NULL);
+    treeAnalisys.findDeclaration(inTuples);
 
     if (NestedOperation * nestedOp = dynamic_cast<NestedOperation *>(treeAnalisys.result))
     {
@@ -310,10 +315,10 @@ bool rule_Graph_try_join(PlanRewriter * pr, MapGraph * op)
             nestedOp->joinGraph(dgRight);
             pr->replaceInParent(op, op->getList());
             debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), op->getList()->oid());
-        } else {
+        } /* else {
             detachGraph(nestedOp->graph(), dgRight);
             debug_op_replace(__PRETTY_FUNCTION__, "detach", op->oid(), nestedOp->oid());
-        };
+        }; */
 
         return true;
     };
@@ -352,10 +357,20 @@ bool rule_bind_MapConcat(PlanRewriter * pr, MapConcat * op)
     if (instanceof<VarIn>(subexpr))
     {
         TupleId tid = static_cast<VarIn*>(subexpr)->tuple();
-        optimizer->dgm()->mergeVariables(tid, op->tid);
-        optimizer->dgm()->removeVariable(static_cast<VarIn*>(subexpr)->dnode);
 
-        pr->replaceInParent(op, op->getList());
+        optimizer->dgm()->removeVariable(op->dnode);
+        optimizer->dgm()->mergeVariables(tid, op->tuple());
+
+        DataGraphIndex joinBuilder(new DataGraph(optimizer->dgm()));
+        DataNode * result = static_cast<VarIn*>(subexpr)->dnode;
+
+        joinBuilder.addOutNode(result);
+        joinBuilder.rebuild();
+
+        pr->replaceInParent(op,
+            new MapGraph(op->getList(), joinBuilder.dg,
+                singleTupleScheme(tid)));
+
         debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), op->getList()->oid());
 
         return true;
@@ -365,50 +380,29 @@ bool rule_bind_MapConcat(PlanRewriter * pr, MapConcat * op)
 };
 
 static
-bool rule_post_MapConcat_to_MapGraph(PlanRewriter * pr, MapConcat * op)
+bool rule_MapConcat_to_MapGraph(PlanRewriter * pr, MapConcat * op)
 {
-    return false;
-/*    
-    RPBase * subexpr = op->getSubplan();
+    MapGraph * nestedGraph = dynamic_cast<MapGraph *>(op->getSubplan());
 
-    if (instanceof<DataGraphOperation>(subexpr))
+    if (NULL != nestedGraph && instanceof<VarIn>(nestedGraph->getList()))
     {
-        DataGraphOperation * dgo = static_cast<DataGraphOperation *>(subexpr);
+        VarIn * varin = static_cast<VarIn *>(nestedGraph->getList());
 
-        // TODO:: substitute with EBV
-        if (dgo->out == NULL) {
-            return false;
-        };
+        optimizer->dgm()->removeVariable(op->dnode);
+        optimizer->dgm()->removeVariable(varin->dnode);
 
-        U_ASSERT(dgo->out != NULL);
-        U_ASSERT(std::find(dgo->graph().out.begin(), dgo->graph().out.end(), dgo->out) != dgo->graph().out.end());
+        optimizer->dgm()->mergeVariables(varin->tuple(), op->tuple());
 
-        if (dgo->out->varTupleId != invalidTupleId) {
-            VariableInfo & varinfo = optimizer->dgm()->getVariable(dgo->out->varTupleId);
+        nestedGraph->children[0] = op->getList();
+        nestedGraph->groupBy.insert(varin->tuple());
 
-            if (varinfo.nodes.size() != 0) {
-                U_ASSERT(false);
-                return false;
-            };
+        pr->replaceInParent(op, nestedGraph);
+        debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), nestedGraph->oid());
 
-            optimizer->dgm()->removeVariable(dgo->out);
-        }
-
-        dgo->out->varTupleId = op->tid;
-        optimizer->dgm()->addVariable(dgo->out);
-
-        MapGraph * mg = new MapGraph(op->getList(), dgo->graph().dg, dgo->children);
-        mg->tupleMask.insert(op->tid);
-
-        debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), mg->oid());
-        pr->replaceInParent(op, mg);
-
-        check_post_MapGraph(dgo->graph().out);
         return true;
     }
 
     return false;
-*/    
 };
 
 static
@@ -575,7 +569,7 @@ bool rule_remove_If(PlanRewriter * pr, If * op)
         VariableInfo & varInfo = optimizer->dgm()->getVariable(condition->tuple());
         U_ASSERT(varInfo.producer != NULL);
 
-        if (varInfo.producer->alwaysTrue)
+        if (varInfo.producer->alwaysTrue && varInfo.producer->notNull)
         {
             optimizer->dgm()->removeVariable(condition->dnode);
             debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), op->getThen()->oid());
@@ -591,13 +585,14 @@ static
 bool rule_conditional_function_remove(PlanRewriter * pr, RPBase * op, unsigned idx)
 {
     TreePathAnalisys pathAnalisys(pr);
+
     if (pathAnalisys.isConditional()) {
         debug_op_replace(__PRETTY_FUNCTION__, "replace", op->oid(), op->children[idx]->oid());
         pr->replaceInParent(op, op->children[idx]);
     };
+
     return false;
 };
-
 
 void PlanRewriter::do_execute()
 {
@@ -608,30 +603,6 @@ void PlanRewriter::do_execute()
 
         /* Before or instead traverse */
         switch (op->info()->clsid) {
-        CASE_TYPE_CAST(MapGraph, mapGraphOp, op)
-            {
-              mapGraphOp->graph().update();
-
-              traverseChildren(OperationList(mapGraphOp->children.begin(), mapGraphOp->children.end() - 1));
-
-              for (TupleScheme::const_iterator it = mapGraphOp->groupBy.begin(); it != mapGraphOp->groupBy.end(); ++it)
-              {
-                  optimizer->dgm()->addVariableDecl(*it, op);
-              };
-
-              traverse(mapGraphOp->getList());
-            }
-            break;
-        CASE_TYPE(SequenceConcat)
-        CASE_TYPE(MapConcat)
-            {
-              NestedOperation * nop = static_cast<NestedOperation *>(op);
-
-              traverse(nop->getSubplan());
-              optimizer->dgm()->addVariableDecl(nop->tid, op);
-              traverse(nop->getList());
-            }
-            break;
           default:
             {
               traverseChildren(op->children);
@@ -647,7 +618,7 @@ void PlanRewriter::do_execute()
             };
         CASE_TYPE_CAST(If, typed_op, op)
             {
-//                RULE(rule_remove_If(this, typed_op));
+                RULE(rule_remove_If(this, typed_op));
             };
             break;
         CASE_TYPE(Exists)
@@ -661,14 +632,11 @@ void PlanRewriter::do_execute()
                 /* Set parent operation */
                 typed_op->graph().dg->operation = typed_op;
 
-                if (!instanceof<MapConcat>(getParent())) {
-//                    RULE(rule_Graph_try_join(this, typed_op));
-                };
+                RULE(rule_Graph_try_join(this, typed_op));
 
 //                RULE(rule_redundant_MapGraph(this, typed_op));
                 RULE(rule_MapGraph_remove_unused(this, typed_op));
-
-//                RULE(rule_DataGraph_do_rewritings(this, typed_op));
+                RULE(rule_DataGraph_do_rewritings(this, typed_op));
             };
             break;
         CASE_TYPE_CAST(VarIn, typed_op, op)
@@ -690,8 +658,8 @@ void PlanRewriter::do_execute()
             break;
         CASE_TYPE_CAST(MapConcat, typed_op, op)
             {
-//                RULE(rule_pull_nested_MapGraph(this, typed_op));
-//                RULE(rule_bind_MapConcat(this, typed_op));
+                RULE(rule_MapConcat_to_MapGraph(this, typed_op));
+                RULE(rule_pull_nested_MapGraph(this, typed_op));
             }
             break;
         CASE_TYPE_CAST(XPathStep, typed_op, op)

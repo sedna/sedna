@@ -14,7 +14,6 @@ RTTI_DEF_BASE(RPBase)
 
 RTTI_DEF(ConstantOperation)
 RTTI_DEF(ListOperation)
-RTTI_DEF(NestedOperation)
 RTTI_DEF(ManyChildren)
 
 int RPBase::opids = 0;
@@ -54,22 +53,6 @@ XmlConstructor& ListOperation::__toXML(XmlConstructor& element) const
     }
 
     return element;
-}
-
-XmlConstructor& NestedOperation::__toXML(XmlConstructor& element) const
-{
-    element.addAttributeValue(SE_EL_NAME("tuple"), tuple_cell::atomic_int(tid));
-    element.addAttributeValue(SE_EL_NAME("name"), getContext()->getVarDef(tid)->getVarLabel() );
-
-    element.openElement(SE_EL_NAME("nested"));
-    
-    if (getSubplan() != null_obj) {
-        getSubplan()->toXML(element);
-    }
-
-    element.closeElement();
-
-    return rqp::ListOperation::__toXML(element);
 }
 
 XmlConstructor& ManyChildren::__toXML(XmlConstructor& element) const

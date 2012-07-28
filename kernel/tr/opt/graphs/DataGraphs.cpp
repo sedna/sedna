@@ -22,9 +22,6 @@ void DataGraphIndex::update()
     in.clear();
     predicates.clear();
 
-    outTuples.clear();
-    inTuples.clear();
-
     predicateMask = 0;
 
     memset(nodeIndex, 0, sizeof(nodeIndex[0]) * MAX_GRAPH_SIZE);
@@ -47,16 +44,11 @@ void DataGraphIndex::update()
 
         if ((n->indexBit & dg->outputNodes) > 0) {
             out.push_back(dg->dataNodes[i]);
-
-            if (n->varTupleId != invalidTupleId) {
-                outTuples.insert(dg->dataNodes[i]->varTupleId);
-            }
         };
 
         if ((n->indexBit & dg->inputNodes) > 0) {
             in.push_back(n);
             U_ASSERT(n->varTupleId != invalidTupleId);
-            inTuples.insert(n->varTupleId);
         };
     };
 
@@ -103,6 +95,26 @@ void DataGraphIndex::update()
     std::sort(out.begin(), out.end());
     std::sort(in.begin(), in.end());
     std::sort(predicates.begin(), predicates.end());
+}
+
+void DataGraphIndex::tuplesInOut(TupleScheme* in, TupleScheme* out)
+{
+    FOR_ALL_GRAPH_ELEMENTS(dg->dataNodes, i) {
+        DataNode * n = dg->dataNodes[i];
+
+        if (n->varTupleId != invalidTupleId) {
+            if (out != NULL &&
+              (n->indexBit & dg->outputNodes) > 0) {
+                out->insert(n->varTupleId);
+            }
+            
+            if (in != NULL &&
+              (n->indexBit & dg->inputNodes) > 0) {
+                in->insert(n->varTupleId);
+            }
+        };
+    };
+    
 }
 
 DataGraphIndex::DataGraphIndex(DataGraph* _dg)
@@ -241,7 +253,9 @@ XmlConstructor & DataNode::toXML(XmlConstructor& element) const
             element.addElementValue(SE_EL_NAME("source"), tuple_cell::atomic_int(aliasFor->index));
             break;
         case dnReplaced :
-            element.addElementValue(SE_EL_NAME("with"), tuple_cell::atomic_int(replacedWith->index));
+            if (NULL != replacedWith) {
+                element.addElementValue(SE_EL_NAME("with"), tuple_cell::atomic_int(replacedWith->index));
+            }
             break;
         case dnConst :
             U_ASSERT(!constValue.isnull());

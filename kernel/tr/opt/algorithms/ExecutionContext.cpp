@@ -29,20 +29,6 @@ public:
     virtual void execute(ExecutionStack* executor);
 };
 
-class GroupNextImplementation : public IExecuteProc
-{
-public:
-    DynamicContext * context;
-    VariableProducer * producer;
-    rqp::RPBase * nextOp;
-    uint64_t tupleMask;
-    
-    explicit GroupNextImplementation(DynamicContext * _context, VariableProducer * _producer, RPBase * _nextOp, uint64_t _tupleMask)
-      : context(_context), producer(_producer), nextOp(_nextOp), tupleMask(_tupleMask) {};
-
-    virtual void execute(ExecutionStack* executor);
-};
-
 void ConstructorImplementation::execute(ExecutionStack* result)
 {
     xsd::QName nameValue;
@@ -51,7 +37,11 @@ void ConstructorImplementation::execute(ExecutionStack* result)
     if (op->getType() == element || op->getType() == attribute || op->getType() == pr_ins)
     {
         ExecutionStack nameEvaluation;
-        optimizer->executor()->push(&nameEvaluation, context, op->getName());
+
+        ExecutionStack * saveStack = optimizer->swapStack(&nameEvaluation);
+        optimizer->pexecutor()->push(context, op->getName());
+        optimizer->swapStack(saveStack);
+        
         tuple_cell qname_tc = nameEvaluation.next();
 
         if (qname_tc.get_atomic_type() != xs_QName)
@@ -83,7 +73,10 @@ void ConstructorImplementation::execute(ExecutionStack* result)
             producer->resetResult();
         };
 
-        optimizer->executor()->push(producer->valueSequence, context, op->getList());
+        ExecutionStack * saveStack = optimizer->swapStack(producer->valueSequence);
+        optimizer->pexecutor()->push(context, op->getList());
+        optimizer->swapStack(saveStack);
+
         VarIterator contentIterator = varmodel->getIterator(op->contentId);
 
         while (!contentIterator.next().is_eos()) {
@@ -97,36 +90,36 @@ void ConstructorImplementation::execute(ExecutionStack* result)
     };
 }
 
-uint64_t getRestrictMask(const TupleScheme & tscheme)
+class IterateVar : public IExecuteProc
 {
-    uint64_t result;
+public:
+    VarIterator varIterator;
 
-    for (TupleScheme::const_iterator it = tscheme.begin(); it != tscheme.end(); ++it)
-    {
-        result |= (1ULL << *it);
-    };
-
-    return result;
+    explicit IterateVar(const VarIterator & _varIterator)
+      : varIterator(_varIterator) {};
+    
+    virtual void execute(ExecutionStack* executor);
 };
 
-void GroupNextImplementation::execute(ExecutionStack* result)
+void IterateVar::execute(ExecutionStack* executor)
 {
-    uint64_t saveRestrickMask = producer->restrictMask;
+    varIterator.next();
 
-    if (saveRestrickMask == 0) {
-        saveRestrickMask = tupleMask;
-    };
+    if (!varIterator.get().is_eos()) {
+        ExecutionStack* saveStack = optimizer->swapStack(executor);
 
-    producer->restrictMask = 0;
-    producer->next();
-    producer->restrictMask = saveRestrickMask;
+        executor->push(Result(new IterateVar(*this)));
+        executor->push(Result(varIterator.get()));
 
-    result->push(Result(new GroupNextImplementation(*this)));
-    optimizer->executor()->push(result, context, nextOp);
-};
+        optimizer->swapStack(saveStack);
+    }
+}
 
-void PlanExecutor::push(ExecutionStack* executionStack, DynamicContext* context, RPBase* op)
+void PlanExecutor::push(DynamicContext* context, RPBase* op)
 {
+    ExecutionStack * executionStack = optimizer->currentStack;
+    currentContext = context;
+    
     switch (op->info()->clsid) {
       CASE_TYPE_CAST(Construct, typed_op, op)
         {
@@ -135,17 +128,7 @@ void PlanExecutor::push(ExecutionStack* executionStack, DynamicContext* context,
         break;
       CASE_TYPE_CAST(MapGraph, typed_op, op)
         {
-            // TODO: optimize graph execution. There is no need in most cases to rebuild the graph
-            GraphExecutionBlock * geb = gc.compile(typed_op->graph(), context);
-            geb->prepare(&(typed_op->graph()));
-            geb->top()->reset();
-
-            VariableProducer * producer =
-              context->variables->bindGraph(geb, &(typed_op->graph()));
-
-            executionStack->push(Result(
-              new GroupNextImplementation(
-                context, producer, typed_op->getList(), getRestrictMask(typed_op->groupBy))));
+            executionStack->push(Result(typed_op->getExecutor()));
         }
         break;
       CASE_TYPE_CAST(Const, typed_op, op)
@@ -155,6 +138,13 @@ void PlanExecutor::push(ExecutionStack* executionStack, DynamicContext* context,
             for (MemoryTupleSequence::const_iterator it = values->begin(); it != values->end(); ++it) {
                 executionStack->push(Result(*it));
             };
+        }
+        break;
+      CASE_TYPE_CAST(VarIn, typed_op, op)
+        {
+            executionStack->push(Result(
+              new IterateVar(
+                context->variables->getIterator(typed_op->tuple()))));
         }
         break;
 /*
@@ -179,19 +169,20 @@ void DynamicContext::createVirtualRoot()
 
 PlanExecutor::PlanExecutor()
 {
-    executionStack = new ExecutionStack();
+    rootStack = new ExecutionStack();
     baseContext.setConstructorContext(NULL);
     baseContext.variables = new VariableModel;
 }
 
 PlanExecutor::~PlanExecutor()
 {
-    delete executionStack;
+    delete rootStack;
     delete baseContext.variables;
 //    delete baseContext.constructorContext;
 }
 
 void PlanExecutor::execute(RPBase* op)
 {
-    push(executionStack, &baseContext, op);
+    optimizer->currentStack = rootStack;
+    push(&baseContext, op);
 }

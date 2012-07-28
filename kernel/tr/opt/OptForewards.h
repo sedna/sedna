@@ -38,6 +38,8 @@ namespace phop {
 
 namespace executor
 {
+    class IExecuteProc;
+
     struct DynamicContext;
     struct ExecutionStack;
 

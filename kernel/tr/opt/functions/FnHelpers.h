@@ -33,13 +33,12 @@ inline static
 bool preservesNull(rqp::RPBase * parent, rqp::RPBase * child)
 {
     return
-    /* Result passthrough */
-      isResultOp(parent, child) || 
     /* Condition of IF expression with only THEN branch */
       (instanceof<rqp::If>(parent) && static_cast<rqp::If *>(parent)->getCondition() == child &&
           parent->result() == static_cast<rqp::If *>(parent)->getThen()) ||
     /* Any branch of MapConcat */
-      instanceof<rqp::MapConcat>(parent);
+      instanceof<rqp::MapConcat>(parent) ||
+      instanceof<rqp::MapGraph>(parent);
 };
 
 inline static
@@ -64,7 +63,6 @@ opt::DataNode * addGraphToJoin(opt::DataGraphIndex & builder, rqp::RPBase * op)
     U_ASSERT(node != NULL);
 
     builder.nodes.push_back(node);
-    builder.out.push_back(node);
 
     return node;
 };

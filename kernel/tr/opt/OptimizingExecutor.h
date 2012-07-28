@@ -34,9 +34,18 @@ public:
     virtual void onTransactionBegin();
     virtual void onTransactionEnd();
 
+    executor::ExecutionStack * currentStack;
+
+    executor::ExecutionStack * swapStack(executor::ExecutionStack * stack)
+    {
+        executor::ExecutionStack * old = currentStack;
+        currentStack = stack;
+        return old;
+    };
+
     DataGraphMaster * dgm() const { return _dgm; };
     rqp::PlanContext * context() const { return _context; };
-    PlanExecutor * executor() const { return _executor; };
+    PlanExecutor * pexecutor() const { return _executor; };
     CostModel * costModel() const { return _costModel; };
 };
 

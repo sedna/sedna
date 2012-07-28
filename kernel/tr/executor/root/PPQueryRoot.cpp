@@ -104,6 +104,17 @@ std::string schemaPath(schema_node_cptr snode) {
     return path.str();
 };
 
+void sendTupleCellToClient(const tuple_cell & tc)
+{
+    GlobalSerializationOptions options;
+    bool is_node = tc.is_node();
+    
+    tr_globals::create_serializer(tr_globals::client->get_result_type());
+    tr_globals::serializer->prepare(tr_globals::client->get_se_ostream(), &options);
+    tr_globals::client->begin_item(is_node, xs_untyped, element, "");
+    tr_globals::serializer->serialize(tuple(tc));
+    
+};
 
 bool PPQueryRoot::do_next()
 {
@@ -113,24 +124,9 @@ bool PPQueryRoot::do_next()
         first = false;
         hui = 0;
 
-        tr_globals::create_serializer(tr_globals::client->get_result_type());
-        tr_globals::client->begin_item(false, xs_untyped, element, "");
-
-        GlobalSerializationOptions * options = cxt->get_static_context()->get_serialization_options();
-
-        if (tr_globals::client->supports_serialization()) {
-            options->indent = false;
-            options->separateTuples = false;
-        } else if (!first && options->indent) {
-            (* tr_globals::client->get_se_ostream()) << "\n"; // separate tuples!
-            // This is needed for backward compatibility with old ( < 4 ) versions of protocol
-        }
-
-        tr_globals::serializer->prepare(tr_globals::client->get_se_ostream(), options);
-
         XmlConstructor xmlConstructor(VirtualRootConstructor(0));
         data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
-        tr_globals::serializer->serialize(data);
+        sendTupleCellToClient(data.cells[0]);
 
         hui = 1;
 
@@ -148,18 +144,19 @@ bool PPQueryRoot::do_next()
             optimizedPlan->toXML(xmlConstructor);
             optimizer->dgm()->toXML(xmlConstructor);
             xmlConstructor.closeElement();
+
             data.cells[0] = xmlConstructor.getLastChild();
-            tr_globals::serializer->serialize(data);
+            sendTupleCellToClient(data.cells[0]);
 
             hui = 2;
-            return false;
+            return true;
         } else if (hui == 2 || hui == 3) {
             if (hui == 2) {
-                optimizer->executor()->execute(optimizedPlan);
+                optimizer->pexecutor()->execute(optimizedPlan);
                 hui = 3;
             }
 
-            data.cells[0] = optimizer->executor()->executionStack->next();
+            data.cells[0] = optimizer->pexecutor()->rootStack->next();
             if (!data.cells[0].is_eos()) {
 /*
                 if (data.cells[0].is_node()) {
@@ -167,8 +164,7 @@ bool PPQueryRoot::do_next()
                       tuple_cell::atomic_deep(xs_string, schemaPath(getSchemaNode(data.cells[0].get_node())).c_str());
                 };
 */
-                tr_globals::serializer->serialize(data);
-                (* tr_globals::client->get_se_ostream()) << "\n"; // separate tuples!
+                sendTupleCellToClient(data.cells[0]);
                 return true;
             }
 

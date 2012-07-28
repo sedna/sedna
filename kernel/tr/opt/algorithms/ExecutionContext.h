@@ -38,7 +38,8 @@ public:
 struct PlanExecutor
 {
     executor::DynamicContext baseContext;
-    executor::ExecutionStack * executionStack;
+    executor::DynamicContext * currentContext;
+    executor::ExecutionStack * rootStack;
     opt::GraphCompiler gc;
 
     // TODO: optimize
@@ -46,11 +47,7 @@ struct PlanExecutor
 
     /* Pushes operation to execution context */
 
-    void push(
-        executor::ExecutionStack * executionStack,
-        executor::DynamicContext * context,
-        rqp::RPBase * op
-    );
+    void push(executor::DynamicContext * context, rqp::RPBase * op);
 
     void execute(rqp::RPBase * op);
     

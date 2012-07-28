@@ -123,22 +123,6 @@ public:
     PROPERTY(List, RPBase *, children[0])
 };
 
-/* 1r-operations with independent nested operation plan */
-class NestedOperation : public ListOperation {
-  RTTI_DECL(plan_operation_NestedOperation, ListOperation)
-protected:
-    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
-public:
-    opt::TupleId tid;
-
-    NestedOperation(clsinfo_t op, RPBase * list_, RPBase * subplan_, opt::TupleId _tid)
-      : ListOperation(op, list_), tid(_tid) {
-        children.push_back(subplan_);
-    };
-
-    PROPERTY(Subplan, RPBase *, children[1])
-};
-
 class ManyChildren : public RPBase {
     RTTI_DECL(plan_operation_ManyChildren, RPBase)
 protected:

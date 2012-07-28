@@ -47,8 +47,6 @@ bool rule_general_comparison_to_graph(PlanRewriter * pr, rqp::FunCall * op)
         return true;
     };
 
-    return false;
-    
     ComparisonData * data = dynamic_cast<ComparisonData *>(op->getData());
 
     if (isGraphExpr(left) && isGraphExpr(right)) {
@@ -62,14 +60,15 @@ bool rule_general_comparison_to_graph(PlanRewriter * pr, rqp::FunCall * op)
         result->varTupleId = optimizer->context()->generateTupleId();
 
         joinBuilder.predicates.push_back(predicate);
-        joinBuilder.nodes.push_back(result);
-        joinBuilder.out.push_back(result);
+        joinBuilder.addOutNode(result);
+
+        joinBuilder.rebuild();
 
         RPBase * newop =
           new rqp::FalseIfNull(
             new MapGraph(
               new VarIn(result->varTupleId), joinBuilder.dg,
-              singleTupleScheme(result->varTupleId)));
+              TupleScheme()));
 
         pr->replaceInParent(op, newop);
 

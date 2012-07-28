@@ -23,13 +23,12 @@ struct VariableInfo {
     TupleId id;
     std::string name;
 
-    rqp::RPBase * declaredIn;
     DataNode * producer;
     DataNodeSet nodes;
 
     TupleId pointsTo;
 
-    VariableInfo(TupleId _id) : id(_id), declaredIn(NULL), producer(NULL), pointsTo(opt::invalidTupleId) {};
+    VariableInfo(TupleId _id) : id(_id), producer(NULL), pointsTo(opt::invalidTupleId) {};
 };
 
 typedef std::map<TupleId, VariableInfo> VariableInfoMap;
