@@ -55,6 +55,18 @@ public:
 
 void GroupByNext::execute(ExecutionStack* executor)
 {
+    U_ASSERT(producer->valueSequence == NULL);
+
+    phop::ITupleOperator * op = producer->graphSequence->top();
+    ExecutionStack* saveStack = optimizer->swapStack(executor);
+
+    if (!op->get().is_eos()) {
+        executor->push(Result(new GroupByNext(*this)));
+        optimizer->pexecutor()->push(context, nextOp);
+    };
+
+    optimizer->swapStack(saveStack);
+
     // TODO : GroupBy Mask
 /*
     uint64_t saveRestrickMask = producer->restrictMask;
@@ -64,18 +76,12 @@ void GroupByNext::execute(ExecutionStack* executor)
     };
 
     producer->restrictMask = 0;
-*/    
-    if (!producer->next()) {
-        return;
-    };
+*/
+//    if (!producer->next()) {
+//        return;
+//    };
 //    producer->restrictMask = saveRestrickMask;
 
-    ExecutionStack* saveStack = optimizer->swapStack(executor);
-
-    executor->push(Result(new GroupByNext(*this)));
-    optimizer->pexecutor()->push(context, nextOp);
-
-    optimizer->swapStack(saveStack);
 }
 
 uint64_t getRestrictMask(const TupleScheme & tscheme)
@@ -107,6 +113,8 @@ executor::IExecuteProc* MapGraph::getExecutor()
         return new GroupByNext(executor->currentContext, producer, getList(), groupBy);
     } else {
         U_ASSERT(false);
+        return NULL;
 //        return new GroupByNext(executor->currentContext, producer, getList(), groupBy);
     };
+
 }

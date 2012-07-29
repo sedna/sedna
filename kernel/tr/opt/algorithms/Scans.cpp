@@ -66,6 +66,7 @@ void SchemaScan::do_next()
             scan();
         } else {
             value().cells[_idx] = tuple_cell::node(*(_cachePtr++));
+            block->flags.changed_flags |= (1ULL << _idx);
             return;
         }
     } while (_cachePtr != _cache.end());
@@ -103,6 +104,7 @@ void SchemaValueScan::do_next()
 
             if (tcmpop.satisfy(leftNode, *it)) {
                 value().cells[left] = leftNode;
+                block->flags.changed_flags |= (1ULL << left);
 
                 if (right < _tsize()) {
                     value().cells[right] = *it;

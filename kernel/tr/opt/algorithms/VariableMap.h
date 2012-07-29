@@ -129,9 +129,7 @@ struct VariableProducer
             // TODO: get rid of tuple here!
             variables->seq->add(tuple(x));
         } else {
-            graphSequence->top()->next();
-
-            if (graphSequence->top()->get().is_eos()) {
+            if (!graphSequence->next()) {
                 return false;
             };
 

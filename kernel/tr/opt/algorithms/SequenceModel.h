@@ -50,6 +50,7 @@ public:
     };
 private:
     friend class IOperator;
+    tuple * previous;
 public:
     OperationFlags flags;
 
@@ -64,8 +65,8 @@ public:
 // TODO : this is not actual result map!!!    
    TupleIdMap resultMap;
 
-    GraphExecutionBlock() {};
-    ~GraphExecutionBlock() {};
+    GraphExecutionBlock() : previous(NULL) {};
+    ~GraphExecutionBlock() { delete previous; };
 
     GraphExecutionBlock * copy();
 
@@ -78,6 +79,8 @@ public:
     {
         return (ITupleOperator *)(body.back());
     };
+
+    bool next();
 };
 
 class IOperator : public ObjectBase, public IXMLSerializable {
@@ -282,6 +285,36 @@ protected:
 public:
     virtual void reset();
 };
+
+inline
+bool tuple_cmp(const tuple_cell& tc1, const tuple_cell& tc2)
+{
+    return
+      ((tc1.__type() == tc2.__type()) &&
+       (0 == memcmp(&(tc1.__data()), &(tc2.__data()), sizeof(tcdata))));
+};
+
+inline 
+bool GraphExecutionBlock::next()
+{
+    tuple_cell * _previous = previous->cells.get();
+
+    if (!top()->next()) {
+        return false;
+    };
+
+    flags.changed_flags = 0;
+
+    for (int i = 0; i < previous->size(); ++i) {
+        if (!tuple_cmp(_previous[i], top()->get()[i])) {
+            flags.changed_flags |= (1ULL << i);
+        };
+    };
+
+    *previous = top()->get();
+
+    return true;
+}
 
 }
 

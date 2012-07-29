@@ -34,6 +34,9 @@ void GraphExecutionBlock::prepare(const opt::DataGraphIndex* dgi)
 
         resultMap = realMap;
     };
+
+    flags.changed_flags = 0;
+    previous = new tuple(top()->_tsize());
 }
 
 void BinaryTupleOperator::reset()
@@ -119,8 +122,6 @@ ItemOperator::ItemOperator(clsinfo_t _opinfo, IValueOperator* _in)
 {
     inIdx = block->operatorMap.at(_in);
 }
-
-
 
 XmlConstructor & BinaryTupleOperator::__toXML(XmlConstructor & element ) const
 {
