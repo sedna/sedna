@@ -19,7 +19,6 @@ struct TupleInfo {
     std::string name;
 
     rqp::RPBase * definedIn;
-    DataNode * producer;
 
     DataNodeSet nodes;
     OperationSet operations;

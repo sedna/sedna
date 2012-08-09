@@ -32,7 +32,7 @@ public:
     TupleInfoMap variableMap;
     MemoryTupleSequencePtr alwaysTrueSequence;
 
-    TupleInfo & addVariableDeclaration(TupleId tid, rqp::RPBase * op, DataNode * dataNode = NULL);
+    TupleInfo & addVariableDeclaration(TupleId tid, rqp::RPBase * op);
     TupleInfo & addVariableUsage(TupleId tid, rqp::RPBase * op, DataNode * dataNode = NULL);
     TupleInfo & addVariableName(TupleId tid, const std::string & name);
     TupleInfo & mergeVariables(TupleId alias, TupleId master);

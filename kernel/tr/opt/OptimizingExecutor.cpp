@@ -120,12 +120,15 @@ void ExplainStatement::next()
     tuple_cell & value = valueTuple.cells[0];
 
     try {
+        XmlConstructor xmlConstructor(VirtualRootConstructor(0));
+        xmlConstructor.openElement(SE_EL_NAME("plan"));
+
+        plan->toXML(xmlConstructor);
+        
         plan = VarGraphRewriting::rewrite(plan);
         plan = RewritingContext::rewrite(plan);
         optimizer->planContext()->varGraph.cleanup();
-
-        XmlConstructor xmlConstructor(VirtualRootConstructor(0));
-        xmlConstructor.openElement(SE_EL_NAME("plan"));
+        
         plan->toXML(xmlConstructor);
         optimizer->planContext()->varGraph.toXML(xmlConstructor);
         xmlConstructor.closeElement();

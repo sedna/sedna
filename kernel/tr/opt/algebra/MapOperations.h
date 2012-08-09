@@ -36,7 +36,7 @@ public:
     MapConcat(RPBase* _list, RPBase* _subplan, opt::TupleId _context)
       : NestedOperation(SELF_RTTI_REF, _list, _subplan, _context)
     {
-        opt::TupleInfo & tinfo = context->varGraph.addVariableDeclaration(_context, this, NULL);
+        opt::TupleInfo & tinfo = context->varGraph.addVariableDeclaration(_context, this);
         tinfo.properties.flags = opt::tuple_info_t::sf_singleton;
         resultChild = 0;
     };
@@ -48,7 +48,7 @@ public:
     SequenceConcat(RPBase* _list, RPBase* _subplan, opt::TupleId _tid)
       : NestedOperation(SELF_RTTI_REF, _list, _subplan, _tid)
     {
-        context->varGraph.addVariableDeclaration(_tid, this, NULL);
+        context->varGraph.addVariableDeclaration(_tid, this);
         resultChild = 0;
     };
 };

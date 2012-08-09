@@ -4,7 +4,10 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/executor/base/tuple.h"
 
-struct IFunctionData {
+#include "tr/models/XmlConstructor.h"
+
+struct IFunctionData : public IXMLSerializable
+{
     virtual ~IFunctionData() {};
 };
 

@@ -9,8 +9,9 @@ class CollationHandler;
 struct ComparisonData : public IFunctionData {
     opt::Comparison cmp;
 
-    ComparisonData(const opt::Comparison & _cmp)
-      : cmp(_cmp){};
+    ComparisonData(const opt::Comparison & _cmp) : cmp(_cmp){};
+
+    virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
 };
 
 extern phop::FunctionInfo * generalComparisonFunction;

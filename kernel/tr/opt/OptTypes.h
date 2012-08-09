@@ -55,12 +55,15 @@ struct tuple_info_t
 
       /* Implies notNull */
       sf_singleton = (0x08 | 0x01),
+
+      sf_unique = (0x10),
+      sf_ddo_sorted = (0x20 | 0x10),
     };
 
     uint32_t flags;
 
     inline bool notNull() { return (flags & sf_notNull) > 0; }
-    inline bool singleton() { return (flags & sf_singleton) > 0; }
+    inline bool singleton() { return (flags & sf_singleton) == sf_singleton; }
     inline bool alwaysTrue() { return (flags & sf_alwaysTrue) > 0; }
     inline bool alwaysFalse() { return (flags & sf_alwaysFalse) > 0; }
 

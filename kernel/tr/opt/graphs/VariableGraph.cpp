@@ -36,7 +36,7 @@ VariableUsageGraph::~VariableUsageGraph()
 
 }
 
-TupleInfo & VariableUsageGraph::addVariableDeclaration(TupleId tid, rqp::RPBase* op, DataNode* dataNode)
+TupleInfo & VariableUsageGraph::addVariableDeclaration(TupleId tid, rqp::RPBase* op)
 {
     if (variableMap.find(tid) == variableMap.end()) {
         variableMap.insert(TupleInfoMap::value_type(tid, TupleInfo(tid)));
@@ -47,7 +47,6 @@ TupleInfo & VariableUsageGraph::addVariableDeclaration(TupleId tid, rqp::RPBase*
     U_ASSERT(info.definedIn == NULL);
 
     info.definedIn = op;
-    info.producer = dataNode;
 
     return info;
 }
@@ -105,7 +104,7 @@ void VariableUsageGraph::addVariableDataNode(DataNode* dn)
 {
     if (dn->varTupleId != opt::invalidTupleId) {
         if (dn->type != DataNode::dnAlias && dn->type != DataNode::dnExternal) {
-            addVariableDeclaration(dn->varTupleId, dn->parent->operation, dn);
+            addVariableDeclaration(dn->varTupleId, dn->parent->operation);
         } else {
             addVariableUsage(dn->varTupleId, dn->parent->operation, dn);
         };
@@ -130,6 +129,8 @@ void VariableUsageGraph::removeVariableDataNode(DataNode* dn)
 
 TupleInfo & VariableUsageGraph::mergeVariables(TupleId master, TupleId alias)
 {
+    U_ASSERT(false);
+/*
     TupleInfo & varMaster = getVariable(master);
     TupleInfo & varAlias = getVariable(alias);
 
@@ -143,12 +144,11 @@ TupleInfo & VariableUsageGraph::mergeVariables(TupleId master, TupleId alias)
 
     U_ASSERT(varMaster.producer == NULL || varAlias.producer == NULL);
 
-    if (varMaster.producer == NULL) {
-        varMaster.producer = varAlias.producer;
+    if (varMaster.definedIn == NULL) {
+        varMaster.definedIn = varAlias.definedIn;
 
-        if (varAlias.producer != NULL) {
-            varAlias.producer->varTupleId = varMaster.id;
-            varAlias.producer = NULL;
+        if (varAlias.definedIn != NULL) {
+            varAlias.definedIn = NULL;
         }
     };
 
@@ -161,6 +161,7 @@ TupleInfo & VariableUsageGraph::mergeVariables(TupleId master, TupleId alias)
     varAlias.pointsTo = varMaster.id;
 
     return varMaster;
+*/    
 }
 
 XmlConstructor& VariableUsageGraph::toXML(XmlConstructor& constructor) const
@@ -179,12 +180,6 @@ XmlConstructor& VariableUsageGraph::toXML(XmlConstructor& constructor) const
                 constructor.openElement(SE_EL_NAME("definedIn"));
                 constructor.addAttributeValue(SE_EL_NAME("type"), tuple_cell::atomic_deep(xs_string, it->second.definedIn->info()->name));
                 constructor.addAttributeValue(SE_EL_NAME("id"), tuple_cell::atomic_int(it->second.definedIn->oid()));
-                constructor.closeElement();
-            }
-
-            if (it->second.producer != NULL) {
-                constructor.openElement(SE_EL_NAME("producer"));
-                it->second.producer->toXML(constructor);
                 constructor.closeElement();
             }
 

@@ -22,6 +22,10 @@ XmlConstructor& FunCallParams::__toXML(XmlConstructor& constructor) const
         constructor.closeElement();
     };
 
+    if (function_data != NULL) {
+        function_data->toXML(constructor);
+    };
+
     return constructor;
 }
 

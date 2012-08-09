@@ -109,15 +109,19 @@ void opt::DataGraphRewriter::selfReferenceResolution()
 {
     DataNode ** dataNodes = graph.dg->dataNodes;
 
+    std::map<TupleId, DataNode *> defMap;
+
+    for (DataNodeList::iterator it = graph.out.begin(); it != graph.out.end(); ++it) {
+        defMap[(*it)->varTupleId] = *it;
+    };
+
     FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
         DataNode * dn = dataNodes[i];
 
         if (dn->type == DataNode::dnExternal) {
-            DataNode * producerPtr = graph.dg->owner->getVariable(dn->varTupleId).producer;
-
-            if (producerPtr != NULL && dataNodes[producerPtr->index] == producerPtr) {
+            if (defMap.find(dn->varTupleId) != defMap.end()) {
                 mergeNodes(
-                    graph.nodeIndex[producerPtr->index],
+                    graph.nodeIndex[defMap[dn->varTupleId]->index],
                     graph.nodeIndex[dn->index]);
             };
         }

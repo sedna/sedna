@@ -139,6 +139,17 @@ struct DataGraphIndex {
     void rebuild();
 
     void addOutNode(DataNode * node) { nodes.push_back(node); out.push_back(node); };
+
+    inline 
+    DataNode * getNode(TupleId tid) {
+        for (DataNodeList::const_iterator it = out.begin(); it != out.end(); ++it) {
+            if ((*it)->varTupleId == tid) {
+                return (*it);
+            };
+        };
+
+        return NULL;
+    };
 private:
     DataGraph * make(VariableUsageGraph * master, DataGraph * graph);
 };

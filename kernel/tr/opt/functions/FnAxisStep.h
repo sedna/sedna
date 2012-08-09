@@ -8,6 +8,8 @@ struct AxisStepData : public IFunctionData {
     pe::Step step;
 
     AxisStepData(const pe::Step & _step) : step(_step) {};
+    virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
+    
 };
 
 extern phop::FunctionInfo * axisStepFunction;

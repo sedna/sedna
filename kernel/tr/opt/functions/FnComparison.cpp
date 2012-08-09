@@ -33,6 +33,15 @@ bool GeneralComparisonFunction::transform(FunCallParams* funcall, RewritingConte
     return false;
 }
 
+XmlConstructor& ComparisonData::toXML(XmlConstructor& constructor) const
+{
+    constructor.addElementValue(SE_EL_NAME("path"),
+        tuple_cell::atomic_deep(xs_string, cmp.toString().c_str()));
+
+    return constructor;
+}
+
+
 /*
 bool do_ebv_operation_push_down(rqp::RewritingContext * pr, rqp::RPBase * op, unsigned idx)
 {
