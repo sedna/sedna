@@ -68,11 +68,13 @@ extern const double C_CPU_Cost;
 class CostModel {
     PathCostModel* evaluatePathCost(const DataRoot& root, const pe::Path& path, TupleStatistics* copyStats, PathCostModel* result, TupleStatistics* baseStats);
 public:
+    executor::DynamicContext * dynamicContext;
+  
     PathCostModel * getAbsPathCost(const DataRoot& root, const pe::Path & path, TupleStatistics * result);
     PathCostModel * getPathCost(const TupleRef & base, const pe::Path & path, TupleStatistics * result);
     ValueCostModel * getValueCost(PathCostModel * m, TupleStatistics * result);
 
-    void getVarCost(executor::DynamicContext* m, opt::TupleId varTupleId, opt::TupleStatistics* result);
+    void getVarCost(opt::TupleId varTupleId, opt::TupleStatistics* result);
 
     SequenceInfo * getDocOrderSequenceCost(const TupleRef & tuple);
     SequenceInfo * getValueSequenceCost(const TupleRef & tuple);

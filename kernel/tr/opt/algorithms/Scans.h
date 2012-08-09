@@ -6,7 +6,7 @@
 
 #include "tr/opt/graphs/Predicates.h"
 #include "tr/opt/algorithms/ComparisonOperation.h"
-#include "tr/opt/algorithms/VariableMap.h"
+#include "tr/opt/evaluation/VariableMap.h"
 
 namespace phop {
 

@@ -292,7 +292,7 @@ void ExternalVarPrototype::evaluateCost(CostModel* model)
     cost = new OperationCost();
 
     outRef->statistics = new TupleStatistics();
-    model->getVarCost(phop::GraphExecutionBlock::current()->context, varTupleId, outRef->statistics);
+    model->getVarCost(varTupleId, outRef->statistics);
 
     cost->firstCost = 0;
     cost->fullCost = 0;

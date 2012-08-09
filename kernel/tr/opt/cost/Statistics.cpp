@@ -2,7 +2,7 @@
 
 #include "tr/opt/phm/Operations.h"
 #include "tr/opt/path/XPathLookup.h"
-#include "tr/opt/algorithms/ExecutionContext.h"
+#include "tr/opt/evaluation/DynamicContext.h"
 
 using namespace opt;
 
@@ -262,9 +262,9 @@ SequenceInfo* CostModel::getValueSequenceCost(const TupleRef& tuple)
     return result;
 }
 
-void CostModel::getVarCost(executor::DynamicContext* m, TupleId varTupleId, TupleStatistics* result)
+void CostModel::getVarCost(TupleId varTupleId, TupleStatistics* result)
 {
-    TupleStatistics * stats = m->variables->getProducer(varTupleId)->statistics;
+    TupleStatistics * stats = dynamicContext->variables->getProducer(varTupleId)->statistics;
 
     if (stats != NULL) {
         *result = *stats;

@@ -4,6 +4,8 @@
 #include "IndependentPlan.h"
 #include "tr/opt/functions/Functions.h"
 
+#include <algorithm>
+
 struct IFunctionData;
 
 namespace rqp {
@@ -21,32 +23,49 @@ public:
     PROPERTY_RO(Step, pe::Step, step)
 };
 
-class FunCall : public ManyChildren {
-    RTTI_DECL(plan_operation_FunCall, ManyChildren)
+typedef std::vector<opt::TupleId> ParamList;
+
+inline static
+ParamList fParams(opt::TupleId p1)
+{
+    ParamList result;
+    result.push_back(p1);
+    return result;
+};
+
+inline static
+ParamList fParams(opt::TupleId p1, opt::TupleId p2)
+{
+    ParamList result;
+    result.push_back(p1);
+    result.push_back(p2);
+    return result;
+};
+
+class FunCallParams : public RPBase {
+    RTTI_DECL(plan_operation_FunCallParams, RPBase)
 
     IFunctionData * function_data;
     phop::FunctionInfo * function;
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
-    explicit FunCall(phop::FunctionInfo * func, IFunctionData * _fd, const OperationList & _oplist)
-      : ManyChildren(SELF_RTTI_REF, _oplist), function_data(_fd), function(func) {
+    ParamList paramList;
+  
+    explicit FunCallParams(phop::FunctionInfo * func, IFunctionData * _fd, const ParamList & params)
+      : RPBase(SELF_RTTI_REF), function_data(_fd), function(func), paramList(params)
+    {
         U_ASSERT(func != NULL);
+
+        for (ParamList::const_iterator it = params.begin(); it != params.end(); ++it) {
+            context->varGraph.addVariableUsage(*it, this, NULL);
+            dependantVariables.insert(*it);
+        };
     };
 
-    explicit FunCall(phop::FunctionInfo * func, IFunctionData * _fd, RPBase* _in)
-      : ManyChildren(SELF_RTTI_REF, _in), function_data(_fd), function(func) {
-        U_ASSERT(func != NULL);
-    };
+    ~FunCallParams() { delete function_data; }
 
-    explicit FunCall(phop::FunctionInfo * func, IFunctionData * _fd, RPBase* _in1, RPBase* _in2)
-      : ManyChildren(SELF_RTTI_REF, _in1), function_data(_fd), function(func) {
-        children.push_back(_in2);
-        U_ASSERT(func != NULL);
-    };
-
-    ~FunCall() { delete function_data; }
-
+    PROPERTY_RO(Params, const ParamList & , paramList)
     PROPERTY_RO(Function, phop::FunctionInfo * , function)
     PROPERTY_RO(Data, IFunctionData * , function_data)
 };

@@ -1,33 +1,30 @@
 #include "FunctionOperations.h"
 
 #include "tr/opt/functions/Functions.h"
-#include "tr/opt/algorithms/ExecutionContext.h"
 
 using namespace rqp;
 using namespace opt;
 
-RTTI_DEF(FunCall)
 RTTI_DEF(Construct)
 RTTI_DEF(XPathStep)
+RTTI_DEF(FunCallParams)
 
-XmlConstructor& FunCall::__toXML(XmlConstructor& element) const
+XmlConstructor& FunCallParams::__toXML(XmlConstructor& constructor) const
 {
-    element.addAttributeValue(SE_EL_NAME("name"), function->getQName().getColonizedName());
+    constructor.addAttributeValue(SE_EL_NAME("name"), function->getQName().getColonizedName());
 
     int i = 0;
-    for (OperationList::const_iterator it = children.begin(); it != children.end(); ++it) {
-        element.openElement(SE_EL_NAME("param"));
-        element.addAttributeValue(SE_EL_NAME("index"), tuple_cell::atomic_int(i++));
-
-        if (*it != null_obj) {
-            (*it)->toXML(element);
-        }
-
-        element.closeElement();
+    for (ParamList::const_iterator it = paramList.begin(); it != paramList.end(); ++it)
+    {
+        constructor.openElement(SE_EL_NAME("param"));
+        constructor.addAttributeValue(SE_EL_NAME("index"), tuple_cell::atomic_int(i++));
+        constructor.addAttributeValue(SE_EL_NAME("varId"), tuple_cell::atomic_int(*it));
+        constructor.closeElement();
     };
 
-    return element;
-};
+    return constructor;
+}
+
 
 XmlConstructor& Construct::__toXML(XmlConstructor& element) const
 {

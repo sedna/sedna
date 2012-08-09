@@ -2,7 +2,7 @@
 #define _VARIABLE_MAP_H_
 
 #include "tr/executor/base/sequence.h"
-#include "tr/opt/algorithms/ExecutionStack.h"
+#include "tr/opt/evaluation/VirtualSequence.h"
 #include "tr/opt/graphs/DataGraphs.h"
 
 namespace executor {
@@ -13,7 +13,9 @@ struct VarCacheInfo
     sequence * seq;
     VariableProducer * producer;
     unsigned inTuple;
+
     opt::TupleStatistics * statistics;
+    opt::tuple_info_t properties;
 
     VarCacheInfo()
       : tid(opt::invalidTupleId), statistics(NULL)
@@ -27,7 +29,7 @@ struct VarCacheInfo
 
 struct VariableProducer
 {
-    executor::ExecutionStack * valueSequence;
+    executor::VirtualSequence * valueSequence;
     phop::GraphExecutionBlock * graphSequence;
     VarCacheInfo * variables;
     size_t varCount;
@@ -37,7 +39,7 @@ struct VariableProducer
     VariableProducer(opt::TupleId varId)
       : varCount(1)
     {
-        valueSequence = new executor::ExecutionStack();
+        valueSequence = new executor::VirtualSequence();
 
         variables = new VarCacheInfo[1];
         variables[0].producer = this;
@@ -78,7 +80,7 @@ struct VariableProducer
             variables[i].seq->clear();
         };
     };
-    
+
     inline
     void reset()
     {
@@ -111,15 +113,14 @@ struct VariableProducer
         };
     }
 
-    void resetResult()
-    {
-        clear();
-    }
-
     inline
     bool next()
     {
         if (valueSequence != NULL) {
+            if (restrictMask > 0) {
+                return false;
+            };
+
             tuple_cell x = valueSequence->next();
 
             if (x.is_eos()) {
@@ -129,12 +130,11 @@ struct VariableProducer
             // TODO: get rid of tuple here!
             variables->seq->add(tuple(x));
         } else {
-            if (!graphSequence->next()) {
+            if ((graphSequence->flags.changed_flags & restrictMask) > 0) {
                 return false;
             };
 
-            if ((graphSequence->flags.changed_flags & restrictMask) > 0)
-            {
+            if (!graphSequence->next()) {
                 return false;
             };
 
@@ -157,22 +157,37 @@ class VarIterator
     int pos;
     VarCacheInfo * varInfo;
     tuple_cell value;
-// TODO : add generation debug
+    int generation;
 public:
     const VarCacheInfo * info() const { return varInfo; }
 
     explicit VarIterator(VarCacheInfo * _varInfo)
       : pos(-1), varInfo(_varInfo), value(EMPTY_TUPLE_CELL)
     {
+        generation = varInfo->producer->generation;
     };
 
+    inline
     tuple_cell & get()
     {
         return value;
     };
 
+    inline
+    void reset()
+    {
+        generation = varInfo->producer->generation;
+        pos = -1;
+        value = EMPTY_TUPLE_CELL;
+    };
+
+    inline
     tuple_cell & next()
     {
+        if (generation != varInfo->producer->generation) {
+            reset();
+        };
+
         if ((pos > -1) && value.is_eos()) {
             return value;
         };
@@ -210,7 +225,7 @@ public:
         // TODO : make debug check for all graph variables to be bound to valid producer
 
         VariableProducer * producer;
-        
+
         /* Create or find producer map for a graph.
          * Kind of optimization.
          */

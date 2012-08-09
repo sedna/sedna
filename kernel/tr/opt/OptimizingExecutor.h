@@ -1,51 +1,122 @@
 #ifndef _OPTIMIZING_EXECUTOR_H_
 #define _OPTIMIZING_EXECUTOR_H_
 
+#include "common/u/uthread.h"
+
 #include "tr/models/SednaModule.h"
 #include "tr/models/MemoryPool.h"
 #include "tr/models/PointerArray.h"
-
 #include "tr/opt/OptForewards.h"
 
+#include "tr/opt/types/ResultQueue.h"
+
+#include "tr/tr_base.h"
+
+struct GlobalSerializationOptions;
+
+class Serializer;
+class client_core;
+
+namespace sedna {
+  class XQueryDriver;
+}
+
+class BlockingItemQueue;
+class SednaException;
+
 namespace opt {
+
+struct execution_params_t
+{
+    unsigned operationTimeout;
+    unsigned executionTimeout;
+
+    unsigned operationStackSize;
+    unsigned executionStackSize;
+};
+
+const execution_params_t defaultSettings =
+{
+    30*60,
+    60*60,
+    1024,
+    16*1024*1024
+};
+
+class IStatement
+{
+public:
+    virtual ~IStatement() {};
+
+    virtual void prepare(QueryType queryType, const char* query_str) = 0;
+    virtual void execute() = 0;
+    virtual void next() = 0;
+};
+
+class OptimizedStatement : public IStatement
+{
+protected:
+    client_core * client;
+    sedna::XQueryDriver * driver;
+    rqp::RPBase * plan;
+    executor::DynamicContext * executionContext;
+    Serializer * serialier;
+    GlobalSerializationOptions * serializationOptions;
+public:
+    execution_params_t params;
+    uint64_t time;
+
+    OptimizedStatement(client_core * _client);
+    virtual ~OptimizedStatement();
+
+    virtual void prepare(QueryType queryType, const char* query_str);
+    virtual void execute();
+    virtual void next();
+};
+
+class ExplainStatement : public OptimizedStatement
+{
+public:
+    ExplainStatement(client_core* _client) : OptimizedStatement(_client) {};
+
+    virtual void execute();
+    virtual void next();
+};
 
 class OptimizingExecutor : SednaModule
 {
 private:
-    DataGraphMaster * _dgm;
-    rqp::PlanContext * _context;
-    PlanExecutor * _executor;
+    opt::GraphCompiler * _gcmpler;
+    VariableUsageGraph * _dgm;
+    rqp::PlanContext * _planContext;
     CostModel * _costModel;
 public:
     MemoryPool planGenerationPool;
     MemoryPool costModelPool;
-//    MemoryPool gataGraphPool;
-//    MemoryPool executionPool;
 
     OptimizingExecutor()
-      : _dgm(NULL), _context(NULL), _executor(NULL), _costModel(NULL),
+      : _gcmpler(NULL), _dgm(NULL), _planContext(NULL), _costModel(NULL),
         planGenerationPool(MEMORY_BLOCK_SIZE),
         costModelPool(MEMORY_BLOCK_SIZE)
           {};
-  
+
     virtual void onSessionBegin();
     virtual void onSessionEnd();
 
     virtual void onTransactionBegin();
     virtual void onTransactionEnd();
 
-    executor::ExecutionStack * currentStack;
+    executor::VirtualSequence * currentStack;
 
-    executor::ExecutionStack * swapStack(executor::ExecutionStack * stack)
+    executor::VirtualSequence * swapStack(executor::VirtualSequence * stack)
     {
-        executor::ExecutionStack * old = currentStack;
+        executor::VirtualSequence * old = currentStack;
         currentStack = stack;
         return old;
     };
 
-    DataGraphMaster * dgm() const { return _dgm; };
-    rqp::PlanContext * context() const { return _context; };
-    PlanExecutor * pexecutor() const { return _executor; };
+    opt::GraphCompiler * gcmpler() const { return _gcmpler; };
+    rqp::PlanContext * planContext() const { return _planContext; };
     CostModel * costModel() const { return _costModel; };
 };
 

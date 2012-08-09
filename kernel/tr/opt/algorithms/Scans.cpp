@@ -8,8 +8,8 @@
 
 #include "tr/models/XmlConstructor.h"
 
-#include "ExecutionContext.h"
 #include "tr/opt/functions/Functions.h"
+#include "tr/opt/evaluation/DynamicContext.h"
 
 using namespace phop;
 using namespace opt;
@@ -136,7 +136,7 @@ void phop::VariableIn::do_next()
 {
    // TODO : remove;
     if (varIt.info() == NULL) {
-        varIt = block->context->variables->getIterator(tid);
+        varIt = block->dynamicContext->variables->getIterator(tid);
     };
 
     tuple_cell tc = varIt.next();
@@ -151,7 +151,7 @@ void phop::VariableIn::do_next()
 void phop::VariableIn::reset()
 {
     phop::ITupleOperator::reset();
-    varIt = block->context->variables->getIterator(tid);
+    varIt = block->dynamicContext->variables->getIterator(tid);
 };
 
 

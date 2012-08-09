@@ -606,6 +606,14 @@ void socket_client::authentication_result(bool res, const string& body)
 
 void socket_client::process_unknown_instruction(int instruction, bool in_transaction)
 {
+    if (instruction == se_SetSessionOptions) {
+        set_session_options(&sp_msg);
+        return;
+    } else if (instruction == se_ResetSessionOptions) {
+        reset_session_options();
+        return;
+    };
+
     if(in_transaction)
     {
         switch (instruction)
@@ -688,6 +696,12 @@ void socket_client::show_time(u_timeb qep_time)
     strcpy(sp_msg.body + 1 + sizeof(int), ex_time.c_str());
 
     if(sp_send_msg(Sock, &sp_msg) != 0) THROW_SOCKET_EXCEPTION(SE3006);
+}
+
+void socket_client::show_time_ex(uint64_t qep_time)
+{
+    U_ASSERT(false);
+//    show_time();
 }
 
 void socket_client::set_keep_alive_timeout(int sec)

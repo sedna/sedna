@@ -23,6 +23,7 @@ class lr2opt : public lr2por
 {
   private:
     StaticContext * context;
+    rqp::PlanContext * planContext;
   public:
     lr2opt(sedna::XQueryDriver *drv_, sedna::XQueryModule *mod_, dynamic_context *dyn_cxt_, bool is_subquery_);
     ~lr2opt();

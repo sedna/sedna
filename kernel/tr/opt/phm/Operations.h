@@ -4,7 +4,7 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/phm/PhysicalModel.h"
 #include "tr/opt/graphs/Predicates.h"
-#include "tr/opt/algorithms/VariableMap.h"
+#include "tr/opt/evaluation/VariableMap.h"
 
 namespace opt {
 

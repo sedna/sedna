@@ -3,11 +3,38 @@
 
 #include "tr/opt/graphs/Predicates.h"
 #include "tr/opt/algebra/PlanAlgorithms.h"
+#include "tr/opt/evaluation/DynamicContext.h"
 
 using namespace rqp;
 using namespace opt;
 
-bool do_ebv_operation_push_down(rqp::PlanRewriter * pr, rqp::RPBase * op, unsigned idx)
+class GeneralComparisonFunction : public phop::FunctionInfo
+{
+    static phop::function_info_t gcmp_name;
+public:
+    GeneralComparisonFunction() : FunctionInfo(&gcmp_name) {};
+    GeneralComparisonFunction(const phop::function_info_t * f) : FunctionInfo(f) {};
+
+    virtual void execute(FunCallParams* funcall, executor::DynamicContext* dynamicContext);
+    virtual bool transform(FunCallParams* funcall, RewritingContext* p);
+};
+
+phop::function_info_t
+GeneralComparisonFunction::gcmp_name = {NULL, "internal", "general_comparison"};
+
+void GeneralComparisonFunction::execute(FunCallParams* funcall, executor::DynamicContext* dynamicContext)
+{
+    //
+}
+
+
+bool GeneralComparisonFunction::transform(FunCallParams* funcall, RewritingContext* p)
+{
+    return false;
+}
+
+/*
+bool do_ebv_operation_push_down(rqp::RewritingContext * pr, rqp::RPBase * op, unsigned idx)
 {
     RPBase * child = op->children[idx];
 
@@ -29,20 +56,19 @@ bool do_ebv_operation_push_down(rqp::PlanRewriter * pr, rqp::RPBase * op, unsign
     return false;
 };
 
+
 static
-bool rule_general_comparison_to_graph(PlanRewriter * pr, rqp::FunCall * op)
+bool rule_general_comparison_to_graph(RewritingContext * pr, rqp::FunCall * op)
 {
     U_ASSERT(op->children.size() == 2);
 
     RPBase * left = op->children[0];
     RPBase * right = op->children[1];
 
-    /* Push down left */
     if (do_ebv_operation_push_down(pr, op, 0)) {
         return true;
     };
 
-    /* Push down right */
     if (do_ebv_operation_push_down(pr, op, 1)) {
         return true;
     };
@@ -57,7 +83,7 @@ bool rule_general_comparison_to_graph(PlanRewriter * pr, rqp::FunCall * op)
         DataNode  * result = createTrueNode();
         Predicate * predicate = new ValuePredicate(nodeLeft, nodeRight, data->cmp);
 
-        result->varTupleId = optimizer->context()->generateTupleId();
+        result->varTupleId = optimizer->planContext()->generateTupleId();
 
         joinBuilder.predicates.push_back(predicate);
         joinBuilder.addOutNode(result);
@@ -76,36 +102,15 @@ bool rule_general_comparison_to_graph(PlanRewriter * pr, rqp::FunCall * op)
     };
     return false;
 };
+*/
 
 using namespace phop;
 
-phop::function_info_t cmp_function = {rule_general_comparison_to_graph };
-
-FunctionInfo * general_comparison_function = NULL;
-
-/*
-FunctionInfo * g_eq_function = NULL;
-FunctionInfo * g_ge_function = NULL;
-FunctionInfo * g_gt_function = NULL;
-FunctionInfo * g_le_function = NULL;
-FunctionInfo * g_lt_function = NULL;
-*/
+FunctionInfo * generalComparisonFunction = NULL;
 
 REGISTER_FUNCTIONS_BEGIN(CMP)
     FunctionLibrary * lib = getFunctionLibrary();
 
-    general_comparison_function = lib->registerFunction(NULL, "internal", "general_comparison", &cmp_function);
-
-#define CMP_FUNCTION(OP) \
-    OP##_function = lib->registerFunction(NULL, "internal", #OP, &cmp_function); \
-    OP##_function->default_data = new ComparisonData(Comparison(opt::Comparison::OP));
-/*
-    CMP_FUNCTION(g_eq)
-    CMP_FUNCTION(g_ge)
-    CMP_FUNCTION(g_gt)
-    CMP_FUNCTION(g_le)
-    CMP_FUNCTION(g_lt)
-*/
-#undef CMP_FUNCTION
+    generalComparisonFunction = lib->registerFunction(new GeneralComparisonFunction());
 
 REGISTER_FUNCTIONS_END(CMP)

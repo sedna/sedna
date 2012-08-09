@@ -20,13 +20,11 @@
 #include "tr/mo/nodemoutils.h"
 
 #include "tr/opt/graphs/Predicates.h"
-#include "tr/opt/graphs/DataGraphCollection.h"
 #include "tr/opt/graphs/DataGraphs.h"
 
 #include "tr/models/SCElementProducer.h"
 
 #include "tr/opt/path/XPathLookup.h"
-#include "tr/opt/algorithms/ExecutionContext.h"
 #include "tr/models/XmlConstructor.h"
 
 using namespace std;
@@ -312,7 +310,7 @@ void PPTest::do_accept(PPVisitor &v)
 void PPDataGraph::do_next(tuple& t)
 {
 /*
-    static opt::DataGraphMaster dgm;
+    static opt::VariableUsageGraph dgm;
 
     if (data != NULL) {
         phop::ITupleOperator * op = (phop::ITupleOperator *) data;

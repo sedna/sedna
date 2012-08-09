@@ -53,7 +53,7 @@ public:
     };
 };
 
-phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph, executor::DynamicContext * context)
+phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph)
 {
     opt::DataGraphRewriter dgr(graph);
     dgr.structuralComparison();
@@ -62,12 +62,10 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph, ex
     phop::GraphExecutionBlock* result = getGraph(graph.dg);
     
     if (result != NULL) {
-        result->context = context;
         return result;
     };
 
     result = new GraphExecutionBlock();
-    result->context = context;
 
     GraphExecutionBlock::push(result);
 
@@ -172,7 +170,7 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph, ex
     ITupleOperator * checkVar = planMap->getLastPlan()->compile();
     U_ASSERT(checkVar == result->top());
     graphCache[graph.dg] = result;
-    
+
     return result;
 }
 

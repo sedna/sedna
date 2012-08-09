@@ -1,5 +1,4 @@
 #include "DataGraphs.h"
-#include "DataGraphCollection.h"
 
 #include "tr/opt/algebra/IndependentPlan.h"
 #include "tr/models/XmlConstructor.h"
@@ -8,7 +7,7 @@
 
 using namespace opt;
 
-DataGraph::DataGraph(DataGraphMaster* _owner) : owner(_owner)
+DataGraph::DataGraph(VariableUsageGraph* _owner) : owner(_owner)
 {
     U_ASSERT(_owner != NULL);
     memset(predicates, 0, sizeof(predicates[0]) * MAX_GRAPH_SIZE);
@@ -134,7 +133,7 @@ void DataGraphIndex::rebuild()
     update();
 }
 
-DataGraph* DataGraphIndex::make(DataGraphMaster* master, DataGraph* graph)
+DataGraph* DataGraphIndex::make(VariableUsageGraph* master, DataGraph* graph)
 {
     PlanDesc lastIndex = 0;
 
@@ -154,11 +153,11 @@ DataGraph* DataGraphIndex::make(DataGraphMaster* master, DataGraph* graph)
         if (n->type == opt::DataNode::dnExternal) {
             graph->inputNodes |= n->indexBit;
         }
-
+/*
         if (n->varTupleId != invalidTupleId) {
             master->addVariable(n);
         }
-
+*/
         lastIndex++;
     };
 
@@ -228,7 +227,7 @@ XmlConstructor & DataNode::toXML(XmlConstructor& element) const
         if (parent->owner->variableMap.find(varTupleId) == parent->owner->variableMap.end()) {
             element.addAttributeValue(SE_EL_NAME("bad"), tuple_cell::atomic(true));
         } else {
-            VariableInfo & vinfo = parent->owner->getVariable(varTupleId);
+            TupleInfo & vinfo = parent->owner->getVariable(varTupleId);
 
             if (!vinfo.name.empty()) {
                 element.addAttributeValue(SE_EL_NAME("varName"), vinfo.name);

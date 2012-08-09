@@ -2,11 +2,12 @@
 #define _FN_HELPERS_H
 
 #include "tr/opt/algebra/AllOperations.h"
-#include "tr/opt/graphs/DataGraphCollection.h"
 #include "tr/opt/graphs/DataGraphs.h"
 
-bool do_operation_push_down(rqp::PlanRewriter * pr, rqp::RPBase * op, unsigned idx);
-bool do_outer_bind_parameter(rqp::PlanRewriter * pr, rqp::RPBase * op, unsigned idx, bool preserveNull);
+void cleanupFunCall(rqp::FunCallParams * funCall);
+
+bool do_operation_push_down(rqp::RewritingContext * pr, rqp::RPBase * op, unsigned idx);
+bool do_outer_bind_parameter(rqp::RewritingContext * pr, rqp::RPBase * op, unsigned idx, bool preserveNull);
 
 inline static
 bool isConstExpr(rqp::RPBase * op)
@@ -47,10 +48,11 @@ bool isGraphExpr(rqp::RPBase * op)
     return instanceof<rqp::Const>(op) || instanceof<rqp::VarIn>(op);
 };
 
+/*
 inline static
 opt::DataNode * addGraphToJoin(opt::DataGraphIndex & builder, rqp::RPBase * op)
 {
-    opt::DataGraphMaster * master = optimizer->dgm();
+    opt::VariableUsageGraph * master = optimizer->dgm();
     opt::DataNode * node = NULL;
 
     if (instanceof<rqp::VarIn>(op)) {
@@ -71,10 +73,11 @@ inline static
 opt::DataNode * createTrueNode()
 {
     opt::DataNode * result = new opt::DataNode(opt::DataNode::dnConst);
-    result->constValue = optimizer->dgm()->alwaysTrueSequence;
-    result->alwaysTrue = true;
+    result->constValue = optimizer->planContext()->variableGraph->alwaysTrueSequence;
+    result->properties.flags |=  opt::variable_properties_t::sf_alwaysTrue;
     return result;
 };
+*/
 
 #define REGISTER_FUNCTIONS_BEGIN(LIB) \
 struct RegisterFunctions##LIB { RegisterFunctions##LIB() {

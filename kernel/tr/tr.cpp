@@ -12,6 +12,7 @@
 #include "common/errdbg/d_printf.h"
 #include "common/pping.h"
 #include "common/ipc_ops.h"
+#include "common/errdbg/exceptions.h"
 
 #include "tr/tr_globals.h"
 #include "tr/tr_functions.h"
@@ -24,12 +25,155 @@
 #include "tr/rcv/rcv_funcs.h"
 #include "common/gmm.h"
 
+#include "tr/opt/OptimizingExecutor.h"
+#include "tr/opt/types/ResultQueue.h"
+
 using namespace std;
 using namespace tr_globals;
 
 /* variables for time measurement */
 DECLARE_TIME_VARS
 u_timeb t_total1, t_total2, t_qep1, t_qep2, t_qep;
+
+class ClientRequestNotSupportedException : public SednaUserSoftException
+{
+public:
+    ClientRequestNotSupportedException(const char* _file_, const char* _function_, int _line_, const char* _err_msg_) :
+        SednaUserSoftException(_file_, _function_, _line_, _err_msg_) { };
+};
+
+class TransactionProcessor
+{
+    client_core * client;
+    SSMMsg * smServer;
+    opt::IStatement * currentStatement;
+public:
+    TransactionProcessor(client_core * _client, SSMMsg * sm_server)
+        : client(_client), smServer(sm_server), currentStatement(NULL)
+    {
+    };
+
+    ~TransactionProcessor()
+    {
+        delete currentStatement;
+    };
+
+    void run()
+    {
+        msg_struct client_msg;
+        bool transactionAlive = true;
+        uint64_t total_time = 0;
+
+        on_transaction_begin(smServer, tr_globals::ppc);
+        client->respond_to_client(se_BeginTransactionOk);
+
+        try {
+            do {
+                client->read_msg(&client_msg);
+                switch (client_msg.instruction) {
+                    /* TODO : move session options handling to client */
+                    case se_SetSessionOptions:
+                        client->set_session_options(&client_msg); break;
+                    case se_ResetSessionOptions:
+                        client->reset_session_options(); break;
+                    case se_Authenticate:
+                    {
+                        do_authentication();
+                        client->authentication_result(true, "");
+                    } break;
+
+                    case se_ExecuteSchemeProgram:  
+                    {
+                        /* Backward compatibility, not currently supported */
+                        throw ClientRequestNotSupportedException(DEFAULT_EXCEPTION_PARAMETERS, "Scheme program execution is depricated");
+                        break;
+                    }
+
+                    case se_ExecuteLong:
+                    case se_Execute:
+                    {
+                        if (currentStatement != NULL) {
+                            delete currentStatement;
+                            currentStatement = NULL;
+                        }
+
+                        /* Adjust client for the new statement */
+                        client->set_result_type((enum se_output_method) (client_msg.body[0]));
+                        client->user_statement_begin();
+
+                        currentStatement = new opt::ExplainStatement(client);
+
+                        currentStatement->prepare(
+                            client->get_query_type(),
+                            client->get_query_string(&client_msg));
+
+                        currentStatement->execute();
+
+                        /* If no exception, consider query succeded */
+                        client->respond_to_client(se_QuerySucceeded);
+
+                        /* Get the first item, no break */
+                    };
+                    case se_GetNextItem:
+                    {
+                        if (currentStatement == NULL) {
+                            U_ASSERT(false);
+                            // Statement not prepared;
+                        };
+
+                        currentStatement->next();
+                        /* TODO: implement time */
+//                        total_time += currentStatement->time;
+                    } break;
+                    case se_ShowTime:      //show time
+                    {
+                        client->show_time_ex(total_time);
+                        break;
+                    }
+                    case se_CommitTransaction:
+                    case se_RollbackTransaction:
+                    case se_CloseConnection:
+                    {
+                        if (currentStatement != NULL) {
+                            delete currentStatement;
+                            currentStatement = NULL;
+                        }
+
+                        transactionAlive = false;
+
+                        on_transaction_end(
+                          smServer,
+                          client_msg.instruction == se_CommitTransaction,
+                          tr_globals::ppc);
+
+                        switch (client_msg.instruction) {
+                          case se_CommitTransaction:
+                            client->respond_to_client(se_CommitTransactionOk); break;
+                          case se_RollbackTransaction:
+                            client->respond_to_client(se_RollbackTransactionOk); break;
+                          case se_CloseConnection:
+                            client->respond_to_client(se_TransactionRollbackBeforeClose); break;
+                          default :
+                            U_ASSERT(false);
+                        };
+                    } break;
+
+                    default:
+                    {
+                        client->process_unknown_instruction(client_msg.instruction, true);
+                        break;
+                    }
+                }
+            } while (transactionAlive);
+        } catch (SednaUserException & userException) {
+            on_transaction_end(smServer, false, tr_globals::ppc);
+        } catch (std::exception & exception) {
+            U_ASSERT(false);
+            on_transaction_end(smServer, false, tr_globals::ppc);
+            throw;
+        }
+    };
+};
 
 int TRmain(int argc, char *argv[])
 {
@@ -183,9 +327,6 @@ int TRmain(int argc, char *argv[])
         on_session_begin(sm_server, db_id, run_recovery);
         elog(EL_LOG, ("Session is ready"));
 
-        /* stores QEP of the current statement */
-        PPQueryEssence *qep_tree = NULL;
-        StmntsArray *st = NULL;
         bool expect_another_transaction = !run_recovery;
 
 #ifdef RCV_TEST_CRASH
@@ -210,243 +351,31 @@ int TRmain(int argc, char *argv[])
         while (expect_another_transaction)
         {
             client->read_msg(&client_msg);
-            if (client_msg.instruction == se_BeginTransaction)  //BeginTransaction
-            {
-                try
+            switch (client_msg.instruction) {
+                case se_BeginTransaction:
                 {
-                    on_transaction_begin(sm_server, tr_globals::ppc);
-                    client->respond_to_client(se_BeginTransactionOk);
-
-                    qep_tree = NULL; //qep of current stmnt
-                    st = NULL;
-                    qepNextAnswer item_status = se_no_next_item;
-
-                    d_printf1("============== Trn execution started ======================\n");
-
-                    /////////////////////////////////////////////////////////////////////////////////
-                    /// CYCLE BY COMMANDS OF ONE TRANSACTION
-                    /////////////////////////////////////////////////////////////////////////////////
-                    do          //cycle by commands of one transaction
-                    {
-                        client->read_msg(&client_msg);
-                        switch (client_msg.instruction)
-                        {
-                        case se_Authenticate:  //authentication
-                            {
-                                do_authentication();
-                                client->authentication_result(true, "");
-                                break;
-                            }
-
-                        case se_ExecuteSchemeProgram:  //Execute Scheme program
-                            {
-                                d_printf2("Scheme program from file=%s is executed\n", client_msg.body);
-                                break;
-                            }
-
-                        case se_ExecuteLong:   //execute long query command
-                        case se_Execute:       //execute query command
-                            {
-                                u_ftime(&t_qep1);
-                                //print for test system
-                                d_printf1("\n============== statement =================\n");
-
-                                // close previous statement
-                                on_user_statement_end(qep_tree, st);
-
-                                /* Adjust client for the new statement */
-                                client->set_result_type((enum se_output_method) (client_msg.body[0]));
-                                client->user_statement_begin();
-
-                                on_user_statement_begin(client->get_query_type(),
-                                    client->get_query_string(&client_msg),
-                                    qep_tree, st);
-
-
-                                if (qep_tree->is_update())
-                                {
-                                    GET_TIME(&t1_exec);
-
-                                    execute(qep_tree);
-                                    GET_TIME(&t2_exec);
-                                    client->respond_to_client(se_UpdateSucceeded);
-                                    on_user_statement_end(qep_tree, st);
-                                }
-                                else if (!(qep_tree->supports_next()))
-                                {
-                                    client->respond_to_client(se_QuerySucceeded);
-                                    GET_TIME(&t1_exec);
-                                    item_status = execute(qep_tree);
-                                    GET_TIME(&t2_exec);
-
-                                    client->end_item(item_status);
-
-                                    on_user_statement_end(qep_tree, st);
-                                }
-                                else
-                                {
-                                    client->respond_to_client(se_QuerySucceeded);
-                                    GET_TIME(&t1_exec);
-                                    item_status = next(qep_tree);
-                                    GET_TIME(&t2_exec);
-
-                                    client->end_item(item_status);
-                                    if (item_status != se_next_item_exists) {
-                                        on_user_statement_end(qep_tree, st);
-                                    }
-                                }
-
-                                u_ftime(&t_qep2);
-                                t_qep = (t_qep2 - t_qep1);
-
-                                ADD_TIME(t_total_exec, t1_exec, t2_exec);
-
-                                break;
-                            }
-
-                        case se_GetNextItem:   //next portion command
-                            {
-                                u_ftime(&t_qep1);
-                                if (qep_tree) // if statement execution is in progress
-                                {
-                                    if (item_status == se_next_item_exists)
-                                    {
-                                        GET_TIME(&t1_exec);
-                                        item_status = next(qep_tree);
-
-                                        GET_TIME(&t2_exec);
-                                    }
-                                    client->end_item(item_status);
-                                    u_ftime(&t_qep2);
-                                    t_qep = (t_qep2 - (t_qep1 - t_qep));
-
-                                    if (item_status != se_next_item_exists)
-                                    {
-                                        on_user_statement_end(qep_tree, st);
-                                    }
-                                }
-
-                                ADD_TIME(t_total_exec, t1_exec, t2_exec);
-
-                                break;
-                            }
-
-                        case se_CommitTransaction:     //commit command
-                            {
-                                on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, true /*COMMIT*/, tr_globals::ppc);
-                                ret_code = 0;
-
-                                client->respond_to_client(se_CommitTransactionOk);
-                                d_printf1("============== Trn execution finished ======================\n");
-                                break;
-                            }
-
-                        case se_RollbackTransaction:   //rollback command
-                            {
-                                on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, false /*ROLLBACK*/, tr_globals::ppc);
-                                ret_code = 0;
-
-                                client->respond_to_client(se_RollbackTransactionOk);
-                                d_printf1("============== Trn execution finished ======================\n");
-                                break;
-                            }
-                        case se_ShowTime:      //show time
-                            {
-                                client->show_time(t_qep);
-                                break;
-                            }
-                        case se_CloseConnection:       //close connection
-                            {
-                                on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, false /*ROLLBACK*/, tr_globals::ppc);
-                                ret_code = 1;
-
-                                client->respond_to_client(se_TransactionRollbackBeforeClose);
-                                d_printf1("============== Trn execution finished ======================\n");
-                                break;
-                            }
-                        case se_SetSessionOptions:
-                            {
-                                client->set_session_options(&client_msg);
-                                break;
-                            }
-                        case se_ResetSessionOptions:
-                            {
-                                client->reset_session_options();
-                                break;
-                            }
-                        default:
-                            {
-                                client->process_unknown_instruction(client_msg.instruction, true);
-                                break;
-                            }
-                        }       //end switch
-
-                    }
-                    while (client_msg.instruction != se_CommitTransaction && client_msg.instruction != se_RollbackTransaction && client_msg.instruction != se_CloseConnection);
-                    /////////////////////////////////////////////////////////////////////////////////
-                    /// END OF CYCLE BY COMMANDS OF ONE TRANSACTION
-                    /////////////////////////////////////////////////////////////////////////////////
-
-                }
-                catch(SednaUserException & e)
+                    TransactionProcessor transaction(client, sm_server);
+                    transaction.run();
+                } break;
+                case se_CloseConnection:
                 {
-                    on_user_statement_end(qep_tree, st);
-                    on_transaction_end(sm_server, false /*ROLLBACK*/, tr_globals::ppc);
-                    ret_code = 1;
-
-                    d_printf1("\nTr is rolled back successfully\n");
-
-                    /* Client session must be closed if we
-                    * have one of the following errors */
-                    if (e.get_code() == SE3053 || e.get_code() == SE3006 || e.get_code() == SE3007 || e.get_code() == SE3009 || e.get_code() == SE3012)
-                    {
-                        ret_code = 1;
-                        throw;
-                    }
-
-                    fprintf(stderr, "%s\n", e.what());
-                    client->error(e.get_code(), e.getMsg());
-                }
-                catch(SednaException & e)
+                    client->respond_to_client(se_CloseConnectionOk);
+                    client->release();
+                    delete client;
+                    expect_another_transaction = false;
+                } break;
+                case se_ShowTime:
                 {
-                    sedna_soft_fault(e, EL_TRN);
-                }
-                catch(ANY_SE_EXCEPTION)
-                {
-                    sedna_soft_fault(EL_TRN);
-                }
-            }
-            else if (client_msg.instruction == se_CloseConnection)      // CloseConnection
-            {
-                client->respond_to_client(se_CloseConnectionOk);
-                client->release();
-                delete client;
-                expect_another_transaction = false;
-            }
-            else if (client_msg.instruction == se_ShowTime)             // ShowTime
-            {
-                client->show_time(t_qep);
-            }
-            else if (client_msg.instruction == se_SetSessionOptions)    // Set session options
-            {
-                client->set_session_options(&client_msg);
-            }
-            else if (client_msg.instruction == se_ResetSessionOptions)  // Reset all session options to their default values
-            {
-                client->reset_session_options();
-            }
-            else
-            {
-                client->process_unknown_instruction(client_msg.instruction, false);
-            }
+                    client->show_time_ex(0);
+                } break;
+                default:
+                    client->process_unknown_instruction(client_msg.instruction, false); break;
+            };
         }
+
         /////////////////////////////////////////////////////////////////////////////////
         /// END OF CYCLE BY TRANSACTIONS
         /////////////////////////////////////////////////////////////////////////////////
-
 
         on_session_end(sm_server);
 

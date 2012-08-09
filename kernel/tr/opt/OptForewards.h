@@ -9,15 +9,13 @@
 class DataRoot;
 class XmlConstructor;
 
-struct PlanExecutor;
-
 namespace rqp {
     class RPBase;
     class MapGraph;
     class PlanContext;
-    class FunCall;
+    class FunCallParams;
 
-    struct PlanRewriter;
+    struct RewritingContext;
 }
 
 namespace pe {
@@ -41,7 +39,7 @@ namespace executor
     class IExecuteProc;
 
     struct DynamicContext;
-    struct ExecutionStack;
+    struct VirtualSequence;
 
     struct VariableProducer;
     struct VarCacheInfo;
@@ -50,8 +48,10 @@ namespace executor
 
 namespace opt
 {
+    class GraphCompiler;
+
 /* Data graph */
-    struct DataGraphMaster;
+    struct VariableUsageGraph;
 
     struct DataNode;
     struct Variable;

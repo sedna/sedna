@@ -34,19 +34,17 @@ class VarIn : public ConstantOperation {
     RTTI_DECL(plan_operation_VarIn, ConstantOperation)
 protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
-private:
 public:
-    /* Phantom datanode */
-    opt::DataNode * dnode;
-    void setDataNode(opt::TupleId _tid);
+    opt::TupleId variable;
 
     explicit VarIn(opt::TupleId _tid)
-      : ConstantOperation(SELF_RTTI_REF)
+      : ConstantOperation(SELF_RTTI_REF), variable(_tid)
     {
-        setDataNode(_tid);
+        context->varGraph.addVariableUsage(variable, this, NULL);
+        dependantVariables.insert(_tid);
     };
 
-    opt::TupleId tuple() const { return dnode->varTupleId; }
+    PROPERTY_RO(Tuple, opt::TupleId, variable)
 };
 
 /**

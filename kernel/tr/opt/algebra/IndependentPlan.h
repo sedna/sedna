@@ -17,8 +17,8 @@
 #include "tr/opt/OptTypes.h"
 
 #include "tr/opt/algebra/PlanOperations.h"
-#include "tr/opt/types/TupleScheme.h"
 #include "tr/opt/path/XPathTypes.h"
+#include "tr/opt/graphs/VariableGraph.h"
 
 #include "tr/models/XmlConstructor.h"
 #include "tr/models/rtti.h"
@@ -34,17 +34,11 @@ namespace rqp {
 typedef int ScopeMarker;
 typedef std::stack<opt::TupleId> ScopeStack;
 typedef std::map<std::string, opt::TupleId> VarNameMap;
-typedef std::map<opt::TupleId, TupleDefinition> GreatTupleScheme;
-typedef std::vector< RPBase * > OperationList;
-
-typedef VarNameMap::value_type VarMapRecord;
-typedef GreatTupleScheme::value_type GreatMapRecord;
 
 class PlanContext {
   private:
     ScopeMarker lastScopeMarker;
     opt::TupleId currentTupleId;
-    GreatTupleScheme greatTupleScheme;
 
     ScopeStack scopeStack;
     VarNameMap scope;
@@ -53,9 +47,10 @@ class PlanContext {
     PlanContext();
     ~PlanContext();
 
-    const TupleDefinition * getVarDef(opt::TupleId tid) const { return &(greatTupleScheme.at(tid)); };
+    opt::VariableUsageGraph varGraph;
 
-    opt::TupleId generateTupleId();
+    opt::TupleId generateTupleId() { return ++currentTupleId; };
+
     opt::TupleId generateTupleIdVarScoped(const std::string & varName);
     opt::TupleId getVarTupleInScope(const std::string & canonicalName);
 
@@ -74,20 +69,25 @@ protected:
     PlanContext * context;
     static int opids;
     int opuid;
+    opt::TupleScheme dependantVariables;
 
     virtual XmlConstructor & __toXML(XmlConstructor &) const = 0;
 public:
     OperationList children;
     int resultChild;
 
-    RPBase(clsinfo_t op) : ObjectBase(op), context(optimizer->context()), opuid(opids++), resultChild(-1) {};
+    RPBase(clsinfo_t op) : ObjectBase(op), context(optimizer->planContext()), opuid(opids++), resultChild(-1) {};
     inline int oid() const { return opuid; };
 
     /* Replace child operation op with another operation */
     void replace(RPBase * op, RPBase * with);
     PlanContext * getContext() const { return context; };
+
     RPBase * result() { if (resultChild > -1) { return children[resultChild]; } else { return (RPBase *)(NULL); } };
 
+    const opt::TupleScheme & dependsOn() const { return dependantVariables; }
+
+    virtual void evaluateTo(executor::DynamicContext * dynamicContext) { U_ASSERT(false); };
     virtual XmlConstructor& toXML(XmlConstructor& constructor) const;
 };
 
@@ -118,6 +118,7 @@ public:
     ListOperation(clsinfo_t op, RPBase * list_)
       : RPBase(op) {
         children.push_back(list_);
+        dependantVariables.insert(list_->dependsOn().begin(), list_->dependsOn().end());
     };
 
     PROPERTY(List, RPBase *, children[0])
@@ -136,11 +137,16 @@ public:
     {
         for (OperationList::const_iterator it = _oplist.begin(); it != _oplist.end(); ++it) {
             children.push_back(*it);
+            dependantVariables.insert((*it)->dependsOn().begin(), (*it)->dependsOn().end());
         };
     };
 
     ManyChildren(clsinfo_t op, RPBase* _in)
-      : RPBase(op) { children.push_back(_in); };
+      : RPBase(op)
+    {
+          children.push_back(_in);
+          dependantVariables.insert(_in->dependsOn().begin(), _in->dependsOn().end());
+    };
 };
 
 }

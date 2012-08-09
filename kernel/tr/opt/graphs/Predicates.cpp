@@ -26,6 +26,13 @@ ValuePredicate::ValuePredicate(DataNode* left, DataNode* right, const Comparison
 
 }
 
+FnDocPredicate::FnDocPredicate(DataNode* left, DataNode* right)
+    : BinaryPredicate(left, right)
+{
+
+}
+
+
 void * StructuralPredicate::compile(PhysicalModel* model)
 {
     return model->compile(this);
@@ -35,6 +42,13 @@ void * ValuePredicate::compile(PhysicalModel* model)
 {
     return model->compile(this);
 }
+
+void* FnDocPredicate::compile(PhysicalModel* model)
+{
+    return NULL;
+//    return model->c
+}
+
 
 /* Serialization */
 
@@ -110,3 +124,17 @@ XmlConstructor & ValuePredicate::toXML(XmlConstructor & element) const
 
     return element;
 }
+
+XmlConstructor& FnDocPredicate::toXML(XmlConstructor& element) const
+{
+    element.openElement(SE_EL_NAME("FnDocPredicate"));
+
+    element.addAttributeValue(SE_EL_NAME("id"), tuple_cell::atomic_int(index));
+    element.addElementValue(SE_EL_NAME("left"), tuple_cell::atomic_int(left()->index));
+    element.addElementValue(SE_EL_NAME("right"), tuple_cell::atomic_int(right()->index));
+
+    element.closeElement();
+
+    return element;
+}
+

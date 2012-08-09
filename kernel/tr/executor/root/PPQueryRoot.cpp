@@ -16,8 +16,6 @@
 #include "tr/opt/algebra/PlanAlgorithms.h"
 #include "tr/models/XmlConstructor.h"
 
-#include "tr/opt/algorithms/ExecutionContext.h"
-
 PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
                          PPOpIn _child_) :       PPQueryEssence("PPQueryRoot"),
                                                  child(_child_),
@@ -118,61 +116,6 @@ void sendTupleCellToClient(const tuple_cell & tc)
 
 bool PPQueryRoot::do_next()
 {
-    static int hui = 0;
-
-    if (first) {
-        first = false;
-        hui = 0;
-
-        XmlConstructor xmlConstructor(VirtualRootConstructor(0));
-        data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
-        sendTupleCellToClient(data.cells[0]);
-
-        hui = 1;
-
-    //    data.cells[0].set_eos();
-
-        return true;
-    } else {
-        if (hui == 1) {
-            if (optimizedPlan != NULL) {
-                optimizedPlan = rqp::PlanRewriter::rewrite(optimizedPlan);
-            }
-
-            XmlConstructor xmlConstructor(VirtualRootConstructor(0));
-            xmlConstructor.openElement(SE_EL_NAME("plan"));
-            optimizedPlan->toXML(xmlConstructor);
-            optimizer->dgm()->toXML(xmlConstructor);
-            xmlConstructor.closeElement();
-
-            data.cells[0] = xmlConstructor.getLastChild();
-            sendTupleCellToClient(data.cells[0]);
-
-            hui = 2;
-            return true;
-        } else if (hui == 2 || hui == 3) {
-            if (hui == 2) {
-                optimizer->pexecutor()->execute(optimizedPlan);
-                hui = 3;
-            }
-
-            data.cells[0] = optimizer->pexecutor()->rootStack->next();
-            if (!data.cells[0].is_eos()) {
-/*
-                if (data.cells[0].is_node()) {
-                    data.cells[0] =
-                      tuple_cell::atomic_deep(xs_string, schemaPath(getSchemaNode(data.cells[0].get_node())).c_str());
-                };
-*/
-                sendTupleCellToClient(data.cells[0]);
-                return true;
-            }
-
-            first = true;
-            return false;
-        };
-    };
-
     if (first) {
         tr_globals::create_serializer(tr_globals::client->get_result_type());
     }

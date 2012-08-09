@@ -11,8 +11,6 @@
 #include "tr/nid/nidalloc.h"
 #include "tr/nid/nid.h"
 
-#include "ExecutionContext.h"
-
 using namespace phop;
 
 RTTI_DEF(DocOrderMerge)

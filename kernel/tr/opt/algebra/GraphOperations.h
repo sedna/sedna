@@ -16,12 +16,16 @@ private:
 public:
     opt::TupleScheme groupBy;
 
+    void updateVarGraph();
+
     MapGraph(RPBase* _list, opt::DataGraph * function_, const opt::TupleScheme & _groupBy)
       : ManyChildren(SELF_RTTI_REF, _list), func(function_), groupBy(_groupBy)
     {
         list_id = children.size() - 1;
         function_->operation = this;
         resultChild = list_id;
+
+        updateVarGraph();
     };
 
     opt::DataGraphIndex & graph() { return func; }
@@ -30,8 +34,8 @@ public:
     void joinGraph(opt::DataGraphIndex & dg);
     void leftJoinGraph(opt::DataGraphIndex & dg);
 
-    executor::IExecuteProc * getExecutor();
-    
+    virtual void evaluateTo(executor::DynamicContext* dynamicContext);
+
     PROPERTY_RO(List, RPBase *, children[list_id])
 };
 

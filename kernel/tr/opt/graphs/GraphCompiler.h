@@ -22,8 +22,8 @@ class GraphCompiler
     };
 
 public:
-//    GraphCompiler(DataGraphMaster * dgm);
-    phop::GraphExecutionBlock* compile(opt::DataGraphIndex& graph, executor::DynamicContext* context);
+//    GraphCompiler(VariableUsageGraph * dgm);
+    phop::GraphExecutionBlock* compile(opt::DataGraphIndex& graph);
 };
 
 };

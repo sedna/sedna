@@ -263,16 +263,16 @@ PathTraverse::PathTraverse(const pe::AtomizedPath& _path)
 
 
 
-typedef std::pair<AtomizedPathVector::const_iterator, schema_node_cptr> ExecutionStackItem;
-typedef std::stack<ExecutionStackItem> ExecutionStack;
+typedef std::pair<AtomizedPathVector::const_iterator, schema_node_cptr> VirtualSequenceItem;
+typedef std::stack<VirtualSequenceItem> VirtualSequence;
 
 bool executeSchemaPathTest(schema_node_cptr base, const AtomizedPath & path, SchemaNodePtrSet * output, bool _fast)
 {
-    ExecutionStack toTraverse;
-    toTraverse.push(ExecutionStackItem(path.begin(), base));
+    VirtualSequence toTraverse;
+    toTraverse.push(VirtualSequenceItem(path.begin(), base));
     
     do {
-        ExecutionStackItem step = toTraverse.top();
+        VirtualSequenceItem step = toTraverse.top();
         toTraverse.pop();
 
         if (step.first == path.end()) {
@@ -294,16 +294,16 @@ bool executeSchemaPathTest(schema_node_cptr base, const AtomizedPath & path, Sch
             t_item childMask = (t_item) 0;
             
             if (axisStep->orSelf) {
-                toTraverse.push(ExecutionStackItem(step.first + 1, base));
+                toTraverse.push(VirtualSequenceItem(step.first + 1, base));
             };
             
             switch (axisStep->axis) {
                 case axis_parent:
                     if (base->parent != XNULL) {
-                        toTraverse.push(ExecutionStackItem(step.first + 1, base->parent));
+                        toTraverse.push(VirtualSequenceItem(step.first + 1, base->parent));
                         
                         if (axisStep->closure) {
-                            toTraverse.push(ExecutionStackItem(step.first, base->parent));
+                            toTraverse.push(VirtualSequenceItem(step.first, base->parent));
                         }
                     }
                     
@@ -323,13 +323,13 @@ bool executeSchemaPathTest(schema_node_cptr base, const AtomizedPath & path, Sch
             
             CAT_FOR_EACH(sc_ref, i, (base->children)) {
                 if ((i->object.type & childMask) != 0) {
-                    toTraverse.push(ExecutionStackItem(step.first + 1, i->object.snode));
+                    toTraverse.push(VirtualSequenceItem(step.first + 1, i->object.snode));
                     
                     if (axisStep->closure && ((i->object.type & ti_with_children) > 0)) {
                         /* In fast mode we do not traverse child closures (descendants) */
                         
                         if (_fast) { return true; }
-                        toTraverse.push(ExecutionStackItem(step.first, i->object.snode));
+                        toTraverse.push(VirtualSequenceItem(step.first, i->object.snode));
                     }
                 };
             };
@@ -337,7 +337,7 @@ bool executeSchemaPathTest(schema_node_cptr base, const AtomizedPath & path, Sch
             SchemaTestAtom * test =  dynamic_cast<SchemaTestAtom *>(item);
             
             if (test->test(base)) {
-                toTraverse.push(ExecutionStackItem(step.first + 1, base));
+                toTraverse.push(VirtualSequenceItem(step.first + 1, base));
             };
         } else {
             U_ASSERT(false);

@@ -52,10 +52,9 @@ private:
     friend class IOperator;
     tuple * previous;
 public:
+    executor::DynamicContext * dynamicContext;
+  
     OperationFlags flags;
-
-    executor::DynamicContext * context;
-    void setContext(executor::DynamicContext * __context) { context = __context; };
 
     Operators body;
     OperatorMap operatorMap;

@@ -138,6 +138,8 @@ Errors could be outputted to the user in the format of <sedna-message>:
 #include "common/utils.h"
 #include "common/errdbg/error_codes.h"
 
+#define DEFAULT_EXCEPTION_PARAMETERS __FILE__, __SE_FUNCTION__, __LINE__
+
 /*	Never use catch(...), use catch(ANY_SE_EXCEPTION) instead. Catch(...) 
 	statement is missinterpreted by cl version 13 and earlier ones. It catches
 	not just any C++ object coming from 'throw' statement (as per C++ standard)

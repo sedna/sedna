@@ -8,43 +8,29 @@ struct IFunctionData {
     virtual ~IFunctionData() {};
 };
 
-typedef bool (*rule_func_t) (rqp::PlanRewriter * pr, rqp::FunCall * op);
-
 namespace phop {
-  
+
 struct function_info_t
 {
-    rule_func_t rule_func;
+    const char * default_prefix;
+    const char * uri;
+    const char * localname;
 };
 
 struct FunctionInfo
 {
-    const char * uri;
-    const char * localname;
     const function_info_t * finfo;
-    IFunctionData * default_data;
-    const char * default_prefix;
+
+    FunctionInfo(const function_info_t * _finfo) : finfo(_finfo) {};
+    virtual ~FunctionInfo() {};
 
     xsd::QName getQName() const
     {
-        return xsd::constQName(xmlns_touch(default_prefix, uri), localname);
+        return xsd::constQName(xmlns_touch(finfo->default_prefix, finfo->uri), finfo->localname);
     };
 
-    FunctionInfo(
-        const char * _default_prefix,
-        const char * _uri,
-        const char * _localname,
-        const function_info_t * _finfo) :
-
-      uri(_uri),
-      localname(_localname),
-      finfo(_finfo),
-      default_data(NULL),
-      default_prefix(_default_prefix)
-
-        {};
-
-    ~FunctionInfo() { delete default_data; };
+    virtual void execute(rqp::FunCallParams * funcall, executor::DynamicContext * dynamicContext) = 0;
+    virtual bool transform(rqp::FunCallParams * funcall, rqp::RewritingContext * rewritingContext) = 0;
 };
 
 typedef std::map<std::string, FunctionInfo *> FunctionMap;
@@ -57,12 +43,7 @@ public:
     FunctionLibrary();
     ~FunctionLibrary();
 
-    FunctionInfo * registerFunction(
-        const char * default_prefix,
-        const char * uri,
-        const char * localname,
-        const function_info_t * finfo);
-
+    FunctionInfo * registerFunction(FunctionInfo * finfo);
     FunctionInfo * findFunction(const xsd::QName & qname);
 };
 

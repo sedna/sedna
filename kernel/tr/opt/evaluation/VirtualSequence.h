@@ -1,5 +1,5 @@
-#ifndef _EXECUTION_STACK_H_
-#define _EXECUTION_STACK_H_
+#ifndef _VIRTUAL_SEQUENCE_H_
+#define _VIRTUAL_SEQUENCE_H_
 
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/algebra/IndependentPlan.h"
@@ -7,15 +7,19 @@
 
 namespace executor {
 
-//typedef void (* ExecutorProc)(void * object, ExecutionStack * executor);
+//typedef void (* ExecutorProc)(void * object, VirtualSequence * executor);
 
+/** @brief Interface for an object, that can continue a lazy sequence
+ */
 class IExecuteProc
 {
 public:
     virtual ~IExecuteProc() {};
-    virtual void execute(ExecutionStack * executor) = 0;
+    virtual void execute(VirtualSequence * sequence) = 0;
 };
 
+/** @brief Item of virtual sequence
+ */
 struct Result
 {
     IExecuteProc * next;
@@ -23,24 +27,31 @@ struct Result
 
     explicit Result(const tuple_cell & _tc) : next(NULL), value(_tc) {};
     explicit Result(IExecuteProc * _next) : next(_next) {};
-
-//    ~Result() { delete next; } TODO : should somehow delete itself
 };
 
 // TODO : optimize result stack as it will be one of the most critical elements
 
 typedef std::list<Result> ResultStack;
 
-struct ExecutionStack
+/** @brief Lazy evaluation implementation sequence
+ */
+struct VirtualSequence
 {
 private:
     ResultStack result;
     ResultStack::iterator position;
 public:
+    /** @brief Dynamic context of the sequence.
+     * It is assigned only when sequence is assigned to the context,
+     * so it is not mandatory
+     */
+
+    executor::DynamicContext * context;
+
     void push(const Result& _result) { position = result.insert(position, _result); };
 
-    ExecutionStack() { position = result.begin(); };
-    
+    VirtualSequence() : context(NULL) { position = result.begin(); };
+
     inline void clear()
     {
         result.clear();
@@ -73,4 +84,4 @@ public:
 
 };
 
-#endif /* _EXECUTION_STACK_H_ */
+#endif /* _VIRTUAL_SEQUENCE_ */

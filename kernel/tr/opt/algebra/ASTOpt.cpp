@@ -2,6 +2,7 @@
 
 #include "tr/opt/algebra/AllOperations.h"
 #include "tr/opt/functions/AllFunctions.h"
+#include "tr/opt/functions/FnAxisStep.h"
 #include "tr/executor/base/XPath.h"
 
 using namespace sedna;
@@ -35,9 +36,9 @@ struct StaticContext {
 
     void generateContext()
     {
-        context.item = optimizer->context()->generateTupleId();
-        context.position = optimizer->context()->generateTupleId();
-        context.size = optimizer->context()->generateTupleId();
+        context.item = optimizer->planContext()->generateTupleId();
+        context.position = optimizer->planContext()->generateTupleId();
+        context.size = optimizer->planContext()->generateTupleId();
     };
 
     RPBase * popResult() {
@@ -64,6 +65,7 @@ lr2opt::lr2opt(XQueryDriver* drv_, XQueryModule* mod_, dynamic_context* dyn_cxt_
     context->context = invalidContext;
     // TODO : remove this hack
     context->collation = static_context::collation_manager.get_default_collation_handler();
+    planContext = optimizer->planContext();
 }
 
 lr2opt::~lr2opt()
@@ -123,13 +125,13 @@ void lr2opt::visit(ASTAxisStep &n)
         throw USER_EXCEPTION(2902);
     }
 
-    RPBase * resultOp = null_op;
+    RPBase * parentOp = null_op;
 
     if (n.cont != NULL) {
         n.cont->accept(*this);
-        resultOp = context->popResult();
+        parentOp = context->popResult();
     } else {
-        resultOp = context->getContextVariableOp();
+        parentOp = context->getContextVariableOp();
     };
 
     if (n.test == NULL) {
@@ -138,7 +140,12 @@ void lr2opt::visit(ASTAxisStep &n)
         n.test->accept(*this);
     }
 
-    resultOp = new XPathStep(resultOp, pe::Step(info.axis, info.nodeTest, info.tqname));
+    opt::TupleId param = planContext->generateTupleId();
+
+    RPBase * resultOp = new FunCallParams(
+        axisStepFunction,
+        new AxisStepData(pe::Step(info.axis, info.nodeTest, info.tqname)),
+        fParams(param));
 
     context->stepStack.pop();
 
@@ -156,11 +163,15 @@ void lr2opt::visit(ASTAxisStep &n)
                   /* If holds */ new VarIn(context->context.item),
                   null_op),
                 resultOp,
-                context->context);
+                context->context.item);
         }
 
         context->context = saveContextVariable;
     }
+
+    U_ASSERT(parentOp != null_op);
+
+    resultOp = new MapConcat(resultOp, parentOp, param);
 
     context->resultStack.push(ResultInfo(resultOp));
 }
@@ -179,7 +190,7 @@ void lr2opt::visit(ASTFilterStep &n) {
         ContextInfo saveContextVariable = context->context;
         context->generateContext();
         n.expr->accept(*this);
-        resultOp = new MapConcat(context->popResult(), resultOp, context->context);
+        resultOp = new MapConcat(context->popResult(), resultOp, context->context.item);
         context->context = saveContextVariable;
     }
     
@@ -197,7 +208,7 @@ void lr2opt::visit(ASTFilterStep &n) {
                   /* If holds */ new VarIn(context->context.item),
                   null_op),
                 resultOp,
-                context->context);
+                context->context.item);
         }
 
         context->context = saveContextVariable;
@@ -405,6 +416,7 @@ void lr2opt::visit(ASTFunCall &n) {
         // TODO: make strict param clearness;
 
         OperationList oplist;
+
         n.params->at(0)->accept(*this);
         oplist.push_back(context->resultStack.top().op);
         context->resultStack.pop();
@@ -426,8 +438,13 @@ void lr2opt::visit(ASTFunCall &n) {
             U_ASSERT(false);
             XQUERY_EXCEPTION2(0017, "Function not found");
         };
-        
-        context->resultStack.push(ResultInfo(new FunCall(f, f->default_data, oplist)));
+
+        opt::TupleId param = planContext->generateTupleId();
+
+        context->resultStack.push(ResultInfo(
+          new SequenceConcat(
+            new FunCallParams(f, NULL, fParams(param)),
+              oplist.at(0), param)));
     } else {
         throw USER_EXCEPTION(2902);
     }
@@ -468,10 +485,17 @@ void lr2opt::visit(ASTBop &n) {
            throw USER_EXCEPTION(2902);
         };
 
+        opt::TupleId leftSequenceId = planContext->generateTupleId();
+        opt::TupleId rightSequenceId = planContext->generateTupleId();
+
         context->resultStack.push(ResultInfo(
-            new FunCall(general_comparison_function,
-                new ComparisonData(cmp),
-                leftSequence, rightSequence)));
+            new SequenceConcat(
+              new SequenceConcat(
+                new FunCallParams(generalComparisonFunction,
+                    new ComparisonData(cmp),
+                    fParams(leftSequenceId, rightSequenceId)),
+                leftSequence, leftSequenceId),
+            rightSequence, rightSequenceId)));
     } else {
         U_ASSERT(false);
     };
@@ -506,7 +530,7 @@ void lr2opt::visit(ASTIf &n) {
 
 void lr2opt::visit(ASTQuantExpr &n)
 {
-    ScopeMarker scopeMarker = optimizer->context()->setScopeMarker();
+    ScopeMarker scopeMarker = optimizer->planContext()->setScopeMarker();
 
     n.expr->accept(*this);
 
@@ -533,7 +557,7 @@ void lr2opt::visit(ASTQuantExpr &n)
         
         context->resultStack.push(ResultInfo(
             new Exists(
-                new rqp::MapConcat(predicate, expression, varBinding))));
+                new rqp::MapConcat(predicate, expression, varBinding.item))));
     }
     else /* EVERY */
     {
@@ -547,7 +571,7 @@ void lr2opt::visit(ASTQuantExpr &n)
 */                
     }
 
-    optimizer->context()->clearScopesToMarker(scopeMarker);
+    optimizer->planContext()->clearScopesToMarker(scopeMarker);
 }
 
 void lr2opt::visit(ASTTypeSwitch &n) {
@@ -564,10 +588,10 @@ void lr2opt::visit(ASTSeq &n) {
 void lr2opt::visit(ASTFLWOR &n) {
     std::stack<ResultInfo> operationStack;
 
-    ScopeMarker scopeMarker = optimizer->context()->setScopeMarker();
+    ScopeMarker scopeMarker = optimizer->planContext()->setScopeMarker();
     
     for (ASTNodesVector::const_iterator fl = n.fls->begin(); fl != n.fls->end(); fl++) {
-        optimizer->context()->newScope();
+        optimizer->planContext()->newScope();
         (*fl)->accept(*this);
 
         operationStack.push(context->resultStack.top());
@@ -592,7 +616,7 @@ void lr2opt::visit(ASTFLWOR &n) {
         switch (operationStack.top().opid) {
           case MapConcat::clsid :
             context->resultStack.top().op =
-              new MapConcat(context->resultStack.top().op, operationStack.top().op, operationStack.top().variable);
+              new MapConcat(context->resultStack.top().op, operationStack.top().op, operationStack.top().variable.item);
             break;
           case SequenceConcat::clsid :
             context->resultStack.top().op =
@@ -609,8 +633,8 @@ void lr2opt::visit(ASTFLWOR &n) {
         
         operationStack.pop();
     };
-    
-    optimizer->context()->clearScopesToMarker(scopeMarker);
+
+    optimizer->planContext()->clearScopesToMarker(scopeMarker);
 }
 
 void lr2opt::visit(ASTFor &n) {
@@ -673,7 +697,7 @@ void lr2opt::visit(ASTTypeSeq &n) {
 
 void lr2opt::visit(ASTTypeVar &n) {
     std::string varName = static_cast<ASTVar *>(n.var)->getStandardName();
-    opt::TupleId varBinding = optimizer->context()->generateTupleIdVarScoped(varName);
+    opt::TupleId varBinding = optimizer->planContext()->generateTupleIdVarScoped(varName);
     context->resultStack.top().variable.item = varBinding;
 }
 
@@ -683,7 +707,7 @@ void lr2opt::visit(ASTType &n) {
 
 void lr2opt::visit(ASTVar &n) {
     context->resultStack.push(ResultInfo(
-          new VarIn(optimizer->context()->getVarTupleInScope(n.getStandardName()))));
+          new VarIn(optimizer->planContext()->getVarTupleInScope(n.getStandardName()))));
 }
 
 void lr2opt::visit(ASTLit &n) {

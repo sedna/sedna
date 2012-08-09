@@ -435,14 +435,22 @@ namespace sedna
         return xqv;
     }
 
+    rqp::RPBase * XQueryDriver::getRQPForModule(unsigned int ind, bool is_subquery)
+    {
+        rqp::RPBase * res = (mods[ind])->getOPT(is_subquery);
+
+        if (gotErrors())
+        {
+            delete res;
+            emitErrors(); // this function will throw an exception
+        }
+
+        return res;
+    }
+
     PPQueryEssence *XQueryDriver::getQEPForModule(unsigned int ind, bool is_subquery)
     {
         PPQueryEssence *res = (mods[ind])->getQEP(is_subquery);
-
-        if (!tr_globals::first_transaction) {
-            res->optimizedPlan = (mods[ind])->getOPT(is_subquery);
-//            debug_xml("opt.g", res->optimizedPlan->toXML(xmlConstructor).getLastChild());
-        }
 
         // some errors might have happened
         if (gotErrors())

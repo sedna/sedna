@@ -1,6 +1,11 @@
 #include "GraphRewriter.h"
-#include "DataGraphCollection.h"
 #include "Predicates.h"
+#include "VariableGraph.h"
+
+#include "tr/models/rtti.h"
+#include "tr/opt/algebra/IndependentPlan.h"
+#include "tr/opt/algebra/MapOperations.h"
+#include "tr/opt/algebra/ElementaryOperations.h"
 
 #include <algorithm>
 
@@ -30,7 +35,7 @@ void opt::DataGraphRewriter::mergeNodes(const DataNodeIndex & master, const Data
         graph.dg->outputNodes |= master.p->indexBit;
         graph.dg->outputNodes &= ~alias.p->indexBit;
     };
-    
+
     alias.p->replacedWith = master.p;
     alias.p->type = DataNode::dnReplaced;
 
@@ -39,11 +44,39 @@ void opt::DataGraphRewriter::mergeNodes(const DataNodeIndex & master, const Data
             graph.dg->owner->mergeVariables(alias.p->varTupleId, master.p->varTupleId);
         } else {
             master.p->varTupleId = alias.p->varTupleId;
-            graph.dg->owner->addVariable(master.p);
+            graph.dg->owner->addVariableDataNode(master.p);
         };
 
-        graph.dg->owner->removeVariable(alias.p);
+        graph.dg->owner->removeVariableDataNode(alias.p);
     };
+}
+
+void DataGraphRewriter::constResolution()
+{
+    DataNode ** dataNodes = graph.dg->dataNodes;
+
+    FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {
+        DataNode * dn = dataNodes[i];
+
+        if (dn->type == DataNode::dnExternal) {
+            TupleInfo & tinfo = graph.dg->owner->getVariable(dn->varTupleId);
+
+            if (instanceof<rqp::SequenceConcat>(tinfo.definedIn) &&
+                  instanceof<rqp::Const>(static_cast<rqp::SequenceConcat*>(tinfo.definedIn)->getSubplan()))
+            {
+                rqp::Const * value = static_cast<rqp::Const*>(static_cast<rqp::SequenceConcat*>(tinfo.definedIn)->getSubplan());
+                graph.dg->owner->removeVariableDataNode(dn);
+
+                dn->type = DataNode::dnConst;
+                dn->varTupleId = invalidTupleId;
+                dn->constValue = value->getSequence();
+
+                graph.dg->inputNodes &= ~dn->indexBit;
+            };
+        };
+    };
+
+    graph.update();
 }
 
 void DataGraphRewriter::deleteRedundantConsts()
@@ -185,7 +218,7 @@ void DataGraphRewriter::doPathExpansion()
         left->path = path;
 
         dg->predicates[right->index] = NULL;
-        dg->owner->removeVariable(dg->dataNodes[i]);
+        dg->owner->removeVariableDataNode(dg->dataNodes[i]);
         dg->dataNodes[i]->type = opt::DataNode::dnReplaced;
         dg->dataNodes[i]->replacedWith = NULL;
         dg->dataNodes[i] = NULL;

@@ -17,6 +17,8 @@ struct DataGraphRewriter {
     void aliasResolution();
     void structuralComparison();
     void doPathExpansion();
+
+    void constResolution();
     
     void expandAbsolutePath();
 };

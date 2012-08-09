@@ -2,7 +2,6 @@
 
 #include "tr/models/XmlConstructor.h"
 #include "tr/opt/functions/Functions.h"
-#include "tr/opt/graphs/DataGraphCollection.h"
 #include "tr/opt/graphs/DataGraphs.h"
 
 #include <set>
@@ -36,6 +35,13 @@ XmlConstructor& RPBase::toXML(XmlConstructor& element) const
     element.openElement(SE_EL_NAME(info()->name));
     element.addAttributeValue(SE_EL_NAME("id"), tuple_cell::atomic_int(opuid));
     __toXML(element);
+/*
+    for (TupleScheme::const_iterator it = dependantVariables.begin(); it != dependantVariables.end(); ++it) {
+        element.openElement(SE_EL_NAME("uses"));
+        element.addAttributeValue(SE_EL_NAME("varid"), tuple_cell::atomic_int(*it));
+        element.closeElement();
+    };
+*/
     element.closeElement();
 
     return element;
@@ -66,10 +72,9 @@ XmlConstructor& ManyChildren::__toXML(XmlConstructor& element) const
     return element;
 }
 
-PlanContext::PlanContext() : lastScopeMarker(0), currentTupleId(worldDataTupleId)
+PlanContext::PlanContext()
+  : lastScopeMarker(0), currentTupleId(1)
 {
-    TupleDefinition td(worldDataTupleId, "WorldData", xs_anyType);
-    greatTupleScheme.insert(GreatMapRecord(td.tid, td));
 }
 
 
@@ -85,7 +90,7 @@ void PlanContext::newScope() {
 void PlanContext::clearScope()
 {
     while (scopeStack.top() != invalidTupleId) {
-        scope.erase(greatTupleScheme.at(scopeStack.top()).name);
+        scope.erase(varGraph.getVariable(scopeStack.top()).name);
         scopeStack.pop();
     }
     --lastScopeMarker;
@@ -103,23 +108,15 @@ void PlanContext::clearScopesToMarker(ScopeMarker marker)
     }
 }
 
-TupleId PlanContext::generateTupleId()
-{
-    TupleDefinition td(++currentTupleId, (xmlscm_type) xs_anyType);
-    greatTupleScheme.insert(GreatMapRecord(td.tid, td));
-    
-    return td.tid;
-}
-
 TupleId PlanContext::generateTupleIdVarScoped(const std::string & varName)
 {
-    TupleDefinition td(++currentTupleId, varName);
+    TupleId tid = generateTupleId();
+
+    varGraph.addVariableName(tid, varName);
+    scope.insert(VarNameMap::value_type(varName, tid));
+    scopeStack.push(tid);
     
-    greatTupleScheme.insert(GreatMapRecord(td.tid, td));
-    scope.insert(VarMapRecord(td.name, td.tid));
-    scopeStack.push(td.tid);
-    
-    return td.tid;
+    return tid;
 }
 
 TupleId PlanContext::getVarTupleInScope(const std::string& canonicalName)

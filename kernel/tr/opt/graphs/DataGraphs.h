@@ -56,15 +56,14 @@ struct DataNode : public IPlanDisposable, public IXMLSerializable
     DataNode * aliasFor;
 
     TupleId varTupleId; // Variable node came from
-    bool alwaysTrue; // Hint for boolean expressions
-    bool notNull; // Hint for boolean expressions
+
+    tuple_info_t properties;
 
     explicit DataNode(data_node_type_t _type, TupleId _varTupleId = opt::invalidTupleId)
         : parent(NULL), type(_type),
           replacedWith(NULL), index(0), indexBit(0),
           absoluteIndex(0), aliasFor(NULL),
-          varTupleId(_varTupleId),
-          alwaysTrue(false), notNull(true)
+          varTupleId(_varTupleId)
     { };
 
     void setIndex(int _index) {
@@ -90,10 +89,10 @@ struct DataNodeIndex {
     bool output;
 };
 
-class DataGraphMaster;
+class VariableUsageGraph;
 
 struct DataGraph : public IPlanDisposable {
-    DataGraphMaster * owner;
+    VariableUsageGraph * owner;
     rqp::RPBase * operation;
 
     Predicate * predicates[MAX_GRAPH_SIZE];
@@ -102,7 +101,7 @@ struct DataGraph : public IPlanDisposable {
     PlanDesc inputNodes;
     PlanDesc outputNodes;
 
-    explicit DataGraph(DataGraphMaster* _owner);
+    explicit DataGraph(VariableUsageGraph* _owner);
     XmlConstructor & toXML(XmlConstructor & ) const;
 };
 
@@ -141,7 +140,7 @@ struct DataGraphIndex {
 
     void addOutNode(DataNode * node) { nodes.push_back(node); out.push_back(node); };
 private:
-    DataGraph * make(DataGraphMaster * master, DataGraph * graph);
+    DataGraph * make(VariableUsageGraph * master, DataGraph * graph);
 };
 
 };

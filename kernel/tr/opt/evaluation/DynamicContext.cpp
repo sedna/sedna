@@ -1,13 +1,12 @@
-#include "ExecutionContext.h"
+#include "DynamicContext.h"
 
-#include "tr/opt/algorithms/VariableMap.h"
+#include "tr/opt/evaluation/VariableMap.h"
 
 #include "tr/opt/algebra/IndependentPlan.h"
 #include "tr/opt/algebra/GraphOperations.h"
 #include "tr/opt/algebra/MapOperations.h"
 #include "tr/opt/algebra/FunctionOperations.h"
 #include "tr/opt/algebra/ElementaryOperations.h"
-#include "tr/opt/graphs/DataGraphCollection.h"
 #include "tr/opt/algorithms/SequenceModel.h"
 #include "tr/models/SCElementProducer.h"
 
@@ -19,6 +18,7 @@ using namespace opt;
 using namespace rqp;
 using namespace executor;
 
+/*
 class ConstructorImplementation : public IExecuteProc
 {
 public:
@@ -26,19 +26,19 @@ public:
     rqp::Construct * op;
 
     explicit ConstructorImplementation(DynamicContext * _context, Construct * _op) : context(_context), op(_op) {};
-    virtual void execute(ExecutionStack* executor);
+    virtual void execute(VirtualSequence* executor);
 };
 
-void ConstructorImplementation::execute(ExecutionStack* result)
+void ConstructorImplementation::execute(VirtualSequence* result)
 {
     xsd::QName nameValue;
     VariableModel * varmodel = context->variables;
 
     if (op->getType() == element || op->getType() == attribute || op->getType() == pr_ins)
     {
-        ExecutionStack nameEvaluation;
+        VirtualSequence nameEvaluation;
 
-        ExecutionStack * saveStack = optimizer->swapStack(&nameEvaluation);
+        VirtualSequence * saveStack = optimizer->swapStack(&nameEvaluation);
         optimizer->pexecutor()->push(context, op->getName());
         optimizer->swapStack(saveStack);
         
@@ -73,7 +73,7 @@ void ConstructorImplementation::execute(ExecutionStack* result)
             producer->resetResult();
         };
 
-        ExecutionStack * saveStack = optimizer->swapStack(producer->valueSequence);
+        VirtualSequence * saveStack = optimizer->swapStack(producer->valueSequence);
         optimizer->pexecutor()->push(context, op->getList());
         optimizer->swapStack(saveStack);
 
@@ -98,15 +98,15 @@ public:
     explicit IterateVar(const VarIterator & _varIterator)
       : varIterator(_varIterator) {};
     
-    virtual void execute(ExecutionStack* executor);
+    virtual void execute(VirtualSequence* executor);
 };
 
-void IterateVar::execute(ExecutionStack* executor)
+void IterateVar::execute(VirtualSequence* executor)
 {
     varIterator.next();
 
     if (!varIterator.get().is_eos()) {
-        ExecutionStack* saveStack = optimizer->swapStack(executor);
+        VirtualSequence* saveStack = optimizer->swapStack(executor);
 
         executor->push(Result(new IterateVar(*this)));
         executor->push(Result(varIterator.get()));
@@ -115,9 +115,9 @@ void IterateVar::execute(ExecutionStack* executor)
     }
 }
 
-void PlanExecutor::push(DynamicContext* context, RPBase* op)
+void PlanExecutor::push(RPBase* op)
 {
-    ExecutionStack * executionStack = optimizer->currentStack;
+    VirtualSequence * executionStack = optimizer->currentStack;
     currentContext = context;
     
     switch (op->info()->clsid) {
@@ -147,42 +147,30 @@ void PlanExecutor::push(DynamicContext* context, RPBase* op)
                 context->variables->getIterator(typed_op->tuple()))));
         }
         break;
-/*
       case SequenceConcat::opid :
       case MapConcat::opid :
         {
           NestedOperation * nop = static_cast<NestedOperation *>(op);
         }
         break;
-*/
       default:
         {
             U_ASSERT(false);
         } break;
     }
 }
+*/
 
-void DynamicContext::createVirtualRoot()
+DynamicContext::DynamicContext()
+  : variables(NULL), stack(NULL)
 {
-    _constructorContext = SCElementProducer::getVirtualRoot(XNULL);
+    variables = new VariableModel();
+    stack = new VirtualSequence();
+    stack->context = this;
 }
 
-PlanExecutor::PlanExecutor()
+DynamicContext::~DynamicContext()
 {
-    rootStack = new ExecutionStack();
-    baseContext.setConstructorContext(NULL);
-    baseContext.variables = new VariableModel;
-}
-
-PlanExecutor::~PlanExecutor()
-{
-    delete rootStack;
-    delete baseContext.variables;
-//    delete baseContext.constructorContext;
-}
-
-void PlanExecutor::execute(RPBase* op)
-{
-    optimizer->currentStack = rootStack;
-    push(&baseContext, op);
+    delete stack;
+    delete variables;
 }

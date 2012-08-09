@@ -29,63 +29,42 @@ public:
     };
 };
 
+namespace rqp {
+    typedef std::vector< rqp::RPBase * > OperationList;
+};
+
 namespace opt {
 
 typedef uint64_t PlanDesc;
 typedef std::set<PlanDesc> PlanDescSet;
 typedef int TupleId;
 
-static const opt::TupleId nullTuple = 0;
-static const opt::TupleId invalidTupleId = -1;
-static const opt::TupleId worldDataTupleId = 1;
+static const opt::TupleId invalidTupleId = 0;
 
 typedef ::IntBitIterator<PlanDesc> PlanDescIterator;
 
 #define SE_EL_NAME(N) xsd::QName::getConstantQName(NULL_XMLNS, N)
 
-template <typename T>
-struct opt_allocator
+struct tuple_info_t
 {
-    typedef T value_type;
-    typedef value_type* pointer;
-    typedef const value_type* const_pointer;
-    typedef value_type& reference;
-    typedef const value_type& const_reference;
-    typedef size_t size_type;
+    enum sequence_flags_t {
+      sf_noflags = 0x00,
+      sf_notNull = 0x01,
+      sf_alwaysTrue = 0x02,
+      sf_alwaysFalse = 0x04,
 
-    template<typename U>
-    struct rebind {
-        typedef opt_allocator<U> other;
+      /* Implies notNull */
+      sf_singleton = (0x08 | 0x01),
     };
 
-    inline explicit opt_allocator() {}
-    inline explicit opt_allocator(opt_allocator const&) {}
+    uint32_t flags;
 
-    template<typename U>
-    inline opt_allocator(opt_allocator<U> const&) {}
+    inline bool notNull() { return (flags & sf_notNull) > 0; }
+    inline bool singleton() { return (flags & sf_singleton) > 0; }
+    inline bool alwaysTrue() { return (flags & sf_alwaysTrue) > 0; }
+    inline bool alwaysFalse() { return (flags & sf_alwaysFalse) > 0; }
 
-    inline ~opt_allocator() {}
-
-    inline pointer address(reference r) { return &r; }
-    inline const_pointer address(const_reference r) { return &r; }
-
-    inline pointer allocate(size_type cnt, const_pointer hint = 0)
-    {
-        return reinterpret_cast<pointer>(optimizer->planGenerationPool.alloc(cnt * sizeof (T)));
-    }
-    
-    inline void deallocate(pointer p, size_type) { }
-
-    inline size_t max_size() const {
-        return MEMORY_BLOCK_SIZE / sizeof(T);
-    }
-
-    //    construction/destruction
-    inline void construct(pointer p, const T& t) { new(p) T(t); }
-    inline void destroy(pointer p) { p->~T(); }
-
-    inline bool operator==(opt_allocator const&) { return true; }
-    inline bool operator!=(opt_allocator const& a) { return !operator==(a); }
+    inline tuple_info_t() : flags(sf_noflags) {};
 };
 
 typedef std::vector<Predicate *> PredicateList;
@@ -95,13 +74,12 @@ typedef std::set<DataNode *, std::less<DataNode *> > DataNodeSet;
 typedef std::vector<DataGraph *> DataGraphList;
 typedef std::set<DataGraph *, std::less<DataGraph *> > DataGraphSet;
 
-typedef std::multimap<TupleId, DataNode *> VariableMap;
-typedef std::map<std::string, DataNode *> VariableNameMap;
-
 typedef std::set<TupleId, std::less<TupleId> > TupleScheme;
 
 typedef std::vector<tuple_cell> MemoryTupleSequence;
 typedef counted_ptr< std::vector<tuple_cell> > MemoryTupleSequencePtr;
+
+typedef std::set< rqp::RPBase * > OperationSet;
 
 static inline
 TupleScheme singleTupleScheme(opt::TupleId tid)
@@ -154,7 +132,7 @@ enum {
     plan_operation_Sequence,
 
     plan_operation_XPathStep,
-    plan_operation_FunCall,
+    plan_operation_FunCallParams,
     plan_operation_Construct,
 
     plan_operation_MapGraph,
