@@ -170,10 +170,6 @@ void xptr_sequence::sort()
 {
     sort1(0,seq_size);
 }
-void xptr_sequence::sort_by_xptr()
-{
-	sort_template<xptr_comparator>(this, 0, seq_size);
-}
 
 template<class Comparator>
 void sort_template(xptr_sequence *xs, int off, int len)
@@ -230,6 +226,11 @@ void sort_template(xptr_sequence *xs, int off, int len)
         sort_template<Comparator>(xs, off, s);
     if ((s = d-c) > 1)
         sort_template<Comparator>(xs, n-s, s);
+}
+
+void xptr_sequence::sort_by_xptr()
+{
+    sort_template<xptr_comparator>(this, 0, seq_size);
 }
 
 void xptr_sequence::sort1(int off, int len)
