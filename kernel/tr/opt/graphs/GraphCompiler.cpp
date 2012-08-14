@@ -6,10 +6,10 @@
 #include "tr/opt/phm/Operations.h"
 
 // ***************************** Data Graph ***************************
-/*
+
 #include <iostream>
 #include <fstream>
-
+/*
 #include "tr/models/XmlConstructor.h"
 
 #include "tr/crmutils/serialization.h"
@@ -69,21 +69,7 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph)
 
     GraphExecutionBlock::push(result);
 
-/*
     std::ofstream F("/tmp/datagraph.log");
-    se_stdlib_ostream Fstream(F);
-
-    SCElementProducer * vrt = SCElementProducer::getVirtualRoot(XNULL);
-    GlobalSerializationOptions opt;
-
-    opt.indent = true;
-    opt.indentSequence = "  ";
-    opt.separateTuples = true;
-    opt.useCharmap = true;
-
-    Serializer * serializer = Serializer::createSerializer(se_output_method_xml);
-    serializer->prepare(&Fstream, &opt);
-*/
 
     PlanMap * planMap = new PlanMap();
 
@@ -114,11 +100,10 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph)
     currentStepSet->insert(0);
 
     int branchLimit = 3;
-    
+
     while (!currentStepSet->empty()) {
         nextStepSet->clear();
 
-/*
         F << "\n Next set : ";
 
         for (PlanDescSet::const_iterator it = currentStepSet->begin(); it != currentStepSet->end(); ++it) {
@@ -126,7 +111,7 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph)
         }
 
         F << "\n\n";
-*/
+
 
         for (PlanDescSet::const_iterator it = currentStepSet->begin(); it != currentStepSet->end(); ++it) {
             PlanInfo * info = planMap->get(*it);
@@ -148,26 +133,27 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph)
                     candidate = planMap->update(candidate);
                     nextStepSet->insert(candidate->getDesc());
 
-/*
-                    serializer->serialize(tuple(candidate->toXML(vrt)->close()));
+                    candidate->toStream(F);
 
                     F << "\n--------------\n";
                     F.flush();
-*/
                 }
             };
         };
 
-//        F << "\n============\n";
+        F << "\n============\n";
 
         PlanDescSet * swapset = currentStepSet;
         currentStepSet = nextStepSet;
         nextStepSet = swapset;
     };
 
-//    serializer->serialize(tuple(planMap->getLastPlan()->toXML(vrt)->close()));
+    planMap->getLastPlan()->toStream(F);
+    F << "\n============\n";
 
     ITupleOperator * checkVar = planMap->getLastPlan()->compile();
+
+    checkVar->toStream(F);
     U_ASSERT(checkVar == result->top());
     graphCache[graph.dg] = result;
 

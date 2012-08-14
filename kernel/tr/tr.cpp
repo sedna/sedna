@@ -101,7 +101,7 @@ public:
                         client->set_result_type((enum se_output_method) (client_msg.body[0]));
                         client->user_statement_begin();
 
-                        currentStatement = new opt::ExplainStatement(client);
+                        currentStatement = new opt::OptimizedStatement(client);
 
                         currentStatement->prepare(
                             client->get_query_type(),

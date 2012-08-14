@@ -13,27 +13,42 @@
 using namespace rqp;
 using namespace opt;
 
+#define IF_IS(OP, TYPE, VARNAME) if (TYPE * VARNAME = dynamic_cast<TYPE *>(OP))
+#define RULE_LOCALS \
+    VariableUsageGraph * varGraph = &op->getContext()->varGraph;
+
 static
-bool replaceTupleInOperation(RPBase * base, TupleId alias, TupleId master)
+bool replaceTupleInOperation(RPBase * op, TupleId alias, TupleId master)
 {
-    if (VarIn * varIn = dynamic_cast<VarIn *>(base)) {
+    RULE_LOCALS
+
+    if (VarIn * varIn = dynamic_cast<VarIn *>(op)) {
         U_ASSERT(varIn->variable == alias);
         varIn->variable = master;
-        base->getContext()->varGraph.addVariableUsage(master, varIn);
-    } else if (FunCallParams * funCall = dynamic_cast<FunCallParams *>(base)) {
+        varGraph->addVariableUsage(master, varIn);
+    } else if (FunCallParams * funCall = dynamic_cast<FunCallParams *>(op)) {
         for (ParamList::iterator it = funCall->paramList.begin(); it != funCall->paramList.end(); ++it) {
             if (*it == alias) {
                 *it = master;
-                base->getContext()->varGraph.addVariableUsage(master, funCall);
+                varGraph->addVariableUsage(master, funCall);
             };
         }
-    } else if (MapGraph * mgraph = dynamic_cast<MapGraph *>(base)) {
+    } else if (MapGraph * mgraph = dynamic_cast<MapGraph *>(op)) {
         DataGraphIndex & graph = mgraph->graph();
       
         for (DataNodeList::iterator it = graph.nodes.begin(); it != graph.nodes.end(); ++it) {
-            if ((*it)->varTupleId == alias) {
-                (*it)->varTupleId = master;
-                base->getContext()->varGraph.addVariableDataNode(*it);
+            DataNode * dn = *it;
+
+            if (dn->varTupleId == alias) {
+                DataNodeIndex & dni = graph.nodeIndex[dn->index];
+                
+                if (dni.input || dni.output) {
+                    dn->varTupleId = master;
+                    varGraph->addVariableDataNode(dn);
+                } else {
+                    varGraph->removeVariableDataNode(dn);
+                    dn->varTupleId = master;
+                };
             };
         }
 
@@ -189,68 +204,63 @@ bool TreePathAnalisys::findDeclaration(const TupleScheme & tuplesToSearch)
 }
 
 static
-bool map_eat_graph(RewritingContext * pr, MapConcat * op)
+bool map_to_graph(RewritingContext * pr, MapConcat * op)
 {
-    MapGraph * nestedGraph = dynamic_cast<MapGraph *>(op->getSubplan());
+    RULE_LOCALS
 
-    if (NULL != nestedGraph && instanceof<VarIn>(nestedGraph->getList()))
+    IF_IS(op->getSubplan(), MapGraph, graph) 
+    IF_IS(graph->getList(), VarIn, graphValue)
     {
-        VarIn * varin = static_cast<VarIn *>(nestedGraph->getList());
+        TupleInfo & alias = varGraph->getVariable(graphValue->getTuple());
 
-        TupleInfo & alias = op->getContext()->varGraph.getVariable(varin->getTuple());
-
-        if (alias.definedIn != nestedGraph) {
+        if (alias.definedIn != graph) {
             return false;
         };
 
-        TupleInfo & master = op->getContext()->varGraph.getVariable(op->getTuple());
+        TupleInfo & master = varGraph->getVariable(op->getTuple());
 
         /* Replace tuple id in nested graph */
-        master.definedIn = null_op;
-        replaceTupleInOperation(nestedGraph, alias.id, master.id);
+        replaceTupleInOperation(graph, alias.id, master.id);
         /* This should automatically replace definition pointer */
-
-        /* Cleanup variable info */
-        alias.definedIn = null_op;
-        alias.operations.clear();
-        alias.pointsTo = master.id;
 
         /* Copy all statistics */
         master.properties = alias.properties;
         master.properties.flags |= tuple_info_t::sf_singleton;
 
-        /* Change subexpression of the nested graph */
-        nestedGraph->children[0] = op->getList();
+        alias.undefine(master.id);
 
-        nestedGraph->groupBy.clear();
-        nestedGraph->groupBy.insert(master.id);
+        graph->setList(op->getList());
+        graph->groupBy.clear();
+        graph->groupBy.insert(master.id);
 
-        pr->replaceInParent(op, nestedGraph);
+        pr->replaceInParent(op, graph);
 
         return true;
-    }
-
+    };
+    
     return false;
 };
 
 static
 bool join_mapgraph(RewritingContext * pr, MapGraph * op)
 {
-    if (MapGraph * nestedGraph = dynamic_cast<MapGraph *>(op->getList())) {
+    RULE_LOCALS
+
+    IF_IS(op->getList(), MapGraph, graph)
+    {
         TupleScheme myOut, childIn;
 
         op->graph().tuplesInOut(NULL, &myOut);
-        nestedGraph->graph().tuplesInOut(&childIn, NULL);
+        graph->graph().tuplesInOut(&childIn, NULL);
 
         if (std::intersection_size(myOut, childIn) > 0) {
-            op->joinGraph(nestedGraph->graph());
-            op->groupBy.insert(nestedGraph->groupBy.begin(), nestedGraph->groupBy.end());
-            op->setList(nestedGraph->getList());
+            op->joinGraph(graph->graph());
+            op->groupBy.insert(graph->groupBy.begin(), graph->groupBy.end());
+            op->setList(graph->getList());
 
             for (TupleScheme::const_iterator it = childIn.begin(); it != childIn.end(); ++it) {
-                op->getContext()->varGraph.getVariable(*it).operations.erase(nestedGraph);
+                varGraph->getVariable(*it).operations.erase(graph);
             };
-//            return true;
         }
     }
 
@@ -351,19 +361,21 @@ bool datagraph_rewritings(RewritingContext * pr, MapGraph * op)
     }
     dgi.rebuild();
 
+    dgw.staticFndoc();
     dgw.doPathExpansion();
 
     return false;
 }
 
 static
-bool remove_redundant_maps(RewritingContext * pr, MapConcat * map)
+bool remove_redundant_maps(RewritingContext * pr, MapConcat * op)
 {
-    if (instanceof<VarIn>(map->getSubplan())) {
-        VarIn * varin = static_cast<VarIn *>(map->getSubplan());
+    RULE_LOCALS
 
-        TupleInfo & master = map->getContext()->varGraph.getVariable(varin->getTuple());
-        TupleInfo & alias = map->getContext()->varGraph.getVariable(map->getTuple());
+    IF_IS(op->getSubplan(), VarIn, varin)
+    {
+        TupleInfo & master = varGraph->getVariable(varin->getTuple());
+        TupleInfo & alias = varGraph->getVariable(op->getTuple());
 
         /* Clear alias data */
         alias.definedIn = null_op;
@@ -373,9 +385,9 @@ bool remove_redundant_maps(RewritingContext * pr, MapConcat * map)
         master.operations.erase(varin);
 
         if (master.properties.singleton()) {
-            pr->replaceInParent(map, map->getList());
+            pr->replaceInParent(op, op->getList());
         } else {
-            pr->replaceInParent(map, new GroupBy(map->getList(), master.id));
+            pr->replaceInParent(op, new GroupBy(op->getList(), master.id));
         };
 
         return true;
@@ -551,19 +563,12 @@ void RewritingContext::do_execute()
         CASE_TYPE_CAST(SequenceConcat, typed_op, op)
             {
                 RULE(remove_unused_sequences(this, typed_op));
-//                RULE(rule_push_down_variable(this, typed_op));
             };
             break;
         CASE_TYPE_CAST(If, typed_op, op)
             {
                 RULE(push_down_if(this, typed_op));
                 RULE(remove_constant_if(this, typed_op));
-            };
-            break;
-        CASE_TYPE(Exists)
-        CASE_TYPE(EffectiveBooleanValue)
-            {
-//                RULE(rule_conditional_function_remove(this, op, 0));
             };
             break;
         CASE_TYPE_CAST(GroupBy, typed_op, op)
@@ -579,20 +584,7 @@ void RewritingContext::do_execute()
             {
                 RULE(join_mapgraph(this, typed_op));
                 RULE(remove_redundant_group_in_graph(this, typed_op));
-
-                /* Set parent operation */
-//                typed_op->graph().dg->operation = typed_op;
-
-//                RULE(rule_Graph_try_join(this, typed_op));
-
-//                RULE(rule_redundant_MapGraph(this, typed_op));
-//                RULE(rule_MapGraph_remove_unused(this, typed_op));
                 RULE(datagraph_rewritings(this, typed_op));
-            };
-            break;
-        CASE_TYPE_CAST(VarIn, typed_op, op)
-            {
-//                optimizer->dgm()->addVariable(typed_op->dnode);
             };
             break;
         CASE_TYPE_CAST(Sequence, typed_op, op)
@@ -608,17 +600,7 @@ void RewritingContext::do_execute()
         CASE_TYPE_CAST(MapConcat, typed_op, op)
             {
                 RULE(remove_redundant_maps(this, typed_op));
-                RULE(map_eat_graph(this, typed_op));
-//                RULE(rule_pull_nested_MapGraph(this, typed_op));
-            }
-            break;
-        CASE_TYPE_CAST(XPathStep, typed_op, op)
-            {
-//                RULE(do_operation_push_down(this, op, 0));
-
-//                if (instanceof<VarIn>(typed_op->getList())) {
-//                    RULE(rule_XPathStep_to_DataGraph(this, typed_op));
-//                }
+                RULE(map_to_graph(this, typed_op));
             }
             break;
           default : break;
@@ -662,6 +644,7 @@ void RewritingContext::deleteOp(RPBase* op)
         }; break;
     CASE_TYPE_CAST(MapGraph, typed_op, op) {
             DataGraphIndex & graph = typed_op->graph();
+
             for (DataNodeList::iterator it = graph.out.begin(); it != graph.out.end(); ++it) {
                 U_ASSERT((*it)->varTupleId != invalidTupleId);
                 varGraph->getVariable((*it)->varTupleId).definedIn = null_op;

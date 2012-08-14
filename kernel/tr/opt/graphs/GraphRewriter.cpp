@@ -7,6 +7,8 @@
 #include "tr/opt/algebra/MapOperations.h"
 #include "tr/opt/algebra/ElementaryOperations.h"
 
+#include "tr/executor/base/PPUtils.h"
+
 #include <algorithm>
 
 using namespace opt;
@@ -246,6 +248,32 @@ void DataGraphRewriter::doPathExpansion()
     graph.update();
 }
 
+void DataGraphRewriter::staticFndoc()
+{
+    DataGraph * dg = graph.dg;
+
+    /* At first, apply all fn:doc transformations */
+
+    FOR_ALL_GRAPH_ELEMENTS(dg->predicates, i) {
+        if (FnDocPredicate * fndoc = dynamic_cast<FnDocPredicate *>(dg->predicates[i])) {
+            if (fndoc->left()->type == opt::DataNode::dnConst) {
+                U_ASSERT(fndoc->right()->type == opt::DataNode::dnFreeNode);
+                dg->predicates[i] = NULL;
+                dg->owner->removeVariableDataNode(dg->dataNodes[fndoc->left()->index]);
+                dg->dataNodes[fndoc->left()->index] = NULL;
+                fndoc->right()->type = opt::DataNode::dnDatabase;
+                fndoc->right()->root = DataRoot(DataRoot::drt_document,
+                    atomize(fndoc->left()->constValue->at(0)).get_str_mem());
+            } else {
+                U_ASSERT(false);
+            };
+        };
+    };
+
+    graph.update();
+}
+
+
 /* Static optimization phase */
 
 void DataGraphRewriter::expandAbsolutePath()
@@ -253,7 +281,7 @@ void DataGraphRewriter::expandAbsolutePath()
     DataNodeList list1, list2;
     DataNodeList *frontList = &list1, *backList = &list2;
     DataGraph * dg = graph.dg;
-
+   
     FOR_ALL_GRAPH_ELEMENTS(dg->dataNodes, i) {
         // TODO : External propagade external 
         if (dg->dataNodes[i]->type == DataNode::dnDatabase) {
@@ -297,7 +325,7 @@ void DataGraphRewriter::expandAbsolutePath()
         backList = swp;
     }
 
-    // NOTE: No need to update anything for we 
+    // NOTE: No need to update anything
 }
 
 /*

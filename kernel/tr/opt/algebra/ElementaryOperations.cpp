@@ -1,5 +1,8 @@
 #include "ElementaryOperations.h"
+
 #include "tr/opt/graphs/DataGraphs.h"
+#include "tr/opt/evaluation/DynamicContext.h"
+#include "tr/opt/evaluation/VariableMap.h"
 
 using namespace rqp;
 using namespace opt;
@@ -9,6 +12,35 @@ RTTI_DEF(Const)
 RTTI_DEF(Exists)
 RTTI_DEF(EffectiveBooleanValue)
 RTTI_DEF(Sequence)
+
+struct VariableIterator : public executor::IExecuteProc
+{
+    executor::VarIterator varIterator;
+
+    VariableIterator(const executor::VarIterator & it)
+      : varIterator(it) {};
+
+    virtual void execute(executor::VirtualSequence* sequence);
+};
+
+void VariableIterator::execute(executor::VirtualSequence* sequence)
+{
+    tuple_cell result = varIterator.next();
+
+    if (!result.is_eos()) {
+        sequence->push(executor::Result(new VariableIterator(*this)));
+        sequence->push(executor::Result(result));
+    }
+}
+
+void VarIn::evaluateTo(executor::DynamicContext* dynamicContext)
+{
+    dynamicContext->stack->push(
+      executor::Result(
+        new VariableIterator(
+          dynamicContext->variables->getIterator(getTuple()))));;
+}
+
 
 XmlConstructor& VarIn::__toXML(XmlConstructor& element) const
 {

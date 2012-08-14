@@ -125,7 +125,7 @@ class TupleRef { public:
 
 typedef std::vector<POProt *> OperationList;
 
-class PlanInfo : public IPlanDisposable, IXMLSerializable {
+class PlanInfo : public IPlanDisposable, public IXMLSerializable {
 friend class PhysicalModel;
 protected:
     PlanDesc desc, parent;

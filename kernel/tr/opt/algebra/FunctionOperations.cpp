@@ -6,7 +6,6 @@ using namespace rqp;
 using namespace opt;
 
 RTTI_DEF(Construct)
-RTTI_DEF(XPathStep)
 RTTI_DEF(FunCallParams)
 
 XmlConstructor& FunCallParams::__toXML(XmlConstructor& constructor) const
@@ -29,7 +28,6 @@ XmlConstructor& FunCallParams::__toXML(XmlConstructor& constructor) const
     return constructor;
 }
 
-
 XmlConstructor& Construct::__toXML(XmlConstructor& element) const
 {
     element.addElementValue(SE_EL_NAME("type"), type2string(type));
@@ -42,12 +40,4 @@ XmlConstructor& Construct::__toXML(XmlConstructor& element) const
 
     return rqp::ListOperation::__toXML(element);
 };
-
-XmlConstructor& XPathStep::__toXML(XmlConstructor& element) const
-{
-    element.addElementValue(SE_EL_NAME("step"), step.toXPathString());
-    return rqp::ListOperation::__toXML(element);
-};
-
-
 

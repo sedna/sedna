@@ -43,9 +43,6 @@ TupleInfo & VariableUsageGraph::addVariableDeclaration(TupleId tid, rqp::RPBase*
     };
 
     TupleInfo & info = getVariable(tid);
-
-    U_ASSERT(info.definedIn == NULL);
-
     info.definedIn = op;
 
     return info;
@@ -102,13 +99,13 @@ TupleInfo & VariableUsageGraph::addVariableName(TupleId tid, const string& name)
 
 void VariableUsageGraph::addVariableDataNode(DataNode* dn)
 {
-    if (dn->varTupleId != opt::invalidTupleId) {
-        if (dn->type != DataNode::dnAlias && dn->type != DataNode::dnExternal) {
-            addVariableDeclaration(dn->varTupleId, dn->parent->operation);
-        } else {
-            addVariableUsage(dn->varTupleId, dn->parent->operation, dn);
-        };
-    }
+    U_ASSERT(dn->varTupleId != opt::invalidTupleId);
+
+    if (dn->type != DataNode::dnAlias && dn->type != DataNode::dnExternal) {
+        addVariableDeclaration(dn->varTupleId, dn->parent->operation);
+    } else {
+        addVariableUsage(dn->varTupleId, dn->parent->operation, dn);
+    };
 }
 
 void VariableUsageGraph::removeVariableDataNode(DataNode* dn)

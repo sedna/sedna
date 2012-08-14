@@ -10,19 +10,6 @@ struct IFunctionData;
 
 namespace rqp {
 
-class XPathStep : public ListOperation {
-    RTTI_DECL(plan_operation_XPathStep, ListOperation)
-
-    pe::Step step;
-protected:
-    virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
-public:
-    explicit XPathStep(RPBase* _in, const pe::Step & _step)
-      : ListOperation(SELF_RTTI_REF, _in), step(_step) { };
-
-    PROPERTY_RO(Step, pe::Step, step)
-};
-
 typedef std::vector<opt::TupleId> ParamList;
 
 inline static

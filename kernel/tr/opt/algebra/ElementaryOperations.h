@@ -44,6 +44,8 @@ public:
         dependantVariables.insert(_tid);
     };
 
+    virtual void evaluateTo(executor::DynamicContext* dynamicContext);
+    
     PROPERTY_RO(Tuple, opt::TupleId, variable)
 };
 

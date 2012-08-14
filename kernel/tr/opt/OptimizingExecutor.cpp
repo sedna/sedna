@@ -55,6 +55,8 @@ void OptimizedStatement::execute()
 {
     xs_decimal_t::init();
     plan = driver->getRQPForModule(driver->getModulesCount() - 1, false);
+    plan = VarGraphRewriting::rewrite(plan);
+    plan = RewritingContext::rewrite(plan);
     executionContext = new executor::DynamicContext();
     plan->evaluateTo(executionContext);
 }
@@ -69,6 +71,7 @@ void OptimizedStatement::next()
 
     if (value.is_eos()) {
         client->end_item(se_no_next_item);
+        return;
     };
 
     if (value.is_node()) {

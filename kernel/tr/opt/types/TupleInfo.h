@@ -30,6 +30,13 @@ struct TupleInfo {
     TupleInfo(TupleId _id)
       : id(_id), definedIn(NULL), pointsTo(opt::invalidTupleId) {};
 
+    void undefine(TupleId _rewire) {
+        pointsTo = _rewire;
+        definedIn = NULL;
+        operations.clear();
+        nodes.clear();
+    }
+      
     std::string toString() const
     {
         std::stringstream s;
