@@ -7,22 +7,23 @@
 namespace rqp {
 
 /* 1r-operations with independent nested operation plan */
-class NestedOperation : public ListOperation {
-  RTTI_DECL(plan_operation_NestedOperation, ListOperation)
+class NestedOperation : public RPBase {
+  RTTI_DECL(plan_operation_NestedOperation, RPBase)
 protected:
     opt::TupleId variableId;
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
     NestedOperation(clsinfo_t op, RPBase * list_, RPBase * subplan_, opt::TupleId _tid)
-      : ListOperation(op, list_), variableId(_tid) {
+      : RPBase(op), variableId(_tid) {
         children.push_back(subplan_);
-        dependantVariables.insert(subplan_->dependsOn().begin(), subplan_->dependsOn().end());
+        children.push_back(list_);
     };
 
-    PROPERTY(Subplan, RPBase *, children[1])
+    PROPERTY(Subplan, RPBase *, children[0])
+    PROPERTY(List, RPBase *, children[1])
     PROPERTY(Tuple, opt::TupleId, variableId)
 };
-  
+
 /*
  * MapConcat operation binds the context variable
  *
@@ -52,6 +53,26 @@ public:
         resultChild = 0;
     };
 };
+
+class GroupBy : public ListOperation {
+    RTTI_DECL(plan_operation_GroupBy, ListOperation)
+protected:
+    opt::TupleId variableId;
+    virtual XmlConstructor& __toXML(XmlConstructor& constructor ) const;
+public:
+    opt::tuple_info_t tmp_tinfo;
+
+    GroupBy(RPBase* _list, opt::TupleId _context)
+      : ListOperation(SELF_RTTI_REF, _list), variableId(_context)
+    {
+        opt::TupleInfo & tinfo = context->varGraph.addVariableUsage(_context, this);
+        tmp_tinfo = tinfo.properties;
+        resultChild = 0;
+    };
+
+    PROPERTY(Tuple, opt::TupleId, variableId)
+};
+
 
 }
 

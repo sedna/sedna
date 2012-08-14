@@ -111,7 +111,7 @@ public:
 
 /* 1r-operations */
 class ListOperation : public RPBase {
-   RTTI_DECL(plan_operation_ListOperation, RPBase)
+    RTTI_DECL(plan_operation_ListOperation, RPBase)
 protected:
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:

@@ -35,13 +35,38 @@ void AxisStepFunction::execute(FunCallParams* funcall, executor::DynamicContext*
 }
 
 using namespace opt;
+using namespace rqp;
 
 bool AxisStepFunction::transform(FunCallParams* funcall, RewritingContext* p)
 {
-    TupleId arg = funcall->getParams().at(0);
+    AxisStepData * data = static_cast<AxisStepData *>(funcall->getData());
+
+    {
+        DataGraphIndex builder(new DataGraph(&funcall->getContext()->varGraph));
+
+        TupleId result = funcall->getContext()->generateTupleId();
+        DataNode * left = new DataNode(DataNode::dnExternal, funcall->getParams().at(0));
+        DataNode * right = new DataNode(DataNode::dnFreeNode, result);
+
+        builder.nodes.push_back(left);
+        builder.addOutNode(right);
+        builder.predicates.push_back(new StructuralPredicate(left, right, data->step));
+
+        builder.rebuild();
+
+        rqp::RPBase * newOp = new MapGraph(new VarIn(result), builder.dg, TupleScheme());
+        newOp->getContext()->varGraph.getVariable(result).properties.flags |= tuple_info_t::sf_nodes;
+        p->replaceInParent(funcall, newOp);
+        cleanupFunCall(funcall);
+
+        return true;
+    }
+
+/*
     TupleInfo & info = funcall->getContext()->varGraph.getVariable(arg);
     AxisStepData * data = static_cast<AxisStepData *>(funcall->getData());
 
+    // TODO : this can only be done using left join
     if (instanceof<rqp::MapGraph>(info.definedIn)) {
         rqp::MapGraph * mgraph = static_cast<rqp::MapGraph *>(info.definedIn);
         DataGraphIndex * graph = &mgraph->graph();
@@ -64,7 +89,7 @@ bool AxisStepFunction::transform(FunCallParams* funcall, RewritingContext* p)
 
         return true;
     };
-    
+*/
     return false;
 }
 

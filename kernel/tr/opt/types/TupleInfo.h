@@ -25,11 +25,10 @@ struct TupleInfo {
 
     TupleId pointsTo;
 
-    TupleStatistics * statistics;
     tuple_info_t properties;
 
     TupleInfo(TupleId _id)
-      : id(_id), definedIn(NULL), pointsTo(opt::invalidTupleId), statistics(NULL) {};
+      : id(_id), definedIn(NULL), pointsTo(opt::invalidTupleId) {};
 
     std::string toString() const
     {

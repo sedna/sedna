@@ -60,10 +60,10 @@ public:
 /**
  * @brief Special logical operation for EBV function
  */
-class FalseIfNull : public ListOperation {
-    RTTI_DECL(plan_operation_FalseIfNull, ListOperation)
+class EffectiveBooleanValue : public ListOperation {
+    RTTI_DECL(plan_operation_EffectiveBooleanValue, ListOperation)
 public:
-    explicit FalseIfNull(RPBase * list)
+    explicit EffectiveBooleanValue(RPBase * list)
       : ListOperation(SELF_RTTI_REF, list) {};
 };
 

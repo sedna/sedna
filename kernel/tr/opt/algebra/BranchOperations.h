@@ -42,7 +42,7 @@ public:
         };
     };
 
-    PROPERTY_RO(Condition, RPBase *, children[0])
+    PROPERTY(Condition, RPBase *, children[0])
 
     RPBase * getThen() const { return (thenBranch != 0) ? children[thenBranch] : null_op; };
     RPBase * getElse() const { return (elseBranch != 0) ? children[elseBranch] : null_op; };

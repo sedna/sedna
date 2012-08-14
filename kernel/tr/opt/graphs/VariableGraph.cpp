@@ -176,6 +176,18 @@ XmlConstructor& VariableUsageGraph::toXML(XmlConstructor& constructor) const
         if (it->second.pointsTo != invalidTupleId) {
             constructor.addAttributeValue(SE_EL_NAME("replaced by"), tuple_cell::atomic_int(it->second.pointsTo));
         } else {
+            if (it->second.properties.notNull()) {
+                constructor.addElementValue(SE_EL_NAME("flag"), "not-null");
+            };
+
+            if (it->second.properties.singleton()) {
+                constructor.addElementValue(SE_EL_NAME("flag"), "singleton");
+            };
+
+            if (it->second.properties.nodes()) {
+                constructor.addElementValue(SE_EL_NAME("flag"), "node-only");
+            };
+
             if (it->second.definedIn != NULL) {
                 constructor.openElement(SE_EL_NAME("definedIn"));
                 constructor.addAttributeValue(SE_EL_NAME("type"), tuple_cell::atomic_deep(xs_string, it->second.definedIn->info()->name));

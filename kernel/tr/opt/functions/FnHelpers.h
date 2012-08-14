@@ -24,6 +24,14 @@ bool isConditional(rqp::RPBase * parent, rqp::RPBase * child)
 };
 
 inline static
+bool staticallyTrue(opt::TupleInfo & info)
+{
+    // TODO : implement static check for boolean value
+    return info.properties.notNull() &&
+      (info.properties.alwaysTrue() || info.properties.nodes());
+};
+
+inline static
 bool isResultOp(rqp::RPBase * parent, rqp::RPBase * child)
 {
     return parent->result() == child;
@@ -43,41 +51,52 @@ bool preservesNull(rqp::RPBase * parent, rqp::RPBase * child)
 };
 
 inline static
+bool isTrueGraphExpr(rqp::RPBase * op)
+{
+    if (rqp::MapGraph * graph = dynamic_cast<rqp::MapGraph * >(op)) {
+        if (rqp::VarIn * varin = dynamic_cast<rqp::VarIn *>(graph->getList())) {
+            return op->getContext()->varGraph.getVariable(varin->getTuple()).definedIn == op;
+        };
+    };
+
+    return false;
+};
+
+inline static
 bool isGraphExpr(rqp::RPBase * op)
 {
-    return instanceof<rqp::Const>(op) || instanceof<rqp::VarIn>(op);
+    return instanceof<rqp::Const>(op) || instanceof<rqp::VarIn>(op) || isTrueGraphExpr(op);
 };
 
 /*
 inline static
-opt::DataNode * addGraphToJoin(opt::DataGraphIndex & builder, rqp::RPBase * op)
+void addGraphToJoin(opt::DataGraphIndex & builder, rqp::RPBase * op)
 {
-    opt::VariableUsageGraph * master = optimizer->dgm();
-    opt::DataNode * node = NULL;
+    opt::VariableUsageGraph * master = op->getContext()->varGraph;
 
-    if (instanceof<rqp::VarIn>(op)) {
-        node = static_cast<rqp::VarIn *>(op)->dnode;
-    } else if (instanceof<rqp::Const>(op)) {
-        node = new opt::DataNode(opt::DataNode::dnConst);
-        node->constValue = static_cast<rqp::Const *>(op)->getSequence();
+    if (rqp::MapGraph * graph = dynamic_cast<rqp::MapGraph *>(op)) {
+        builder.nodes.insert(builder.nodes.end(), graph->graph().nodes.begin(), graph->graph().nodes.end());
+        builder.predicates.insert(builder.predicates.end(), graph->graph().predicates.begin(), graph->graph().predicates.end());
+    } else if (rqp::VarIn * varin = dynamic_cast<rqp::VarIn *>(op)) {
+        builder.nodes.push_back(new opt::DataNode(opt::DataNode::dnExternal, varin->getTuple()));
+    } else if (rqp::Const * cnst = dynamic_cast<rqp::Const *>(op)) {
+        opt::DataNode * node = new opt::DataNode(opt::DataNode::dnConst, varin->getTuple());
+        builder.nodes.push_back(node);
+        node->constValue = cnst->getSequence();
     }
 
-    U_ASSERT(node != NULL);
-
-    builder.nodes.push_back(node);
-
-    return node;
+    builder.rebuild();
 };
+*/
 
 inline static
 opt::DataNode * createTrueNode()
 {
     opt::DataNode * result = new opt::DataNode(opt::DataNode::dnConst);
-    result->constValue = optimizer->planContext()->variableGraph->alwaysTrueSequence;
-    result->properties.flags |=  opt::variable_properties_t::sf_alwaysTrue;
+    result->constValue = optimizer->planContext()->varGraph.alwaysTrueSequence;
+    result->properties.flags |=  opt::tuple_info_t::sf_alwaysTrue;
     return result;
 };
-*/
 
 #define REGISTER_FUNCTIONS_BEGIN(LIB) \
 struct RegisterFunctions##LIB { RegisterFunctions##LIB() {

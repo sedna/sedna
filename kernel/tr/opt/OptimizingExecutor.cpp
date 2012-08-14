@@ -124,11 +124,11 @@ void ExplainStatement::next()
         xmlConstructor.openElement(SE_EL_NAME("plan"));
 
         plan->toXML(xmlConstructor);
-        
+
         plan = VarGraphRewriting::rewrite(plan);
         plan = RewritingContext::rewrite(plan);
         optimizer->planContext()->varGraph.cleanup();
-        
+
         plan->toXML(xmlConstructor);
         optimizer->planContext()->varGraph.toXML(xmlConstructor);
         xmlConstructor.closeElement();

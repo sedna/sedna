@@ -19,6 +19,12 @@ void MapGraph::updateVarGraph()
     {
         context->varGraph.addVariableDataNode(*it);
     }
+
+    /* TODO : this is temporary */
+    for (DataNodeList::const_iterator it = func.out.begin(); it != func.out.end(); ++it)
+    {
+        context->varGraph.getVariable((*it)->varTupleId).properties.flags |= tuple_info_t::sf_notNull;
+    }
 }
 
 
@@ -44,6 +50,13 @@ void MapGraph::joinGraph(DataGraphIndex& rg)
     func.nodes.insert(func.nodes.end(), rg.nodes.begin(), rg.nodes.end());
     func.predicates.insert(func.predicates.end(), rg.predicates.begin(), rg.predicates.end());
     func.out.insert(func.out.end(), rg.out.begin(), rg.out.end());
+
+    for (DataNodeList::const_iterator it = rg.nodes.begin(); it != rg.nodes.end(); ++it) {
+        const DataNode * dn = *it;
+        if (dn->varTupleId != invalidTupleId) {
+            context->varGraph.getVariable(dn->varTupleId).definedIn = this;
+        }
+    }
 
     func.rebuild();
 }

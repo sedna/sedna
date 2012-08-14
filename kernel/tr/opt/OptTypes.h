@@ -58,16 +58,20 @@ struct tuple_info_t
 
       sf_unique = (0x10),
       sf_ddo_sorted = (0x20 | 0x10),
+      sf_nodes = (0x40),
     };
 
+    TupleStatistics * statistics;
     uint32_t flags;
+//    xmlscm_type typeRestriction;
 
-    inline bool notNull() { return (flags & sf_notNull) > 0; }
-    inline bool singleton() { return (flags & sf_singleton) == sf_singleton; }
-    inline bool alwaysTrue() { return (flags & sf_alwaysTrue) > 0; }
-    inline bool alwaysFalse() { return (flags & sf_alwaysFalse) > 0; }
+    inline bool notNull() const { return (flags & sf_notNull) > 0; }
+    inline bool singleton() const { return (flags & sf_singleton) == sf_singleton; }
+    inline bool nodes() const { return (flags & sf_nodes) > 0; }
+    inline bool alwaysTrue() const { return (flags & sf_alwaysTrue) > 0; }
+    inline bool alwaysFalse() const { return (flags & sf_alwaysFalse) > 0; }
 
-    inline tuple_info_t() : flags(sf_noflags) {};
+    inline tuple_info_t() : statistics(NULL), flags(sf_noflags) /*, typeRestriction(xs_anyType) */ {};
 };
 
 typedef std::vector<Predicate *> PredicateList;
@@ -131,7 +135,7 @@ enum {
     plan_operation_Const,
     plan_operation_VarIn,
     plan_operation_Exists, // Important: differs from effective boolean value
-    plan_operation_FalseIfNull,
+    plan_operation_EffectiveBooleanValue,
     plan_operation_Sequence,
 
     plan_operation_XPathStep,
@@ -142,12 +146,10 @@ enum {
 
     plan_operation_MapConcat,
     plan_operation_SequenceConcat,
+    plan_operation_GroupBy,
 
-    plan_operation_If
-};
-
-
-enum {
+    plan_operation_If,
+    
     physical_model_POProt,
     physical_model_BinaryOpPrototype,
     physical_model_MergeJoinPrototype,
@@ -158,9 +160,7 @@ enum {
     physical_model_EvaluatePrototype,
     physical_model_ExternalVarPrototype,
     physical_model_ValidatePathPrototype,
-};
-
-enum {
+    
     sequence_operator_IOperator,
     sequence_operator_IValueOperator,
     sequence_operator_ITupleOperator,

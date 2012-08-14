@@ -6,6 +6,7 @@ using namespace opt;
 RTTI_DEF(MapConcat)
 RTTI_DEF(SequenceConcat)
 RTTI_DEF(NestedOperation)
+RTTI_DEF(GroupBy)
 
 XmlConstructor& NestedOperation::__toXML(XmlConstructor& element) const
 {
@@ -20,5 +21,18 @@ XmlConstructor& NestedOperation::__toXML(XmlConstructor& element) const
 
     element.closeElement();
 
-    return rqp::ListOperation::__toXML(element);
+    if (getList() != null_obj) {
+        getList()->toXML(element);
+    }
+
+    return element;
+}
+
+XmlConstructor& GroupBy::__toXML(XmlConstructor& constructor) const
+{
+    constructor.openElement(SE_EL_NAME("group-by"));
+    constructor.addAttributeValue(SE_EL_NAME("var-id"), tuple_cell::atomic_int(getTuple()));
+    constructor.closeElement();
+    
+    return rqp::ListOperation::__toXML(constructor);
 }

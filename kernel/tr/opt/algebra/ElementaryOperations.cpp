@@ -7,7 +7,7 @@ using namespace opt;
 RTTI_DEF(VarIn)
 RTTI_DEF(Const)
 RTTI_DEF(Exists)
-RTTI_DEF(FalseIfNull)
+RTTI_DEF(EffectiveBooleanValue)
 RTTI_DEF(Sequence)
 
 XmlConstructor& VarIn::__toXML(XmlConstructor& element) const

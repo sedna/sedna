@@ -30,6 +30,34 @@ void GeneralComparisonFunction::execute(FunCallParams* funcall, executor::Dynami
 
 bool GeneralComparisonFunction::transform(FunCallParams* funcall, RewritingContext* p)
 {
+    // FIXME : make conditional check
+    bool conditional = true;
+
+    if (conditional) {
+        ComparisonData * data = static_cast<ComparisonData *>(funcall->getData());
+
+        DataGraphIndex builder(new DataGraph(&funcall->getContext()->varGraph));
+
+        DataNode * left = new DataNode(DataNode::dnExternal, funcall->getParams().at(0));
+        DataNode * right = new DataNode(DataNode::dnExternal, funcall->getParams().at(1));
+
+        builder.nodes.push_back(left);
+        builder.nodes.push_back(right);
+        builder.predicates.push_back(new ValuePredicate(left, right, data->cmp));
+
+        builder.rebuild();
+
+        RPBase * newOp = new MapGraph(
+          new Const(funcall->getContext()->varGraph.alwaysTrueSequence),
+          builder.dg, TupleScheme());
+
+        p->replaceInParent(funcall, newOp);
+
+        cleanupFunCall(funcall);
+
+        return true;
+    }
+
     return false;
 }
 
@@ -58,7 +86,7 @@ bool do_ebv_operation_push_down(rqp::RewritingContext * pr, rqp::RPBase * op, un
         child->children[child->resultChild] = op;
         op->children[idx] = grandChild;
 
-        pr->replaceInParent(op, new FalseIfNull(child));
+        pr->replaceInParent(op, new EffectiveBooleanValue(child));
         return true;
     };
 
@@ -100,7 +128,7 @@ bool rule_general_comparison_to_graph(RewritingContext * pr, rqp::FunCall * op)
         joinBuilder.rebuild();
 
         RPBase * newop =
-          new rqp::FalseIfNull(
+          new rqp::EffectiveBooleanValue(
             new MapGraph(
               new VarIn(result->varTupleId), joinBuilder.dg,
               TupleScheme()));

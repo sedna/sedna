@@ -80,6 +80,8 @@ struct RewritingContext {
         traverseStack.push_back(op2);
     };
 
+    void deleteOp(rqp::RPBase * op);
+    
     inline
     void traverseChildren(const rqp::OperationList & children)
     {

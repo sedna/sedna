@@ -36,19 +36,21 @@ void opt::DataGraphRewriter::mergeNodes(const DataNodeIndex & master, const Data
         graph.dg->outputNodes &= ~alias.p->indexBit;
     };
 
-    alias.p->replacedWith = master.p;
-    alias.p->type = DataNode::dnReplaced;
-
     if (alias.p->varTupleId != opt::invalidTupleId) {
-        if (master.p->varTupleId != opt::invalidTupleId) {
-            graph.dg->owner->mergeVariables(alias.p->varTupleId, master.p->varTupleId);
-        } else {
-            master.p->varTupleId = alias.p->varTupleId;
-            graph.dg->owner->addVariableDataNode(master.p);
+        if (master.p->varTupleId != alias.p->varTupleId) {
+            if (master.p->varTupleId != opt::invalidTupleId) {
+                graph.dg->owner->mergeVariables(alias.p->varTupleId, master.p->varTupleId);
+            } else {
+                master.p->varTupleId = alias.p->varTupleId;
+                graph.dg->owner->addVariableDataNode(master.p);
+            };
         };
 
         graph.dg->owner->removeVariableDataNode(alias.p);
     };
+
+    alias.p->replacedWith = master.p;
+    alias.p->type = DataNode::dnReplaced;
 }
 
 void DataGraphRewriter::constResolution()
@@ -111,8 +113,12 @@ void opt::DataGraphRewriter::selfReferenceResolution()
 
     std::map<TupleId, DataNode *> defMap;
 
-    for (DataNodeList::iterator it = graph.out.begin(); it != graph.out.end(); ++it) {
-        defMap[(*it)->varTupleId] = *it;
+    for (DataNodeList::iterator it = graph.nodes.begin(); it != graph.nodes.end(); ++it) {
+        DataNode * dn = *it;
+
+        if (dn->varTupleId != invalidTupleId && dn->type != DataNode::dnExternal) {
+            defMap[dn->varTupleId] = dn;
+        }
     };
 
     FOR_ALL_GRAPH_ELEMENTS(dataNodes, i) {

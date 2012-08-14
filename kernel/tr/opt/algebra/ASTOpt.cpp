@@ -193,7 +193,7 @@ void lr2opt::visit(ASTFilterStep &n) {
         resultOp = new MapConcat(context->popResult(), resultOp, context->context.item);
         context->context = saveContextVariable;
     }
-    
+
     if (n.preds != NULL) {
         ContextInfo saveContextVariable = context->context;
 
@@ -552,12 +552,14 @@ void lr2opt::visit(ASTQuantExpr &n)
     // TODO: not fair! should be an aggr function
     if (n.type == ASTQuantExpr::SOME)
     {
-//        aggrFunction = xsd::constQName(skn->resolvePrefix("fn"), "opt_not_empty");
-//        predicate = new rqp::If(predicate, new rqp::Const(fn_true()), new rqp::Const(EmptySequenceConst()));
-        
         context->resultStack.push(ResultInfo(
-            new Exists(
-                new rqp::MapConcat(predicate, expression, varBinding.item))));
+          new If(
+            new MapConcat(
+              new If(predicate,
+                new VarIn(varBinding.item), null_op),
+              expression, varBinding.item),
+            new Const(planContext->varGraph.alwaysTrueSequence),
+            null_op)));
     }
     else /* EVERY */
     {
