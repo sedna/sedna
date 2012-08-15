@@ -6,10 +6,10 @@
 #include "libsedna.h"
 #include "common/errdbg/error_codes.h"
 #include "common/errdbg/d_printf.h"
-#include "common/sp.h"
-#include "common/u/uutils.h"
-#include "common/u/usocket.h"
-#include "common/u/uhdd.h"
+#include "common/protocol/sp.h"
+#include "u/uutils.h"
+#include "u/usocket.h"
+#include "u/uhdd.h"
 
 #ifdef _MSC_VER
 #pragma comment(lib,"Advapi32.lib")

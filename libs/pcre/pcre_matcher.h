@@ -122,7 +122,7 @@ public:
 	}
 
 	bool matches(const CharIterator &subject_start, const CharIterator &subject_end, 
-				const CharIterator &match_start = start, int options = 0) {
+				const CharIterator &match_start, int options = 0) {
 		reset();
 		if (m_offsets == NULL)
 			m_offsets = new CharIterator[m_ofscount];

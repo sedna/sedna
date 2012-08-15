@@ -14,6 +14,10 @@
 #include <u/uutils.h>
 #include "common/globalobjects/globalnames.h"
 
+#ifdef EL_DEBUG
+#include <iostream>
+#endif /* EL_DEBUG */
+
 int main(int argc, char** argv)
 {
     program_name_argv_0 = argv[0];
@@ -30,6 +34,11 @@ int main(int argc, char** argv)
         GlobalParameters sednaGlobalOptions;
         if ( parseSednaOptions(argc, argv, &sednaGlobalOptions, program_name_argv_0) ) { return 1; }
 
+#ifdef EL_DEBUG
+        std::cout << "\n\nFinal Sedna parameters are: \n";
+        sednaGlobalOptions.saveToStream(&std::cout);     
+#endif /* EL_DEBUG */
+        
 // !FIXME: do we really need SEDNA_DATA in this form?
 
         SEDNA_DATA = sednaGlobalOptions.global.dataDirectory.c_str();
@@ -43,7 +52,10 @@ int main(int argc, char** argv)
         GlobalObjectsCollector collector(sednaGlobalOptions.global.dataDirectory.c_str());
         uSetGlobalNameGeneratorBase(sednaGlobalOptions.global.dataDirectory.c_str(), "0");
 
-         if (event_logger_start_daemon(el_convert_log_level(sednaGlobalOptions.global.logLevel), "SE_EVENT_LOG_SHM", "SE_EVENT_LOG_SEM"))
+         if (event_logger_start_daemon(sednaGlobalOptions.global.dataDirectory.c_str(),
+                                       el_convert_log_level(sednaGlobalOptions.global.logLevel),
+                                       "SE_EVENT_LOG_SHM", 
+                                       "SE_EVENT_LOG_SEM"))
             throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
         log_out_system_information();

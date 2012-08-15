@@ -12,6 +12,10 @@
 
 #include <sstream>
 
+#ifdef GOV_DEBUG
+#include <iostream>
+#endif /* GOV_DEBUG */
+
 #define DEFAULT_BIND_ADDRESS            "0.0.0.0"
 #define DEFAULT_DATA_DIR                "/var/sedna"
 #define DEFAULT_LISTEN_PORT             5050
@@ -112,7 +116,18 @@ void getSednaConfValues(GlobalParameters * sednaGlobalOptions)
         
         setDefaultSednaOptions( &(sednaGlobalOptions->global) );
 
+#ifdef GOV_DEBUG
+        std::cout << "\n\nDefault hardcoded defaults are: \n";
+        sednaGlobalOptions->saveToStream(&std::cout);     
+#endif /* GOV_DEBUG */
+
         sednaGlobalOptions->loadFromStream(scoped_ptr<std::stringstream>(new std::stringstream(cfgText)).get());
+
+#ifdef GOV_DEBUG
+        std::cout << "\n\nParameters from file are: \n";
+        sednaGlobalOptions->saveToStream(&std::cout);     
+#endif /* GOV_DEBUG */
+        
     } else {
         setDefaultSednaOptions( &(sednaGlobalOptions->global) );
     }

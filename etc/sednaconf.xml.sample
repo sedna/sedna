@@ -2,59 +2,59 @@
 
 <!-- Configuration file for Sedna database.
      Change values and rename this file into sednaconf.xml.
-     Note! Don't forget to change <sedna_data> value!
+     Note! Don't forget to change <dataDirectory> value!
  -->
-<sednaconf>
+<sednaOptions>
+  <global>
+    <!-- 
+        Path to the database files:
+          - path must exist;
+          - path must be absolute;
+          - on Windows use '/' for separating directories (example: c:/sedna) 
+    -->
+    <dataDirectory>/var/lib/sedna</dataDirectory>
 
-  <!-- 
-       Path to the database files:
-        - path must exist;
-        - path must be absolute;
-        - on Windows use '/' for separating directories (example: c:/sedna) 
-  -->
-  <dataDirectory>/var/lib/sedna</dataDirectory>
+    <!-- 
+        The address on which the server is to listen for connections from
+        client applications. The value takes the form of a host name or numeric
+        IP address. The value 0.0.0.0 corresponds to all available IP
+        interfaces. The default value is 'localhost', which allows only local
+        "loopback" connections to be made.
+        Default: localhost
+    -->
+    <bindAddress>localhost</bindAddress>
 
-  <!-- 
-       The address on which the server is to listen for connections from
-	   client applications. The value takes the form of a host name or numeric
-	   IP address. The value 0.0.0.0 corresponds to all available IP
-	   interfaces. The default value is 'localhost', which allows only local
-	   "loopback" connections to be made.
-       Default: localhost
-  -->
-  <bindAddress>localhost</bindAddress>
+    <!--
+        Sedna server listening port number. If you run multiple
+        Sedna instances this value MUST differ between them.
+        Default: 5050
+    -->
+    <listenPort>5050</listenPort>
 
-  <!--
-       Sedna server listening port number. If you run multiple
-       Sedna instances this value MUST differ between them.
-       Default: 5050
-  -->
-  <listenPort>5050</listenPort>
+    <!-- 
+        Event logging level 
+        0 -  event logging is off
+        1 -  log only fatal errors when system goes down
+        2 -  log all errors/warnings (e.g. errors in queries)
+        3 -  server operational messages. This is 
+              quite complete log of what is going on in system.
+        4 -  log everything including internal debug messages
+        Default: 3
+    -->
+    <logLevel>3</logLevel>
 
-  <!-- 
-       Event logging level 
-       0 -  event logging is off
-       1 -  log only fatal errors when system goes down
-       2 -  log all errors/warnings (e.g. errors in queries)
-       3 -  server operational messages. This is 
-            quite complete log of what is going on in system.
-       4 -  log everything including internal debug messages
-       Default: 3
-  -->
-  <logLevel>3</logLevel>
-
-  <!-- Session keep alive timeout
-       Number of seconds to wait for the next request
-       from the some client on the same connection
-       Default: 0 - no timeout (infinite timeout)
-  -->
-  <keepAlive>0</keepAlive>
-  
-  <!-- Maximum depth of the query execution plan.
-       Make sure that you have enough process stack size
-       before increasing this parameter.
-       Default: 4000
-  -->
-  <stackDepth>4000</stackDepth>
-
-</sednaconf>
+    <!-- Session keep alive timeout
+        Number of seconds to wait for the next request
+        from the some client on the same connection
+        Default: 0 - no timeout (infinite timeout)
+    -->
+    <keepAlive>0</keepAlive>
+    
+    <!-- Maximum depth of the query execution plan.
+        Make sure that you have enough process stack size
+        before increasing this parameter.
+        Default: 4000
+    -->
+    <stackDepth>4000</stackDepth>
+  </global>
+</sednaOptions>

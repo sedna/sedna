@@ -35,7 +35,9 @@
 #define SEDNA_LOG_LESS                                     7
 #define SEDNA_LOG_FULL                                     8
 
-
+/* TODO: seems like error. When everything is ready, need to replace int -> uint32 and check that
+ * it doesn't break anything.
+ */
 typedef int sp_int32;
 
 enum se_db_security_type

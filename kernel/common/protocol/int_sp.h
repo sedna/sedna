@@ -1,11 +1,10 @@
 /*
- * File:  sp_defs.h
+ * File:  int_sp.h
  * Copyright (C) 2012 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #ifndef _INT_SP_H
 #define _INT_SP_H
-
 
 /* Attenttion! You should be very careful:
  * If you want to define new protocol constants for internal Sedna processes 
@@ -15,8 +14,7 @@
  * intersect by numeric values, otherwise you will debug it very-very long
  */
 
-enum se_int_sp_instructions 
-{
+enum se_int_sp_instructions {
 /* TODO: sort signals in the order of they appear */
   
     se_ConnectProcess                              = 180,
@@ -27,7 +25,7 @@ enum se_int_sp_instructions
     se_SMRegisteringOK                             = 181,
     se_RegistrationFailed                          = 182,
     se_CdbRegisteringOK                            = 183,
-    se_CdbRegisteringFailed                        = 184,
+    se_CdbRegisteringFailed                        = 184
     
 /*  
     se_RegisterNewSession                          = 121,
@@ -47,6 +45,6 @@ enum se_int_sp_instructions
     
     
     */
-} se_int_sp_instructions;
+};
 
 #endif /* _INT_SP_H */

@@ -14,7 +14,7 @@
 #include "u/uprocess.h"
 
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))
-#include "auxiliarystacktrace/stacktrace.h"
+#include "auxiliary/stacktrace/stacktrace.h"
 #ifdef _WIN32
 #include <dbghelp.h>
 #include <shellapi.h>

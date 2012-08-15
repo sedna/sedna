@@ -9,6 +9,10 @@
 
 #include <set>
 
+#ifdef EL_DEBUG
+#include "common/errdbg/d_printf.h"
+#endif /* EL_DEBUG */
+
 #define MAX_TICKET_SIZE 1024
 #define MAX_ERROR_LENGTH 1024
 #define MAX_DB_NAME 1024
@@ -61,17 +65,25 @@ SocketClient * ClientNegotiationManager::processData() {
     ProtocolVersion protocolVersion;
     
     switch (communicator->getInstruction()) {
+
+#ifdef EL_DEBUG
+    d_printf1("Got new connection");
+#endif /* EL_DEBUG */
       case se_StartUp :
         length = communicator->getMessageLength();
 
         // Distincts new protocol from the old one
-        // New protocol sends protocol version immediately
+        // New protocol client sends protocol version immediately
         if (length == 2) {
             // New protocol
 
             protocolVersion.min = communicator->readChar();
             protocolVersion.maj = communicator->readChar();
-
+            
+#ifdef EL_DEBUG
+            d_printf1("New protocol connection established");
+#endif /* EL_DEBUG */
+            
             return new ServiceConnectionProcessor(this, protocolVersion);
         } else {
             return new ClientConnectionProcessor(this, ClientConnectionProcessor::CommonProtocolClient());

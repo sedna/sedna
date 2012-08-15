@@ -7,6 +7,13 @@
 
 #include <iostream>
 
+/* Imprortant: here i define "default" options that MUST differ from normalOptions. */
+#define DEFAULT_BIND_ADDRESS            "1.1.1.1"
+#define DEFAULT_DATA_DIR                "/default/"
+#define DEFAULT_LISTEN_PORT             1010
+#define DEFAULT_LOG_LEVEL               1
+#define DEFAULT_STACK_DEPTH             111
+#define DEFAULT_KEEP_ALIVE              5
 
 static const char * normalOptions =
   "<sednaOptions><global><dataDirectory>/var/sedna</dataDirectory><listenPort>5050</listenPort><bindAddress>0.0.0.0</bindAddress><logLevel>2</logLevel><stackDepth>4000</stackDepth><keepAlive>0</keepAlive></global>"
@@ -40,8 +47,8 @@ int saveDatabaseOptions(const std::string& name, std::istream * options) {
 
 void setDefaultDatabaseOptions(DatabaseOptions * databaseOptions)
 {
-    databaseOptions->bufferCount = 1600;
-    databaseOptions->databaseName = "default";
+    databaseOptions->bufferCount = 1601;
+    databaseOptions->databaseName = "error-default";
     databaseOptions->updateCriteria = 1.4;
     databaseOptions->maxLogFiles = 20;
     databaseOptions->securityOptions = 0;
@@ -53,12 +60,12 @@ void setDefaultDatabaseOptions(DatabaseOptions * databaseOptions)
 
 void setDefaultSednaOptions(SednaOptions * sednaOptions)
 {
-    sednaOptions->bindAddress = "0.0.0.0";
-    sednaOptions->dataDirectory = "/var/sedna";
-    sednaOptions->listenPort = 5050;
-    sednaOptions->logLevel = 2;
-    sednaOptions->stackDepth = 4000;
-    sednaOptions->keepAlive = 0;
+    sednaOptions->bindAddress = DEFAULT_BIND_ADDRESS;
+    sednaOptions->dataDirectory = DEFAULT_DATA_DIR;
+    sednaOptions->listenPort = DEFAULT_LISTEN_PORT;
+    sednaOptions->logLevel = DEFAULT_LOG_LEVEL;
+    sednaOptions->stackDepth = DEFAULT_STACK_DEPTH;
+    sednaOptions->keepAlive = DEFAULT_KEEP_ALIVE;
 };
 
 TEST(globalOptionsReader, correctOptions) {
@@ -69,6 +76,13 @@ TEST(globalOptionsReader, correctOptions) {
     try {
         globals.loadFromStream(scoped_ptr<std::stringstream>(new std::stringstream(normalOptions)).get());
         globals.saveToStream(&std::cout);
+        
+        if (globals.global.bindAddress == DEFAULT_BIND_ADDRESS) { ASSERT_FALSE(true); throw; };
+        if (globals.global.dataDirectory == DEFAULT_DATA_DIR) { ASSERT_FALSE(true); throw; };
+        if (globals.global.listenPort ==  DEFAULT_LISTEN_PORT) { ASSERT_FALSE(true); throw; };
+        if (globals.global.logLevel == DEFAULT_LOG_LEVEL) { ASSERT_FALSE(true); throw; };
+        if (globals.global.stackDepth == DEFAULT_STACK_DEPTH) { ASSERT_FALSE(true); throw; };
+        if (globals.global.keepAlive == DEFAULT_KEEP_ALIVE) { ASSERT_FALSE(true); throw; };
     } catch (std::exception & x) {
         std::cout << x.what() << "\n";
         ASSERT_TRUE(false);
@@ -87,6 +101,13 @@ TEST(globalOptionsReader, errorOptions1) {
     try {
         globals.loadFromStream(scoped_ptr<std::stringstream>(new std::stringstream(errorOptions1)).get());
         globals.saveToStream(&std::cout);
+        
+        if (globals.global.bindAddress == DEFAULT_BIND_ADDRESS) { ASSERT_FALSE(true); throw; };
+        if (globals.global.dataDirectory == DEFAULT_DATA_DIR) { ASSERT_FALSE(true); throw; };
+        if (globals.global.listenPort ==  DEFAULT_LISTEN_PORT) { ASSERT_FALSE(true); throw; };
+        if (globals.global.logLevel == DEFAULT_LOG_LEVEL) { ASSERT_FALSE(true); throw; };
+        if (globals.global.stackDepth == DEFAULT_STACK_DEPTH) { ASSERT_FALSE(true); throw; };
+        if (globals.global.keepAlive == DEFAULT_KEEP_ALIVE) { ASSERT_FALSE(true); throw; };
     } catch (std::exception & x) {
         std::cout << x.what() << "\n";
         ASSERT_TRUE(true);
@@ -105,6 +126,13 @@ TEST(globalOptionsReader, errorOptions2) {
     try {
         globals.loadFromStream(scoped_ptr<std::stringstream>(new std::stringstream(errorOptions2)).get());
         globals.saveToStream(&std::cout);
+        
+        if (globals.global.bindAddress == DEFAULT_BIND_ADDRESS) { ASSERT_FALSE(true); throw; };
+        if (globals.global.dataDirectory == DEFAULT_DATA_DIR) { ASSERT_FALSE(true); throw; };
+        if (globals.global.listenPort ==  DEFAULT_LISTEN_PORT) { ASSERT_FALSE(true); throw; };
+        if (globals.global.logLevel == DEFAULT_LOG_LEVEL) { ASSERT_FALSE(true); throw; };
+        if (globals.global.stackDepth == DEFAULT_STACK_DEPTH) { ASSERT_FALSE(true); throw; };
+        if (globals.global.keepAlive == DEFAULT_KEEP_ALIVE) { ASSERT_FALSE(true); throw; };
     } catch (std::exception & x) {
         std::cout << x.what() << "\n";
         ASSERT_TRUE(true);

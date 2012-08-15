@@ -21,6 +21,10 @@ add_executable(global_names_test global_names_test.cpp)
 add_dependencies(global_names_test generate_error_codes u common gtest)
 target_link_libraries(global_names_test u common gtest ${sysaux_LIB})
 
+add_executable(protocol_test protocol_test.cpp)
+add_dependencies(protocol_test common u)
+target_link_libraries(protocol_test common u)
+
 
 add_test(NAME event_log_test COMMAND event_log_test)
 
