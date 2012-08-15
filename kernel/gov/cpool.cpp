@@ -101,11 +101,20 @@ WorkerSocketClient * Worker::createListener()
 
         ownListenerSocket = new ListenerSocket(this, listening_socket);
         newClients.push_back(ownListenerSocket);
+        
         return ownListenerSocket;
 }
 
 void Worker::run() {
     for (;;) {
+        /* We add client to separate client list not to spoil the client list iterator */
+        
+        for (UnsortedSocketClientList::iterator i = newClients.begin(); i != newClients.end(); ++i) {
+            addClient(*i);
+        }
+        
+        newClients.clear();
+        
         memcpy(&readySet, &allSet, sizeof(readySet));
 
         int readyCount = uselect_read_arr(&readySet, maxfd, NULL, __sys_call_error);
@@ -160,11 +169,6 @@ void Worker::run() {
             if (readyCount == 0) {
                 break;
             };
-        }
-
-        /* We add client to separate client list not to spoil the client list iterator */
-        for (UnsortedSocketClientList::iterator i = newClients.begin(); i != newClients.end(); ++i) {
-            addClient(*i);
         }
     }
 }
