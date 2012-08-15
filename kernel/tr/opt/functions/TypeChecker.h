@@ -15,7 +15,7 @@ struct TypedSequenceIterator
     SequenceType iterator;
     TypeChecker checker;
     int min, max;
-    error_info_t & error_info;
+    error_info_t error_info;
     tuple_cell value;
 
     TypedSequenceIterator(
@@ -42,7 +42,7 @@ struct TypedSequenceIterator
             return value;
         }
 
-        if (!checker.check(x)) {
+        if (!checker.check(value)) {
             throw USER_EXCEPTION2(error_info.code, error_info.description);
         };
 
@@ -73,14 +73,14 @@ struct AtomicTypeChecker
     inline
     bool check(tuple_cell & tc)
     {
-        return tc.is_atomic_type(tc);
+        return tc.is_atomic_type(type);
     };
 };
 
 struct LightAtomicTypeChecker
 {
     xmlscm_type type;
-    AtomicTypeChecker(xmlscm_type _type) : type(_type) {};
+    LightAtomicTypeChecker(xmlscm_type _type) : type(_type) {};
 
     inline
     bool check(tuple_cell & tc)
@@ -103,7 +103,7 @@ struct NodeChecker
     bool check(tuple_cell & tc)
     {
         // TODO : add node type check
-        return tc.is_node(tc);
+        return tc.is_node();
     };
 };
 
@@ -115,7 +115,7 @@ struct AtomicTypeCaster
     inline
     bool check(tuple_cell & tc)
     {
-        if (!tc.is_atomic_type(tc)) {
+        if (!tc.is_atomic_type(type)) {
             tc = cast(atomize(tc), type);
         };
 

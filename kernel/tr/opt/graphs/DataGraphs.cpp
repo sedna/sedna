@@ -178,23 +178,23 @@ DataGraph* DataGraphIndex::make(VariableUsageGraph* master, DataGraph* graph)
     return graph;
 }
 
-XmlConstructor & DataGraph::toXML(XmlConstructor & producer) const
+XmlConstructor & DataGraph::toXML(XmlConstructor& constructor) const
 {
-    producer.openElement(SE_EL_NAME("datagraph"));
+    constructor.openElement(SE_EL_NAME("datagraph"));
 
     FOR_ALL_GRAPH_ELEMENTS(dataNodes, i)
     {
-        dataNodes[i]->toXML(producer);
+        dataNodes[i]->toXML(constructor);
     };
 
     FOR_ALL_GRAPH_ELEMENTS(predicates, i)
     {
-        predicates[i]->toXML(producer);
+        predicates[i]->toXML(constructor);
     };
 
-    producer.closeElement();
+    constructor.closeElement();
 
-    return producer;
+    return constructor;
 }
 
 XmlConstructor & DataNode::toXML(XmlConstructor& element) const

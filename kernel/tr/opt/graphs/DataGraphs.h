@@ -91,7 +91,7 @@ struct DataNodeIndex {
 
 class VariableUsageGraph;
 
-struct DataGraph : public IPlanDisposable {
+struct DataGraph : public IPlanDisposable, public IXMLSerializable {
     VariableUsageGraph * owner;
     rqp::RPBase * operation;
 
@@ -102,7 +102,7 @@ struct DataGraph : public IPlanDisposable {
     PlanDesc outputNodes;
 
     explicit DataGraph(VariableUsageGraph* _owner);
-    XmlConstructor & toXML(XmlConstructor & ) const;
+    virtual XmlConstructor & toXML(XmlConstructor & constructor) const;
 };
 
 struct DataGraphIndex {

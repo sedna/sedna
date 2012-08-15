@@ -96,11 +96,29 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph)
         };
     }
 
+    graph.dg->toStream(F);
+
     planMap->update(nullPlan);
     currentStepSet->insert(0);
 
-    int branchLimit = 3;
+    int branchLimit = 2;
 
+    PlanDesc initialPredicates = graph.predicateMask;
+
+    for (PredicateList::const_iterator it = graph.predicates.begin(); it != graph.predicates.end(); ++it) {
+        Predicate * predicate = *it;
+
+        if (StructuralPredicate * pathPredicate = dynamic_cast<StructuralPredicate *>(predicate)) {
+            DataNode * leftNode = pathPredicate->left();
+
+            if (leftNode->type == DataNode::dnExternal) {
+            } else if ((graph.nodeIndex[leftNode->index].predicates ^ pathPredicate->indexBit) == 0) {
+            } else {
+                initialPredicates &= ~ predicate->indexBit;
+            };
+        };
+    };
+    
     while (!currentStepSet->empty()) {
         nextStepSet->clear();
 
@@ -120,7 +138,7 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph)
 //            if (dsc == 0 && branchLimit > 0) {
             if (branchLimit > 0) {
                 branchLimit--;
-                dsc = graph.predicateMask & ~info->getDesc();
+                dsc = initialPredicates & ~info->getDesc();
             };
 
             PlanDescIterator neighbours(dsc);

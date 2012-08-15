@@ -32,14 +32,14 @@ std::string getSearchName(const char* uri, const char* localname, int argc)
 
 FunctionInfo* FunctionLibrary::registerFunction(FunctionInfo * finfo)
 {
-    std::string name = getSearchName(finfo->finfo->uri, finfo->finfo->localname);
+    std::string name = getSearchName(finfo->finfo->uri, finfo->finfo->localname, finfo->finfo->argc);
     functions.insert(FunctionMap::value_type(name, finfo));
     return finfo;
 }
 
 FunctionInfo* FunctionLibrary::findFunction(const xsd::QName& qname, int argc)
 {
-    std::string name = getSearchName(qname.getUri(), qname.getLocalName());
+    std::string name = getSearchName(qname.getUri(), qname.getLocalName(), argc);
 
     FunctionMap::const_iterator it = functions.find(name);
 

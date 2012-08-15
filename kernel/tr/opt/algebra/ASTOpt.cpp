@@ -432,7 +432,7 @@ void lr2opt::visit(ASTFunCall &n) {
         // fndoc
 
         phop::FunctionInfo * f = getFunctionLibrary()->findFunction(
-              xsd::constQName(ns, n.local->c_str()));
+              xsd::constQName(ns, n.local->c_str()), 1);
 
         if (f == NULL) {
             U_ASSERT(false);

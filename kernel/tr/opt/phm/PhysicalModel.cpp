@@ -323,7 +323,7 @@ void* StructuralCandidateSelector::evaluate(Candidate* candidate)
             // TODO :: maybe we should validate path here
             break;
         case evaluate_Right_then_Left:
-            if (!setOp(leftOp, leftCandidate, candidate->opList)) {
+            if (!setOp(rightOp, rightCandidate, candidate->opList)) {
                 return NULL;
             }
         case evaluate_Left_from_Right:
@@ -365,7 +365,7 @@ void* PhysicalModel::compile(StructuralPredicate* pred)
 
     result = NULL;
 
-    if (evaluatable) {
+    if (!evaluatable) {
         sel.leftOp = materialize(plan->getRef(pred->left()->absoluteIndex));
         sel.rightOp = materialize(plan->getRef(pred->right()->absoluteIndex));
 
@@ -389,11 +389,6 @@ void* PhysicalModel::compile(StructuralPredicate* pred)
         };
     }
 
-    // Join is always an option!
-    if (sel.leftCandidate != NULL || sel.rightCandidate != NULL) {
-        candidates.push_back(Candidate(join));
-    }
-
     if (evaluatable) {
         if (sel.leftOp.op == NULL && sel.rightOp.op == NULL) {
             if (sel.rightCandidate != NULL && inversablePath) {
@@ -410,6 +405,11 @@ void* PhysicalModel::compile(StructuralPredicate* pred)
         }
     };
 
+    // Join is always an option!
+    if (sel.leftCandidate != NULL || sel.rightCandidate != NULL) {
+        candidates.push_back(Candidate(join));
+    }
+    
     if (candidates.size() == 0) {
         return NULL;
     };
@@ -420,9 +420,10 @@ void* PhysicalModel::compile(StructuralPredicate* pred)
     Candidate * minCandidate = NULL;
     
     for (std::vector<Candidate>::iterator cand = candidates.begin(); cand != candidates.end(); ++cand) {
+        StructuralCandidateSelector newSelector(sel);
         Candidate * candidate = &(*cand);
 
-        if (sel.evaluate(candidate) != NULL) {
+        if (newSelector.evaluate(candidate) != NULL) {
             if (minCandidate == NULL || candidate->cost < minCandidate->cost) {
                 minCandidate = candidate;
             }

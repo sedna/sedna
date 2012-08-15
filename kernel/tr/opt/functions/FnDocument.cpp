@@ -46,6 +46,8 @@ void DocumentFunction::execute(FunCallParams* funcall, executor::DynamicContext*
 //    throw ;
 }
 
+using executor::SequenceIterator;
+
 executor::SequenceIterator getArg(FunCallParams* funcall, executor::DynamicContext* dynamicContext, int n)
 {
     return dynamicContext->variables->getIterator(funcall->getParams().at(n));
@@ -57,9 +59,15 @@ void LoadDocumentFunction::execute(FunCallParams* funcall, executor::DynamicCont
 {
     error_info_t cast_error = {XPTY0004, "Wrong arguments in function se:load-doc"};
 
-    tuple_cell fileName = TypedSequenceIterator(GET_ARG(0), AtomicTypeCaster(xs_string), 1, 1, cast_error).next();
-    tuple_cell docName = TypedSequenceIterator(GET_ARG(1), AtomicTypeCaster(xs_string), 1, 1, cast_error).next();
+    tuple_cell fileName =
+      TypedSequenceIterator<SequenceIterator, AtomicTypeCaster>
+        (GET_ARG(0), AtomicTypeCaster(xs_string), 1, 1, cast_error).next();
 
+    tuple_cell docName =
+      TypedSequenceIterator<SequenceIterator, AtomicTypeCaster>
+        (GET_ARG(1), AtomicTypeCaster(xs_string), 1, 1, cast_error).next();
+
+/*    
     xptr docRoot;
 
     try {
@@ -73,7 +81,7 @@ void LoadDocumentFunction::execute(FunCallParams* funcall, executor::DynamicCont
     }
 
     fileName.get_str_mem();
-
+*/
 //      getArgument(funcall, dynamicContext, xs_string);
     U_ASSERT(false);
 //    funcall->getData();
