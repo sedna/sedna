@@ -295,7 +295,7 @@ namespace sedna
         }
         catch (SednaUserException &e) // invalid uri exception
         {
-            drv->error(e.get_code(), e.getDescription().c_str());
+            drv->error(e.getCode(), e.getDescription());
         }
     }
 
@@ -919,7 +919,7 @@ namespace sedna
         }
         catch (SednaUserException &e) // invalid uri
         {
-            drv->error(e.get_code(), e.getDescription().c_str());
+            drv->error(e.getCode(), e.getDescription());
         }
     }
 
@@ -1863,7 +1863,7 @@ namespace sedna
                         delete para[i].op;
 
                     off_this.opin = PPOpIn(NULL, 1);
-                    drv->error(e.get_code(), e.getDescription().c_str());
+                    drv->error(e.getCode(), e.getDescription());
                 }
             }
         }
@@ -1908,7 +1908,7 @@ namespace sedna
                         delete para[i].op;
 
                     off_this.opin = PPOpIn(NULL, 1);
-                    drv->error(n.getLocation(), e.get_code(), e.getDescription().c_str());
+                    drv->error(n.getLocation(), e.getCode(), e.getDescription());
                 }
             }
         }
@@ -2103,7 +2103,7 @@ namespace sedna
         }
         catch (SednaUserException &e)
         {
-            drv->error(e.get_code(), e.getDescription().c_str());
+            drv->error(e.getCode(), e.getDescription());
             tc = string2tuple_cell("dummy", xs_string);
         }
 

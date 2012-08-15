@@ -75,7 +75,7 @@ void PPDropModule::do_execute()
     }
     catch(SednaUserException& e)
     {
-        if(e.get_code() == SE2006)
+        if(e.getCode() == SE2006)
         {
             throw USER_EXCEPTION2(SE1074, tc.get_str_mem());
         }

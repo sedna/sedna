@@ -197,11 +197,11 @@ void PPLoadModule::do_execute()
         }
         catch(SednaUserException& e)
         {
-            if(e.get_code() == SE2004)
+            if(e.getCode() == SE2004)
             {
                 throw USER_EXCEPTION2(SE1073, module_name.c_str());
             }
-            if(e.get_code() == SE2008)
+            if(e.getCode() == SE2008)
             {
                 throw USER_EXCEPTION2(SE2008, (std::string("Invalid module URI '") + module_name + "'").c_str());
             }

@@ -42,8 +42,7 @@ private:
     ResultStack::iterator position;
 public:
     /** @brief Dynamic context of the sequence.
-     * It is assigned only when sequence is assigned to the context,
-     * so it is not mandatory
+     * It is assigned only when sequence is assigned to the context, so it is not mandatory
      */
 
     executor::DynamicContext * context;

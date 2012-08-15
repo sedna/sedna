@@ -20,7 +20,7 @@ public:
 };
 
 phop::function_info_t
-GeneralComparisonFunction::gcmp_name = {NULL, "internal", "general_comparison"};
+GeneralComparisonFunction::gcmp_name = {NULL, "internal", "general_comparison", 2};
 
 void GeneralComparisonFunction::execute(FunCallParams* funcall, executor::DynamicContext* dynamicContext)
 {

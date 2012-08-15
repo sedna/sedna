@@ -152,7 +152,7 @@ struct VariableProducer
     };
 };
 
-class VarIterator
+class SequenceIterator
 {
     int pos;
     VarCacheInfo * varInfo;
@@ -161,7 +161,7 @@ class VarIterator
 public:
     const VarCacheInfo * info() const { return varInfo; }
 
-    explicit VarIterator(VarCacheInfo * _varInfo)
+    explicit SequenceIterator(VarCacheInfo * _varInfo)
       : pos(-1), varInfo(_varInfo), value(EMPTY_TUPLE_CELL)
     {
         generation = varInfo->producer->generation;
@@ -269,7 +269,7 @@ public:
     };
 
     /* Generate Iterator for a variable */
-    VarIterator getIterator(opt::TupleId var)
+    SequenceIterator getIterator(opt::TupleId var)
     {
         VariableMap::const_iterator it = variableMap.find(var);
 
@@ -279,7 +279,7 @@ public:
         //throw USER_EXCEPTION
         };
 
-        return VarIterator(it->second);
+        return SequenceIterator(it->second);
     }
 };
 

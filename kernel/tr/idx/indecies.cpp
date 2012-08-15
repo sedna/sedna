@@ -370,7 +370,7 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
                             throw USER_EXCEPTION2(SE1008, "The size of the index key exceeds max key limit");
                           };
                         } catch (SednaUserException e) {
-                          if (e.get_code() != SE1003) { throw; }
+                          if (e.getCode() != SE1003) { throw; }
 
                           //IX. Increment the counter, which shows the number of
                           //    items that were not inserted because they have
@@ -429,7 +429,7 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
             }
             catch (SednaUserException e) {
                 // FIXME : we MUST check for a error type here
-                if (e.get_code() != SE1003) { throw; }
+                if (e.getCode() != SE1003) { throw; }
 
                 //XIV. Increment the counter, which shows the number of
                 //     items that were not inserted because they have

@@ -18,6 +18,8 @@ struct function_info_t
     const char * default_prefix;
     const char * uri;
     const char * localname;
+
+    int argc;
 };
 
 struct FunctionInfo
@@ -33,7 +35,10 @@ struct FunctionInfo
     };
 
     virtual void execute(rqp::FunCallParams * funcall, executor::DynamicContext * dynamicContext) = 0;
-    virtual bool transform(rqp::FunCallParams * funcall, rqp::RewritingContext * rewritingContext) = 0;
+    virtual bool transform(rqp::FunCallParams * funcall, rqp::RewritingContext * rewritingContext) { return false; };
+
+//    virtual bool checkStatic(rqp::FunCallParams * funcall);
+//    virtual bool checkParams(rqp::FunCallParams * funcall);
 };
 
 typedef std::map<std::string, FunctionInfo *> FunctionMap;
@@ -47,7 +52,7 @@ public:
     ~FunctionLibrary();
 
     FunctionInfo * registerFunction(FunctionInfo * finfo);
-    FunctionInfo * findFunction(const xsd::QName & qname);
+    FunctionInfo * findFunction(const xsd::QName & qname, int argc);
 };
 
 extern FunctionLibrary * functionLibrary;
@@ -57,6 +62,7 @@ void initFunctionLibrary();
 };
 
 #define FN_NS (predefinedNamespaces[namespace_fn])
+#define SE_NS (predefinedNamespaces[namespace_se])
 
 inline static
 phop::FunctionLibrary * getFunctionLibrary()

@@ -620,7 +620,7 @@ void socket_client::process_unknown_instruction(int instruction, bool in_transac
         {
         case se_BeginTransaction:
             {
-                error(SE4612, USER_EXCEPTION(SE4612).getMsg());
+                error(SE4612, USER_EXCEPTION(SE4612).what());
                 break;
             }
         default: throw USER_EXCEPTION(SE3009);
@@ -632,32 +632,32 @@ void socket_client::process_unknown_instruction(int instruction, bool in_transac
         {
         case se_CommitTransaction:
             {
-                error(SE4610, USER_EXCEPTION(SE4610).getMsg());
+                error(SE4610, USER_EXCEPTION(SE4610).what());
                 break;
             }
         case se_RollbackTransaction:
             {
-                error(SE4611, USER_EXCEPTION(SE4611).getMsg());
+                error(SE4611, USER_EXCEPTION(SE4611).what());
                 break;
             }
         case se_GetNextItem:
             {
-                error(SE4614, USER_EXCEPTION(SE4614).getMsg());
+                error(SE4614, USER_EXCEPTION(SE4614).what());
                 break;
             }
         case se_ExecuteLong:
             {
-                error(SE4615, USER_EXCEPTION(SE4615).getMsg());
+                error(SE4615, USER_EXCEPTION(SE4615).what());
                 break;
             }
         case se_Execute:
             {
-                error(SE4615, USER_EXCEPTION(SE4615).getMsg());
+                error(SE4615, USER_EXCEPTION(SE4615).what());
                 break;
             }
         case se_ExecuteSchemeProgram:
             {
-                error(SE4615, USER_EXCEPTION(SE4615).getMsg());
+                error(SE4615, USER_EXCEPTION(SE4615).what());
                 break;
             }
         default: throw USER_EXCEPTION(SE3009);

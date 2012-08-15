@@ -60,7 +60,7 @@ class VariableIn : public ITupleOperator {
     RTTI_DECL(sequence_operator_VariableIn, ITupleOperator)
 private:
     opt::TupleId tid;
-    executor::VarIterator varIt;
+    executor::SequenceIterator varIt;
     unsigned idx;
 protected:
     virtual void do_next();

@@ -6,9 +6,6 @@
 
 void cleanupFunCall(rqp::FunCallParams * funCall);
 
-bool do_operation_push_down(rqp::RewritingContext * pr, rqp::RPBase * op, unsigned idx);
-bool do_outer_bind_parameter(rqp::RewritingContext * pr, rqp::RPBase * op, unsigned idx, bool preserveNull);
-
 inline static
 bool isConstExpr(rqp::RPBase * op)
 {

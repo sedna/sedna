@@ -161,7 +161,7 @@ qepNextAnswer execute(PPQueryEssence* qep_tree)
     } catch (SednaUserException &e) {
         if (1 == tr_globals::debug_mode) 
             print_pp_stack(tr_globals::client->get_debug_ostream());
-        if (e.get_code() == SE2041) return se_result_is_cut_off;
+        if (e.getCode() == SE2041) return se_result_is_cut_off;
         throw;
     }
 
@@ -177,7 +177,7 @@ qepNextAnswer next(PPQueryEssence* qep_tree)
     } catch (SednaUserException &e) {
         if (1 == tr_globals::debug_mode) 
             print_pp_stack(tr_globals::client->get_debug_ostream());
-        if (e.get_code() == SE2041) return se_result_is_cut_off;
+        if (e.getCode() == SE2041) return se_result_is_cut_off;
         throw;
     }
 

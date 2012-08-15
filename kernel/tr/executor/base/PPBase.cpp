@@ -43,3 +43,40 @@ namespace executor_globals
         pp_stack.clear();
     }
 }
+
+#define CHECK_SNPRINTF_RET(VAL, BUF, BUF0) \
+    if (VAL < 0) { return NULL; } \
+    if (VAL >= EXCEPTION_BUFFER_SIZE) { return BUF0; }; \
+    BUF += VAL;
+
+const char* SednaXQueryException::createMessage(char* buffer) const
+{
+    const char * buf0 = buffer;
+    size_t len;
+
+    len = snprintf(buffer, EXCEPTION_BUFFER_SIZE, "SEDNA Message: ERROR %s \n%s\n",
+        user_error_code_entries[internal_code].code,
+        user_error_code_entries[internal_code].descr);
+
+    CHECK_SNPRINTF_RET(len, buffer, buf0);
+
+    if (err_msg[0] != 0) {
+        len = snprintf(buffer, EXCEPTION_BUFFER_SIZE - (buffer - buf0),
+            "Details: %s\n", err_msg);
+        CHECK_SNPRINTF_RET(len, buffer, buf0);
+    }
+
+    if (xquery_line != 0)
+    {
+        len = snprintf(buffer, EXCEPTION_BUFFER_SIZE - (buffer - buf0),
+            "Query line: %d, column: %d \n", xquery_line, xquery_col);
+        CHECK_SNPRINTF_RET(len, buffer, buf0);
+    }
+
+#if (EL_DEBUG == 1)
+    len = snprintf(buffer, EXCEPTION_BUFFER_SIZE - (buffer - buf0),
+        "Position: [%s, %s, %d]\n", file, function, line);
+    CHECK_SNPRINTF_RET(len, buffer, buf0);
+#endif
+    return buf0;
+}

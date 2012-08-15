@@ -25,9 +25,9 @@ FunctionLibrary::~FunctionLibrary()
 }
 
 static
-std::string getSearchName(const char* uri, const char* localname)
+std::string getSearchName(const char* uri, const char* localname, int argc)
 {
-    return std::string(localname) + ((uri == NULL) ? "@{}" : ("@{" + std::string(uri) + "}"));
+    return int2string(argc) + "_" + localname + ((uri == NULL) ? "@{}" : ("@{" + std::string(uri) + "}"));
 };
 
 FunctionInfo* FunctionLibrary::registerFunction(FunctionInfo * finfo)
@@ -37,7 +37,7 @@ FunctionInfo* FunctionLibrary::registerFunction(FunctionInfo * finfo)
     return finfo;
 }
 
-FunctionInfo* FunctionLibrary::findFunction(const xsd::QName& qname)
+FunctionInfo* FunctionLibrary::findFunction(const xsd::QName& qname, int argc)
 {
     std::string name = getSearchName(qname.getUri(), qname.getLocalName());
 

@@ -15,9 +15,9 @@ RTTI_DEF(Sequence)
 
 struct VariableIterator : public executor::IExecuteProc
 {
-    executor::VarIterator varIterator;
+    executor::SequenceIterator varIterator;
 
-    VariableIterator(const executor::VarIterator & it)
+    VariableIterator(const executor::SequenceIterator & it)
       : varIterator(it) {};
 
     virtual void execute(executor::VirtualSequence* sequence);

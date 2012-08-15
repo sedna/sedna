@@ -71,105 +71,113 @@ public:
             do {
                 client->read_msg(&client_msg);
                 switch (client_msg.instruction) {
-                    /* TODO : move session options handling to client */
-                    case se_SetSessionOptions:
-                        client->set_session_options(&client_msg); break;
-                    case se_ResetSessionOptions:
-                        client->reset_session_options(); break;
-                    case se_Authenticate:
-                    {
-                        do_authentication();
-                        client->authentication_result(true, "");
-                    } break;
+                case se_Authenticate:
+                {
+                    do_authentication();
+                    client->authentication_result(true, "");
+                } break;
 
-                    case se_ExecuteSchemeProgram:  
-                    {
-                        /* Backward compatibility, not currently supported */
-                        throw ClientRequestNotSupportedException(DEFAULT_EXCEPTION_PARAMETERS, "Scheme program execution is depricated");
-                        break;
+                case se_ExecuteSchemeProgram:
+                {
+                    /* Backward compatibility, not currently supported */
+                    throw ClientRequestNotSupportedException(EXCEPTION_PARAMETERS, "Scheme program execution is depricated");
+                    break;
+                }
+
+                case se_ExecuteLong:
+                case se_Execute:
+                {
+                    if (currentStatement != NULL) {
+                        delete currentStatement;
+                        currentStatement = NULL;
                     }
 
-                    case se_ExecuteLong:
-                    case se_Execute:
-                    {
-                        if (currentStatement != NULL) {
-                            delete currentStatement;
-                            currentStatement = NULL;
-                        }
+                    /* Adjust client for the new statement */
+                    client->set_result_type((enum se_output_method) (client_msg.body[0]));
+                    client->user_statement_begin();
 
-                        /* Adjust client for the new statement */
-                        client->set_result_type((enum se_output_method) (client_msg.body[0]));
-                        client->user_statement_begin();
+                    currentStatement = new opt::OptimizedStatement(client);
 
-                        currentStatement = new opt::OptimizedStatement(client);
+                    currentStatement->prepare(
+                        client->get_query_type(),
+                        client->get_query_string(&client_msg));
 
-                        currentStatement->prepare(
-                            client->get_query_type(),
-                            client->get_query_string(&client_msg));
+                    currentStatement->execute();
 
-                        currentStatement->execute();
+                    /* If no exception, consider query succeded */
+                    client->respond_to_client(se_QuerySucceeded);
 
-                        /* If no exception, consider query succeded */
-                        client->respond_to_client(se_QuerySucceeded);
-
-                        /* Get the first item, no break */
+                    /* Get the first item, no break */
+                };
+                case se_GetNextItem:
+                {
+                    if (currentStatement == NULL) {
+                        U_ASSERT(false);
+                        // Statement not prepared;
                     };
-                    case se_GetNextItem:
-                    {
-                        if (currentStatement == NULL) {
-                            U_ASSERT(false);
-                            // Statement not prepared;
-                        };
 
-                        currentStatement->next();
-                        /* TODO: implement time */
+                    currentStatement->next();
+                    /* TODO: implement time */
 //                        total_time += currentStatement->time;
-                    } break;
-                    case se_ShowTime:      //show time
-                    {
-                        client->show_time_ex(total_time);
-                        break;
+                } break;
+                case se_ShowTime:      //show time
+                {
+                    client->show_time_ex(total_time);
+                    break;
+                }
+                case se_CommitTransaction:
+                case se_RollbackTransaction:
+                case se_CloseConnection:
+                {
+                    if (currentStatement != NULL) {
+                        delete currentStatement;
+                        currentStatement = NULL;
                     }
-                    case se_CommitTransaction:
-                    case se_RollbackTransaction:
-                    case se_CloseConnection:
-                    {
-                        if (currentStatement != NULL) {
-                            delete currentStatement;
-                            currentStatement = NULL;
-                        }
 
-                        transactionAlive = false;
+                    transactionAlive = false;
 
+                    try {
                         on_transaction_end(
                           smServer,
                           client_msg.instruction == se_CommitTransaction,
                           tr_globals::ppc);
+                    } catch (std::exception & exception) {
+                        throw SYSTEM_EXCEPTION(exception.what());
+                    };
 
-                        switch (client_msg.instruction) {
-                          case se_CommitTransaction:
-                            client->respond_to_client(se_CommitTransactionOk); break;
-                          case se_RollbackTransaction:
-                            client->respond_to_client(se_RollbackTransactionOk); break;
-                          case se_CloseConnection:
-                            client->respond_to_client(se_TransactionRollbackBeforeClose); break;
-                          default :
-                            U_ASSERT(false);
-                        };
-                    } break;
+                    switch (client_msg.instruction) {
+                      case se_CommitTransaction:
+                        client->respond_to_client(se_CommitTransactionOk); break;
+                      case se_RollbackTransaction:
+                        client->respond_to_client(se_RollbackTransactionOk); break;
+                      case se_CloseConnection:
+                        client->respond_to_client(se_TransactionRollbackBeforeClose); break;
+                      default :
+                        U_ASSERT(false);
+                    };
+                } break;
 
-                    default:
-                    {
-                        client->process_unknown_instruction(client_msg.instruction, true);
-                        break;
-                    }
+                default:
+                  client->process_unknown_instruction(client_msg.instruction, true);
                 }
             } while (transactionAlive);
+        } catch (SednaUserEnvException & userException) {
+            throw;
         } catch (SednaUserException & userException) {
-            on_transaction_end(smServer, false, tr_globals::ppc);
+            /* Any exception thrown from this block is considered system */
+
+            try {
+                on_transaction_end(smServer, false, tr_globals::ppc);
+            } catch (std::exception & exception) {
+                throw SYSTEM_EXCEPTION(exception.what());
+            };
+
+            if (userException.getCode() == SE3053) {
+                client->authentication_result(false, userException.what());
+            } else {
+                client->error(userException.getCode(), userException.what());
+            }
         } catch (std::exception & exception) {
-            U_ASSERT(false);
-            on_transaction_end(smServer, false, tr_globals::ppc);
             throw;
         }
     };
@@ -232,7 +240,7 @@ int TRmain(int argc, char *argv[])
                 close_global_memory_mapping();
                 sedna_server_is_running = true;
             } catch (SednaUserException &e) {
-                if (e.get_code() != SE4400) throw;
+                if (e.getCode() != SE4400) throw;
             }
             OS_EXCEPTIONS_INSTALL_HANDLER
         }
@@ -447,10 +455,10 @@ int TRmain(int argc, char *argv[])
         {
             if (client != NULL)
             {
-                if (e.get_code() == SE3053)
-                    client->authentication_result(false, e.getMsg());
+                if (e.getCode() == SE3053)
+                    client->authentication_result(false, e.what());
                 else
-                    client->error(e.get_code(), e.getMsg());
+                    client->error(e.getCode(), e.what());
 
                 client->release();
                 delete client;

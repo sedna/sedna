@@ -18,7 +18,7 @@ public:
 };
 
 phop::function_info_t
-AxisStepFunction::axis_step_name = {NULL, "internal", "axis_step"};
+AxisStepFunction::axis_step_name = {NULL, "internal", "axis_step", 1};
 
 XmlConstructor& AxisStepData::toXML(XmlConstructor& constructor) const
 {

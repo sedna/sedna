@@ -403,7 +403,7 @@ int sm_server_handler(void *arg)
         ReleaseGiantLock(); isGiantLockObtained = false;
     } catch (SednaUserException &e) {
         if (isGiantLockObtained) ReleaseGiantLock();
-        switch (e.get_code())
+        switch (e.getCode())
         {
         case SE1011:  // Data file has reached its maximum size.
             msg->cmd = 21;
@@ -562,7 +562,7 @@ int main(int argc, char **argv)
                 return 0;
 
             } catch (SednaUserException &e) {
-                fprintf(stderr, "%s\n", e.getMsg().c_str());
+                fprintf(stderr, "%s\n", e.what());
                 if (ppc) { ppc->shutdown(); delete ppc; ppc = NULL; }
                 return 1;
             } catch (SednaException &e) {
@@ -722,7 +722,7 @@ int main(int argc, char **argv)
         return 0;
 
     } catch (SednaUserException &e) {
-        fprintf(stderr, "%s\n", e.getMsg().c_str());
+        fprintf(stderr, "%s\n", e.what());
         event_logger_release();
         if (ppc) { ppc->shutdown(); delete ppc; ppc = NULL; }
         close_gov_shm();
