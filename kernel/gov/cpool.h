@@ -35,7 +35,6 @@ private:
 
     void processClientData(WorkerSocketClient * client);
 
-    WorkerSocketClient * addClient(WorkerSocketClient * stream);
 public:
     UnsortedSocketClientList newClients;
 
@@ -49,6 +48,7 @@ public:
     void run();
 
     void createUnixListener(SessionProcessInfo * trninfo);
+    WorkerSocketClient * addClient(WorkerSocketClient * stream);
 };
 
 

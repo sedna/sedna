@@ -27,7 +27,11 @@ WorkerSocketClient * Worker::addClient(WorkerSocketClient * stream) {
         if (maxfd < s) {
                 maxfd = s;
         }
-
+        
+        /* We add client to separate client list not to spoil the client list iterator 
+         * It's obligatory, don't forget for the second time! 
+         */
+        newClients.push_back(stream);
         return stream;
 };
 
@@ -35,16 +39,15 @@ SocketClient * ListenerSocket::processData() {
         USOCKET negotiation_socket_stream;
         negotiation_socket_stream = uaccept(clientSocket, __sys_call_error);
 
-        WorkerSocketClient * newSocketStream = new ClientNegotiationManager(worker, negotiation_socket_stream);
-
         if(negotiation_socket_stream == U_INVALID_SOCKET) {
-                throw SYSTEM_EXCEPTION("Can't accept client's connection");
+            throw SYSTEM_EXCEPTION("Can't accept client's connection");
         }
-
+        
         socketSetNoDelay(negotiation_socket_stream);
         
-        worker->newClients.push_back(newSocketStream);
-        return newSocketStream;
+        WorkerSocketClient * newSocketStream = new ClientNegotiationManager(worker, negotiation_socket_stream);
+
+        return worker->addClient(newSocketStream);
 }
 
 /* TODO: need to modify this function in the new way. But this function is NECESSARY */
@@ -76,7 +79,7 @@ SocketClient * ListenerSocket::processData() {
 
 
 /**
- * Binds a new listening socket to globally awailable address
+ * Binds a new listening socket to globally available address
  */
 
 WorkerSocketClient * Worker::createListener() 
@@ -100,21 +103,12 @@ WorkerSocketClient * Worker::createListener()
         }
 
         ownListenerSocket = new ListenerSocket(this, listening_socket);
-        newClients.push_back(ownListenerSocket);
         
-        return ownListenerSocket;
+        return this->addClient(ownListenerSocket);
 }
 
 void Worker::run() {
     for (;;) {
-        /* We add client to separate client list not to spoil the client list iterator */
-        
-        for (UnsortedSocketClientList::iterator i = newClients.begin(); i != newClients.end(); ++i) {
-            addClient(*i);
-        }
-        
-        newClients.clear();
-        
         memcpy(&readySet, &allSet, sizeof(readySet));
 
         int readyCount = uselect_read_arr(&readySet, maxfd, NULL, __sys_call_error);
@@ -124,9 +118,12 @@ void Worker::run() {
             throw SYSTEM_EXCEPTION(usocket_error_translator());
         }
 
+        clientList.insert(clientList.end(), newClients.begin(), newClients.end());
+        newClients.clear();
+        
         for (UnsortedSocketClientList::iterator i = clientList.begin(); i != clientList.end(); ) {
             WorkerSocketClient * client = *i;
-
+            
             if (client->isObsolete()) {
                 USOCKET socket = client->getSocket();
                 U_SSET_CLR(socket, &allSet);
@@ -134,9 +131,9 @@ void Worker::run() {
                 delete client;
                 continue;
             }
-
+            
             USOCKET socket = client->getSocket();
-
+            
             if (U_SSET_ISSET(socket, &readySet)) {
                 try {
                     while (client != NULL) {
@@ -145,7 +142,13 @@ void Worker::run() {
                         readyCount--;
 
                         if (client != nextProcessor) {
-                            delete client;
+                            /* NOTE: we really need this check for the case
+                             * when send fails to handle broken pipe/hanged connection
+                             */
+                            if ((NULL == nextProcessor) && (client->isObsolete()) ) {
+                              USOCKET socket = client->getSocket();
+                              U_SSET_CLR(socket, &allSet);
+                            }
                             client = nextProcessor;
                             *i = client;
                         } else {
@@ -166,7 +169,8 @@ void Worker::run() {
             ++i;
 
             /* If we already read all desciptors, break inner loop */
-            if (readyCount == 0) {
+            /* NOTE: readyCount may be negative, really */
+            if (readyCount <= 0) {
                 break;
             };
         }
