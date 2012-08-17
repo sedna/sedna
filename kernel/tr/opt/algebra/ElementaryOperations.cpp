@@ -20,10 +20,10 @@ struct VariableIterator : public executor::IExecuteProc
     VariableIterator(const executor::SequenceIterator & it)
       : varIterator(it) {};
 
-    virtual void execute(executor::VirtualSequence* sequence);
+    virtual void execute(executor::ResultSequence * sequence);
 };
 
-void VariableIterator::execute(executor::VirtualSequence* sequence)
+void VariableIterator::execute(executor::ResultSequence* sequence)
 {
     tuple_cell result = varIterator.next();
 
@@ -41,6 +41,14 @@ void VarIn::evaluateTo(executor::DynamicContext* dynamicContext)
           dynamicContext->variables->getIterator(getTuple()))));;
 }
 
+void Const::evaluateTo(executor::DynamicContext* dynamicContext)
+{
+    MemoryTupleSequence & value = *sequence;
+
+    for (MemoryTupleSequence::const_iterator it = value.begin(); it != value.end(); ++it) {
+        dynamicContext->stack->push(executor::Result(*it));
+    };
+}
 
 XmlConstructor& VarIn::__toXML(XmlConstructor& element) const
 {

@@ -37,7 +37,7 @@ TupleRef PlanInfo::initTupleSet(DataNode* node)
 
     ref->status = TupleValueInfo::available;
     ref->node = node;
-    ref->statistics = NULL;
+    ref->m_stat = node->properties;
 
     return ref;
 }
@@ -56,7 +56,7 @@ TupleChrysalis::TupleChrysalis(const TupleChrysalis* parent)
     rowSize = parent->rowSize;
 }
 
-TupleChrysalis * PhysicalModel::updateOne(TupleChrysalis* parent, const POProtIn& op)
+TupleChrysalis * PhysicalModel::updateOne(TupleChrysalis* parent, const POProtIn& op) const
 {
     TupleChrysalis * t = new TupleChrysalis(parent);
     TupleRef opT(t, op.index);
@@ -70,7 +70,7 @@ TupleChrysalis * PhysicalModel::updateOne(TupleChrysalis* parent, const POProtIn
     return t;
 }
 
-TupleChrysalis * PhysicalModel::updateTwo(TupleChrysalis* x, TupleChrysalis* y, POProt* op, TupleId ind1, TupleId ind2)
+TupleChrysalis * PhysicalModel::updateTwo(TupleChrysalis* x, TupleChrysalis* y, POProt* op, TupleId ind1, TupleId ind2) const
 {
     U_ASSERT(x->tuples.size() == y->tuples.size());
 
@@ -210,19 +210,6 @@ void* PhysicalModel::compile(ValuePredicate* pred)
         } else {
             result = new MergeJoinPrototype(this, leftOp, rightOp, new GeneralComparisonPrototype(pred->cmp));
         };
-/*
-        if (isCacheReasonable(left->statistics->nodeMass)) {
-            result = new CachedNestedLoop(left->source, right->source, pred->Path);
-        } else if (isCacheReasonable(right->mass)) {
-            result = new CachedNestedLoop(right->source, left->source, pred->op);
-        } else if (isHashable(pred)) {
-        // TODO: check for index available
-        // TODO: check for nested loop join
-            //            result = new HashJoin(left->source, right->source, pred->op);
-        } else {
-            result = new SortMergeJoin(left->source, right->source, pred->op);
-        };
-*/
     } else if (isConst(initialRef(rightOp.index))) {
         result = new ValueScanPrototype(this, leftOp, initialRef(rightOp.index), pred->cmp);
     } else if (isConst(initialRef(leftOp.index)) && pred->cmp.inversable()) {
@@ -277,10 +264,10 @@ struct StructuralCandidateSelector
 {
     PhysicalModel * model;
     StructuralPredicate* pred;
-    
+
     POProtIn leftOp;
     POProtIn rightOp;
-    
+
     POProt* leftCandidate;
     POProt* rightCandidate;
 
@@ -298,7 +285,7 @@ void* StructuralCandidateSelector::evaluate(Candidate* candidate)
             if (!setOp(rightOp, rightCandidate, candidate->opList)) {
                 return NULL;
             }
-            
+
             if (leftOp.op == rightOp.op) {
                 candidate->opList.push_back(
                   new FilterTuplePrototype(model,
@@ -353,10 +340,9 @@ void* StructuralCandidateSelector::evaluate(Candidate* candidate)
 void* PhysicalModel::compile(StructuralPredicate* pred)
 {
     StructuralCandidateSelector sel;
-    
-    bool evaluatable = !pred->path.horizontal();
+
     bool inversablePath = pred->path.inversable();
-    
+
     std::vector<Candidate> candidates;
     candidates.reserve(3);
 
@@ -365,7 +351,7 @@ void* PhysicalModel::compile(StructuralPredicate* pred)
 
     result = NULL;
 
-    if (!evaluatable) {
+    if (pred->path.horizontal()) {
         sel.leftOp = materialize(plan->getRef(pred->left()->absoluteIndex));
         sel.rightOp = materialize(plan->getRef(pred->right()->absoluteIndex));
 
@@ -387,14 +373,12 @@ void* PhysicalModel::compile(StructuralPredicate* pred)
         } else {
             sel.rightCandidate = sel.rightOp.op;
         };
-    }
 
-    if (evaluatable) {
         if (sel.leftOp.op == NULL && sel.rightOp.op == NULL) {
             if (sel.rightCandidate != NULL && inversablePath) {
                 candidates.push_back(Candidate(evaluate_Right_then_Left));
             }
-            
+
             if (sel.leftCandidate != NULL) {
                 candidates.push_back(Candidate(evaluate_Left_then_Right));
             }

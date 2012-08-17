@@ -32,7 +32,7 @@ public:
 
     void openElement(const xsd::QName &qname, xmlscm_type type = xs_untypedAtomic);
     void closeElement();
-    
+
     tuple_cell getLastChild() const { return lastElement; };
 };
 

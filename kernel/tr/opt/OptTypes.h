@@ -70,6 +70,8 @@ struct tuple_info_t
     inline bool nodes() const { return (flags & sf_nodes) > 0; }
     inline bool alwaysTrue() const { return (flags & sf_alwaysTrue) > 0; }
     inline bool alwaysFalse() const { return (flags & sf_alwaysFalse) > 0; }
+    inline bool unique() const { return (flags & sf_unique) > 0; }
+    inline bool ddo() const { return (flags & sf_ddo_sorted) == sf_ddo_sorted; }
 
     inline tuple_info_t() : statistics(NULL), flags(sf_noflags) /*, typeRestriction(xs_anyType) */ {};
 };

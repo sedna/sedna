@@ -27,6 +27,8 @@ public:
       : ConstantOperation(SELF_RTTI_REF), sequence(new opt::MemoryTupleSequence())
     { };
 
+    virtual void evaluateTo(executor::DynamicContext* dynamicContext);
+
     PROPERTY_RO(Sequence, opt::MemoryTupleSequencePtr, sequence)
 };
 

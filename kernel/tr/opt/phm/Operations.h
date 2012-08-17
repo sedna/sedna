@@ -20,8 +20,8 @@ class MergeJoinPrototype : public BinaryOpPrototype {
 protected:
     ComparisonPrototype * comparison;
 
-    bool needLeftSort;
-    bool needRightSort;
+    bool pathComparison;
+    bool equalityComparison;
 
     virtual XmlConstructor & __toXML(XmlConstructor & ) const;
     virtual phop::IOperator * compile();

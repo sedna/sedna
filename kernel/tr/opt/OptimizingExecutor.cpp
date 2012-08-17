@@ -1,14 +1,20 @@
 #include "OptimizingExecutor.h"
 
 #include "tr/opt/OptTypes.h"
-#include "tr/opt/graphs/GraphCompiler.h"
-#include "tr/opt/algebra/IndependentPlan.h"
-#include "tr/opt/algebra/PlanAlgorithms.h"
-#include "tr/opt/cost/Statistics.h"
-#include "tr/xqp/XQuerytoLR.h"
 
 #include "tr/opt/evaluation/DynamicContext.h"
+#include "tr/opt/evaluation/VirtualSequence.h"
+
+#include "tr/opt/algebra/IndependentPlan.h"
+#include "tr/opt/algebra/PlanAlgorithms.h"
+#include "tr/opt/graphs/GraphCompiler.h"
+#include "tr/opt/cost/Statistics.h"
+
+#include "tr/xqp/XQuerytoLR.h"
+
 #include "tr/crmutils/serialization.h"
+
+#include <fstream>
 
 using namespace opt;
 using namespace rqp;
@@ -55,14 +61,38 @@ void OptimizedStatement::execute()
 {
     xs_decimal_t::init();
     plan = driver->getRQPForModule(driver->getModulesCount() - 1, false);
+
+    std::ofstream F("/tmp/executor.log");
+
+    plan->toStream(F);
+    F << "\n===========================================\n";
+
     plan = VarGraphRewriting::rewrite(plan);
     plan = RewritingContext::rewrite(plan);
+
+    plan->toStream(F);
+    F << "\n===========================================\n";
+    F.flush();
+
     executionContext = new executor::DynamicContext();
     plan->evaluateTo(executionContext);
+
+    update = !executionContext->updates->empty();
+
+    if (update) {
+        if (!executionContext->stack->empty()) {
+            // TODO : throw
+            U_ASSERT(false);
+        };
+
+        executionContext->updates->execute();
+    };
 }
 
 void OptimizedStatement::next()
 {
+    U_ASSERT(!finished);
+  
     tuple valueTuple(1);
     tuple_cell & value = valueTuple.cells[0];
     t_item node_type = (t_item) 0;
@@ -70,7 +100,7 @@ void OptimizedStatement::next()
     value = executionContext->stack->next();
 
     if (value.is_eos()) {
-        client->end_item(se_no_next_item);
+        finished = true;
         return;
     };
 
@@ -93,6 +123,9 @@ void OptimizedStatement::prepare(QueryType queryType, const char* query_str)
     driver = new sedna::XQueryDriver();
     parse_batch(driver, queryType, query_str, NULL);
     serialier->prepare(client->get_se_ostream(), serializationOptions);
+
+    update = false;
+    finished = false;
 }
 
 OptimizedStatement::OptimizedStatement(client_core* _client)

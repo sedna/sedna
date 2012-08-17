@@ -6,42 +6,46 @@
 
 tuple_cell op_doc_order_lt (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler)
 {
-    if (!a1.is_node() || !a2.is_node()) {
-        U_ASSERT(false);
-//        throw
-    };
-    
+    if (!a1.is_node() || !a2.is_node()) { U_ASSERT(false); };
+
     return tuple_cell::atomic(nid_cmp_effective(a1.get_node(), a2.get_node()) < 0);
 };
 
 tuple_cell op_doc_order_gt (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler)
 {
-    if (!a1.is_node() || !a2.is_node()) {
-        U_ASSERT(false);
-//        throw
-    };
+    if (!a1.is_node() || !a2.is_node()) { U_ASSERT(false); };
 
     return tuple_cell::atomic(nid_cmp_effective(a1.get_node(), a2.get_node()) > 0);
 };
 
 tuple_cell op_doc_order_ancestor(const tuple_cell& a1, const tuple_cell& a2, CollationHandler* handler)
 {
-    if (!a1.is_node() || !a2.is_node()) {
-        U_ASSERT(false);
-//        throw
-    };
+    if (!a1.is_node() || !a2.is_node()) { U_ASSERT(false); };
 
     return tuple_cell::atomic(nid_cmp_effective(a1.get_node(), a2.get_node()) == -2);
 }
 
 tuple_cell op_doc_order_descendant(const tuple_cell& a1, const tuple_cell& a2, CollationHandler* handler)
 {
-    if (!a1.is_node() || !a2.is_node()) {
-        U_ASSERT(false);
-//        throw
-    };
+    if (!a1.is_node() || !a2.is_node()) { U_ASSERT(false); };
 
     return tuple_cell::atomic(nid_cmp_effective(a1.get_node(), a2.get_node()) == +2);
+}
+
+tuple_cell op_doc_order_ancestor_or_self(const tuple_cell& a1, const tuple_cell& a2, CollationHandler* handler)
+{
+    if (!a1.is_node() || !a2.is_node()) { U_ASSERT(false); };
+
+    int diff = nid_cmp_effective(a1.get_node(), a2.get_node());
+    return tuple_cell::atomic(diff == -2 || diff == 0);
+}
+
+tuple_cell op_doc_order_descendant_or_self(const tuple_cell& a1, const tuple_cell& a2, CollationHandler* handler)
+{
+    if (!a1.is_node() || !a2.is_node()) { U_ASSERT(false); };
+
+    int diff = nid_cmp_effective(a1.get_node(), a2.get_node());
+    return tuple_cell::atomic(diff == +2 || diff == 0);
 }
 
 

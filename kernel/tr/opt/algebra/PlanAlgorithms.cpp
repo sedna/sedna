@@ -123,17 +123,8 @@ bool RewritingContext::__debug_trace_replace(uint op1, uint op2)
 
 void RewritingContext::execute()
 {
-    try {
-        traverseStack.push_back(root);
-        do_execute();
-/*
-        root->toStream(tmpDebug);
-        tmpDebug << "\n";
-        tmpDebug.flush();
-*/
-    } catch (std::exception & e) {
-        throw USER_EXCEPTION(2303);
-    };
+    traverseStack.push_back(root);
+    do_execute();
 }
 
 bool TreePathAnalisys::isConditional()

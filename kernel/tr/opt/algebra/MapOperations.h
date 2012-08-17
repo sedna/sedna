@@ -52,6 +52,8 @@ public:
         context->varGraph.addVariableDeclaration(_tid, this);
         resultChild = 0;
     };
+
+    virtual void evaluateTo(executor::DynamicContext* dynamicContext);
 };
 
 class GroupBy : public ListOperation {

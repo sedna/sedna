@@ -38,7 +38,7 @@ protected:
     virtual XmlConstructor& __toXML ( XmlConstructor& constructor ) const;
 public:
     ParamList paramList;
-  
+
     explicit FunCallParams(phop::FunctionInfo * func, IFunctionData * _fd, const ParamList & params)
       : RPBase(SELF_RTTI_REF), function_data(_fd), function(func), paramList(params)
     {
@@ -51,6 +51,8 @@ public:
     };
 
     ~FunCallParams() { delete function_data; }
+
+    virtual void evaluateTo(executor::DynamicContext* dynamicContext);
 
     PROPERTY_RO(Params, const ParamList & , paramList)
     PROPERTY_RO(Function, phop::FunctionInfo * , function)

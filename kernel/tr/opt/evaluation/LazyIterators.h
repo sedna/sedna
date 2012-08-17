@@ -16,7 +16,7 @@ public:
     explicit NextWindow(VariableProducer * _producer, rqp::RPBase * _nextOp, uint64_t _restrictMask)
       : producer(_producer), nextOp(_nextOp), restrictMask(_restrictMask) {};
 
-    virtual void execute(executor::VirtualSequence* sequence);
+    virtual void execute(executor::ResultSequence * sequence);
 };
 
 };

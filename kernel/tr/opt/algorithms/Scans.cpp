@@ -14,13 +14,13 @@
 using namespace phop;
 using namespace opt;
 
-RTTI_DEF(phop::SchemaScan)
-RTTI_DEF(phop::SchemaValueScan)
-RTTI_DEF(phop::VariableIn)
+RTTI_DEF(SchemaScan)
+RTTI_DEF(SchemaValueScan)
+RTTI_DEF(VariableIn)
 
-RTTI_DEF(phop::BogusConstSequence)
-RTTI_DEF(phop::CachedNestedLoop)
-RTTI_DEF(phop::NestedEvaluation)
+RTTI_DEF(BogusConstSequence)
+RTTI_DEF(CachedNestedLoop)
+RTTI_DEF(NestedEvaluation)
 //OPINFO_DEF(FunctionOp)
 
 SchemaScan::SchemaScan(schema_node_cptr _snode, unsigned int size, unsigned int idx)
@@ -66,7 +66,6 @@ void SchemaScan::do_next()
             scan();
         } else {
             value().cells[_idx] = tuple_cell::node(*(_cachePtr++));
-            block->flags.changed_flags |= (1ULL << _idx);
             return;
         }
     } while (_cachePtr != _cache.end());
@@ -98,13 +97,12 @@ void SchemaValueScan::do_next()
         currentNode = NodeIteratorForeward::nextNode(currentNode.getPtr());
     };
 
-    do {
+    while (!currentNode.isNull()) {
         for (MemoryTupleSequence::const_iterator it = sequence->begin(); it != sequence->end(); ++it) {
             tuple_cell leftNode = tuple_cell::node(currentNode.getPtr());
 
             if (tcmpop.satisfy(leftNode, *it)) {
                 value().cells[left] = leftNode;
-                block->flags.changed_flags |= (1ULL << left);
 
                 if (right < _tsize()) {
                     value().cells[right] = *it;
@@ -115,7 +113,7 @@ void SchemaValueScan::do_next()
         };
 
         currentNode = NodeIteratorForeward::nextNode(currentNode.getPtr());
-    } while (!currentNode.isNull());
+    };
 
     seteos();
 }
@@ -177,7 +175,13 @@ void BogusConstSequence::do_next()
     }
 }
 
-CachedNestedLoop::CachedNestedLoop(unsigned _size, const MappedTupleIn & _left, const MappedTupleIn & _right, const TupleCellComparison & _tcmpop, CachedNestedLoop::flags_t _flags)
+CachedNestedLoop::CachedNestedLoop(
+    unsigned _size,
+    const MappedTupleIn & _left,
+    const MappedTupleIn & _right,
+    const TupleCellComparison & _tcmpop,
+    CachedNestedLoop::flags_t _flags)
+
   : BinaryTupleOperator(SELF_RTTI_REF, _size, _left, _right),
     tcmpop(_tcmpop), cacheFilled(false), flags(_flags)
 {
@@ -226,7 +230,7 @@ void CachedNestedLoop::do_next()
                 if ((flags & strict_output) == 0) {
                     nestedIdx = nestedSequenceCache.size();
                 };
-                
+
                 return;
             }
         };

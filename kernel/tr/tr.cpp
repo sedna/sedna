@@ -48,8 +48,10 @@ class TransactionProcessor
     SSMMsg * smServer;
     opt::IStatement * currentStatement;
 public:
+    int lastInstruction;
+
     TransactionProcessor(client_core * _client, SSMMsg * sm_server)
-        : client(_client), smServer(sm_server), currentStatement(NULL)
+        : client(_client), smServer(sm_server), currentStatement(NULL), lastInstruction(0)
     {
     };
 
@@ -70,7 +72,9 @@ public:
         try {
             do {
                 client->read_msg(&client_msg);
-                switch (client_msg.instruction) {
+                lastInstruction = client_msg.instruction;
+
+                switch (lastInstruction) {
                 case se_Authenticate:
                 {
                     do_authentication();
@@ -105,7 +109,12 @@ public:
                     currentStatement->execute();
 
                     /* If no exception, consider query succeded */
-                    client->respond_to_client(se_QuerySucceeded);
+                    if (currentStatement->isUpdate()) {
+                        client->respond_to_client(se_UpdateSucceeded);
+                        break;
+                    } else {
+                        client->respond_to_client(se_QuerySucceeded);
+                    };
 
                     /* Get the first item, no break */
                 };
@@ -117,6 +126,11 @@ public:
                     };
 
                     currentStatement->next();
+
+                    if (currentStatement->isFinished()) {
+                        client->end_item(se_no_next_item);
+                    }
+
                     /* TODO: implement time */
 //                        total_time += currentStatement->time;
                 } break;
@@ -364,7 +378,11 @@ int TRmain(int argc, char *argv[])
                 {
                     TransactionProcessor transaction(client, sm_server);
                     transaction.run();
-                } break;
+
+                    if (transaction.lastInstruction != se_CloseConnection) {
+                        break;
+                    };
+                }
                 case se_CloseConnection:
                 {
                     client->respond_to_client(se_CloseConnectionOk);

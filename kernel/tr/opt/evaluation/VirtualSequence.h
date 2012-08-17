@@ -4,8 +4,13 @@
 #include "tr/opt/OptTypes.h"
 #include "tr/opt/algebra/IndependentPlan.h"
 #include "tr/opt/algorithms/SequenceModel.h"
+#include "tr/opt/evaluation/DynamicContext.h"
+
+#include <vector>
 
 namespace executor {
+
+class DynamicContext;
 
 //typedef void (* ExecutorProc)(void * object, VirtualSequence * executor);
 
@@ -15,7 +20,7 @@ class IExecuteProc
 {
 public:
     virtual ~IExecuteProc() {};
-    virtual void execute(VirtualSequence * sequence) = 0;
+    virtual void execute(ResultSequence * sequence) = 0;
 };
 
 /** @brief Item of virtual sequence
@@ -31,48 +36,84 @@ struct Result
 
 // TODO : optimize result stack as it will be one of the most critical elements
 
-typedef std::list<Result> ResultStack;
+typedef std::vector<Result> ResultStack;
 
-/** @brief Lazy evaluation implementation sequence
- */
-struct VirtualSequence
+struct ResultSequence
 {
-private:
+protected:
     ResultStack result;
-    ResultStack::iterator position;
 public:
     /** @brief Dynamic context of the sequence.
      * It is assigned only when sequence is assigned to the context, so it is not mandatory
      */
-
     executor::DynamicContext * context;
 
-    void push(const Result& _result) { position = result.insert(position, _result); };
+    ResultSequence() : context(NULL) {};
 
-    VirtualSequence() : context(NULL) { position = result.begin(); };
+    inline void push(const Result& _result) { result.push_back(_result); };
+    inline void clear() { result.clear(); };
+    inline bool empty() const { return result.empty(); };
+};
 
-    inline void clear()
+/** @brief Update primitive sequence
+ */
+struct UpdateSequence : public ResultSequence
+{
+    inline
+    void execute()
     {
-        result.clear();
-        position = result.begin();
-    };
+        while (!result.empty()) {
+            U_ASSERT(NULL != result.back().next);
 
+            IExecuteProc * proc = result.back().next;
+            result.pop_back();
+            proc->execute(this);
+            delete proc;
+        };
+    };
+};
+
+struct SetContext {
+    DynamicContext * dc;
+    VirtualSequence * oldvs;
+
+    inline
+    SetContext(DynamicContext * _dc, VirtualSequence * vs)
+        : dc(_dc)
+    {
+        if (dc->stack != vs) {
+            oldvs = dc->stack;
+            dc->stack = vs;
+        } else {
+            dc = NULL;
+        };
+    }
+
+    inline
+    ~SetContext() { if (dc != NULL) { dc->stack = oldvs; } };
+};
+
+/** @brief Lazy evaluation implementation sequence
+ */
+struct VirtualSequence : public ResultSequence
+{
     inline
     tuple_cell next()
     {
-        U_ASSERT(position == result.begin());
+        U_ASSERT(context != NULL);
+        SetContext _setContext(context, this);
 
-        while (position != result.end()) {
-            if (NULL != position->next) {
-                IExecuteProc * proc = position->next;
-                position = result.erase(position);
+        while (!result.empty()) {
+            if (NULL != result.back().next) {
+                IExecuteProc * proc = result.back().next;
+                result.pop_back();
                 proc->execute(this);
                 delete proc;
-            } else if (position->value.is_eos()) {
-                position = result.erase(position);
+            } else if (result.back().value.is_eos()) {
+                result.pop_back();
             } else {
-                tuple_cell r = position->value;
-                position = result.erase(position);
+                tuple_cell r = result.back().value;
+                result.pop_back();
                 return r;
             };
         };

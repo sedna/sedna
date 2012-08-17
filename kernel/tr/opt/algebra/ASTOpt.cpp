@@ -5,58 +5,15 @@
 #include "tr/opt/functions/FnAxisStep.h"
 #include "tr/executor/base/XPath.h"
 
+#include "tr/opt/types/StaticContext.h"
+
 using namespace sedna;
 using namespace rqp;
-
-static const ContextInfo invalidContext = {opt::invalidTupleId, opt::invalidTupleId, opt::invalidTupleId};
-
-struct ResultInfo {
-    rqp::RPBase * op;
-    int opid;
-    ContextInfo variable;
-
-    explicit ResultInfo(rqp::RPBase * _op)
-      : op(_op), opid(0), variable(invalidContext) { };
-};
-
-struct StepInfo {
-    pe::axis_t axis;
-    pe::node_test_t nodeTest;
-    xsd::TemplateQName tqname;
-};
-
-struct StaticContext {
-    ContextInfo context;
-
-    std::stack<ResultInfo> resultStack;
-    std::stack<StepInfo> stepStack;
-
-    StaticallyKnownNamespaces skn;
-    CollationHandler * collation;
-
-    void generateContext()
-    {
-        context.item = optimizer->planContext()->generateTupleId();
-        context.position = optimizer->planContext()->generateTupleId();
-        context.size = optimizer->planContext()->generateTupleId();
-    };
-
-    RPBase * popResult() {
-        RPBase * result = resultStack.top().op;
-        resultStack.pop();
-        return result;
-    };
-
-    RPBase * getContextVariableOp() {
-        return new rqp::VarIn(context.item);
-    }
-};
 
 RPBase* lr2opt::getPlan() const
 {
     return context->resultStack.top().op;
 }
-
 
 lr2opt::lr2opt(XQueryDriver* drv_, XQueryModule* mod_, dynamic_context* dyn_cxt_, bool is_subquery_)
     : lr2por(drv_, mod_, dyn_cxt_, is_subquery_), context(NULL)
@@ -77,7 +34,6 @@ void lr2opt::visit(ASTLoadFile& n)
 {
     context->resultStack.push(ResultInfo(NULL));
 }
-
 
 /*
  * NOTE: Context item can be ONLY overwritten
@@ -412,42 +368,42 @@ void lr2opt::visit(ASTNsp &n) {
 /* XQuery language - Functions and operators */
 
 void lr2opt::visit(ASTFunCall &n) {
-    if (*n.int_name == "!fn!document") {
-        // TODO: make strict param clearness;
+    OperationList oplist;
+    ParamList params;
 
-        OperationList oplist;
-
-        n.params->at(0)->accept(*this);
-        oplist.push_back(context->resultStack.top().op);
-        context->resultStack.pop();
-
-        xmlns_ptr ns;
-
-        if (!n.pref->empty()) {
-             ns = skn->resolvePrefix(n.pref->c_str());
-        } else {
-             ns = skn->resolvePrefix("fn");
-        };
-
-        // fndoc
-
-        phop::FunctionInfo * f = getFunctionLibrary()->findFunction(
-              xsd::constQName(ns, n.local->c_str()), 1);
-
-        if (f == NULL) {
-            U_ASSERT(false);
-            XQUERY_EXCEPTION2(0017, "Function not found");
-        };
+    for (ASTNodesVector::iterator it = n.params->begin(); it != n.params->end(); ++it) {
+        (*it)->accept(*this);
 
         opt::TupleId param = planContext->generateTupleId();
+        oplist.push_back(context->resultStack.top().op);
+        params.push_back(planContext->generateTupleId());
+        context->resultStack.pop();
+    };
 
-        context->resultStack.push(ResultInfo(
-          new SequenceConcat(
-            new FunCallParams(f, NULL, fParams(param)),
-              oplist.at(0), param)));
+    xmlns_ptr ns;
+
+    if (!n.pref->empty()) {
+          ns = skn->resolvePrefix(n.pref->c_str());
     } else {
-        throw USER_EXCEPTION(2902);
+          ns = skn->resolvePrefix("fn");
+    };
+
+    phop::FunctionInfo * f = getFunctionLibrary()->findFunction(
+          xsd::constQName(ns, n.local->c_str()), params.size());
+
+    if (f == NULL) {
+        throw XQUERY_EXCEPTION2(0017, "Function not found");
+    };
+
+    RPBase * op = new FunCallParams(f, NULL, params);
+
+    ParamList::const_iterator jt = params.begin();
+    for (OperationList::const_iterator it = oplist.begin(); it != oplist.end(); ++it) {
+        op = new SequenceConcat(op, *it, *jt);
+        ++jt;
     }
+
+    context->resultStack.push(ResultInfo(op));
 }
 
 void lr2opt::visit(ASTUop &n) {

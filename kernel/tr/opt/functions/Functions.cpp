@@ -27,7 +27,7 @@ FunctionLibrary::~FunctionLibrary()
 static
 std::string getSearchName(const char* uri, const char* localname, int argc)
 {
-    return int2string(argc) + "_" + localname + ((uri == NULL) ? "@{}" : ("@{" + std::string(uri) + "}"));
+    return int2string(argc) + "/" + localname + ((uri == NULL) ? "@{}" : ("@{" + std::string(uri) + "}"));
 };
 
 FunctionInfo* FunctionLibrary::registerFunction(FunctionInfo * finfo)
@@ -44,7 +44,6 @@ FunctionInfo* FunctionLibrary::findFunction(const xsd::QName& qname, int argc)
     FunctionMap::const_iterator it = functions.find(name);
 
     if (it == functions.end()) {
-        U_ASSERT(false);
         return NULL;
     } else {
         return it->second;

@@ -16,10 +16,14 @@
 #include "tr/crmutils/global_options.h"
 #include "tr/tr_base.h"
 
-struct client_file{
-    FILE* f;
-    char name[1024];
-    int64_t file_size;
+struct client_file
+{
+    std::istream * stream;
+    std::string name;
+    int64_t size;
+
+    client_file() : stream(NULL) {};
+    ~client_file() { delete stream; };
 };
 
 class Serializer;

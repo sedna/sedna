@@ -8,6 +8,11 @@ using namespace opt;
 RTTI_DEF(Construct)
 RTTI_DEF(FunCallParams)
 
+void FunCallParams::evaluateTo(executor::DynamicContext* dynamicContext)
+{
+    function->execute(this, dynamicContext);
+}
+
 XmlConstructor& FunCallParams::__toXML(XmlConstructor& constructor) const
 {
     constructor.addAttributeValue(SE_EL_NAME("name"), function->getQName().getColonizedName());

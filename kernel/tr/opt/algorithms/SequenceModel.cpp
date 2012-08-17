@@ -35,7 +35,6 @@ void GraphExecutionBlock::prepare(const opt::DataGraphIndex* dgi)
         resultMap = realMap;
     };
 
-    flags.changed_flags = 0;
     previous = new tuple(top()->_tsize());
 }
 

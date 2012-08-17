@@ -726,6 +726,7 @@ public:
     void copy(const tuple &t)
     {
         eos = t.eos;
+        U_ASSERT(cells_number == t.cells_number);
         if (!eos) for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
     }
 

@@ -1,9 +1,3 @@
-/*
- * File:  []
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
- */
-
-
 #ifndef PHYSICAL_MODEL_H
 #define PHYSICAL_MODEL_H
 
@@ -11,7 +5,9 @@
 #include "tr/models/rtti.h"
 
 #include "common/sedna.h"
+
 #include "tr/opt/OptTypes.h"
+#include "tr/opt/graphs/DataGraphs.h"
 
 namespace opt {
 
@@ -23,14 +19,10 @@ struct TupleValueInfo {
     };
 
     element_status_t status;
-    TupleStatistics * statistics;
+    tuple_info_t m_stat;
 
-    enum order_t {
-        none = 0, node_unique, node_ddo, value
-    };
-    
-    order_t order;
-    
+    inline TupleStatistics *& statistics() { return m_stat.statistics; }
+
     DataNode * node;
     POProt * _gen;
 };
@@ -42,16 +34,20 @@ public:
     explicit TupleChrysalis(const TupleChrysalis * parent);
 
     std::vector<TupleValueInfo> tuples;
-    std::vector<unsigned> sortOrder;
+    TupleValueInfo * get(TupleId i) { return &(tuples.at(i)); };
 
     unsigned _width;
+    unsigned width() const { return _width; };
 
     Range rowSize;
     Range rowCount;
 
-    unsigned width() const { return _width; };
-
-    TupleValueInfo * get(TupleId i) { return &(tuples.at(i)); };
+    /* Sort info */
+    inline void unsorted() {
+        for (std::vector<TupleValueInfo>::iterator it = tuples.begin(); it != tuples.end(); ++it) {
+            it->m_stat.flags &= !(tuple_info_t::sf_ddo_sorted);
+        }
+    };
 
     virtual XmlConstructor & toXML(XmlConstructor &) const;
 };
@@ -63,6 +59,8 @@ class POProtIn { public:
     POProtIn() : op(NULL), index(0) {};
     POProtIn(POProt * _op, const TupleId _index) : op(_op), index(_index) { };
     POProtIn(const POProtIn& _other) : op(_other.op), index(_other.index) { };
+
+    POProt * operator->() const { return op; }
 };
 
 class POProt : public ObjectBase, public IPlanDisposable, IXMLSerializable {
@@ -71,7 +69,7 @@ class POProt : public ObjectBase, public IPlanDisposable, IXMLSerializable {
     phop::IOperator * op;
 protected:
     OperationCost * cost;
-    
+
     XmlConstructor & __commonToXML(XmlConstructor &) const;
     virtual XmlConstructor & __toXML(XmlConstructor &) const;
 
@@ -115,6 +113,9 @@ class TupleRef { public:
 //    explicit TupleRef(const POProtIn & _x) : tupleDesc(_x.op->result), tid(_x.index) {};
     explicit TupleRef(const POProtIn & _x, TupleChrysalis * _default)
       : tupleDesc(_default), tid(_x.index) { if (_x.op != NULL) { tupleDesc = _x.op->result; }; };
+
+    explicit TupleRef(const POProtIn & _x)
+      : tupleDesc(_x.op->result), tid(_x.index) { tupleDesc = _x.op->result; };
 
     TupleRef & operator=(const TupleRef & _x) { if (this != &_x) { tupleDesc = _x.tupleDesc; tid = _x.tid; }; return *this; };
 
@@ -189,8 +190,8 @@ public:
         plan->opList.push_back(op);
     }
     
-    TupleChrysalis * updateOne(TupleChrysalis* parent, const POProtIn& op);
-    TupleChrysalis * updateTwo(TupleChrysalis* x, TupleChrysalis* y, POProt* op, TupleId ind1, TupleId ind2);
+    TupleChrysalis * updateOne(TupleChrysalis* parent, const POProtIn& op) const;
+    TupleChrysalis * updateTwo(TupleChrysalis* x, TupleChrysalis* y, POProt* op, TupleId ind1, TupleId ind2) const;
 
     void * compile(ValuePredicate * pred);
     void * compile(StructuralPredicate * pred);

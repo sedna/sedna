@@ -8,20 +8,23 @@ using namespace opt;
 
 SequenceInfo* GeneralComparisonPrototype::getSequenceCost(CostModel* model, TupleRef in)
 {
-    if (in->statistics == NULL) {
+    TupleStatistics * statistics = in->statistics();
+
+    if (statistics == NULL) {
         U_ASSERT(false);
         return NULL;
     };
 
-    model->getValueCost(in->statistics->pathInfo, in->statistics);
-    in->statistics = new TupleStatistics(in->statistics);
+    model->getValueCost(statistics->pathInfo, statistics);
+
+    in->statistics() = new TupleStatistics(*statistics);
 
     return model->getValueSequenceCost(in);
 }
 
 EvaluationInfo* GeneralComparisonPrototype::getComparisonCost(CostModel* model, TupleRef left, TupleRef right)
 {
-    return model->getCmpInfo(left->statistics, right->statistics, cmp);
+    return model->getCmpInfo(left->statistics(), right->statistics(), cmp);
 }
 
 XmlConstructor& GeneralComparisonPrototype::__toXML(XmlConstructor& element) const
@@ -62,19 +65,21 @@ ValueFunction GeneralComparisonPrototype::getValueFunction(unsigned idxL, unsign
 EvaluationInfo* PathComparisonPrototype::getComparisonCost(CostModel* model, TupleRef left, TupleRef right)
 {
     return model->getDocOrderInfo(
-        left->statistics->pathInfo,
-        right->statistics->pathInfo,
+        left->statistics()->pathInfo,
+        right->statistics()->pathInfo,
         path);
 }
 
 SequenceInfo* PathComparisonPrototype::getSequenceCost(CostModel* model, TupleRef in)
 {
-    if (in->statistics == NULL) {
+    TupleStatistics * statistics = in->statistics();
+
+    if (statistics == NULL) {
         U_ASSERT(false);
         return NULL;
     };
 
-    in->statistics = new TupleStatistics(in->statistics);
+    in->statistics() = new TupleStatistics(*statistics);
 
     return model->getDocOrderSequenceCost(in);
 }
@@ -137,8 +142,15 @@ TupleCellComparison PathComparisonPrototype::getTupleCellComparison()
       case pe::axis_parent :
         return TupleCellComparison(
           op_doc_order_lt, op_doc_order_descendant, false, NULL);
+      case pe::axis_descendant_or_self :
+        return TupleCellComparison(
+          op_doc_order_lt, op_doc_order_ancestor_or_self, false, NULL);
+      case pe::axis_ancestor_or_self :
+        return TupleCellComparison(
+          op_doc_order_lt, op_doc_order_descendant_or_self, false, NULL);
       default:
         U_ASSERT(false);
+
         return TupleCellComparison(
           op_doc_order_lt, op_doc_order_lt, false, NULL);
     }

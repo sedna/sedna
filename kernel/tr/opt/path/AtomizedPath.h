@@ -72,20 +72,20 @@ public:
     inline void setImmutable() { isMutable = false; };
     
     inline int cost() const {
-        int __result = 0;
-        
+        int result = 0;
+
         ATOMPATH_FOR_EACH_CONST(*this, _i) {
-            __result += (*_i)->cost();
+            result += (*_i)->cost();
         };
-        
-        return __result;
+
+        return result;
     };
     
     std::string __toString() const;
 };
 
-#define CHILD_INITIAL_COST 10
-#define CLOSURE_INITIAL_COST 10
+#define CHILD_INITIAL_COST 2
+#define CLOSURE_INITIAL_COST 5
 
 struct AxisPathAtom : public PathAtom {
     axis_t axis;

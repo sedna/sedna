@@ -9,11 +9,14 @@
 class DataRoot;
 class XmlConstructor;
 
+struct StaticContext;
+
 namespace rqp {
     class RPBase;
     class MapGraph;
     class PlanContext;
     class FunCallParams;
+    class VarIn;
 
     struct RewritingContext;
 }
@@ -39,7 +42,10 @@ namespace executor
     class IExecuteProc;
 
     struct DynamicContext;
+
+    struct ResultSequence;
     struct VirtualSequence;
+    struct UpdateSequence;
 
     struct VariableProducer;
     struct VarCacheInfo;

@@ -3,7 +3,7 @@
 
 using namespace executor;
 
-void NextWindow::execute(executor::VirtualSequence* sequence)
+void NextWindow::execute(ResultSequence* sequence)
 {
     uint64_t saveRestrictMask = producer->restrictMask;
     producer->restrictMask = restrictMask;

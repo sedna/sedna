@@ -162,15 +162,19 @@ void PlanExecutor::push(RPBase* op)
 */
 
 DynamicContext::DynamicContext()
-  : variables(NULL), stack(NULL)
+  : variables(NULL), stack(NULL), updates(NULL)
 {
     variables = new VariableModel();
     stack = new VirtualSequence();
     stack->context = this;
+
+    /* TODO: should be NULL and dynamically created by Update operation */
+    updates = new UpdateSequence();
 }
 
 DynamicContext::~DynamicContext()
 {
+    delete updates;
     delete stack;
     delete variables;
 }

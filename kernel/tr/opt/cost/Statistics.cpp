@@ -32,8 +32,8 @@ PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path&
 
         result->card = 1;
         result->blockCount = 1;
-        result->nidSize = 0;
-        
+        result->nidSize = 1;
+
         result->schemaTraverseCost = 0;
         result->iterationCost = 0;
 
@@ -44,7 +44,7 @@ PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path&
 
         return result;
     }
-    
+
     pe::SchemaLookup * scmLookup = new pe::SchemaLookup(path);
 
     result->data = modelData;
@@ -52,13 +52,14 @@ PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path&
 
     scmLookup->compile();
 
-    if (path.getBody()->rbegin()->getAxis() == pe::axis_parent) {
+    pe::axis_t firstAxis = path.getBody()->rbegin()->getAxis();
+    if (firstAxis == pe::axis_parent || firstAxis == pe::axis_ancestor || firstAxis == pe::axis_ancestor_or_self) {
         if (baseStats != NULL) {
             result->card = baseStats->distinctValues;
             result->blockCount = baseStats->pathInfo->blockCount;
             result->nidSize = baseStats->pathInfo->nidSize;
             result->schemaTraverseCost = path.getBody()->size() * getCPUCost();
-            result->iterationCost = path.getBody()->size() * getIOCost();
+            result->iterationCost = scmLookup->atomizedPath.cost() * getIOCost();
             scmLookup->executeAll(&((PathCostModelData*) baseStats->pathInfo->data)->snodes, &modelData->snodes);
 
             if (copyStats != NULL) {
@@ -69,7 +70,7 @@ PathCostModel* CostModel::evaluatePathCost(const DataRoot& root, const pe::Path&
 
         return result;
     }
-    
+
     result->nidSize = 0;
 
     result->iterationCost = scmLookup->atomizedPath.cost();
@@ -143,16 +144,17 @@ PathCostModel* CostModel::getPathCost(const TupleRef& base, const pe::Path& path
     cm->blockCount = 1;
     cm->nidSize = 1;
 
-    if (base->statistics != NULL) {
-        cm->card = base->statistics->distinctValues;
+    if (base->statistics() != NULL) {
+        TupleStatistics * statistics = base->statistics();
+        cm->card = statistics->distinctValues;
 
-        if (base->statistics->pathInfo != NULL) {
-            cm->blockCount = base->statistics->pathInfo->blockCount;
-            cm->nidSize = base->statistics->pathInfo->nidSize;
+        if (statistics->pathInfo != NULL) {
+            cm->blockCount = statistics->pathInfo->blockCount;
+            cm->nidSize = statistics->pathInfo->nidSize;
         };
     };
 
-    return evaluatePathCost(base->node->root, path, _result, cm, base->statistics);
+    return evaluatePathCost(base->node->root, path, _result, cm, base->statistics());
 }
 
 ValueCostModel* CostModel::getValueCost(PathCostModel* m, TupleStatistics * _result)
@@ -227,49 +229,50 @@ EvaluationInfo* CostModel::getDocOrderInfo(PathCostModel* m1, PathCostModel* m2,
     return result;
 }
 
-struct XLogXOp { double operator() (double x) { return x*log(x); } };
+struct XLogXOp { double operator() (double x) { return x*(log2(x)+1); } };
+struct CeilX { double operator() (double x) { return ceil(x); } };
 
 SequenceInfo* CostModel::getDocOrderSequenceCost(const TupleRef& tuple)
 {
     SequenceInfo* result = new SequenceInfo;
+    TupleStatistics * statistics = tuple->statistics();
 
-    U_ASSERT(tuple->statistics->pathInfo != NULL);
+    U_ASSERT(statistics->pathInfo != NULL);
 
-    result->blockCount = tuple.tupleDesc->rowCount * tuple.tupleDesc->rowSize / PAGE_SIZE;
+    result->blockCount = (tuple.tupleDesc->rowCount * tuple.tupleDesc->rowSize / PAGE_SIZE).map<CeilX>();
     result->card = tuple.tupleDesc->rowCount;
     result->sortCost =
       result->blockCount.map<XLogXOp>() * getIOCost() + 
-      (result->card / result->blockCount).map<XLogXOp>() * getCPUCost()
-        * tuple->statistics->pathInfo->nidSize
-        * result->blockCount;
-    
+      result->card.map<XLogXOp>() * getCPUCost() * statistics->pathInfo->nidSize;
+
     return result;
 }
 
 SequenceInfo* CostModel::getValueSequenceCost(const TupleRef& tuple)
 {
     SequenceInfo* result = new SequenceInfo;
+    TupleStatistics * statistics = tuple->statistics();
 
-    U_ASSERT(tuple->statistics->valueInfo != NULL);
+    U_ASSERT(statistics->valueInfo != NULL);
 
-    result->blockCount = tuple.tupleDesc->rowCount * tuple.tupleDesc->rowSize / PAGE_SIZE;
+    result->blockCount = (tuple.tupleDesc->rowCount * tuple.tupleDesc->rowSize / PAGE_SIZE).map<CeilX>();
     result->card = tuple.tupleDesc->rowCount;
     result->sortCost =
       result->blockCount.map<XLogXOp>() * getIOCost() +
       (result->card / result->blockCount).map<XLogXOp>() * getCPUCost()
-        * tuple->statistics->valueInfo->atomizationCost * result->blockCount;
-    
+        * statistics->valueInfo->atomizationCost * result->blockCount;
+
     return result;
 }
 
 void CostModel::getVarCost(TupleId varTupleId, TupleStatistics* result)
 {
-    TupleStatistics * stats = dynamicContext->variables->getProducer(varTupleId)->statistics;
+    TupleStatistics * stats = dynamicContext->variables->getProducer(varTupleId)->properties.statistics;
 
     if (stats != NULL) {
         *result = *stats;
     } else {
-        result->distinctValues = Range(1, 1000);
+        result->distinctValues = Range(1, 10);
         result->pathInfo = NULL;
         result->valueInfo = NULL;
         result->valueSize = Range(1, 10);

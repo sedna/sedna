@@ -1,4 +1,6 @@
 #include "MapOperations.h"
+#include "tr/opt/evaluation/DynamicContext.h"
+#include "tr/opt/evaluation/VariableMap.h"
 
 using namespace rqp;
 using namespace opt;
@@ -7,6 +9,27 @@ RTTI_DEF(MapConcat)
 RTTI_DEF(SequenceConcat)
 RTTI_DEF(NestedOperation)
 RTTI_DEF(GroupBy)
+
+void SequenceConcat::evaluateTo(executor::DynamicContext* dynamicContext)
+{
+    executor::VarCacheInfo * varInfo = dynamicContext->variables->getProducer(getTuple());
+
+    if (varInfo == NULL) {
+        dynamicContext->variables->bind(new executor::VariableProducer(getTuple()));
+        varInfo = dynamicContext->variables->getProducer(getTuple());
+        varInfo->producer->valueSequence->context = dynamicContext;
+    }
+
+    U_ASSERT(varInfo->producer->valueSequence != NULL);
+
+    {
+        executor::SetContext _setContext(dynamicContext, varInfo->producer->valueSequence);
+        varInfo->producer->reset();
+        getSubplan()->evaluateTo(dynamicContext);
+    }
+
+    getList()->evaluateTo(dynamicContext);
+}
 
 XmlConstructor& NestedOperation::__toXML(XmlConstructor& element) const
 {

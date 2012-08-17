@@ -25,8 +25,9 @@ struct function_info_t
 struct FunctionInfo
 {
     const function_info_t * finfo;
+    bool isUpdate;
 
-    FunctionInfo(const function_info_t * _finfo) : finfo(_finfo) {};
+    FunctionInfo(const function_info_t * _finfo) : finfo(_finfo), isUpdate(false) {};
     virtual ~FunctionInfo() {};
 
     xsd::QName getQName() const
@@ -34,6 +35,7 @@ struct FunctionInfo
         return xsd::constQName(xmlns_touch(finfo->default_prefix, finfo->uri), finfo->localname);
     };
 
+    virtual IFunctionData * createData(StaticContext * staticContext) { return NULL; };
     virtual void execute(rqp::FunCallParams * funcall, executor::DynamicContext * dynamicContext) = 0;
     virtual bool transform(rqp::FunCallParams * funcall, rqp::RewritingContext * rewritingContext) { return false; };
 

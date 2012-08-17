@@ -14,11 +14,21 @@ tuple_cell op_doc_order_gt (const tuple_cell &a1, const tuple_cell &a2, Collatio
 tuple_cell op_doc_order_descendant (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
 tuple_cell op_doc_order_ancestor (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
 
+tuple_cell op_doc_order_descendant_or_self (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
+tuple_cell op_doc_order_ancestor_or_self (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
+
 struct TupleCellComparison {
+    enum {
+        opt_none = 0,
+        opt_swap = 0x1,
+        opt_atomize = 0x2,
+        opt_swap_atomize = 0x3,
+    };
+
     bin_op_tuple_cell_tuple_cell_collation lessop;
     bin_op_tuple_cell_tuple_cell_collation predop;
 
-    bool generalComparison; // TODO : delete this
+    int opts; // TODO : delete this
     CollationHandler * handler;
 
     TupleCellComparison(
@@ -27,21 +37,40 @@ struct TupleCellComparison {
         bool gcmp,
         CollationHandler * _handler
     )
-      : lessop(_lessop), predop(_predop), generalComparison(gcmp), handler(_handler) {};
+      : lessop(_lessop), predop(_predop), opts(gcmp ? opt_atomize : 0), handler(_handler) {};
+
+    TupleCellComparison inverse()
+    {
+        TupleCellComparison result(*this);
+        result.opts ^= opt_swap; // xor with swap
+        return result;
+    };
 
     bool less(const tuple_cell & a, const tuple_cell & b) {
-        if (generalComparison) {
-            return lessop(atomize(a), atomize(b), handler).get_xs_boolean();
-        } else {
+        switch (opts) {
+          case opt_none:
             return lessop(a, b, handler).get_xs_boolean();
+          case opt_swap:
+            return lessop(b, a, handler).get_xs_boolean();
+          case opt_atomize:
+            return lessop(atomize(a), atomize(b), handler).get_xs_boolean();
+          case opt_swap_atomize:
+            return lessop(atomize(b), atomize(a), handler).get_xs_boolean();
+          default: U_ASSERT(false); return false;
         };
     };
 
     bool satisfy(const tuple_cell & a, const tuple_cell & b) {
-        if (generalComparison) {
-            return predop(atomize(a), atomize(b), handler).get_xs_boolean();
-        } else {
+        switch (opts) {
+          case opt_none:
             return predop(a, b, handler).get_xs_boolean();
+          case opt_swap:
+            return predop(b, a, handler).get_xs_boolean();
+          case opt_atomize:
+            return predop(atomize(a), atomize(b), handler).get_xs_boolean();
+          case opt_swap_atomize:
+            return predop(atomize(b), atomize(a), handler).get_xs_boolean();
+          default: U_ASSERT(false); return false;
         };
     };
 };

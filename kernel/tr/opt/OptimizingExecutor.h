@@ -45,12 +45,18 @@ const execution_params_t defaultSettings =
 
 class IStatement
 {
+protected:
+    bool update;
+    bool finished;
 public:
     virtual ~IStatement() {};
 
     virtual void prepare(QueryType queryType, const char* query_str) = 0;
     virtual void execute() = 0;
     virtual void next() = 0;
+
+    bool isUpdate() const { return update; };
+    bool isFinished() const { return finished; };
 };
 
 class OptimizedStatement : public IStatement

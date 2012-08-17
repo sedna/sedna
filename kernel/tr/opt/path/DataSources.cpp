@@ -4,6 +4,7 @@
 
 #include "tr/executor/base/xs_uri.h"
 #include "tr/structures/metadata.h"
+#include "tr/structures/system_tables.h"
 #include "tr/locks/locks.h"
 
 #ifdef SE_ENABLE_TRIGGERS
@@ -11,12 +12,14 @@
 #endif /* SE_ENABLE_TRIGGERS */
 
 DataRoot::DataRoot(const data_root_type_t _type, const char* _name)
-: type(_type), name(NULL), snode(XNULL)
+: type(_type), snode(XNULL)
 {
-    name = new std::string(_name);
+    if (_name != NULL && _name[0] != '\0') {
+        name = _name;
+    }
 }
 
-DataRoot::DataRoot(const scheme_list* lst) : type(drt_null), name(NULL), snode(XNULL)
+DataRoot::DataRoot(const scheme_list* lst) : type(drt_null), snode(XNULL)
 {
     if (lst->size() != 2 || lst->at(0).type != SCM_SYMBOL || lst->at(1).type != SCM_STRING) {
         throw USER_EXCEPTION2(SE1004, "Invalid root LR string");
@@ -37,7 +40,7 @@ DataRoot::DataRoot(const scheme_list* lst) : type(drt_null), name(NULL), snode(X
             throw USER_EXCEPTION2(SE1004, "Invalid root type");
     };
     
-    name = new std::string(lst->at(1).internal.str);
+    name = std::string(lst->at(1).internal.str);
 }
 
 std::string DataRoot::toLRString() const
@@ -49,18 +52,18 @@ std::string DataRoot::toLRString() const
     switch(type) {
         case drt_document :
             stream << " doc ";
-            stream << "\"" << *name << "\"";
+            stream << "\"" << name << "\"";
             break;
         case drt_collection :
             stream << " collection ";
-            stream << "\"" << *name << "\"";
+            stream << "\"" << name << "\"";
             break;
         case drt_null :
             stream << " null ";
             break;
         case drt_external :
             stream << " ext ";
-            stream << "\"" << *name << "\"";
+            stream << "\"" << name << "\"";
             break;
     };
 
@@ -77,46 +80,53 @@ schema_node_xptr DataRoot::_getSchemaNode() const
     bool validURI;
     bool entityExists;
 
-    Uri::check_constraints(name->c_str(), &validURI, NULL);
+    Uri::check_constraints(name.c_str(), &validURI, NULL);
 
     if (validURI) {
-        entityExists = document_or_collection_exists(name->c_str());
+        entityExists = document_or_collection_exists(name.c_str());
     };
 
     switch(type) {
         case drt_document :
+        {
             if (!validURI) {
-                errorMessage = "Invalid document URI '" + *name + "'";
+                errorMessage = "Invalid document URI '" + name + "'";
                 throw USER_EXCEPTION2(FODC0005, errorMessage.c_str());
             };
 
+            document_type dtype = get_document_type(name.c_str(), dbe_document);
+
+            if (dtype != DT_NON_SYSTEM) {
+                return get_system_doc(dtype, name.c_str());
+            };
+
             if (!entityExists) {
-                errorMessage = "Document '" + *name + "'";
+                errorMessage = "Document '" + name + "'";
                 throw USER_EXCEPTION2(FODC0002, errorMessage.c_str());
             };
 
-            local_lock_mrg->put_lock_on_document(name->c_str());
-            result = find_document(name->c_str());
-            
-            break;
+            local_lock_mrg->put_lock_on_document(name.c_str());
+            result = find_document(name.c_str());
+
+        } break;
         case drt_collection :
             if (!validURI) {
-                errorMessage = "Invalid collection URI '" + *name + "'";
+                errorMessage = "Invalid collection URI '" + name + "'";
                 throw USER_EXCEPTION2(FODC0004, errorMessage.c_str());
             };
-            
+
             if (!entityExists) {
-                errorMessage = "Collection '" + *name + "'";
+                errorMessage = "Collection '" + name + "'";
                 throw USER_EXCEPTION2(FODC0002, errorMessage.c_str());
             };
 
-            local_lock_mrg->put_lock_on_collection(name->c_str());
-            result = find_collection(name->c_str());
+            local_lock_mrg->put_lock_on_collection(name.c_str());
+            result = find_collection(name.c_str());
 
             break;
         case drt_external :
             U_ASSERT(false);
-/*          
+/*
             if (!validURI) {
                 throw XQUERY_EXCEPTION2(FODC0005, (std::string("Invalid document URI '") + name.get() + "'").c_str());
             };
@@ -129,7 +139,7 @@ schema_node_xptr DataRoot::_getSchemaNode() const
     };
 
     #ifdef SE_ENABLE_TRIGGERS
-    nested_updates_tracking(local_lock_mrg->get_cur_lock_mode(), result, name->c_str());
+    nested_updates_tracking(local_lock_mrg->get_cur_lock_mode(), result, name.c_str());
     #endif
     
     return result;

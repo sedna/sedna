@@ -141,7 +141,7 @@ void PPBulkLoad::do_execute()
             bulkLoadManager.options.preserveCDataSection = false;
         }
 
-        bulkLoadManager.setSourceFile(cf_vec[0].f);
+        bulkLoadManager.setSourceStream(cf_vec.at(0).stream);
 
         if (collection.op == NULL)
         {

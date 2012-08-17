@@ -14,11 +14,10 @@ struct VarCacheInfo
     VariableProducer * producer;
     unsigned inTuple;
 
-    opt::TupleStatistics * statistics;
     opt::tuple_info_t properties;
 
     VarCacheInfo()
-      : tid(opt::invalidTupleId), statistics(NULL)
+      : tid(opt::invalidTupleId)
     {
         // TODO : add variable no cache optimization
         seq = new sequence(1, 1024);
@@ -37,7 +36,7 @@ struct VariableProducer
     uint64_t restrictMask;
 
     VariableProducer(opt::TupleId varId)
-      : varCount(1)
+      : variables(NULL), varCount(1), restrictMask(0)
     {
         valueSequence = new executor::VirtualSequence();
 
@@ -47,7 +46,7 @@ struct VariableProducer
     };
 
     VariableProducer(phop::GraphExecutionBlock * graph, const opt::DataGraphIndex * prototype)
-      : valueSequence(NULL), graphSequence(graph), varCount(0), restrictMask(0)
+      : valueSequence(NULL), graphSequence(graph), variables(NULL), varCount(0), restrictMask(0)
     {
         varCount = prototype->out.size();
         variables = new VarCacheInfo[varCount];
@@ -130,7 +129,7 @@ struct VariableProducer
             // TODO: get rid of tuple here!
             variables->seq->add(tuple(x));
         } else {
-            if ((graphSequence->flags.changed_flags & restrictMask) > 0) {
+            if ((graphSequence->flags.changed & restrictMask) > 0) {
                 return false;
             };
 
@@ -141,7 +140,7 @@ struct VariableProducer
             for (size_t i = 0; i < varCount; ++i) {
                 unsigned tid = variables[i].inTuple;
 
-                if ((graphSequence->flags.changed_flags & (1ULL << tid)) > 0) {
+                if ((graphSequence->flags.changed & (1ULL << tid)) > 0) {
                     // TODO: get rid of tuple here!
                     variables[i].seq->add(tuple(graphSequence->top()->get().cells[tid]));
                 }

@@ -50,10 +50,12 @@ struct TupleStatistics : public ICostModelDisposable {
     PathCostModel * pathInfo;
     ValueCostModel * valueInfo;
 
-    TupleStatistics() : distinctValues(0), valueSize(0), pathInfo(NULL), valueInfo(NULL) {}
+    TupleStatistics()
+      : distinctValues(0), valueSize(0),
+        pathInfo(NULL), valueInfo(NULL) {}
 
-    explicit TupleStatistics(const TupleStatistics * _x)
-        : distinctValues(_x->distinctValues), valueSize(_x->valueSize), pathInfo(_x->pathInfo), valueInfo(_x->valueInfo) {};
+//    explicit TupleStatistics(const TupleStatistics & _x)
+//        : distinctValues(_x.distinctValues), valueSize(_x.valueSize), pathInfo(_x.pathInfo), valueInfo(_x.valueInfo) {};
 };
 
 struct OperationCost : public ICostModelDisposable {

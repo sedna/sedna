@@ -60,9 +60,11 @@ void parse_batch(sedna::XQueryDriver *drv, QueryType type, StringVector batch, s
                 // do semantic analysis; any errors will be thrown as exceptions
                 drv->doSemanticAnalysis();
 
+/* TODO : Needed by old executor
                 // do lreturn optimizations
                 if (type != TL_XQueryMod)
                     drv->doLReturnAnalysis();
+*/
 
                 if (module_name)
                     *module_name = drv->getParsedModuleName();

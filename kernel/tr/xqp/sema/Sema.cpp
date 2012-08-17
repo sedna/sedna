@@ -870,6 +870,7 @@ namespace sedna
         // first of all, we should check arguments
         VisitNodesVector(n.params, *this);
 
+/* TODO : old executor needs this!
         if (!n.int_name)
         {
             // then find the function
@@ -907,6 +908,8 @@ namespace sedna
             if (*n.int_name != "") // standard function
                 rewriteStdFunCall(n, *n.int_name);
         }
+*/
+        n.int_name = new std::string("");
     }
 
     void Sema::visit(ASTFuncDecl &n)

@@ -101,7 +101,7 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph)
     planMap->update(nullPlan);
     currentStepSet->insert(0);
 
-    int branchLimit = 2;
+    int branchLimit = 1;
 
     PlanDesc initialPredicates = graph.predicateMask;
 
@@ -118,7 +118,7 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph)
             };
         };
     };
-    
+
     while (!currentStepSet->empty()) {
         nextStepSet->clear();
 
@@ -166,12 +166,24 @@ phop::GraphExecutionBlock* opt::GraphCompiler::compile(DataGraphIndex& graph)
         nextStepSet = swapset;
     };
 
+    U_ASSERT(planMap->getLastPlan()->getDesc() == graph.predicateMask);
+
     planMap->getLastPlan()->toStream(F);
     F << "\n============\n";
 
-    ITupleOperator * checkVar = planMap->getLastPlan()->compile();
+    ;
 
+    /* The only exception from standard exaluation model is when graph has 1 node and no predicates */
+    if (graph.nodes.size() == 1 && graph.predicates.size() == 0) {
+        PhysicalModel pm(planMap->getLastPlan());
+        pm.materialize(POProtIn(NULL, 0));
+    }
+
+    ITupleOperator * checkVar = planMap->getLastPlan()->compile();
     checkVar->toStream(F);
+
+    F.flush();
+
     U_ASSERT(checkVar == result->top());
     graphCache[graph.dg] = result;
 

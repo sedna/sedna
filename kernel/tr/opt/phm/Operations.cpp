@@ -71,13 +71,15 @@ MergeJoinPrototype::MergeJoinPrototype(PhysicalModel* model, const POProtIn& _le
     resultSet.push_back(_left.index);
     resultSet.push_back(_right.index);
 
-    if (dynamic_cast<GeneralComparisonPrototype *>(comparison) != NULL) {
-        needLeftSort = true;
-        needRightSort = true;
-    } else {
-        needLeftSort = false;
-        needRightSort = false;
+    if (PathComparisonPrototype * pcp = dynamic_cast<PathComparisonPrototype *>(comparison))
+    {
+        pathComparison = true;
+        equalityComparison = !pcp->path.horizontal();
+    } else if (GeneralComparisonPrototype * gcp = dynamic_cast<GeneralComparisonPrototype *>(comparison)) {
+        pathComparison = false;
+        equalityComparison = (gcp->cmp.op == opt::Comparison::g_eq);
     };
+
 
     evaluateCost(optimizer->costModel());
 }
@@ -121,7 +123,7 @@ ValidatePathPrototype::ValidatePathPrototype(PhysicalModel* model, const POProtI
   : POProt(SELF_RTTI_REF)
 {
     in.push_back(_tuple);
-    
+
     result = model->updateOne(_tuple.op->result, POProtIn(this, _tuple.index));
     resultSet.push_back(_tuple.index);
 
@@ -157,6 +159,7 @@ XmlConstructor & EvaluatePrototype::__toXML(XmlConstructor & element) const
 {
     /* Here we evaluate cost, based on the last 
      */
+
 //    element.addElementValue(SE_EL_NAME("root"), dataRoot.toLRString());
 //    element.addElementValue(SE_EL_NAME("path"), path.toXPathString());
 
@@ -187,32 +190,31 @@ struct XLogXOp { double operator() (double x) { return x*log(1+x); } };
 
 void AbsPathScanPrototype::evaluateCost(CostModel* model)
 {
-    TupleStatistics * stats = new TupleStatistics();
-    result->get(resultSet.at(0))->statistics = stats;
-    PathCostModel * costInfo = model->getAbsPathCost(dataRoot, path, stats);
+    TupleRef tref(result, resultSet.at(0));
 
-    result->rowCount = stats->distinctValues;
+    tref->statistics() = new TupleStatistics();
+    PathCostModel * costInfo = model->getAbsPathCost(dataRoot, path, tref->statistics());
+
+    result->rowCount = tref->statistics()->distinctValues;
     result->rowSize = model->getNodeSize();
 
     cost = new OperationCost();
-
     cost->firstCost = costInfo->schemaTraverseCost;
 
     Range evalCost = costInfo->blockCount * model->getIOCost() + costInfo->card * model->getCPUCost();
 
-    wantSort = true;
-    Range heapSortCost = (wantSort ? (costInfo->card.map<XLogXOp>() * model->getCPUCost()) : Range(0.0));
+    tref->m_stat.flags |= tuple_info_t::sf_ddo_sorted;
 
-    if (stats->distinctValues.upper == 0) {
-        cost->nextCost = 0;
-    } else if (stats->distinctValues.lower == 0) {
-        cost->nextCost = (evalCost + heapSortCost) / stats->distinctValues.upper;
+    if (tref->statistics()->distinctValues.upper == 0) {
+        cost->nextCost = model->getCPUCost();
+    } else if (tref->statistics()->distinctValues.lower == 0) {
+        cost->nextCost = evalCost / tref->statistics()->distinctValues.upper;
     } else {
-        cost->nextCost = (evalCost + heapSortCost) / stats->distinctValues;
+        cost->nextCost = evalCost / tref->statistics()->distinctValues;
     }
 
     U_ASSERT(cost->nextCost.lower > 0);
-    cost->fullCost = cost->firstCost + evalCost + heapSortCost;
+    cost->fullCost = cost->firstCost + evalCost;
 }
 
 void MergeJoinPrototype::evaluateCost(CostModel* model)
@@ -220,7 +222,7 @@ void MergeJoinPrototype::evaluateCost(CostModel* model)
     TupleRef leftIn(in[0], NULL), rightIn(in[1], NULL);
     TupleRef leftResult(result, resultSet[0]), rightResult(result, resultSet[1]);
 
-    if (leftIn->statistics == NULL || rightIn->statistics == NULL) {
+    if (leftIn->statistics() == NULL || rightIn->statistics() == NULL) {
         U_ASSERT(false);
         return;
     };
@@ -230,21 +232,47 @@ void MergeJoinPrototype::evaluateCost(CostModel* model)
     SequenceInfo * leftSeq = comparison->getSequenceCost(model, leftIn);
     SequenceInfo * rightSeq = comparison->getSequenceCost(model, rightIn);
 
-    EvaluationInfo * cmpInfo = comparison->getComparisonCost(model, leftIn, rightIn); ;
+    EvaluationInfo * cmpInfo = comparison->getComparisonCost(model, leftIn, rightIn);
 
-    leftResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
-    rightResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
+    if (pathComparison && equalityComparison) {
+        TupleStatistics * leftStats = leftResult->statistics();
+        TupleStatistics * rightStats = rightResult->statistics();
 
-    result->rowCount = std::min(leftIn.tupleDesc->rowCount, rightIn.tupleDesc->rowCount) * cmpInfo->selectivity;
+        U_ASSERT(leftStats->pathInfo != NULL);
+        U_ASSERT(rightStats->pathInfo != NULL);
 
-    cost->firstCost =
-        in.at(0).op->getCost()->fullCost +
-        in.at(1).op->getCost()->fullCost;
+        double leftSel = leftStats->distinctValues.avg() / leftStats->pathInfo->card.upper;
+        double rightSel = rightStats->distinctValues.avg() / rightStats->pathInfo->card.upper;
 
-    // TODO if sorted, update sorted information
+        leftStats->distinctValues *= std::max(1.0, rightSel);
+        rightStats->distinctValues *= std::max(1.0, leftSel);
 
-    cost->firstCost +=
-        leftSeq->sortCost + rightSeq->sortCost;
+        result->rowCount = std::max(leftIn.tupleDesc->rowCount, rightIn.tupleDesc->rowCount)
+            * leftSel * rightSel;
+    } else {
+        // FIXME: Very inaccurate
+
+        leftResult->statistics()->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
+        rightResult->statistics()->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
+
+        result->rowCount = std::max(leftIn.tupleDesc->rowCount, rightIn.tupleDesc->rowCount) * cmpInfo->selectivity;
+    }
+
+    cost->firstCost = in[0].op->getCost()->fullCost + in[1]->getCost()->fullCost;
+
+    if (!pathComparison || !leftIn->m_stat.ddo()) {
+        if (pathComparison) { leftResult->m_stat.flags |= tuple_info_t::sf_ddo_sorted; }
+        cost->firstCost += leftSeq->sortCost;
+    }
+
+    if (!pathComparison || !rightIn->m_stat.ddo()) {
+        if (pathComparison) { rightResult->m_stat.flags |= tuple_info_t::sf_ddo_sorted; }
+        cost->firstCost += rightSeq->sortCost;
+    }
+
+    if (!equalityComparison) {
+        result->unsorted();
+    };
 
     Range mergeCost =
         leftSeq->card * cmpInfo->opCost +
@@ -254,8 +282,6 @@ void MergeJoinPrototype::evaluateCost(CostModel* model)
 
     cost->nextCost = mergeCost / result->rowCount;
     cost->fullCost = cost->firstCost + mergeCost;
-
-    // Update sort information
 }
 
 void FilterTuplePrototype::evaluateCost(CostModel* model)
@@ -263,7 +289,7 @@ void FilterTuplePrototype::evaluateCost(CostModel* model)
     TupleRef leftIn(in[0], NULL), rightIn(in[1], NULL);
     TupleRef leftResult(result, resultSet[0]), rightResult(result, resultSet[1]);
 
-    if (leftIn->statistics == NULL || rightIn->statistics == NULL) {
+    if (leftIn->statistics() == NULL || rightIn->statistics() == NULL) {
         U_ASSERT(false);
         return;
     };
@@ -272,13 +298,13 @@ void FilterTuplePrototype::evaluateCost(CostModel* model)
 
     EvaluationInfo * cmpInfo = comparison->getComparisonCost(model, leftIn, rightIn);
 
-    leftResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
-    rightResult->statistics->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
+    leftResult->statistics()->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
+    rightResult->statistics()->distinctValues *= std::max(1.0, cmpInfo->selectivity.avg());
 
     result->rowCount = leftIn.tupleDesc->rowCount * cmpInfo->selectivity;
 
     OperationCost * initialCost = in[0].op->getCost();
-    
+
     cost->firstCost = initialCost->firstCost;
     cost->fullCost = initialCost->fullCost + leftIn.tupleDesc->rowCount * cmpInfo->opCost;
     cost->nextCost = (cost->fullCost - cost->firstCost) / result->rowCount;
@@ -291,8 +317,8 @@ void ExternalVarPrototype::evaluateCost(CostModel* model)
     TupleRef outRef(result, resultSet[0]);
     cost = new OperationCost();
 
-    outRef->statistics = new TupleStatistics();
-    model->getVarCost(varTupleId, outRef->statistics);
+    outRef->statistics() = new TupleStatistics();
+    model->getVarCost(varTupleId, outRef->statistics());
 
     cost->firstCost = 0;
     cost->fullCost = 0;
@@ -304,17 +330,17 @@ void ValueScanPrototype::evaluateCost(CostModel* model)
     TupleRef inRef(in[0], NULL);
     TupleRef outRef(result, resultSet[0]);
 
-    U_ASSERT(inRef->statistics);
+    U_ASSERT(inRef->statistics() != NULL);
 
     cost = new OperationCost();
 
-    model->getValueCost(inRef->statistics->pathInfo, inRef->statistics);
-    outRef->statistics = new TupleStatistics(inRef->statistics);
+    model->getValueCost(inRef->statistics()->pathInfo, inRef->statistics());
+    outRef->statistics() = new TupleStatistics(*(inRef->statistics()));
 
-    EvaluationInfo * cmpInfo = model->getCmpInfo(inRef->statistics, model->getConstInfo(value), cmp);
+    EvaluationInfo * cmpInfo = model->getCmpInfo(inRef->statistics(), model->getConstInfo(value), cmp);
 
-    outRef->statistics->distinctValues *= cmpInfo->selectivity;
-    result->rowCount = outRef->statistics->distinctValues;
+    outRef->statistics()->distinctValues *= cmpInfo->selectivity;
+    result->rowCount = outRef->statistics()->distinctValues;
 
     OperationCost * inCost = in.at(0).op->getCost();
 
@@ -330,11 +356,11 @@ void EvaluatePrototype::evaluateCost(CostModel* model)
 
     const OperationCost * inCost = in.at(0).op->getCost();
 
-    U_ASSERT(inRef->statistics);
+    U_ASSERT(inRef->statistics() != NULL);
 
     cost = new OperationCost();
 
-    outRef->statistics = new TupleStatistics(inRef->statistics);
+    outRef->statistics() = new TupleStatistics(*(inRef->statistics()));
 
     result->rowCount = inRef.tupleDesc->rowCount;
     result->rowSize = inRef.tupleDesc->rowSize + model->getNodeSize();
@@ -350,20 +376,20 @@ void PathEvaluationPrototype::evaluateCost(CostModel* model)
     TupleRef outRef(result, resultSet[0]);
     const OperationCost * inCost = in.at(0).op->getCost();
 
-    U_ASSERT(inRef->statistics);
+    U_ASSERT(inRef->statistics());
 
     cost = new OperationCost();
 
-    outRef->statistics = new TupleStatistics();
-    
-    PathCostModel * costInfo = model->getPathCost(inRef, path, outRef->statistics);
+    outRef->statistics() = new TupleStatistics();
 
-    result->rowCount = inRef.tupleDesc->rowCount * outRef->statistics->distinctValues / inRef->statistics->distinctValues;
+    PathCostModel * costInfo = model->getPathCost(inRef, path, outRef->statistics());
+
+    result->rowCount = inRef.tupleDesc->rowCount * outRef->statistics()->distinctValues / inRef->statistics()->distinctValues;
     result->rowSize = inRef.tupleDesc->rowSize + model->getNodeSize();
 
     cost->firstCost = inCost->firstCost;
     cost->fullCost  =
-        inCost->fullCost + inRef->statistics->distinctValues * outRef->statistics->pathInfo->iterationCost +
+        inCost->fullCost + inRef->statistics()->pathInfo->blockCount * costInfo->iterationCost +
         costInfo->blockCount * model->getIOCost();
     cost->nextCost  = (cost->fullCost - cost->firstCost) / result->rowCount;
 }
@@ -413,7 +439,7 @@ phop::IOperator * AbsPathScanPrototype::compile()
     executeSchemaPathTest(dataRoot.getSchemaNode(), pe::AtomizedPath(path.getBody()->begin(), path.getBody()->end()), &schemaNodes, false);
 
     GraphExecutionBlock::current()->resultMap[resultSet.at(0)] = 0;
-    
+
     if (schemaNodes.size() == 0) {
         U_ASSERT(false);
     };
@@ -482,6 +508,16 @@ phop::IOperator * PathEvaluationPrototype::compile()
     return new phop::NestedEvaluation(aopin, ain, aopin->_tsize() + 1, aopin->_tsize());
 }
 
+static
+void offsetResultMap(TupleChrysalis * rightScheme, unsigned offset)
+{
+    for (unsigned i = 0; i < rightScheme->tuples.size(); ++i) {
+        if (rightScheme->tuples[i].status == TupleValueInfo::evaluated) {
+            GraphExecutionBlock::current()->resultMap[i] += offset;
+        };
+    };
+};
+
 phop::IOperator * MergeJoinPrototype::compile()
 {
     GraphExecutionBlockWarden warden(this);
@@ -497,21 +533,39 @@ phop::IOperator * MergeJoinPrototype::compile()
     TupleIn leftOp(leftPtr, leftIdx);
     TupleIn rightOp(rightPtr, rightIdx);
 
-    if (needLeftSort) {
-        leftOp.op = new TupleSort(leftOp->_tsize(), MappedTupleIn(leftOp), comparison->createTupleSerializer(leftOp.offs));
-    }
+    if (left.op->result->rowCount.avg() < log2(right.op->result->rowCount.avg())) {
+        offsetResultMap(right.op->result, leftOp->_tsize());
 
-    if (needRightSort) {
-        rightOp.op = new TupleSort(rightOp->_tsize(), MappedTupleIn(rightOp), comparison->createTupleSerializer(rightOp.offs));
-    }
-
-    TupleChrysalis * rightScheme = right.op->result;
-
-    for (unsigned i = 0; i < rightScheme->tuples.size(); ++i) {
-        if (rightScheme->tuples[i].status == TupleValueInfo::evaluated) {
-            GraphExecutionBlock::current()->resultMap[i] += leftOp->_tsize();
-        };
+        return new CachedNestedLoop(
+            leftOp->_tsize() + rightOp->_tsize(),
+            MappedTupleIn(rightOp.op, rightOp.offs, leftOp->_tsize()),
+            MappedTupleIn(leftOp),
+            comparison->getTupleCellComparison().inverse(),
+            phop::CachedNestedLoop::strict_output);
     };
+
+    if (right.op->result->rowCount.avg() < log2(left.op->result->rowCount.avg())) {
+        offsetResultMap(right.op->result, leftOp->_tsize());
+
+        return new CachedNestedLoop(
+            leftOp->_tsize() + rightOp->_tsize(),
+            MappedTupleIn(leftOp),
+            MappedTupleIn(rightOp.op, rightOp.offs, leftOp->_tsize()),
+            comparison->getTupleCellComparison(),
+            phop::CachedNestedLoop::strict_output);
+    };
+
+    if (!pathComparison || !TupleRef(left)->m_stat.ddo()) {
+        leftOp.op = new TupleSort(leftOp->_tsize(), MappedTupleIn(leftOp),
+            comparison->createTupleSerializer(leftOp.offs));
+    }
+
+    if (!pathComparison || !TupleRef(right)->m_stat.ddo()) {
+        rightOp.op = new TupleSort(rightOp->_tsize(), MappedTupleIn(rightOp),
+            comparison->createTupleSerializer(rightOp.offs));
+    }
+
+    offsetResultMap(right.op->result, leftOp->_tsize());
 
     return new TupleJoinFilter(
         leftOp->_tsize() + rightOp->_tsize(),
@@ -551,7 +605,7 @@ phop::IOperator * ValueScanPrototype::compile()
         executeSchemaPathTest(pathScan->getRoot().getSchemaNode(), path, &schemaNodes, false);
 
         GraphExecutionBlock::current()->resultMap[pathScan->resultSet.at(0)] = 0;
-        
+
         if (schemaNodes.size() == 0) {
             U_ASSERT(false);
         };

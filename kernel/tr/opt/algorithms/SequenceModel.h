@@ -24,7 +24,7 @@ typedef std::map<opt::TupleId, unsigned> TupleIdMap;
 
 struct OperationFlags
 {
-    uint64_t changed_flags;
+    uint64_t changed;
 };
 
 class GraphExecutionBlock {
@@ -129,7 +129,7 @@ public:
 
         return true;
     };
-    
+
     const tuple_cell& get() const { return valueCache.front(); };
 };
 
@@ -302,11 +302,11 @@ bool GraphExecutionBlock::next()
         return false;
     };
 
-    flags.changed_flags = 0;
+    flags.changed = 0;
 
     for (int i = 0; i < previous->size(); ++i) {
         if (!tuple_cmp(_previous[i], top()->get()[i])) {
-            flags.changed_flags |= (1ULL << i);
+            flags.changed |= (1ULL << i);
         };
     };
 

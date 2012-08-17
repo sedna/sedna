@@ -160,7 +160,7 @@ void TupleJoinFilter::do_next()
 
         leftValue.copy(initialLeft);
         rightValue.copy(initialRight);
-        
+
         initialized = true;
     };
 

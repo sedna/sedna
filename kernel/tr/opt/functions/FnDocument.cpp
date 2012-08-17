@@ -19,7 +19,10 @@ class LoadDocumentFunction : public phop::FunctionInfo
 {
 public:
     static phop::function_info_t name;
-    LoadDocumentFunction(const phop::function_info_t * f) : FunctionInfo(f) {};
+
+    LoadDocumentFunction(const phop::function_info_t * f) : FunctionInfo(f) {
+        isUpdate = true;
+    };
 
     virtual void execute(FunCallParams* funcall, executor::DynamicContext* dynamicContext);
 };
@@ -55,6 +58,29 @@ executor::SequenceIterator getArg(FunCallParams* funcall, executor::DynamicConte
 
 #define GET_ARG(N) dynamicContext->variables->getIterator(funcall->getParams().at(N))
 
+struct LoadDocumentExecutor : public executor::IExecuteProc
+{
+    tuple_cell fileName;
+    tuple_cell docName;
+
+    virtual void execute(executor::ResultSequence * sequence);
+
+    LoadDocumentExecutor(const tuple_cell & _fileName, const tuple_cell & _docName)
+      : fileName(_fileName), docName(_docName) {};
+};
+
+void LoadDocumentExecutor::execute(executor::ResultSequence* sequence)
+{
+    BulkLoadFrontend bulkLoadManager;
+
+    std::vector<std::string> filenames(1, fileName.get_str_mem());
+    std::vector<client_file> cf_vec(1);
+    tr_globals::client->get_file_from_client(&filenames, &cf_vec);
+
+    bulkLoadManager.setSourceStream(cf_vec.at(0).stream);
+    bulkLoadManager.loadDocument(docName.get_str_mem());
+}
+
 void LoadDocumentFunction::execute(FunCallParams* funcall, executor::DynamicContext* dynamicContext)
 {
     error_info_t cast_error = {XPTY0004, "Wrong arguments in function se:load-doc"};
@@ -67,24 +93,7 @@ void LoadDocumentFunction::execute(FunCallParams* funcall, executor::DynamicCont
       TypedSequenceIterator<SequenceIterator, AtomicTypeCaster>
         (GET_ARG(1), AtomicTypeCaster(xs_string), 1, 1, cast_error).next();
 
-/*    
-    xptr docRoot;
-
-    try {
-        BulkLoadFrontend bulkLoadManager;
-//        bulkLoadManager.options.stripBoundarySpaces = boundary_space_strip;
-        bulkLoadManager.setSourceFile(tr_globals::client->get_file_from_client(fileName.get_str_mem()));
-        docRoot = bulkLoadManager.loadDocument(docName.get_str_mem());
-    } catch (std::exception &) {
-        tr_globals::client->close_file_from_client(cf_vec[0]);
-        throw;
-    }
-
-    fileName.get_str_mem();
-*/
-//      getArgument(funcall, dynamicContext, xs_string);
-    U_ASSERT(false);
-//    funcall->getData();
+    dynamicContext->updates->push(executor::Result(new LoadDocumentExecutor(fileName, docName)));
 };
 
 bool DocumentFunction::transform(FunCallParams* funcall, RewritingContext* p)
