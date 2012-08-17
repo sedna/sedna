@@ -35,6 +35,8 @@ WorkerSocketClient * Worker::addClient(WorkerSocketClient * stream) {
         return stream;
 };
 
+
+/* NOTE: Must always return self -- otherwise it will be deleted on the third step*/
 SocketClient * ListenerSocket::processData() {
         USOCKET negotiation_socket_stream;
         negotiation_socket_stream = uaccept(clientSocket, __sys_call_error);
@@ -46,8 +48,10 @@ SocketClient * ListenerSocket::processData() {
         socketSetNoDelay(negotiation_socket_stream);
         
         WorkerSocketClient * newSocketStream = new ClientNegotiationManager(worker, negotiation_socket_stream);
+        
+        worker->addClient(newSocketStream);
 
-        return worker->addClient(newSocketStream);
+        return this;
 }
 
 /* TODO: need to modify this function in the new way. But this function is NECESSARY */
