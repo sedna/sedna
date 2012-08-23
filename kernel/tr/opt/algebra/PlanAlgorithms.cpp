@@ -89,8 +89,6 @@ void VarGraphRewriting::execute()
     };
 }
 
-
-
 /*
 #include <fstream>
 #include <iostream>
@@ -510,6 +508,33 @@ bool remove_constant_if(RewritingContext * pr, If * ifexpr)
     return false;
 };
 
+static
+bool sequence_const_to_const_sequence(RewritingContext * pr, Sequence * seq)
+{
+    // TODO implement true sequence of const
+
+    for (OperationList::iterator it = seq->children.begin(); it != seq->children.end(); ++it) {
+        if (!isConstExpr(*it)) {
+            return false;
+        };
+    };
+
+    MemoryTupleSequencePtr constSequence(new MemoryTupleSequence());
+
+    for (OperationList::iterator it = seq->children.begin(); it != seq->children.end(); ++it) {
+        rqp::Const * op = static_cast<rqp::Const *>(*it);
+
+        if (op != null_op) {
+            constSequence->insert(constSequence->end(), op->getSequence()->begin(), op->getSequence()->end());
+        };
+    };
+
+    pr->deleteOp(seq);
+    pr->replaceInParent(seq, new rqp::Const(constSequence));
+
+    return true;
+};
+
 /*
 static
 bool make_bind_into_graph(RewritingContext * pr, SequenceConcat * bind)
@@ -634,19 +659,18 @@ void RewritingContext::deleteOp(RPBase* op)
             varGraph->getVariable(typed_op->getTuple()).operations.erase(op);
         }; break;
     CASE_TYPE_CAST(MapGraph, typed_op, op) {
-            DataGraphIndex & graph = typed_op->graph();
+        DataGraphIndex & graph = typed_op->graph();
 
-            for (DataNodeList::iterator it = graph.out.begin(); it != graph.out.end(); ++it) {
-                U_ASSERT((*it)->varTupleId != invalidTupleId);
-                varGraph->getVariable((*it)->varTupleId).definedIn = null_op;
-            };
+        for (DataNodeList::iterator it = graph.out.begin(); it != graph.out.end(); ++it) {
+            U_ASSERT((*it)->varTupleId != invalidTupleId);
+            varGraph->getVariable((*it)->varTupleId).definedIn = null_op;
+        };
 
-            for (DataNodeList::iterator it = graph.nodes.begin(); it != graph.nodes.end(); ++it) {
-                if ((*it)->varTupleId != invalidTupleId) {
-                    varGraph->getVariable((*it)->varTupleId).operations.erase(typed_op);
-                }
-            };
-      
+        for (DataNodeList::iterator it = graph.nodes.begin(); it != graph.nodes.end(); ++it) {
+            if ((*it)->varTupleId != invalidTupleId) {
+                varGraph->getVariable((*it)->varTupleId).operations.erase(typed_op);
+            }
+        };
     }; break;
     CASE_TYPE_CAST(MapConcat, typed_op, op) {
             // TODO : remove all

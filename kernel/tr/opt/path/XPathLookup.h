@@ -55,13 +55,14 @@ class PathSchemaCheck : public phop::ItemOperator {
     RTTI_DECL(sequence_operator_PathSchemaCheck, phop::ItemOperator)
 
     typedef std::map<schema_node_xptr, bool> SchemaCache;
+
     SchemaLookup scnLookup;
     SchemaCache cache;
 protected:
     virtual void do_next();
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
-    PathSchemaCheck(IValueOperator * _in, const AtomizedPath& apath);
+    PathSchemaCheck(const AtomizedPath& apath, const phop::MappedTupleIn & _in, unsigned _size, unsigned _resultIdx);
     virtual void reset();
 };
 
@@ -72,14 +73,16 @@ protected:
     virtual void do_next();
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
-    PathEvaluateTraverse(IValueOperator * _in, const AtomizedPath& apath);
+    PathEvaluateTraverse(const AtomizedPath& apath, const phop::MappedTupleIn & _in, unsigned _size, unsigned _resultIdx);
     virtual ~PathEvaluateTraverse();
     virtual void reset();
 };
 
 class PathSchemaResolve : public phop::ItemOperator {
     RTTI_DECL(sequence_operator_PathSchemaResolve, phop::ItemOperator)
+
     typedef std::map<schema_node_xptr, SchemaNodeList> SchemaCache;
+
     SchemaLookup scnLookup;
     SchemaCache cache;
     PathSchemaMerge * merge;
@@ -87,7 +90,7 @@ protected:
     virtual void do_next();
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
-    PathSchemaResolve(IValueOperator * _in, const AtomizedPath& apath);
+    PathSchemaResolve(const AtomizedPath& apath, const phop::MappedTupleIn & _in, unsigned _size, unsigned _resultIdx);
     virtual ~PathSchemaResolve();
     virtual void reset();
 };

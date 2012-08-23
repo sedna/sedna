@@ -34,6 +34,25 @@ bool isResultOp(rqp::RPBase * parent, rqp::RPBase * child)
     return parent->result() == child;
 };
 
+inline static
+rqp::RPBase * getProducer(rqp::RPBase * op)
+{
+    switch (op->info()->clsid) {
+        CASE_TYPE_CAST(rqp::MapGraph, typed_op, op) {
+          return typed_op;
+        }
+        CASE_TYPE_CAST(rqp::MapConcat, typed_op, op) {
+          return typed_op->getSubplan();
+        }
+        CASE_TYPE_CAST(rqp::SequenceConcat, typed_op, op) {
+          return typed_op->getSubplan();
+        }
+      default:
+        U_ASSERT(false);
+        return rqp::null_op;
+    };
+};
+
 /* Expression preserves null iff it returns null on null input form child */
 inline static
 bool preservesNull(rqp::RPBase * parent, rqp::RPBase * child)
@@ -64,27 +83,6 @@ bool isGraphExpr(rqp::RPBase * op)
 {
     return instanceof<rqp::Const>(op) || instanceof<rqp::VarIn>(op) || isTrueGraphExpr(op);
 };
-
-/*
-inline static
-void addGraphToJoin(opt::DataGraphIndex & builder, rqp::RPBase * op)
-{
-    opt::VariableUsageGraph * master = op->getContext()->varGraph;
-
-    if (rqp::MapGraph * graph = dynamic_cast<rqp::MapGraph *>(op)) {
-        builder.nodes.insert(builder.nodes.end(), graph->graph().nodes.begin(), graph->graph().nodes.end());
-        builder.predicates.insert(builder.predicates.end(), graph->graph().predicates.begin(), graph->graph().predicates.end());
-    } else if (rqp::VarIn * varin = dynamic_cast<rqp::VarIn *>(op)) {
-        builder.nodes.push_back(new opt::DataNode(opt::DataNode::dnExternal, varin->getTuple()));
-    } else if (rqp::Const * cnst = dynamic_cast<rqp::Const *>(op)) {
-        opt::DataNode * node = new opt::DataNode(opt::DataNode::dnConst, varin->getTuple());
-        builder.nodes.push_back(node);
-        node->constValue = cnst->getSequence();
-    }
-
-    builder.rebuild();
-};
-*/
 
 inline static
 opt::DataNode * createTrueNode()

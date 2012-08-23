@@ -71,35 +71,17 @@ public:
     virtual void reset();
 };
 
-class NestedEvaluation : public ITupleOperator {
-    RTTI_DECL(sequence_operator_NestedEvaluation, ITupleOperator)
-private:
-    Operators::size_type nestedOperatorIdx;
-protected:
-    phop::TupleIn in;
-    IValueOperator * nestedOperator;
-    unsigned resultIdx;
-    
-    virtual void do_next();
-    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
-public:
-    NestedEvaluation(const phop::TupleIn& _in, IValueOperator * _op, unsigned _size, unsigned _resultIdx);
-    
-    virtual void reset();
-};
-
-
 class BogusConstSequence : public ITupleOperator {
     RTTI_DECL(sequence_operator_BogusConstSequence, ITupleOperator)
 protected:
-    counted_ptr<opt::MemoryTupleSequence> sequence;
+    opt::MemoryTupleSequencePtr sequence;
     unsigned resultIdx;
     unsigned idx;
 
     virtual void do_next();
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:
-    BogusConstSequence(counted_ptr<opt::MemoryTupleSequence> _sequence, unsigned _size, unsigned _resultIdx);
+    BogusConstSequence(opt::MemoryTupleSequencePtr _sequence, unsigned _size, unsigned _resultIdx);
 
     virtual void reset();
 };
@@ -126,22 +108,6 @@ public:
     virtual void reset();
 };
 
-/*
-class FunctionOp : public ITupleOperator {
-protected:
-    IFunctionOpInstance * func;
-    phop::MappedTupleIn in;
-    unsigned resultIdx;
-
-    virtual void do_next();
-public:
-    OPINFO_DECL(0x214)
-
-    FunctionOp(const phop::MappedTupleIn& _in, unsigned _size, unsigned _resultIdx, IFunctionOpInstance * _inst);
-
-    virtual void reset();
-};
-*/
 }
 
 #endif /* SCANS_H */

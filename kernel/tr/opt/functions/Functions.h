@@ -36,7 +36,7 @@ struct FunctionInfo
     };
 
     virtual IFunctionData * createData(StaticContext * staticContext) { return NULL; };
-    virtual void execute(rqp::FunCallParams * funcall, executor::DynamicContext * dynamicContext) = 0;
+    virtual void execute(rqp::FunCallParams * funcall, executor::DynamicContext * dynamicContext);
     virtual bool transform(rqp::FunCallParams * funcall, rqp::RewritingContext * rewritingContext) { return false; };
 
 //    virtual bool checkStatic(rqp::FunCallParams * funcall);

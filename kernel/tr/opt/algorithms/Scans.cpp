@@ -20,8 +20,6 @@ RTTI_DEF(VariableIn)
 
 RTTI_DEF(BogusConstSequence)
 RTTI_DEF(CachedNestedLoop)
-RTTI_DEF(NestedEvaluation)
-//OPINFO_DEF(FunctionOp)
 
 SchemaScan::SchemaScan(schema_node_cptr _snode, unsigned int size, unsigned int idx)
     : ITupleOperator(SELF_RTTI_REF, size),
@@ -244,56 +242,6 @@ void CachedNestedLoop::reset()
     nestedIdx = nestedSequenceCache.size();
 }
 
-NestedEvaluation::NestedEvaluation(const phop::TupleIn& _in, IValueOperator* _op, unsigned int _size, unsigned int _resultIdx)
-  : ITupleOperator(SELF_RTTI_REF, _size), in(_in), nestedOperator(_op), resultIdx(_resultIdx)
-{
-    nestedOperatorIdx = block->operatorMap.at(_op);
-}
-
-void NestedEvaluation::do_next()
-{
-    nestedOperator->next();
-
-    if (nestedOperator->get().is_eos()) {
-        seteos();
-        return;
-    };
-
-    in.copyTo(value());
-    value().cells[resultIdx] = nestedOperator->get();
-}
-
-void NestedEvaluation::reset()
-{
-    phop::ITupleOperator::reset();
-    nestedOperator = dynamic_cast<IValueOperator *>(block->body.at(nestedOperatorIdx));
-    nestedOperator->reset();
-}
-
-/*
-FunctionOp::FunctionOp(const phop::MappedTupleIn& _in, unsigned int _size, unsigned int _resultIdx, IFunctionOpInstance* _inst)
-    : ITupleOperator(SELF_RTTI_REF, _size), func(_inst), in(_in), resultIdx(_resultIdx)
-{
-    
-}
-
-void FunctionOp::do_next()
-{
-    tuple t(1);
-
-    t.cells[0] = in.get();
-    in.assignTo(value());
-    value().cells[resultIdx] = func->eval(t);
-}
-
-void FunctionOp::reset()
-{
-    func->reset();
-    phop::ITupleOperator::reset();
-}
-*/
-
-
 #include <sstream>
 
 static
@@ -354,20 +302,4 @@ XmlConstructor & CachedNestedLoop::__toXML(XmlConstructor & producer) const
     return BinaryTupleOperator::__toXML(producer);
 };
 
-
-XmlConstructor & NestedEvaluation::__toXML(XmlConstructor & producer) const
-{
-    nestedOperator->toXML(producer);
-    in.op->toXML(producer);
-    return producer;
-};
-
-/*
-XmlConstructor & FunctionOp::__toXML(XmlConstructor & producer) const
-{
-    in.op->toXML(producer);
-    return producer;
-};
-
-*/
 

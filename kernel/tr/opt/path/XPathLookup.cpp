@@ -104,8 +104,8 @@ void SchemaLookup::executeAll(const SchemaNodePtrList* in, SchemaNodePtrList* ou
 }
 
 
-PathSchemaCheck::PathSchemaCheck(phop::IValueOperator* _in, const pe::AtomizedPath& apath)
-    : ItemOperator(SELF_RTTI_REF, _in), scnLookup(apath) { }
+PathSchemaCheck::PathSchemaCheck(const pe::AtomizedPath& apath, const phop::MappedTupleIn & _in, unsigned _size, unsigned _resultIdx)
+    : ItemOperator(SELF_RTTI_REF, _in, _size, _resultIdx), scnLookup(apath) { }
 
 void PathSchemaCheck::reset()
 {
@@ -121,7 +121,7 @@ void PathSchemaCheck::do_next()
 
     do {
         in->next();
-        tin = in->get();
+        tin = in.get();
 
         if (tin.is_eos()) {
             seteos();
@@ -141,11 +141,11 @@ void PathSchemaCheck::do_next()
         };
     } while (!satisfy);
 
-    push(tin);
+    in.assignTo(value());
 }
 
-PathSchemaResolve::PathSchemaResolve(phop::IValueOperator* _in, const pe::AtomizedPath& apath)
-    : ItemOperator(SELF_RTTI_REF, _in), scnLookup(apath)
+PathSchemaResolve::PathSchemaResolve(const pe::AtomizedPath& apath, const phop::MappedTupleIn & _in, unsigned _size, unsigned _resultIdx)
+    : ItemOperator(SELF_RTTI_REF, _in, _size, _resultIdx), scnLookup(apath)
 {
     merge = new PathSchemaMerge();
 }
@@ -162,12 +162,12 @@ void PathSchemaResolve::do_next()
 
     do {
         if (!merge->eos()) {
-            push(tuple_cell::node(merge->next()));
+            set(tuple_cell::node(merge->next()));
             return;
         };
 
         in->next();
-        tin = in->get();
+        tin = in.get();
 
         if (tin.is_eos()) {
             seteos();
@@ -201,8 +201,8 @@ void PathSchemaResolve::reset()
     cache.clear();
 }
 
-PathEvaluateTraverse::PathEvaluateTraverse(phop::IValueOperator* _in, const pe::AtomizedPath& apath)
-    : ItemOperator(SELF_RTTI_REF, _in), traverse(NULL)
+PathEvaluateTraverse::PathEvaluateTraverse(const pe::AtomizedPath& apath, const phop::MappedTupleIn & _in, unsigned _size, unsigned _resultIdx)
+    : ItemOperator(SELF_RTTI_REF, _in, _size, _resultIdx), traverse(NULL)
 {
     traverse = new PathTraverse(apath);
 }
@@ -219,7 +219,7 @@ void PathEvaluateTraverse::do_next()
     do {
         if (traverse->eos()) {
             in->next();
-            tin = in->get();
+            tin = in.get();
 
             if (tin.is_eos()) {
                 seteos();
@@ -233,7 +233,7 @@ void PathEvaluateTraverse::do_next()
         Node node = traverse->next();
 
         if (!node.isNull()) {
-            push(tuple_cell::node(node.getPtr()));
+            set(tuple_cell::node(node.getPtr()));
             return;
         };
     } while (true);

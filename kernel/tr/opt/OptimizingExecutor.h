@@ -2,6 +2,7 @@
 #define _OPTIMIZING_EXECUTOR_H_
 
 #include "common/u/uthread.h"
+#include "common/u/utime.h"
 
 #include "tr/models/SednaModule.h"
 #include "tr/models/MemoryPool.h"
@@ -70,7 +71,7 @@ protected:
     GlobalSerializationOptions * serializationOptions;
 public:
     execution_params_t params;
-    uint64_t time;
+    ex_time_t time;
 
     OptimizedStatement(client_core * _client);
     virtual ~OptimizedStatement();

@@ -6,6 +6,12 @@ using namespace phop;
 
 FunctionLibrary * phop::functionLibrary = NULL;
 
+void FunctionInfo::execute(rqp::FunCallParams* funcall, executor::DynamicContext* dynamicContext)
+{
+    throw USER_EXCEPTION2(0, "This function is not implemented in algebra mode. This is an optimizer error.");
+}
+
+
 void phop::initFunctionLibrary()
 {
     phop::functionLibrary = new FunctionLibrary;

@@ -100,39 +100,6 @@ public:
     virtual XmlConstructor & toXML(XmlConstructor &) const;
 };
 
-class IValueOperator : public IOperator {
-    RTTI_DECL(sequence_operator_IValueOperator, IOperator)
-
-    std::deque<tuple_cell> valueCache;
-protected:
-    void seteos() { valueCache.push_back(tuple_cell()); };
-    void push(const tuple_cell & tc) { valueCache.push_back(tc); };
-
-    IValueOperator(clsinfo_t _opinfo) : IOperator(_opinfo) {};
-public:
-    virtual void reset()
-      { valueCache.clear(); };
-
-    inline bool next()
-    {
-        if (!valueCache.empty()) {
-            if (get().is_eos()) {
-                return false;
-            };
-
-            valueCache.pop_front();
-        }
-
-        if (valueCache.empty()) {
-            do_next();
-        };
-
-        return true;
-    };
-
-    const tuple_cell& get() const { return valueCache.front(); };
-};
-
 class ITupleOperator : public IOperator {
     RTTI_DECL(sequence_operator_ITupleOperator, IOperator)
 
@@ -172,7 +139,7 @@ struct TupleIn {
     ITupleOperator * operator->() const { return op; };
 
     bool eos() const { return op->get().is_eos(); };
-    tuple_cell get() const { return op->get().cells[offs]; };
+    tuple_cell get() const { return op->get().is_eos() ? tuple_cell() : op->get().cells[offs]; };
 
     static void tupleAssignTo(tuple & result, const tuple & from, const TupleMap & tmap) {
         if (tmap.size() > 0) {
@@ -221,23 +188,6 @@ struct MappedTupleIn : public TupleIn {
     void assignTo(tuple & result) const { TupleIn::assignTo(result, tmap); }
 };
 
-class ReduceToItemOperator : public IValueOperator {
-    RTTI_DECL(sequence_operator_ReduceToItemOperator, IValueOperator)
-private:
-    Operators::size_type inIdx;
-protected:
-    TupleIn in;
-    bool nested;
-
-    virtual void do_next();
-    virtual XmlConstructor& __toXML(XmlConstructor& ) const;
-public:
-    ReduceToItemOperator(const TupleIn & op, bool nested);
-
-    virtual void reset();
-    virtual XmlConstructor & toXML(XmlConstructor &) const;
-};
-
 class BinaryTupleOperator : public ITupleOperator {
     RTTI_DECL(sequence_operator_BinaryTupleOperator, ITupleOperator)
 private:
@@ -271,14 +221,16 @@ public:
     virtual void reset();
 };
 
-class ItemOperator : public IValueOperator {
-    RTTI_DECL(sequence_operator_ItemOperator, IValueOperator)
-private:
-    Operators::size_type inIdx;
+class ItemOperator : public ITupleOperator {
+    RTTI_DECL(sequence_operator_ItemOperator, ITupleOperator)
 protected:
-    IValueOperator * in;
-    
-    ItemOperator(clsinfo_t _opinfo, IValueOperator * _in);
+    phop::MappedTupleIn in;
+    unsigned resultIdx;
+
+    void set(const tuple_cell & tc) { value().cells[resultIdx] = tc; };
+protected:
+    ItemOperator(clsinfo_t _opinfo, const phop::MappedTupleIn & _in, unsigned _size, unsigned _resultIdx)
+      : ITupleOperator(_opinfo, _size), in(_in), resultIdx(_resultIdx) {};
 
     virtual XmlConstructor& __toXML(XmlConstructor& ) const;
 public:

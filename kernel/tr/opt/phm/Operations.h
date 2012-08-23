@@ -46,7 +46,7 @@ public:
 
 class AbsPathScanPrototype : public POProt {
     RTTI_DECL(physical_model_AbsPathScanPrototype, POProt)
-    
+
     DataRoot dataRoot;
     pe::Path path;
 protected:
@@ -78,7 +78,7 @@ public:
 
 class ValueScanPrototype : public POProt {
     RTTI_DECL(physical_model_ValueScanPrototype, POProt)
-    
+
     const Comparison cmp;
     MemoryTupleSequencePtr value;
 protected:
@@ -91,7 +91,7 @@ public:
 
 class EvaluatePrototype : public POProt {
     RTTI_DECL(physical_model_EvaluatePrototype, POProt)
-    
+
     phop::IFunction * func;
 protected:
     virtual XmlConstructor & __toXML(XmlConstructor & ) const;
@@ -104,7 +104,7 @@ public:
 
 class ExternalVarPrototype : public POProt {
     RTTI_DECL(physical_model_ExternalVarPrototype, POProt)
-    
+
     TupleId varTupleId;
 protected:
     virtual XmlConstructor & __toXML(XmlConstructor & ) const;
@@ -117,7 +117,7 @@ public:
 
 class ValidatePathPrototype : public POProt {
     RTTI_DECL(physical_model_ValidatePathPrototype, POProt)
-    
+
     DataRoot dataRoot;
     pe::Path path;
 protected:

@@ -230,7 +230,7 @@ void TupleJoinFilter::reset()
     initial_left_seq_pos = 0;
     right_seq_pos = 0;
     initial_right_seq_pos = 0;
-    
+
     step_state = step_both;
 }
 

@@ -3,6 +3,7 @@
 
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/opt/OptTypes.h"
 
 struct error_info_t {
     int code;
@@ -58,6 +59,27 @@ struct TypedSequenceIterator
         return value;
     };
 };
+
+template <typename IteratorType>
+struct StlIterator
+{
+    IteratorType tc, tend;
+
+    StlIterator(const IteratorType & start, const IteratorType & end)
+      : tc(start), tend(end) {};
+
+    inline
+    tuple_cell next()
+    {
+        if (tc == tend) {
+            return tuple_cell();
+        };
+
+        return *(tc++);
+    };
+};
+
+typedef StlIterator<opt::MemoryTupleSequence::iterator> MemoryTuplesWrapper;
 
 struct AnyTypeChecker
 {
@@ -122,6 +144,21 @@ struct AtomicTypeCaster
         tc = tuple_cell::make_sure_light_atomic(tc);
 
         return tc.is_atomic_type(type);
+    };
+};
+
+struct TypeAtomizer
+{
+    TypeAtomizer() {};
+
+    inline
+    bool check(tuple_cell & tc)
+    {
+        if (!tc.is_atomic()) {
+            tc = atomize(tc);
+        };
+
+        return tc.is_atomic();
     };
 };
 

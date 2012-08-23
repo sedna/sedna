@@ -461,12 +461,15 @@ phop::IOperator * PathEvaluationPrototype::compile()
     GraphExecutionBlockWarden warden(this);
     // TODO : make effective evaluation
 
-    ITupleOperator * opin = dynamic_cast<ITupleOperator *>(in.at(0).op->getStatement());
-    TupleIn aopin(opin, GraphExecutionBlock::current()->resultMap[in.at(0).index]);
+    MappedTupleIn opin(
+        dynamic_cast<ITupleOperator *>(in.at(0).op->getStatement()),
+        GraphExecutionBlock::current()->resultMap[in.at(0).index],
+          0);
 
-    U_ASSERT(opin != NULL);
+    unsigned resultIdx = opin->_tsize();
+    unsigned newSize = opin->_tsize() + 1;
 
-    IValueOperator * ain = new phop::ReduceToItemOperator(aopin, true);
+    U_ASSERT(opin.op != NULL);
 
     pe::PathVectorPtr pathBody = path.getBody();
     pe::PathVector::const_iterator it = pathBody->begin();
@@ -479,7 +482,8 @@ phop::IOperator * PathEvaluationPrototype::compile()
         };
 
         if (pstart != it) {
-            ain = new pe::PathEvaluateTraverse(ain, pe::AtomizedPath(pstart, it));
+            opin.op = new pe::PathEvaluateTraverse(pe::AtomizedPath(pstart, it), opin, newSize, resultIdx);
+            opin.offs = resultIdx;
         }
 
         pe::PathVector::const_iterator cstart = it;
@@ -490,7 +494,8 @@ phop::IOperator * PathEvaluationPrototype::compile()
         };
 
         if (cstart != it) {
-            ain = new pe::PathSchemaResolve(ain, pe::AtomizedPath(cstart, it));
+            opin.op = new pe::PathSchemaResolve(pe::AtomizedPath(cstart, it), opin, newSize, resultIdx);
+            opin.offs = resultIdx;
         }
 
         if (pstart == it) {
@@ -500,12 +505,12 @@ phop::IOperator * PathEvaluationPrototype::compile()
     };
 
     if (it != pathBody->end()) {
-        ain = new pe::PathEvaluateTraverse(ain, pe::AtomizedPath(it, pathBody->end()));
+        opin.op = new pe::PathEvaluateTraverse(pe::AtomizedPath(it, pathBody->end()), opin, newSize, resultIdx);
     }
 
-    GraphExecutionBlock::current()->resultMap[resultSet.at(0)] = aopin->_tsize();
+    GraphExecutionBlock::current()->resultMap[resultSet.at(0)] = resultIdx;
 
-    return new phop::NestedEvaluation(aopin, ain, aopin->_tsize() + 1, aopin->_tsize());
+    return opin.op;
 }
 
 static

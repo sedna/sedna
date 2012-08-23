@@ -418,7 +418,10 @@ void lr2opt::visit(ASTBop &n) {
     n.rop->accept(*this);
     RPBase * rightSequence = context->resultStack.top().op;
     context->resultStack.pop();
-    
+
+    opt::TupleId leftSequenceId = planContext->generateTupleId();
+    opt::TupleId rightSequenceId = planContext->generateTupleId();
+
     if (n.op >= ASTBop::IS && n.op <= ASTBop::GE_G) {
         opt::Comparison cmp(
           opt::Comparison::invalid,
@@ -437,12 +440,23 @@ void lr2opt::visit(ASTBop &n) {
           case ASTBop::EQ_G :
             cmp.op = opt::Comparison::g_eq;
             break;
+/*
+          case ASTBop::NE_G :
+            cmp.op = opt::Comparison::g_ne;
+            break;
+          case ASTBop::LT_G :
+            cmp.op = opt::Comparison::g_lt;
+            break;
+          case ASTBop::LE_G :
+            cmp.op = opt::Comparison::g_le;
+            break;
+          case ASTBop::GE_G :
+            cmp.op = opt::Comparison::g_ge;
+            break;
+*/
           default:
            throw USER_EXCEPTION(2902);
         };
-
-        opt::TupleId leftSequenceId = planContext->generateTupleId();
-        opt::TupleId rightSequenceId = planContext->generateTupleId();
 
         context->resultStack.push(ResultInfo(
             new SequenceConcat(
@@ -450,6 +464,41 @@ void lr2opt::visit(ASTBop &n) {
                 new FunCallParams(generalComparisonFunction,
                     new ComparisonData(cmp),
                     fParams(leftSequenceId, rightSequenceId)),
+                leftSequence, leftSequenceId),
+            rightSequence, rightSequenceId)));
+    } else if (n.op >= ASTBop::OR && n.op <= ASTBop::MOD) {
+        BinaryTupleCellOpData * fnData;
+
+        switch (n.op) {
+          case ASTBop::PLUS :
+            fnData = new BinaryTupleCellOpData(xqbop_add);
+            break;
+          case ASTBop::MINUS :
+            fnData = new BinaryTupleCellOpData(xqbop_sub);
+            break;
+          case ASTBop::MULT :
+            fnData = new BinaryTupleCellOpData(xqbop_mul);
+            break;
+          case ASTBop::DIV :
+            fnData = new BinaryTupleCellOpData(xqbop_div);
+            break;
+          case ASTBop::IDIV :
+            fnData = new BinaryTupleCellOpData(xqbop_idiv);
+            break;
+          case ASTBop::MOD :
+            fnData = new BinaryTupleCellOpData(xqbop_mod);
+            break;
+          default:
+            U_ASSERT(false);
+        };
+
+        fnData->init(xs_anyType, xs_anyType);
+
+        context->resultStack.push(ResultInfo(
+            new SequenceConcat(
+              new SequenceConcat(
+                new FunCallParams(binaryOperationFunction,
+                    fnData, fParams(leftSequenceId, rightSequenceId)),
                 leftSequence, leftSequenceId),
             rightSequence, rightSequenceId)));
     } else {
@@ -537,6 +586,7 @@ void lr2opt::visit(ASTTypeSwitch &n) {
 }
 
 void lr2opt::visit(ASTSeq &n) {
+    
     throw USER_EXCEPTION(2902);
 }
 
@@ -672,13 +722,29 @@ void lr2opt::visit(ASTLit &n) {
     opt::MemoryTupleSequence * mts = new opt::MemoryTupleSequence;
     context->resultStack.push(ResultInfo(new Const(mts)));
 
-    switch (n.type) {
-      case ASTLit::STRING:
-        mts->push_back(tuple_cell::atomic_deep(xs_string, n.lit->c_str()));
-      break;
-      default:
-        U_ASSERT(false);
-    };
+    try {
+        switch (n.type) {
+          case ASTLit::STRING:
+            mts->push_back(string2tuple_cell(*n.lit, xs_string));
+          break;
+          case ASTLit::DOUBLE :
+            mts->push_back(string2tuple_cell(*n.lit, xs_double));
+          break;
+          case ASTLit::INTEGER:
+            mts->push_back(string2tuple_cell(*n.lit, xs_integer));
+          break;
+          case ASTLit::DECIMAL:
+            mts->push_back(string2tuple_cell(*n.lit, xs_decimal));
+          break;
+          default:
+            U_ASSERT(false);
+            drv->error(SE4001, "unexpected literal node type");
+        };
+    }
+    catch (SednaUserException &e)
+    {
+        drv->error(e.getCode(), e.getDescription());
+    }
 }
 
 void lr2opt::visit(ASTQName &n) {
