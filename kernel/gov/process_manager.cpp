@@ -7,7 +7,10 @@
 
 #include <sstream>
 
+#ifndef _WIN32
 #define SMImageName "se_sm "
+#define TRNImageName "se_trn "
+#endif /* _WIN32 */
 
 DatabaseOptions* ProcessManager::getDatabaseOptions(const std::string& dbName)
 {
@@ -28,12 +31,15 @@ void ProcessManager::setDatabaseOptions(const std::string& dbName, const std::st
 
 #define CMD_LINE_BUFFER_LEN 1024
 
-void execStorageManagerProcess(const std::string& ticket, DatabaseProcessInfo * databaseProcessInfo) 
-{
+void ProcessManager::execStorageManagerProcess(const std::string& ticket, 
+                                               DatabaseProcessInfo* databaseProcessInfo) {
     char command_line_buffer[CMD_LINE_BUFFER_LEN];
 
     databaseProcessInfo->locked = false;
-    snprintf(command_line_buffer, CMD_LINE_BUFFER_LEN, "%s %s %s", SMImageName, databaseProcessInfo->databaseName.c_str(), ticket.c_str());
+    snprintf(command_line_buffer, CMD_LINE_BUFFER_LEN, "%s localhost %s %d %s", 
+             SMImageName,
+             this->parameters.global.listenPort,
+             ticket.c_str());
 
     if (uCreateProcess(command_line_buffer, false, NULL, 0, &(databaseProcessInfo->pHandle), NULL, 
                       &(databaseProcessInfo->pid), NULL, NULL, __sys_call_error) != 0) {
@@ -41,11 +47,33 @@ void execStorageManagerProcess(const std::string& ticket, DatabaseProcessInfo * 
         /* TODO:
         throw EProccessExecutionFailed();
         */
-        throw SYSTEM_EXCEPTION("can't start SM process");
+        elog(EL_LOG,("SM process start failed"));
+        throw SYSTEM_EXCEPTION("Can't start SM process");
     }
-
-//     return databaseProcessInfo;
 };
+
+void ProcessManager::execTransactionProcess(const std::string& ticket, 
+                                            SessionProcessInfo* sessionProcessInfo) {
+    char command_line_buffer[CMD_LINE_BUFFER_LEN];
+
+    sessionProcessInfo->locked = false;
+    snprintf(command_line_buffer, CMD_LINE_BUFFER_LEN, "%s localhost %d %d %s", 
+             TRNImageName,
+             this->parameters.global.listenPort,
+             sessionProcessInfo->database->databaseId,
+             ticket.c_str());
+
+    if (uCreateProcess(command_line_buffer, false, NULL, 0, &(sessionProcessInfo->pHandle), NULL, 
+                      &(sessionProcessInfo->pid), NULL, NULL, __sys_call_error) != 0) {
+        
+        /* TODO:
+        throw EProccessExecutionFailed();
+        */
+        elog(EL_LOG,("TRN process start failed"));
+        throw SYSTEM_EXCEPTION("Can't start SM process");
+    }
+};
+
 
 ProcessManager::~ProcessManager()
 {
@@ -98,15 +126,15 @@ void ProcessManager::startDatabase(const std::string& dbName, IProcessCallback* 
 void ProcessManager::requestSession(DatabaseProcessInfo* sm, IProcessCallback* callback)
 {
     std::string ticket;
-
+    generateTicket(ticket);
     // TODO : make universal process start framework
     SessionProcessInfo * sessionProcessInfo = new SessionProcessInfo();
     sessionProcessInfo->state = trninfo_not_started;
     sessionProcessInfo->database = sm;
     sessionProcessInfo->clientCallbackSet.insert(callback);
-
+    
     try {
-//        execStorageManagerProcess(ticket, sessionProcessInfo);
+        execTransactionProcess(ticket, sessionProcessInfo);
     } catch(std::exception & x) {
         delete sessionProcessInfo;
         callbackError(callback, x.what());

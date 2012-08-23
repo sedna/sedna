@@ -11,6 +11,19 @@
 #include <set>
 #include <queue>
 
+
+/* NOTE:
+ * Callback idea:
+ * 1) client connects to gov.
+ * 2) connectionProcessor is created; 
+ * 3) connectionProcessor starts db creation, callback is created with pm->CreateDatabase(for example).
+ * 4) connectionProcessor returns new processor (service processor for example)
+ * 5) when databaseConnectionProcessor execution is finished, it calls callback in associated ProcessInfo
+ * 6) callback responds to client the result
+ * 
+ */
+
+
 class ClientConnectionProcessor;
 
 struct SocketClientGreater {
@@ -87,6 +100,9 @@ class ProcessManager {
     bool requestsPending;
     void doProcessRequests();
     void generateTicket(ClientTicket & ticket);
+    void execStorageManagerProcess(const std::string& ticket, DatabaseProcessInfo * databaseProcessInfo);
+    void execTransactionProcess(const std::string& ticket, SessionProcessInfo * sessionProcessInfo);
+    
 public:
     ProcessManager(GlobalParameters & _parameters) : parameters(_parameters), lastSessionId(0), requestsPending(false) {};
     ~ProcessManager();

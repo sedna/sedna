@@ -100,10 +100,7 @@ SocketClient * ClientNegotiationManager::processData() {
         break;
       case se_ConnectProcess :
         return new InternalProcessNegotiation(this);
-      case se_ReceiveSocket :
-        U_ASSERT(false);
-        //worker->getProcessManager()->getSessionById();
-        //
+
       default:
         respondError();
         setObsolete();
@@ -382,7 +379,7 @@ SocketClient* DatabaseConnectionProcessor::processData()
     
     switch (state) {
          case sm_initial_state:
-
+         {
         //       NOTE : do not copy/paste
             dbInfo = dynamic_cast<DatabaseProcessInfo *>(pm->getUnregisteredProcess(ticket));
 
@@ -401,7 +398,7 @@ SocketClient* DatabaseConnectionProcessor::processData()
 
             XMLBuilder serializedOptions;
             
-            dbInfo->options->saveToXml(&serializedOptions);
+            dbInfo->options.saveToXml(&serializedOptions);
             communicator->writeString(serializedOptions.str());
             communicator->endSend();
         }
@@ -456,14 +453,21 @@ public:
         if (client != NULL) {
             client->respondError(cause);
             client->setObsolete(false);
-            client->state = cdb_awaiting_sm_start; // >TODO FIXME
+            client->state = cdb_fallthrough;
+
+            elog(EL_LOG, ("Request for database creation failed"));
         }
     };
     
     virtual void onSuccess(CallbackMessage* cbm)
     {
-        U_ASSERT(false);
-        // TODO
+        if (client != NULL) {
+            client->communicator->beginSend(se_CreateDbOK);
+            client->communicator->endSend();
+            client->state = cdb_fallthrough;
+
+            elog(EL_LOG, ("Request for database creation satisfied"));
+        }
     };
 };
 
@@ -495,13 +499,12 @@ SocketClient* CreateDatabaseRequestProcessor::processData()
 
           pm->setDatabaseOptions(dbName, communicator->readString(MAX_XML_PARAMS));
           pm->createDatabase(dbName, new CreateDatabaseCallback(this));
-
+          
+          state = cdb_awaiting_sm_start;
           break;
        case cdb_awaiting_sm_start:
-          communicator->beginSend(se_CreateDbOK);
-          communicator->endSend();
-          elog(EL_LOG, ("Request for database creation satisfied"));
-          
+          U_ASSERT(false);
+       case cdb_fallthrough:
           return new ServiceConnectionProcessor(this, true);
     }
     return this;
@@ -514,6 +517,29 @@ SocketClient* SednaShutdownProcessor::processData()
 }
 
 
+
+SocketClient* SessionConnectionProcessor::processData()
+{
+    ProcessManager * pm = worker->getProcessManager();
+    trnInfo = dynamic_cast<SessionProcessInfo *> (pm->getUnregisteredProcess());
+    if (NULL == trnInfo) {
+        pm->processRegistrationFailed(ticket, "Invalid ticket");
+        respondError();
+        return NULL;
+    };
+
+    XMLBuilder serializedOptions;
+    
+    communicator->beginSend(se_TrnRegisterOK);
+    communicator->writeInt32(trnInfo->sessionId);
+    communicator->endSend();
+    return this;
+}
+
+void SessionConnectionProcessor::cleanupOnError()
+{
+
+}
 
 
 

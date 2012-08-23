@@ -33,7 +33,8 @@ enum service_client_state_t {
 
 enum cdb_state_t {
       cdb_awaiting_db_options,
-      cdb_awaiting_sm_start
+      cdb_awaiting_sm_start,
+      cdb_fallthrough
 };
 
 enum sm_internal_state_t {
@@ -84,10 +85,10 @@ public:
 class SessionConnectionProcessor : public InternalSocketClient {
 private:
     session_id                  sid;
-    SessionProcessInfo *        trninfo;
+    SessionProcessInfo *        trnInfo;
 public:
     SessionConnectionProcessor  (WorkerSocketClient * producer, const std::string& _ticket)
-      : InternalSocketClient(producer, se_Client_Priority_TRN, ticket), sid(0), trninfo(NULL) { }
+      : InternalSocketClient(producer, se_Client_Priority_TRN, ticket), sid(0), trnInfo(NULL) { }
                                 
     virtual SocketClient * processData ();
     virtual void cleanupOnError();
