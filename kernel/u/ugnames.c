@@ -48,6 +48,12 @@ const char* UGetNameFromGlobalName(global_name globalName, char* buf, size_t buf
         return NULL;
     };
 
+    if (globalName[0] == '|')
+    {
+        strncpy(buf, globalName + 1, bufSize);
+        return buf;
+    };
+    
 #ifdef _WIN32
     snprintf(buf, bufSize, "sedna-%08x/%s.%s", basedir_hash, globalName, instance);
 #elif (defined(FreeBSD) || defined(DARWIN))

@@ -17,47 +17,62 @@
 
 using namespace std;
 
-lsize_t determineLayerSize(CdbParameters * cdbParams, gov_header_struct * cfg)
+class SharedMemoryWarden
 {
-    int db_id = cdbParams->db_id;
-    char buf[128];
-    char path_buf[U_MAX_PATH + 10];
-    lsize_t layer_size = 0;
+    UShMem shmem;
+    global_name gname;
+    char * _data;
+public:
+    SharedMemoryWarden(global_name gname, size_t sz)
+    {
+        if (uCreateShMem(&shmem, gname, sz, NULL, __sys_call_error) != 0) {
+            throw USER_EXCEPTION(SE4016);
+        };
+        
+        if (NULL == (_data = (char *) uAttachShMem(&gname, NULL, 0, __sys_call_error))) {
+            throw USER_EXCEPTION(SE4023);
+        }
+    };
+
+    ~SharedMemoryWarden() {
+        if (uDettachShMem(&shmem, gname, __sys_call_error) != 0)
+            throw USER_EXCEPTION(SE4024);
+
+        if (uReleaseShMem(&shmem, gname, __sys_call_error) != 0)
+            throw USER_EXCEPTION(SE4020);
+    }
+
+    char * data() { return _data; };
+};
+
+lsize_t determineLayerSize()
+{
+    static char db_id[32];
+    static char trn_command_line[U_MAX_PATH] = {};
+
     UPID pid;
     UPHANDLE process_handle;
-    UShMem p_cdb_callback_file_mapping;
-    lsize_t *p_cdb_callback_data;
 
-    U_ASSERT(db_id != -1);
+    snprintf(db_id, 32, "%d", databaseOptions->databaseId);
 
-    uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, u_itoa(db_id, buf, 10), NULL, __sys_call_error);
-//     uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(cfg.os_primitives_id_min_bound, buf, 10), NULL, __sys_call_error);
-
-    std::string path_str = constructClForTrn (cfg, cdbParams->db_name, db_id);
-    strcpy(path_buf, path_str.c_str());
-
+    uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, db_id, NULL, __sys_call_error);
+    uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, SEDNA_DATA, NULL, __sys_call_error);
+    
     // Result from transaction will be returned to this shared memory segment
     // So, we should create and attach it
-    if (uCreateShMem(&p_cdb_callback_file_mapping, SEDNA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(lsize_t), NULL, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4016, "SEDNA_SM_CALLBACK_SHARED_MEMORY_NAME");
-    p_cdb_callback_data = (lsize_t *)uAttachShMem(&p_cdb_callback_file_mapping, NULL, 0, __sys_call_error);
-    if (p_cdb_callback_data == NULL)
-        throw USER_EXCEPTION2(SE4023, "SEDNA_SM_CALLBACK_SHARED_MEMORY_NAME");
+    SharedMemoryWarden layerAddressMemory("LAYER_ADDRESS_RETURN", sizeof(lsize_t));
 
-    // setting hint size from command line
-    *p_cdb_callback_data = (lsize_t)(cdbParams->layer_size * 1024 * 1024);
+    snprintf(trn_command_line, U_MAX_PATH, "%s"U_PATH_DELIMITER"%s", base_path, SESSION_EXE);
 
-    if (uCreateProcess(path_buf,
-        false, // inherit handles
-        NULL,
-        U_DETACHED_PROCESS,
-        &process_handle,
-        NULL,
-        &pid,
-        NULL,
-        NULL,
-        __sys_call_error) != 0)
+    /* setting hint size from command line */
+    /* This is a safe cast since attached shared mem is always aligned */
+    * (lsize_t *) layerAddressMemory.data() = (lsize_t) databaseOptions->layerSize * 1024 * 1024;
+
+    if (uCreateProcess(path_buf, false, NULL, U_DETACHED_PROCESS, &process_handle, NULL,
+            &pid, NULL, NULL, __sys_call_error) != 0)
+    {
         throw USER_ENV_EXCEPTION("Cannot create process to determine VMM region", false);
+    }
 
     int status = 0;
     int res = 0;
@@ -68,27 +83,20 @@ lsize_t determineLayerSize(CdbParameters * cdbParams, gov_header_struct * cfg)
 
     uCloseProcessHandle(process_handle, __sys_call_error);
 
-    // for the next se_trn run
     uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "-1", NULL, __sys_call_error);
 
-    // size of the layer should be right there
-    layer_size = *p_cdb_callback_data;
+    /* size of the layer should be right there */
+    databaseOptions->layerSize = * (lsize_t *) layerAddressMemory.data();
 
-    // dettach/destroy the mapping
-    if (uDettachShMem(&p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4024, "SEDNA_SM_CALLBACK_SHARED_MEMORY_NAME");
-    if (uReleaseShMem(&p_cdb_callback_file_mapping, SEDNA_SM_CALLBACK_SHARED_MEMORY_NAME, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4020, "SEDNA_SM_CALLBACK_SHARED_MEMORY_NAME");
-
-    if (layer_size < VMM_REGION_MIN_SIZE)
+    if (databaseOptions->layerSize < VMM_REGION_MIN_SIZE)
         throw USER_EXCEPTION2(SE1031, (std::string("Determined layer size: ") + int2string(LAYER_ADDRESS_SPACE_SIZE)).c_str());
 
-    elog(EL_INFO,  ("Layer address space size = 0x%x", layer_size));
+    elog(EL_INFO,  ("Layer address space size = 0x%x", databaseOptions->layerSize));
 
-    return layer_size;
+    return databaseOptions->layerSize;
 }
 
-void createCfgFile(CdbParameters * cdbParams)
+void createCfgFile()
 {
    char buf[100];
    unsigned int nbytes_written = 0;

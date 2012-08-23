@@ -58,8 +58,8 @@ UGlobalGarbageCollector * UGlobalObjectsGC;
  * (session, database or global).
  *
  * Windows names are in the form of:
- * Global\BaseDirHash/ObjectName
- * e.g. Global\10237874/buffer_shared_memory.7.14
+ * BaseDirHash/ObjectName
+ * e.g. 10237874/buffer_shared_memory.7.14
  *
  * Note, that Windows object names must not contain "\"
  * 
@@ -75,8 +75,14 @@ UGlobalGarbageCollector * UGlobalObjectsGC;
  * debug mode safely, so that it can always be fixed. And the second one may
  * be checked only in runtime.
  *
- * Both of this checks are TODO!
+ * Both of these checks are TODO!
+ * 
+ * NOTE: A hack: due to some reasons, there is a way to pass unfair global name.
+ * If you want a name to be passed as is,
+ * it should be started with | (pipe) symbol,
+ * which is then removed
  */
+
 
 EXTERNC
 void uSetGlobalNameGeneratorBase(const char* _basedir, const char* _instance);

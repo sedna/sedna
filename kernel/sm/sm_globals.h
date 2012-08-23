@@ -6,11 +6,14 @@
 #ifndef _SM_GLOBALS_H
 #define _SM_GLOBALS_H
 
+#include "u/u.h"
+
 class MessageExchanger;
 struct DatabaseOptions;
 
 extern DatabaseOptions * databaseOptions;
 extern MessageExchanger * govMessager;
+extern global_name smMessageServerName;
 
 /*
 void         register_sm_on_gov         (MessageExchanger* communicator);

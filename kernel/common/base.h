@@ -23,8 +23,11 @@ typedef uint32_t CP_counter;
 #define MAX_FILE_SIZE_WITHOUT_CHECKPOINT 50*(1024*1024)
 
 #define SEDNA_NAMESPACE_URI     "http://www.sedna.org/"
-//#define SEDNA_NAMESPACE_URI     "http://www.modis.ispras.ru/sedna"
 #define SEDNA_NAMESPACE_PREFIX  "se"
+
+extern const char * base_path;
+
+void init_base_path(const char * arg0);
 
 typedef int32_t session_id;
 

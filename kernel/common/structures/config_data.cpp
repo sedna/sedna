@@ -82,6 +82,7 @@ struct DatabaseOptionsXmlReader : public XmlNodeReader {
         this->readDoubleValue(EXPANDR(updateCriteria));
         this->readIntValue(EXPANDR(securityOptions));
         this->readIntValue(EXPANDR(sessionPoolSize));
+        this->readIntValue(EXPANDR(layerSize));
         // FIXME !!! Uncomment
 //        this->readIntValue(EXPANDR(autoStart));
 
@@ -102,6 +103,7 @@ void DatabaseOptions::saveToXml(XMLBuilder* xmlBuilder) const
     xmlBuilder->addElement(EXPANDWC(updateCriteria));
     xmlBuilder->addElement(EXPANDWC(securityOptions));
     xmlBuilder->addElement(EXPANDWC(sessionPoolSize));
+    xmlBuilder->addElement(EXPANDWC(layerSize));
     xmlBuilder->addElement(EXPANDWC(autoStart));
 
     xmlBuilder->beginElement("dataFileSize");

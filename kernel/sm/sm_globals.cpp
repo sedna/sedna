@@ -15,6 +15,7 @@
 
 DatabaseOptions databaseOptions_instance;
 DatabaseOptions * databaseOptions = &databaseOptions_instance;
+global_name smMessageServerName;
 
 static char token[MAX_TICKET_SIZE] = {};
 

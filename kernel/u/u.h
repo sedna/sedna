@@ -368,12 +368,16 @@ int se_ExceptionalCondition(const char *conditionName, const char *errorType,
 #ifdef _WIN32
 #define U_MAX_PATH          _MAX_PATH
 #define U_MAX_HOSTNAME      255
+#define U_PATH_DELIMITER    "\\"
+#define U_PATH_DELIMITER_C  '\\'
 #else
  #ifndef _POSIX_HOSTNAME_MAX
  #define _POSIX_HOSTNAME_MAX 255
  #endif
 #define U_MAX_PATH          PATH_MAX
 #define U_MAX_HOSTNAME     _POSIX_HOSTNAME_MAX
+#define U_PATH_DELIMITER    "/"
+#define U_PATH_DELIMITER_C  '/'
 #endif /* _WIN32 */
 
 /*

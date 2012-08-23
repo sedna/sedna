@@ -59,5 +59,5 @@ void recreate_tmp_file()
     mb->tmp_file_cur_size = 0;
     mb->free_tmp_blocks = XNULL;
 
-    extend_tmp_file((int)MBS2PAGES(sm_globals::tmp_file_initial_size));
+    extend_tmp_file((int)MBS2PAGES(databaseOptions->tmpFileSize.initial));
 }

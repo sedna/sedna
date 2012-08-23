@@ -47,6 +47,7 @@ struct DatabaseOptions {
     int securityOptions;
 
     int sessionPoolSize;
+    int layerSize;
     bool autoStart;
 
     struct DatabaseFileSize {
