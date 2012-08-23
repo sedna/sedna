@@ -1,8 +1,13 @@
 #include "process_manager.h"
 #include "common/procutils/cmdlines.h"
 #include "common/structures/config_data.h"
+#include "common/errdbg/exceptions.h"
+#include "u/uprocess.h"
+#include <stdio.h>
 
 #include <sstream>
+
+#define SMImageName "se_sm "
 
 DatabaseOptions* ProcessManager::getDatabaseOptions(const std::string& dbName)
 {
@@ -25,20 +30,21 @@ void ProcessManager::setDatabaseOptions(const std::string& dbName, const std::st
 
 void execStorageManagerProcess(const std::string& ticket, DatabaseProcessInfo * databaseProcessInfo) 
 {
-/*    
     char command_line_buffer[CMD_LINE_BUFFER_LEN];
 
     databaseProcessInfo->locked = false;
-    
-    snprintf(command_line_buffer, CMD_LINE_BUFFER_LEN, "%s %s ", SMImageName, dbName.c_str());
+    snprintf(command_line_buffer, CMD_LINE_BUFFER_LEN, "%s %s %s", SMImageName, databaseProcessInfo->databaseName.c_str(), ticket.c_str());
 
-    if (uCreateProcess(command_line_buffer, false, NULL, 0, databaseProcessInfo->pHandle, NULL, 
-                      databaseProcessInfo->pid, NULL, NULL, __sys_call_error) != 0) {
+    if (uCreateProcess(command_line_buffer, false, NULL, 0, &(databaseProcessInfo->pHandle), NULL, 
+                      &(databaseProcessInfo->pid), NULL, NULL, __sys_call_error) != 0) {
+        
+        /* TODO:
         throw EProccessExecutionFailed();
+        */
+        throw SYSTEM_EXCEPTION("can't start SM process");
     }
 
-    return databaseProcessInfo;
-*/    
+//     return databaseProcessInfo;
 };
 
 ProcessManager::~ProcessManager()
@@ -46,10 +52,29 @@ ProcessManager::~ProcessManager()
 //
 }
 
+void ProcessManager::generateTicket(ClientTicket& ticket)
+{
+    size_t ticket_len = 128;
+    char * s = (char *) malloc(ticket_len+1);
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+
+    for (int i = 0; i < ticket_len; ++i) {
+        s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
+    }
+
+    s[ticket_len] = 0;
+    ticket.append(s, ticket_len);
+    delete s;
+}
+
 void ProcessManager::startDatabase(const std::string& dbName, IProcessCallback* callback)
 {
     std::string ticket;
-
+    this->generateTicket(ticket);
+    
     GlobalParameters::DatabaseOptionMap::iterator it = parameters.databaseOptions.find(dbName);
     // TODO : check for existence and throw exceptions if not exists
     DatabaseOptions * databaseOptions = &it->second;

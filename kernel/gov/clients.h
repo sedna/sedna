@@ -58,11 +58,11 @@ struct ServiceProtocolClient {
 };
 
 class InternalProcessNegotiation : public InternalSocketClient {
-    enum {
-        iproc_initial,
-        iproc_awaiting_key,
-        iproc_ticket_recieved
-    } state;
+//     enum {
+//         iproc_initial,
+//         iproc_awaiting_key,
+//         iproc_ticket_recieved
+//     } state;
 public:
     InternalProcessNegotiation(WorkerSocketClient* producer)
         : InternalSocketClient(producer, se_Client_Priority_SM, std::string()) {}

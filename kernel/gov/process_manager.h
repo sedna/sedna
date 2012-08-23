@@ -86,6 +86,7 @@ class ProcessManager {
 
     bool requestsPending;
     void doProcessRequests();
+    void generateTicket(ClientTicket & ticket);
 public:
     ProcessManager(GlobalParameters & _parameters) : parameters(_parameters), lastSessionId(0), requestsPending(false) {};
     ~ProcessManager();

@@ -22,20 +22,28 @@ using namespace std;
 
 SocketClient* InternalProcessNegotiation::processData()
 {
-    switch(state) {
-      case iproc_initial :
-        if (!communicator->receive()) { return this; }
-        communicator->beginSend(se_Handshake);
-        // Here should be initial key someday
-        communicator->endSend();
-        state = iproc_awaiting_key;
-      case iproc_awaiting_key :
-        if (!communicator->receive()) { return this; }
-        ticket = communicator->readString(MAX_TICKET_SIZE);
-        // Here we recieve key, so we know type of client
-        // Next processor
-      default : break;
-    };
+//     switch(state) {
+//       case iproc_initial :
+//         if (!communicator->receive()) { return this; }
+//         communicator->beginSend(se_Handshake);
+//         
+//         // Here should be initial key someday
+//         
+//         communicator->endSend();
+//         state = iproc_awaiting_key;
+//       case iproc_awaiting_key :
+//         if (!communicator->receive()) { return this; }
+        
+    ticket = communicator->readString(MAX_TICKET_SIZE);
+    ProcessManager * pm = worker->getProcessManager();
+    ProcessInfo * info = pm->getUnregisteredProcess(ticket);
+    if (DatabaseProcessInfo * dbInfo = dynamic_cast <DatabaseProcessInfo *> (info)) {
+        return new DatabaseConnectionProcessor(this, ticket);
+    }
+    
+    if (SessionProcessInfo * trnInfo = dynamic_cast <SessionProcessInfo *> (info)) {
+        return new SessionConnectionProcessor(this, ticket);
+    }
 
     respondError();
     setObsolete();
@@ -373,25 +381,7 @@ SocketClient* DatabaseConnectionProcessor::processData()
     ProcessManager * pm = worker->getProcessManager();
     
     switch (state) {
-        case sm_initial_state:
-        {
-            if (!communicator->receive()) { return this; }
-
-            if (!(se_RegisterCDB == communicator->getInstruction())) {
-                communicator->beginSend(se_CdbRegisteringFailed);
-                communicator->endSend();
-                setObsolete();
-                return NULL;
-            }
-
-            dbName = communicator->readString(MAX_DB_NAME); // TODO: FIXME!
-
-            DatabaseOptions * options = pm->getDatabaseOptions(dbName);
-
-            if (options == NULL) {
-                respondError();
-                return NULL;
-            };
+         case sm_initial_state:
 
         //       NOTE : do not copy/paste
             dbInfo = dynamic_cast<DatabaseProcessInfo *>(pm->getUnregisteredProcess(ticket));
@@ -410,7 +400,8 @@ SocketClient* DatabaseConnectionProcessor::processData()
             }
 
             XMLBuilder serializedOptions;
-            options->saveToXml(&serializedOptions);
+            
+            dbInfo->options->saveToXml(&serializedOptions);
             communicator->writeString(serializedOptions.str());
             communicator->endSend();
         }

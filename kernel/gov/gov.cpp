@@ -11,7 +11,8 @@
 #include "gov/gov_functions.h"
 #include "common/procutils/version.h"
 #include "u/ugnames.h"
-#include <u/uutils.h>
+#include "u/uutils.h"
+#include "u/uprocess.h"
 #include "common/globalobjects/globalnames.h"
 
 #ifdef EL_DEBUG
@@ -59,7 +60,8 @@ int main(int argc, char** argv)
             throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
         log_out_system_information();
-
+        srand(uGetCurrentProcessId(__sys_call_error));
+        
         ProcessManager processManager(sednaGlobalOptions);
         Worker * govWorker = new Worker(&processManager);
         govWorker->createListener();
