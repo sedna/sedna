@@ -1,3 +1,2 @@
-#include "common/wutypes.h"
-#include "common/wustructures.h"
-
+#include "common/xptr/wutypes.h"
+#include "common/xptr/wustructures.h"

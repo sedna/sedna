@@ -9,9 +9,9 @@
 #include "common/sedna.h"
 #include <map>
 #include "common/base.h"
-#include "common/u/usem.h"
+#include "u/usem.h"
 #include "sm/lm/TransCB.h"
-#include "common/lm_base.h"
+#include "common/lockmantypes.h"
 
 class tr_lock_head
 {

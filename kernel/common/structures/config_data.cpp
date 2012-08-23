@@ -70,12 +70,13 @@ struct DatabaseOptionsXmlReader : public XmlNodeReader {
     SessionOptionsXmlReader sessionReader;
 
     DatabaseOptionsXmlReader(DatabaseOptions* options) 
-      : dataFileSizeReader(&options->dataFile),
-        tmpFileSizeReader(&options->tmpFile),
+      : dataFileSizeReader(&options->dataFileSize),
+        tmpFileSizeReader(&options->tmpFileSize),
         sessionReader(&options->sessionOptions)
-        
     {
-//        this->readStringValue(EXPANDR(databaseName));
+        this->readIntValue(EXPANDR(databaseId));
+        this->readStringValue(EXPANDR(databaseName));
+        this->readStringValue(EXPANDR(dataFilePath));
         this->readUintValue(EXPANDR(bufferCount));
         this->readUintValue(EXPANDR(maxLogFiles));
         this->readDoubleValue(EXPANDR(updateCriteria));
@@ -93,7 +94,9 @@ struct DatabaseOptionsXmlReader : public XmlNodeReader {
 
 void DatabaseOptions::saveToXml(XMLBuilder* xmlBuilder) const
 {
+    xmlBuilder->addElement(EXPANDWC(databaseId));
     xmlBuilder->addElement(EXPANDW(databaseName));
+    xmlBuilder->addElement(EXPANDW(dataFilePath));
     xmlBuilder->addElement(EXPANDWC(bufferCount));
     xmlBuilder->addElement(EXPANDWC(maxLogFiles));
     xmlBuilder->addElement(EXPANDWC(updateCriteria));
@@ -102,11 +105,11 @@ void DatabaseOptions::saveToXml(XMLBuilder* xmlBuilder) const
     xmlBuilder->addElement(EXPANDWC(autoStart));
 
     xmlBuilder->beginElement("dataFileSize");
-    dataFile.saveToXml(xmlBuilder);
+    dataFileSize.saveToXml(xmlBuilder);
     xmlBuilder->endElement();
 
     xmlBuilder->beginElement("tmpFileSize");
-    tmpFile.saveToXml(xmlBuilder);
+    tmpFileSize.saveToXml(xmlBuilder);
     xmlBuilder->endElement();
 
     xmlBuilder->beginElement("sessionOptions");
@@ -145,7 +148,6 @@ struct SednaOptionsXmlReader : public XmlNodeReader {
         this->readIntValue(EXPANDR(logLevel));
         this->readIntValue(EXPANDR(stackDepth));
         this->readIntValue(EXPANDR(keepAlive));
-        this->setJealousMode(true);
     }
 };
 
@@ -173,6 +175,7 @@ void GlobalParameters::loadFromStream(std::istream* stream)
     XmlNodeReader * root =
       parser.getDocNodeReader()->createElementReader("sednaOptions", new XmlNodeReader());
 
+    root->setJealousMode(true);
     root->setElementReader("global", &sednaOptionsReader);
     root->setElementReader("databaseDefaults", &dbOptionsReader);
     

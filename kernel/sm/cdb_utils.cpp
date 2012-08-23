@@ -1,36 +1,21 @@
 #include "gov/cpool.h"
 #include "gov/clients.h"
-#include "gov/processes.h"
-#include "common/errdbg/d_printf.h"
-#include "common/u/uutils.h"
-#include "common/db_utils.h"
-#include "common/ipc_ops.h"
-#include "common/ugc.h"
-#include "common/xptr.h"
+
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/blk_mngmt.h"
 #include "sm/bufmgr/bm_functions.h"
+
 #include "sm/sm_globals.h"
-#include "common/commutil.h"
-#include "common/tr_debug.h"
 #include "sp_defs.h"
-#include "common/processes/command_lines.h"
+
+#include "common/errdbg/d_printf.h"
 #include "common/llcommon/llMain.h"
-#include "sm/trmgr.h"
+#include "u/uutils.h"
 #include "wu/wu.h"
 
-static inline string
-replaceAll(string context, const char* src, const char* dst) {
-    size_t lookHere = 0;
-    size_t foundHere;
-    const string from(src);
-    const string to(dst);
-    while((foundHere = context.find(from, lookHere)) != string::npos) {
-        context.replace(foundHere, from.size(), to);
-        lookHere = foundHere + to.size();
-    }
-    return context;
-}
+#include <string>
+
+using namespace std;
 
 lsize_t determineLayerSize(CdbParameters * cdbParams, gov_header_struct * cfg)
 {

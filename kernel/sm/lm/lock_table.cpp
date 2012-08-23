@@ -6,7 +6,7 @@
 #include "common/sedna.h"
 #include <iostream>
 #include <string>
-#include "common/u/usem.h"
+#include "u/usem.h"
 #include "common/lm_base.h"
 #include "sm/lm/lm_globals.h"
 #include "sm/lm/lock_table.h"

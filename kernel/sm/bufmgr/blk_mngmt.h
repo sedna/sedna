@@ -8,7 +8,7 @@
 #define _BLK_MNGMT_H
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 int push_to_persistent_free_blocks_stack(xptr *hd, xptr p, bool canStoreFreeBlocks = true);
 int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p);

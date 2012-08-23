@@ -8,8 +8,9 @@
 
 #include "common/sedna.h"
 #include "common/base.h"
+#include "common/lockmantypes.h"
+
 #include "sm/lm/lock_table.h"
-#include "common/lm_base.h"
 
 class lock_request;
 

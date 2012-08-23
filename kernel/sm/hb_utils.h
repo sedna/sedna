@@ -7,7 +7,7 @@
 #define _HB_UTILS_H_
 
 #include "common/base.h"
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 
 // processes start request from hot-backup client
 hb_state hbProcessStartRequest(hb_state state, bool is_checkp, hb_state state_incr);

@@ -7,8 +7,7 @@
 #ifndef _OFFSLIST_H
 #define _OFFSLIST_H
 
-#include "common/sedna.h"
-#include "common/se_hash.h"
+#include "auxiliary/se_hash.h"
 
 /*
  * offs_list implements list of offsets with fast-find via hash

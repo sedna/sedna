@@ -8,8 +8,9 @@
 #define _BM_FUNCTIONS_H
 
 #include "common/sedna.h"
-#include "common/xptr.h"
-#include "common/sm_vmm_data.h"
+
+#include "common/xptr/xptr.h"
+#include "common/xptr/sm_vmm_data.h"
 
 void bm_startup();
 

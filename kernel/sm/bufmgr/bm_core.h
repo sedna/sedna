@@ -8,13 +8,17 @@
 #define _BM_CORE_H
 
 #include "common/sedna.h"
+
+#include "u/usem.h"
+#include "u/uhdd.h"
+#include "u/ushm.h"
+#include "u/ummap.h"
+
+#include "common/xptr/XptrHash.h"
+#include "auxiliary/offs_list.h"
+
 #include <map>
-#include "common/XptrHash.h"
-#include "common/offs_list.h"
-#include "common/u/usem.h"
-#include "common/u/uhdd.h"
-#include "common/u/ushm.h"
-#include "common/u/ummap.h"
+#include <vector>
 
 /*******************************************************************************
 ********************************************************************************

@@ -9,7 +9,7 @@
 #ifndef _LL_HB_LOG_
 #define _LL_HB_LOG_
 
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 
 // Main log hot-backup routine
 // Returns:

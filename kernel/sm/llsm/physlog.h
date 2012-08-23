@@ -11,9 +11,11 @@
 
 #include "common/llcommon/llMain.h"
 #include "common/base.h"
-#include "common/xptr.h"
-#include "common/lfsGlobals.h"
-#include "common/wutypes.h"
+
+#include "common/xptr/xptr.h"
+#include "common/llcommon/lfsGlobals.h"
+#include "common/xptr/wutypes.h"
+
 #include "sm/wu/wu.h"
 
 // Free block log record

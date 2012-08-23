@@ -9,7 +9,7 @@
 
 #include "wutypes.h"
 #include "wuerr.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "common/errdbg/exceptions.h"
 
 #include <assert.h>

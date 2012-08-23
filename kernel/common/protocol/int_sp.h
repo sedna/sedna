@@ -6,6 +6,8 @@
 #ifndef _INT_SP_H
 #define _INT_SP_H
 
+#define MAX_TICKET_SIZE 1024
+
 /* Attenttion! You should be very careful:
  * If you want to define new protocol constants for internal Sedna processes 
  * communications you should do it there. If you want to add some constants for
@@ -16,12 +18,13 @@
 
 enum se_int_sp_instructions {
 /* TODO: sort signals in the order of they appear */
-  
     se_ConnectProcess                              = 180,
+
     se_ReceiveSocket                               = 164,
     se_Handshake                                   = 121,
-    se_RegisterCDB                                 = 124,
+    se_RegisterDB                                  = 123,
     se_UnRegisterDB                                = 125,
+
     se_SMRegisteringOK                             = 181,
     se_RegistrationFailed                          = 182,
     se_CdbRegisteringOK                            = 183,
@@ -42,9 +45,7 @@ enum se_int_sp_instructions {
     se_TrnRegisterFailedMaxSessLimit               = 172,
     
     se_SMRegisteringFailed                         = 182,
-    
-    
-    */
+*/
 };
 
 #endif /* _INT_SP_H */

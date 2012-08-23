@@ -7,12 +7,12 @@
 #define _LM_GLOBALS_H_
 
 #include "common/sedna.h"
+#include "common/lockmantypes.h"
+
 #include "sm/lm/lock_table.h"
 #include "sm/lm/trans_table.h"
-#include "common/lm_base.h"
 
 extern lock_table lm_table;
-
 extern trans_table tr_table;
 
 #endif

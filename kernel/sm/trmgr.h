@@ -9,10 +9,9 @@
 
 #include "common/sedna.h"
 #include "common/base.h"
+#include "common/llcommon/lfsGlobals.h"
 
-#include "common/u/uevent.h"
-
-#include "common/lfsGlobals.h"
+#include "u/uevent.h"
 
 /******************************************************************************
  * Some exclusive mode stuff

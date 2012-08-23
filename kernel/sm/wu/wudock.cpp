@@ -1,7 +1,7 @@
 #define __WUDANG_SOURCES__
 
 #include <stdint.h>
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 #include "wudock.h"
 #include "wuaux.h"
 #include "sm/bufmgr/bm_core.h"

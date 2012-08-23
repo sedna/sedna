@@ -3,77 +3,19 @@
 * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 */
 
-#include <iostream>
+#include "smtypes.h"
 
-#include "common/sedna.h"
-#include "common/u/usem.h"
-#include "common/u/uevent.h"
-#include "common/SSMMsg.h"
-#include "common/errdbg/d_printf.h"
-#include "common/rcv_test.h"
-// #include "common/pping.h"
-#include "common/lm_base.h"
-#include "common/gmm.h"
-#include "common/mmgr/memutils.h"
-#include "common/config.h"
-#include "common/ipc_ops.h"
-#include "common/sm_vmm_data.h"
-#include "common/llcommon/llMain.h"
+#include "u/usem.h"
+#include "u/usocket.h"
+#include "u/uevent.h"
 
-#include "sm/sm_globals.h"
-#include "sm/sm_functions.h"
-#include "sm/bufmgr/bm_functions.h"
-#include "sm/bufmgr/bm_core.h"
-#include "sm/trmgr.h"
-#include "sm/lm/lm_globals.h"
-#include "sm/wu/wu.h"
 #include "sm/llsm/physrcv.h"
 #include "sm/hb_utils.h"
+#include "sm/cdb_utils.h"
 
-#include "common/u/usocket.h"
-#include "common/structures/cdb_structures.h"
-#include "cdb_utils.h"
+#include <iostream>
 
-using namespace std;
-using namespace sm_globals;
-
-static SSMMsg *ssmmsg;
-static USemaphore wait_for_shutdown;
-
-#define SM_BACKGROUND_MODE				"SEDNA_SM_BACKGROUND_MODE"
-#define SM_BACKGROUND_MODE_TIMEOUT		60000
-
-#ifdef _WIN32
-BOOL SMCtrlHandler(DWORD fdwCtrlType)
-{
-    switch (fdwCtrlType)
-    {
-    case CTRL_C_EVENT		: /* Handle the CTRL+C signal. */
-    case CTRL_CLOSE_EVENT	: /* CTRL+CLOSE: confirm that the user wants to exit. */
-    case CTRL_BREAK_EVENT	:
-    case CTRL_LOGOFF_EVENT	:
-    case CTRL_SHUTDOWN_EVENT:
-        Beep(1000, 1000);
-
-        send_stop_sm_msg();
-
-        return TRUE;
-    default					: return FALSE;
-    }
-}
-#else  /* !_WIN32 */
-#include <signal.h>
-
-void SMCtrlHandler(int signo)
-{
-    if (   signo == SIGINT
-        || signo == SIGQUIT
-        || signo == SIGTERM) {
-            send_stop_sm_msg();
-    }
-}
-#endif /* _WIN32 */
-
+static SSMMsg * smMessageServer;
 
 int sm_server_handler(void *arg)
 {
@@ -81,7 +23,9 @@ int sm_server_handler(void *arg)
     bool isGiantLockObtained = false;
 
     try {
-        ObtainGiantLock(); isGiantLockObtained = true;
+        ObtainGiantLock();
+        isGiantLockObtained = true;
+
         switch (msg->cmd)
         {
             case 1:  {//get identifier for transaction
@@ -293,14 +237,7 @@ int sm_server_handler(void *arg)
                          break;
                      }
             case 32: {
-                         //d_printf1("query 32: bm_pseudo_allocate_data_block\n");
-                         //bm_pseudo_allocate_data_block(msg->sid, (xptr*)(&(msg->data.ptr)));
-                         msg->cmd = 0;
-                         break;
-                     }
             case 33: {
-                         //d_printf1("query 33: bm_pseudo_delete_data_block\n");
-                         //bm_pseudo_delete_data_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
                          msg->cmd = 0;
                          break;
                      }
@@ -451,7 +388,7 @@ int sm_server_handler(void *arg)
 int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
-//     pping_client *ppc = NULL;
+
     char buf[1024];
 //     SednaUserException ppc_ex = USER_EXCEPTION(SE4400); /* used below in ppc->startup() */
     int sedna_db_version = 0;
@@ -463,7 +400,6 @@ int main(int argc, char **argv)
 #endif
 
     try {
-
 #ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
 #endif
@@ -518,23 +454,14 @@ int main(int argc, char **argv)
           elog(EL_LOG, ("CDB almost finished"));
           
         }
-        
-        
-        
 
 
         InitGiantLock(); atexit(DestroyGiantLock);
 
-//         ppc = new pping_client(GOV_HEADER_GLOBAL_PTR -> ping_port_number, EL_SM);
-//         ppc->startup(ppc_ex);
-
         elog(EL_LOG, ("Ping client has been started"));
 
-
         /* Setup default values from config file */
-        
-//         !TODO do not to forget that these globals should be passed through command line
-//         !TODO transmit it using cdbconfig in cdb_mode
+
         setup_sm_globals();
 
         recover_database_by_physical_and_logical_log(db_id);
@@ -593,15 +520,15 @@ int main(int argc, char **argv)
             // Starting SSMMsg server
             d_printf1("Starting SSMMsg...");
 
-            ssmmsg = new SSMMsg(SSMMsg::Server,
+            smMessageServer = new SSMMsg(SSMMsg::Server,
                 sizeof (sm_msg_struct),
                 SEDNA_SSMMSG_SM_ID(sm_globals::db_id, buf, 1024),
                 SM_NUMBER_OF_SERVER_THREADS,
                 U_INFINITE);
-            if (ssmmsg->init() != 0)
+            if (smMessageServer->init() != 0)
                 throw USER_EXCEPTION(SE3030);
 
-            if (ssmmsg->serve_clients(sm_server_handler) != 0)
+            if (smMessageServer->serve_clients(sm_server_handler) != 0)
                 throw USER_EXCEPTION(SE3031);
 
             WuSetTimestamp(llGetPersTimestamp() + 1);
@@ -638,22 +565,22 @@ int main(int argc, char **argv)
             
             unregister_sm_on_gov(communicator);
             //to this point all sessions are closed by governor
-            if (ssmmsg->stop_serve_clients() != 0)
+            if (smMessageServer->stop_serve_clients() != 0)
                 throw USER_EXCEPTION(SE3032);
 
-            if (ssmmsg->shutdown() != 0)
+            if (smMessageServer->shutdown() != 0)
                 throw USER_EXCEPTION(SE3033);
 
             USemaphoreRelease(wait_for_shutdown, __sys_call_error);
 
         } catch(ANY_SE_EXCEPTION) {
-            ssmmsg->stop_serve_clients();
-            ssmmsg->shutdown();
+            smMessageServer->stop_serve_clients();
+            smMessageServer->shutdown();
             throw;
         }
 
-        delete ssmmsg;
-        ssmmsg = NULL;
+        delete smMessageServer;
+        smMessageServer = NULL;
 
         //shutdown checkpoint thread (it also makes checkpoint)
         shutdown_chekpoint_thread();
@@ -794,15 +721,15 @@ void recover_database_by_physical_and_logical_log(int db_id)
             // Starting SSMMsg server
             d_printf1("Starting SSMMsg...");
 
-            ssmmsg = new SSMMsg(SSMMsg::Server,
+            smMessageServer = new SSMMsg(SSMMsg::Server,
                 sizeof (sm_msg_struct),
                 SEDNA_SSMMSG_SM_ID(db_id, buf, 1024),
                 SM_NUMBER_OF_SERVER_THREADS,
                 U_INFINITE);
-            if (ssmmsg->init() != 0)
+            if (smMessageServer->init() != 0)
                 throw USER_EXCEPTION(SE3030);
 
-            if (ssmmsg->serve_clients(sm_server_handler) != 0)
+            if (smMessageServer->serve_clients(sm_server_handler) != 0)
                 throw USER_EXCEPTION(SE3031);
 
             d_printf1("OK\n");
@@ -822,10 +749,10 @@ void recover_database_by_physical_and_logical_log(int db_id)
             llEnableCheckpoints();
             elog(EL_LOG, ("Checkpoints are enabled"));
 
-            if (ssmmsg->stop_serve_clients() != 0)
+            if (smMessageServer->stop_serve_clients() != 0)
                 throw USER_EXCEPTION(SE3032);
 
-            if (ssmmsg->shutdown() != 0)
+            if (smMessageServer->shutdown() != 0)
                 throw USER_EXCEPTION(SE3033);
 
             //shutdown checkpoint thread (it also makes checkpoint)

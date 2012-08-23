@@ -9,7 +9,7 @@
 #include "common/base.h"
 #include "common/llcommon/llMain.h"
 #include "common/llcommon/lfsStorage.h"
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 
 static hb_state hbStatus = HB_END;  // status of hot-backup process
 static uint64_t hbLastFileNum = LFS_INVALID_FILE;  // number of the last archived file

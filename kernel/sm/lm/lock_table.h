@@ -7,13 +7,16 @@
 #define _LOCK_TABLE_H_
 
 #include "common/sedna.h"
+#include "common/base.h"
+#include "common/lockmantypes.h"
+
+#include "u/umutex.h"
+#include "u/usem.h"
+
+#include "sm/lm/TransCB.h"
+
 #include <string>
 #include <map>
-#include "common/base.h"
-#include "common/lm_base.h"
-#include "common/u/umutex.h"
-#include "common/u/usem.h"
-#include "sm/lm/TransCB.h"
 
 bool lock_compat(lock_mode, lock_mode);
 lock_mode lock_max(lock_mode, lock_mode);

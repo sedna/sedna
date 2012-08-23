@@ -3,27 +3,26 @@
  * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/u/usem.h"
+#include "u/usem.h"
 #include "sm/trmgr.h"
 #include "sm/hb_utils.h"
 
 #include "sm/llsm/llhb.h"
-#include "common/llcommon/llMain.h"
 
-#include "common/lfsGlobals.h"
+#include "common/llcommon/llMain.h"
+#include "common/llcommon/lfsGlobals.h"
 
 static bool hb_in_process = false;
 
 // resets hbp state in case of bad request or at the end
 static void ResetHbState(hb_state state)
 {
-	    if (hb_in_process)
-	    {
-	    	llHotBackup(state, HB_NONE_INCR);  // notify logical log
-			llEnableCheckpoints(); 			   // enable checkpoints
-		}
+    if (hb_in_process) {
+        llHotBackup(state, HB_NONE_INCR);  // notify logical log
+        llEnableCheckpoints();             // enable checkpoints
+    }
 
-		hb_in_process = false;
+    hb_in_process = false;
 }
 
 // processes request from hot-backup client

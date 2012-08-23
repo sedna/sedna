@@ -8,5 +8,4 @@
 #include "sm/lm/trans_table.h"
 
 lock_table lm_table;
-
 trans_table tr_table;

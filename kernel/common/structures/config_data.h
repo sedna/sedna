@@ -35,7 +35,10 @@ struct SessionOptions {
 };
 
 struct DatabaseOptions {
+    int32_t databaseId;
+    
     std::string databaseName;
+    std::string dataFilePath;
 
     uint32_t bufferCount;
     uint32_t maxLogFiles;
@@ -54,8 +57,8 @@ struct DatabaseOptions {
         void saveToXml(XMLBuilder * xmlBuilder) const;
     };
 
-    DatabaseFileSize dataFile;
-    DatabaseFileSize tmpFile;
+    DatabaseFileSize dataFileSize;
+    DatabaseFileSize tmpFileSize;
 
     SessionOptions sessionOptions;
 

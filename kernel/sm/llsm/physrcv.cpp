@@ -6,19 +6,12 @@
  *
  */
 
+#include "sm/smtypes.h"
 
-#include "common/llcommon/llMain.h"
-#include "sm/sm_globals.h"
-#include "sm/bufmgr/bm_core.h"
-#include "sm/bufmgr/blk_mngmt.h"
-#include "common/base.h"
-#include "common/xptr.h"
-#include "common/lfsGlobals.h"
-#include "common/wutypes.h"
-#include "common/sm_vmm_data.h"
+#include "u/uutils.h"
 #include "sm/wu/wu.h"
-#include "common/u/uutils.h"
 
+#include <stdlib.h>
 #include <string>
 
 static unsigned int sector_size = 512;
@@ -187,56 +180,56 @@ static int llRcvPhysRecsInfoLen = sizeof(llRcvPhysRecsInfo) / sizeof(llRecInfo);
 // This function restores persistent snapshot and free blocks information
 LSN llRecoverPhysicalState()
 {
-	char *rec, *offs;
-	LSN lsn;
-	uint32_t count;
-	void *ctrl_blk_buf;
+    char *rec, *offs;
+    LSN lsn;
+    uint32_t count;
+    void *ctrl_blk_buf;
 
-	lsn = llInfo->checkpoint_lsn;
+    lsn = llInfo->checkpoint_lsn;
 
-	if (lsn == LFS_INVALID_LSN)
-	{
-		// we are in big trouble here :)
-		return LFS_INVALID_LSN;
-	}
+    if (lsn == LFS_INVALID_LSN)
+    {
+            // we are in big trouble here :)
+            return LFS_INVALID_LSN;
+    }
 
-	// recover info from first checkpoint record
-	rec = (char *)llGetRecordFromDisc(&lsn);
+    // recover info from first checkpoint record
+    rec = (char *)llGetRecordFromDisc(&lsn);
 
-	if (rec[0] != LL_CHECKPOINT)
-		throw SYSTEM_EXCEPTION("Invalid checkpoint record");
+    if (rec[0] != LL_CHECKPOINT)
+            throw SYSTEM_EXCEPTION("Invalid checkpoint record");
 
-	offs = rec + sizeof(char) + sizeof(LSN) + sizeof(int);
-	count = *((uint32_t *)offs);
-	offs += sizeof(uint32_t) + sizeof(WuVersionEntry) * count;
+    offs = rec + sizeof(char) + sizeof(LSN) + sizeof(int);
+    count = *((uint32_t *)offs);
+    offs += sizeof(uint32_t) + sizeof(WuVersionEntry) * count;
 
-	// recover master block
-	ll_rcv_master_block(offs);
+    // recover master block
+    ll_rcv_master_block(offs);
     offs += sizeof(bm_masterblock);
 
-	// recover minimal lsn for logical recovery
-	llInfo->min_rcv_lsn = *((LSN *)offs);
+    // recover minimal lsn for logical recovery
+    llInfo->min_rcv_lsn = *((LSN *)offs);
 
-	lsn = llInfo->last_chain_lsn;
+    lsn = llInfo->last_chain_lsn;
 
-    if (uGetDiskSectorSize(&sector_size, sm_globals::db_files_path,
-            __sys_call_error) == 0)
+    if (uGetDiskSectorSize(&sector_size, databaseOptions->dataFilePath.c_str(), __sys_call_error) == 0) {
         throw USER_EXCEPTION(SE4051);
+    }
 
-	if ((ctrl_blk_buf = malloc(2 * PAGE_SIZE)) == NULL)
-		throw SYSTEM_EXCEPTION("Cannot allocate memory");
-	// sector alligned buffer
-	ctrl_blk = (void *)((uintptr_t)((char *)ctrl_blk_buf + sector_size - 1) &
-	        ~(uintptr_t)(sector_size - 1));
+    if ((ctrl_blk_buf = malloc(2 * PAGE_SIZE)) == NULL)
+            throw SYSTEM_EXCEPTION("Cannot allocate memory");
+    // sector alligned buffer
+    ctrl_blk = (void *)((uintptr_t)((char *)ctrl_blk_buf + sector_size - 1) &
+            ~(uintptr_t)(sector_size - 1));
 
-	// recover physical state by scaning all physical records
-	llScanRecords(llRcvPhysRecsInfo, llRcvPhysRecsInfoLen, lsn,
-	        llRcvGetNextPhysLsn, NULL);
+    // recover physical state by scaning all physical records
+    llScanRecords(llRcvPhysRecsInfo, llRcvPhysRecsInfoLen, lsn,
+            llRcvGetNextPhysLsn, NULL);
 
-	free(ctrl_blk_buf);
-	ctrl_blk = NULL;
+    free(ctrl_blk_buf);
+    ctrl_blk = NULL;
 
-	// return lsn for logical recovery
-	return (llInfo->min_rcv_lsn == LFS_INVALID_LSN) ?
-	        llInfo->checkpoint_lsn :llInfo->min_rcv_lsn;
+    // return lsn for logical recovery
+    return (llInfo->min_rcv_lsn == LFS_INVALID_LSN) ?
+            llInfo->checkpoint_lsn :llInfo->min_rcv_lsn;
 }

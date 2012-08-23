@@ -9,7 +9,7 @@
 #include "common/base.h"
 #include "sm/lm/trans_table.h"
 #include "sm/lm/TransCB.h"
-#include "common/u/usem.h"
+#include "u/usem.h"
 #include "common/errdbg/d_printf.h"
 
 using namespace std;

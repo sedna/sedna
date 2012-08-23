@@ -6,7 +6,7 @@
 
 #include "common/sedna.h"
 #include <string>
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/blk_mngmt.h"

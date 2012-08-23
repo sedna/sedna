@@ -7,13 +7,7 @@
 #define _SM_FUNCTIONS_H
 
 #include "common/sedna.h"
-#include "expat.h"
-#include "common/xptr.h"
-
-/* Handlers to parse config files */
-void startElement_sm_cfg(void *tag_name, const char *name, const char **atts);
-void endElement_sm_cfg(void *tag_name, const char *name);
-void characterData_sm_cfg(void *tag_name, const XML_Char *s, int len);
+#include "common/xptr/xptr.h"
 
 /* Various SM functions */
 void start_chekpoint_thread();

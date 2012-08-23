@@ -3,35 +3,29 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "smtypes.h"
+#include "trmgr.h"
+
+#include "common/errdbg/d_printf.h"
+
+#include "u/usem.h"
+#include "u/umutex.h"
+#include "u/uevent.h"
+#include "u/uthread.h"
+#include "u/uprocess.h"
+#include "u/uutils.h"
+
+#include "sm/bufmgr/bm_core.h"
+#include "sm/bufmgr/bm_functions.h"
+#include "sm/trmgr.h"
+#include "sm/llsm/physlog.h"
+
+#include "common/protocol/int_sp.h"
+
 #include <string>
 #include <vector>
 #include <iostream>
 
-#include "common/sedna.h"
-
-#include "common/u/usem.h"
-#include "common/u/umutex.h"
-#include "common/u/uevent.h"
-#include "common/u/uthread.h"
-#include "common/u/uprocess.h"
-#include "common/u/uutils.h"
-#include "sm/bufmgr/bm_core.h"
-#include "common/u/uprocess.h"
-#include "common/base.h"
-#include "sm/trmgr.h"
-#include "sm/sm_globals.h"
-#include "common/errdbg/d_printf.h"
-#include "common/tr_debug.h"
-#include "common/u/uutils.h"
-#include "sm/bufmgr/bm_functions.h"
-#include "common/SSMMsg.h"
-#include "sm/trmgr.h"
-#include "sm/sm_functions.h"
-#include "sm/llsm/physlog.h"
-#include "common/llcommon/llMain.h"
-#include "common/ipc_ops.h"
-
-#include "common/rcv_test.h"
 
 using namespace std;
 
@@ -57,9 +51,7 @@ static vector<transaction_id> _ids_table_;
 
 #define CHEKPOINT_THREAD_STACK_SIZE     102400
 
-// some very rough criterion for snapshot advancement
-//#define UPDATED_PART_THRESHOLD 0.25
-#define UPDATED_PART_THRESHOLD sm_globals::upd_crt
+#define UPDATED_PART_THRESHOLD (databaseOptions->updateCriteria)
 #define CREATED_PART_THRESHOLD 0.25
 
 static bool SnapshotAdvanceCriterion()

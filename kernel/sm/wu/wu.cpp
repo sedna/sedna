@@ -13,9 +13,9 @@
 #include "sm/llsm/physlog.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/blk_mngmt.h"
-#include "common/sm_vmm_data.h"
-#include "common/u/u.h"
-#include "common/u/umutex.h"
+#include "common/xptr/sm_vmm_data.h"
+#include "u/u.h"
+#include "u/umutex.h"
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/trmgr.h"
 

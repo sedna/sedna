@@ -378,9 +378,9 @@ public:
 
 ExpatWrapperPP::ExpatWrapperPP(XmlParserTrigger * trigger)
 {
-	pstate.push();
+    pstate.push();
 
-	XmlParserLevel * topLevel = pstate.current();
+    XmlParserLevel * topLevel = pstate.current();
 
     topLevel->deep = false;
     topLevel->composite = false;
@@ -439,14 +439,6 @@ void ExpatWrapperPP::elementStart(void* _p, const char* el, const char** attr)
     XmlParserLevel * currentLevel = pstate->parent();
     XmlParserLevel * childLevel = pstate->current();
 
-/*
-    if (currentLevel->textBuffer.tellp() > 0) {
-        currentLevel->trigger->onText(currentLevel->textBuffer.str(), currentLevel->deep);
-        currentLevel->textBuffer = std::stringstream();
-        currentLevel->composite = true;
-    }
-*/
-
     childLevel->trigger = currentLevel->trigger->onElement(el, currentLevel->deep);
     childLevel->deep = childLevel->trigger == NULL;
     childLevel->composite = false;
@@ -470,10 +462,6 @@ void ExpatWrapperPP::elementEnd(void* _p, const char* el)
 
     if (currentLevel->textBuffer->tellp() > 0) {
         std::string value = currentLevel->textBuffer->str();
-/*
-        currentLevel->trigger->onText(value, currentLevel->deep);
-*/
-//        currentLevel->textBuffer = std::stringstream();
 
         if (!currentLevel->composite) {
             parentLevel->trigger->onValue(el, value, false, parentLevel->deep);

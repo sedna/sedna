@@ -7,8 +7,8 @@
 #ifndef _XPTRHASH_H
 #define _XPTRHASH_H
 
-#include "common/xptr.h"
-#include "common/se_hash.h"
+#include "common/xptr/xptr.h"
+#include "auxiliary/se_hash.h"
 
 // T - value type
 // xptr hashed by using its offset. See se_hash implementation for details.

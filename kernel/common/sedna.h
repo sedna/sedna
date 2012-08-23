@@ -10,6 +10,8 @@
 #include "u/u.h"
 #include "u/uni.h"
 
+#include <stdint.h>
+
 #include "common/errdbg/event_log.h"
 #include "common/errdbg/error_codes.h"
 #include "common/errdbg/errors.h"

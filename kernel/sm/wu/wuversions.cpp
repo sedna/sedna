@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <list>
 #include <algorithm>
-#include "common/u/uhash_map.h"
+#include "u/uhash_map.h"
 #include "wuaux.h"
 #include "wudock.h"
 #include "wuerr.h"

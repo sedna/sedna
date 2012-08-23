@@ -5,8 +5,8 @@
 
 #include "common/sedna.h"
 #include <iostream>
-#include "common/u/uutils.h"
-#include "common/sm_vmm_data.h"
+#include "u/uutils.h"
+#include "common/xptr/sm_vmm_data.h"
 #include "sm/bufmgr/bm_core.h"
 #include "common/llcommon/llMain.h"
 #include "sm/sm_globals.h"

@@ -3,6 +3,7 @@ set(lib_SUBDIRS llsm lm wu bufmgr)
 
 # common sources for our executables
 set(common_SRC sm_globals.cpp)
+
 foreach (SUB ${lib_SUBDIRS})
     ADD_SUBFOLDER_SRC(common_SRC ${SUB})
 endforeach (SUB ${lib_SUBDIRS})

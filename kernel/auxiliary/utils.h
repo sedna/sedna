@@ -11,11 +11,6 @@
 
 #include "common/sedna.h"
 
-// TODO: Merge with commutils
-
-#define MBS2PAGES(s)   ((int64_t) (s) * (int64_t)0x100000 / (int64_t) PAGE_SIZE)
-#define PAGES2MBS(s)   ((int64_t) (s) * (int64_t)PAGE_SIZE / (int64_t) 0x100000)
-
 /* datatypes and functions to with time (time in sec + time in millisec)*/
 #ifndef _WIN32
 struct _timeb
@@ -88,7 +83,8 @@ double power(double a, double b);
 #ifndef _WIN32
 int _isnan(double x);
 #endif
-    
+
+/*
 template<class T>
 std::vector<T> vector_concat(const std::vector<T>& v1, const std::vector<T> &v2)
 {
@@ -102,6 +98,7 @@ std::vector<T> vector_concat(const std::vector<T>& v1, const std::vector<T> &v2)
 
     return res;
 }
+*/
 
 inline static bool implies(bool a, bool b) { return !a || b; }
 
