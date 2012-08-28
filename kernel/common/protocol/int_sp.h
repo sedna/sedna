@@ -28,24 +28,19 @@ enum se_int_sp_instructions {
     se_SMRegisteringOK                             = 181,
     se_RegistrationFailed                          = 182,
     se_CdbRegisteringOK                            = 183,
-    se_CdbRegisteringFailed                        = 184
+    se_CdbRegisteringFailed                        = 184,
     
-/*  
     se_RegisterNewSession                          = 121,
     se_UnRegisterSession                           = 122,
-    se_RegisterDB                                  = 123,
-    
 
     se_TrnRegisterOK                               = 161,
     se_TrnRegisterOKFirstTransaction               = 162,
     se_UnixSocketReady                             = 163,
-    se_ReceiveSocket                               = 164,
+    
     se_SocketReceivedOK                            = 165,
     se_TrnRegisterFailedNotRunningOrSpecialMode    = 171,
-    se_TrnRegisterFailedMaxSessLimit               = 172,
+    se_TrnRegisterFailedMaxSessLimit               = 172
     
-    se_SMRegisteringFailed                         = 182,
-*/
 };
 
 #endif /* _INT_SP_H */

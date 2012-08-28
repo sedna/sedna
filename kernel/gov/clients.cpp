@@ -1,4 +1,4 @@
-#include "clients.h"
+#include "gov/clients.h"
 
 #include "gov/cpool.h"
 #include "common/structures/listener_states.h"
@@ -6,6 +6,7 @@
 #include "common/protocol/int_sp.h"
 #include "auxiliary/internstr.h"
 #include "auxiliary/options/xml_options.h"
+#include "u/uhdd.h"
 
 #include <set>
 
@@ -465,6 +466,8 @@ public:
             client->communicator->beginSend(se_CreateDbOK);
             client->communicator->endSend();
             client->state = cdb_fallthrough;
+            
+            client->writeDatabaseConfig();
 
             elog(EL_LOG, ("Request for database creation satisfied"));
         }
@@ -474,10 +477,51 @@ public:
 CreateDatabaseRequestProcessor::CreateDatabaseRequestProcessor(WorkerSocketClient* producer)
   : WorkerSocketClient(producer, se_Client_Priority_Cdb), activeCallback(NULL), state(cdb_awaiting_db_options) {  }
 
+void CreateDatabaseRequestProcessor::writeDatabaseConfig () {
+   unsigned int nbytes_written = 0;
+   UFile cfgFileHandle;
+   USECURITY_ATTRIBUTES *def_sa;
+   XMLBuilder serializedOptions;
+
+   ProcessManager * pm = worker->getProcessManager();
+   
+   DatabaseOptions * dbInfo = pm->getDatabaseOptions(dbName);
+   dbInfo->saveToXml(&serializedOptions);
+   
+   std::string cfgFilePath = pm->getGlobalParameters()->global.dataDirectory + dbName;
+      
+   if(uCreateSA(&def_sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) {
+       throw USER_EXCEPTION(SE3060);
+   }
+   
+   cfgFileHandle = uCreateFile(cfgFilePath.c_str(),
+                                    0,
+                                    U_READ_WRITE,
+                                    U_WRITE_THROUGH,
+                                    def_sa, __sys_call_error);
+   if (cfgFileHandle == U_INVALID_FD) {
+      throw USER_EXCEPTION2(SE4040, "Can not create database configuration file");
+   }
+
+   uReleaseSA(def_sa, __sys_call_error);
+
+   int res = uWriteFile(cfgFileHandle,
+                        serializedOptions.str().c_str(),
+                        serializedOptions.str().size(),
+                        &nbytes_written,
+                        __sys_call_error);
+
+   if ( res == 0 || nbytes_written != serializedOptions.str().size()) {
+      throw USER_EXCEPTION2( SE4045, cfgFilePath.c_str() );
+   }
+   if (uCloseFile(cfgFileHandle, __sys_call_error) == 0) {
+      throw USER_EXCEPTION2(SE4043, "Can not close configuration file");
+   }
+}
+  
 SocketClient* CreateDatabaseRequestProcessor::processData()
 {
     ProcessManager * pm = worker->getProcessManager();
-    string dbName;
     
     switch (state) {
        case cdb_awaiting_db_options:
@@ -521,17 +565,21 @@ SocketClient* SednaShutdownProcessor::processData()
 SocketClient* SessionConnectionProcessor::processData()
 {
     ProcessManager * pm = worker->getProcessManager();
-    trnInfo = dynamic_cast<SessionProcessInfo *> (pm->getUnregisteredProcess());
+    trnInfo = dynamic_cast<SessionProcessInfo *> (pm->getUnregisteredProcess(ticket));
     if (NULL == trnInfo) {
         pm->processRegistrationFailed(ticket, "Invalid ticket");
         respondError();
         return NULL;
     };
-
-    XMLBuilder serializedOptions;
     
+    XMLBuilder serializedOptions;
+            
+    pm->getDatabaseOptions(trnInfo->database->databaseName)->saveToXml(&serializedOptions);
+    
+    /* send database options to trn */
     communicator->beginSend(se_TrnRegisterOK);
     communicator->writeInt32(trnInfo->sessionId);
+    communicator->writeString(serializedOptions.str());
     communicator->endSend();
     return this;
 }

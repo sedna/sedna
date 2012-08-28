@@ -77,7 +77,7 @@ int uWaitForProcess(UPID pid, UPHANDLE h, sys_call_error_fun fun);
 int uNonBlockingWaitForChildProcess(UPID pid);
 
 
-extern char *program_name_argv_0;
+extern const char *program_name_argv_0;
 
 /*  The result if written to buf. The size of the buf should be
  *  not less than U_MAX_PATH + 1. The function return buf. 

@@ -732,7 +732,7 @@ int find_executable(const char *name, char *buf, size_t size)
 #endif /* (!defined(_WIN32) && !(defined(HAVE_PROC_EXE))) */
 
 
-char *program_name_argv_0 = NULL;
+const char *program_name_argv_0 = NULL;
 
 char* uGetImageProcPath(char* buf, sys_call_error_fun fun)
 {

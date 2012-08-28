@@ -164,7 +164,7 @@ void mergeCommandLineAndConfig(SednaOptions * sednaOptions)
 
 
 /* returns true if we should exit se_gov */
-bool parseSednaOptions(int argc, char ** argv, GlobalParameters * sednaGlobalOptions, char * progname)
+bool parseSednaOptions(int argc, char ** argv, GlobalParameters * sednaGlobalOptions, const char * progname)
 {
     int nerrors;
 

@@ -193,7 +193,10 @@ class CreateDatabaseRequestProcessor : public WorkerSocketClient {
     friend class CreateDatabaseCallback;
     CreateDatabaseCallback      * activeCallback;
 
+    std::string                 dbName;
     cdb_state_t                 state;
+    
+    void                        writeDatabaseConfig ();
     
   public:
                                 CreateDatabaseRequestProcessor (WorkerSocketClient * producer);

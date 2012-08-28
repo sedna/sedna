@@ -192,3 +192,41 @@ void RenameLastSoftFaultDir()
 
   return;
 }
+
+// void createCfgFile(string &content, char * path)
+// {
+//    char buf[10240];
+//    unsigned int nbytes_written = 0;
+//    string cfg_file_content;
+//    UFile cfg_file_handle;
+//    USECURITY_ATTRIBUTES *def_sa, *dir_sa;
+// 
+//    if(uCreateSA(&dir_sa, U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
+//    if (uMkDir(cdbParams->cfg_files_path.c_str(), dir_sa, __sys_call_error) == 0)
+//       throw USER_EXCEPTION2(SE4300, cdbParams->cfg_files_path.c_str());
+// 
+//    if(uCreateSA(&def_sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
+//    cfg_file_handle = uCreateFile(cdbParams->cfg_file_name.c_str(),
+//                                     0,
+//                                     U_READ_WRITE,
+//                                     U_WRITE_THROUGH,
+//                                     def_sa, __sys_call_error);
+//    if (cfg_file_handle == U_INVALID_FD)
+//       throw USER_EXCEPTION2(SE4040, "database configuration file");
+// 
+//    uReleaseSA(def_sa, __sys_call_error);
+//    uReleaseSA(dir_sa, __sys_call_error);
+// 
+// 
+//    int res = uWriteFile(cfg_file_handle,
+//                         content.c_str(),
+//                         (unsigned)content.size(),
+//                         &nbytes_written,
+//                         __sys_call_error);
+// 
+//    if ( res == 0 || nbytes_written != cfg_file_content.size())
+//       throw USER_EXCEPTION2(SE4045, cdbParams->cfg_file_name.c_str());
+// 
+//    if (uCloseFile(cfg_file_handle, __sys_call_error) == 0)
+//       throw USER_EXCEPTION2(SE4043, "configuration file");
+// }
