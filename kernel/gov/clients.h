@@ -42,6 +42,11 @@ enum sm_internal_state_t {
       sm_awaiting_db_stop
 };
 
+enum trn_state {
+    trn_initial_state,
+    trn_registered
+};
+
 struct ProtocolVersion {
     uint8_t min;
     uint8_t maj;
@@ -86,9 +91,11 @@ class SessionConnectionProcessor : public InternalSocketClient {
 private:
     session_id                  sid;
     SessionProcessInfo *        trnInfo;
+    trn_state                   state;
+    
 public:
     SessionConnectionProcessor  (WorkerSocketClient * producer, const std::string& _ticket)
-      : InternalSocketClient(producer, se_Client_Priority_TRN, ticket), sid(0), trnInfo(NULL) { }
+      : InternalSocketClient(producer, se_Client_Priority_TRN, ticket), sid(0), trnInfo(NULL), state(trn_initial_state) { }
                                 
     virtual SocketClient * processData ();
     virtual void cleanupOnError();

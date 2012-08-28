@@ -168,7 +168,7 @@ public:
     virtual void onSuccess(CallbackMessage * cbm) {
         if (client != NULL) {
             client->trninfo = dynamic_cast<SessionProcessInfo *>(cbm->pinfo);
-            client->processSendSocket();
+            client->processSendSocket(client->trninfo.);
         }
     };
 };
@@ -566,21 +566,35 @@ SocketClient* SessionConnectionProcessor::processData()
 {
     ProcessManager * pm = worker->getProcessManager();
     trnInfo = dynamic_cast<SessionProcessInfo *> (pm->getUnregisteredProcess(ticket));
-    if (NULL == trnInfo) {
-        pm->processRegistrationFailed(ticket, "Invalid ticket");
-        respondError();
-        return NULL;
-    };
-    
-    XMLBuilder serializedOptions;
+
+    switch (state) {
+        case trn_initial_state:
+            if (NULL == trnInfo) {
+                pm->processRegistrationFailed(ticket, "Invalid ticket");
+                respondError();
+                return NULL;
+            };
+        
+            XMLBuilder serializedOptions;
+                    
+            pm->getDatabaseOptions(trnInfo->database->databaseName)->saveToXml(&serializedOptions);
             
-    pm->getDatabaseOptions(trnInfo->database->databaseName)->saveToXml(&serializedOptions);
+            /* send database options to trn */
+            communicator->beginSend(se_TrnRegisterOK);
+            communicator->writeInt32(trnInfo->sessionId);
+            communicator->writeString(serializedOptions.str());
+            communicator->endSend();
+            state = trn_registered;
+        case trn_registered:
+            if (!communicator->receive()) return this;
+            if (communicator->getInstruction() != se_ReceiveSocket) {
+                pm->processRegistrationFailed(ticket, "Unexpected message received");
+                respondError();
+                return NULL;
+            }
+            pm->processRegistered(ticket, this);
+    }        
     
-    /* send database options to trn */
-    communicator->beginSend(se_TrnRegisterOK);
-    communicator->writeInt32(trnInfo->sessionId);
-    communicator->writeString(serializedOptions.str());
-    communicator->endSend();
     return this;
 }
 
