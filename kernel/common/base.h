@@ -9,7 +9,7 @@
 
 #include "u/u.h"
 
-#define SEDNA_DATA_STRUCTURES_VER 12
+#define SEDNA_DATA_STRUCTURES_VER 20
 
 // buffer memory offset; this type is used for addressing buffers in buffer
 // memory area by defining offset of buffer from the beginning of the shared
@@ -81,18 +81,17 @@ extern const char * SEDNA_DATA;
 #define MODULES_COLLECTION_NAME "$modules"
 
 #define TRIGGER_MAX_CASCADING_LEVEL                     10
-
 #define SM_NUMBER_OF_SERVER_THREADS                     1
-
 #define GOV_NUMBER_OF_SERVER_THREADS                    1
 
-#define SEDNA_DETERMINE_VMM_REGION                      "SEDNA_DETERMINE_VMM_REGION"
+#define SEDNA_DATA_ENVIRONMENT                          "SEDNA_DATA"
+#define SEDNA_DB_ID_ENVIRONMENT                         "SEDNA_DATABASE_ID"
+#define LAYER_SIZE_RETURN_NAME                          "LAYER_SIZE_RETURN"
+
 #define CONNECTION_SOCKET_HANDLE                        "CONNECTION_SOCKET_HANDLE"
 #define SEDNA_SERVER_MODE                               "SEDNA_SERVER_MODE"
 
 #define SEDNA_LOAD_METADATA_TRANSACTION                 "SEDNA_LOAD_METADATA_TRANSACTION"
-
-#define SEDNA_OS_PRIMITIVES_ID_MIN_BOUND                "SEDNA_OS_PRIMITIVES_ID_MIN_BOUND"
 
 #define SEDNA_RUN_RECOVERY_TRANSACTION                  "SEDNA_RUN_RECOVERY_TRANSACTION"
 

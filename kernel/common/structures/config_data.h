@@ -38,10 +38,12 @@ struct DatabaseOptions {
     int32_t databaseId;
     
     std::string databaseName;
-    std::string dataFilePath;
+    std::string dataFilePath; /* Path to database files */
+//    std::string tmpFilePath; /* Path to temporary files */
 
     uint32_t bufferCount;
     uint32_t maxLogFiles;
+    uint32_t logFileSize;
 
     double updateCriteria;
     int securityOptions;
@@ -63,6 +65,9 @@ struct DatabaseOptions {
 
     SessionOptions sessionOptions;
 
+    std::string dataFileName;
+    std::string tmpFileName;
+    
     void saveToXml(XMLBuilder * xmlBuilder) const;
     XmlNodeReader * createReader();
 };

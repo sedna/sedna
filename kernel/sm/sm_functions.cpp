@@ -52,7 +52,7 @@ void set_layer_parameters(lsize_t layer_size)
 void recreate_tmp_file()
 {
     // truncate tmp file up to zero size
-    if (uSetEndOfFile(tmp_file_handler, 0, U_FILE_BEGIN, __sys_call_error) == 0)
+    if (uSetEndOfFile(tmp_file_handle, 0, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot truncate tmp file");
 
     // update master block

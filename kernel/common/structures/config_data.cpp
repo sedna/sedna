@@ -31,7 +31,6 @@ void TopLevelAuthentication::recvServiceAuth(MessageExchanger* comm)
 #define EXPANDW(OPT) #OPT, OPT
 #define EXPANDWC(OPT) #OPT, cast_to_string(OPT)
 
-
 struct SessionOptionsXmlReader : public XmlNodeReader {
     SessionOptionsXmlReader(SessionOptions* options) {
         this->readIntValue(EXPANDR(executionStackDepth));
@@ -79,6 +78,7 @@ struct DatabaseOptionsXmlReader : public XmlNodeReader {
         this->readStringValue(EXPANDR(dataFilePath));
         this->readUintValue(EXPANDR(bufferCount));
         this->readUintValue(EXPANDR(maxLogFiles));
+        this->readUintValue(EXPANDR(logFileSize));
         this->readDoubleValue(EXPANDR(updateCriteria));
         this->readIntValue(EXPANDR(securityOptions));
         this->readIntValue(EXPANDR(sessionPoolSize));

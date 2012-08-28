@@ -575,7 +575,7 @@ void extend_data_file(int extend_portion)
     
      /* Extend the file. */ 
     if (!uSetEndOfFile(
-            data_file_handler, 
+            data_file_handle, 
             fileSizeNew, 
             U_FILE_BEGIN, 
             __sys_call_error)) throw USER_EXCEPTION(SE1013);
@@ -583,7 +583,7 @@ void extend_data_file(int extend_portion)
     mb->data_file_cur_size = fileSizeNew;
    
     mb->free_data_blocks = extend_file_helper(
-                                data_file_handler,
+                                data_file_handle,
                                 fileSizeCurrent,
                                 fileSizeNew,
                                 mb->free_data_blocks,
@@ -611,7 +611,7 @@ void extend_tmp_file(int extend_portion)
 
     /* Extend the file. */ 
     if (!uSetEndOfFile(
-            tmp_file_handler, 
+            tmp_file_handle, 
             fileSizeNew, 
             U_FILE_BEGIN, 
             __sys_call_error)) throw USER_EXCEPTION(SE1014);
@@ -619,7 +619,7 @@ void extend_tmp_file(int extend_portion)
     mb->tmp_file_cur_size = fileSizeNew;
 
     mb->free_tmp_blocks = extend_file_helper(
-                                tmp_file_handler,
+                                tmp_file_handle,
                                 fileSizeCurrent,
                                 fileSizeNew,
                                 mb->free_tmp_blocks,

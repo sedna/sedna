@@ -95,8 +95,8 @@ USemaphore trigger_sem;
 #endif
 */
 // File handlers
-UFile data_file_handler;
-UFile tmp_file_handler;
+UFile data_file_handle;
+UFile tmp_file_handle;
 
 // Master block
 char bm_master_block_buf[MASTER_BLOCK_SIZE * 2];
@@ -121,11 +121,11 @@ char *system_data_aligned_ptr = NULL;
 ////////////////////////////////////////////////////////////////////////////////
 void read_master_block()
 {
-    if (uSetFilePointer(data_file_handler, (int64_t)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
+    if (uSetFilePointer(data_file_handle, (int64_t)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot read master block", false);
 
     unsigned int number_of_bytes_read = 0;
-    int res = uReadFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_read, __sys_call_error);
+    int res = uReadFile(data_file_handle, mb, MASTER_BLOCK_SIZE, &number_of_bytes_read, __sys_call_error);
     if (res == 0 || number_of_bytes_read != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot read master block", false);
     buf_io_stats.reads++;
@@ -133,16 +133,16 @@ void read_master_block()
 
 void flush_master_block()
 {
-    if (uSetFilePointer(data_file_handler, (int64_t)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
+    if (uSetFilePointer(data_file_handle, (int64_t)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 
     unsigned int number_of_bytes_written = 0;
-    int res = uWriteFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_written, __sys_call_error);
+    int res = uWriteFile(data_file_handle, mb, MASTER_BLOCK_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
     buf_io_stats.writes++;
 
-    if (uFlushBuffers(data_file_handler, __sys_call_error) == 0)
+    if (uFlushBuffers(data_file_handle, __sys_call_error) == 0)
         throw SYSTEM_EXCEPTION("Cannot flush buffers (master block)");
 }
 
@@ -168,7 +168,7 @@ void calculate_offset_and_file_handler(const xptr &p,
         {
             throw SYSTEM_EXCEPTION("Offset is out of range");
         }
-        *file_handler = data_file_handler;
+        *file_handler = data_file_handle;
     }
     else 
     {
@@ -179,7 +179,7 @@ void calculate_offset_and_file_handler(const xptr &p,
         {
             throw SYSTEM_EXCEPTION("Offset is out of range");
         }
-        *file_handler = tmp_file_handler;
+        *file_handler = tmp_file_handle;
     }
 }
 
@@ -406,13 +406,13 @@ bool flush_buffer(ramoffs offs, bool sync)
 		WuOnFlushBufferExn(physXptr);
 
 		// sync barrier
-		if (sync && uFlushBuffers(data_file_handler, __sys_call_error) == 0)
+		if (sync && uFlushBuffers(data_file_handle, __sys_call_error) == 0)
 			throw SYSTEM_EXCEPTION("Cannot sync-flush buffer");
 
         write_block(physXptr, offs);
 
 		// sync barrier
-		if (sync && uFlushBuffers(data_file_handler, __sys_call_error) == 0)
+		if (sync && uFlushBuffers(data_file_handle, __sys_call_error) == 0)
 			throw SYSTEM_EXCEPTION("Cannot sync-flush buffer");
 
 		blk->is_changed = false;
@@ -464,7 +464,7 @@ void flush_data_buffers()
     elog(EL_DBG, ("Wrote back %d dirty buffers, going to sync", flushed));
 
     // sync barrier
-    if (uFlushBuffers(data_file_handler, __sys_call_error) == 0)
+    if (uFlushBuffers(data_file_handle, __sys_call_error) == 0)
         throw SYSTEM_EXCEPTION("Cannot sync-flush buffers (checkpoint)");
 
     elog(EL_DBG, ("Flushing buffers on checkpoint complete"));

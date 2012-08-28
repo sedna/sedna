@@ -159,16 +159,16 @@ void bm_startup()
      */
     string data_file_name = string(sm_globals::db_files_path) +
             string(sm_globals::db_name) + ".sedata";
-    data_file_handler = uOpenFile(data_file_name.c_str(), U_SHARE_READ,
+    data_file_handle = uOpenFile(data_file_name.c_str(), U_SHARE_READ,
             U_READ_WRITE, 0, __sys_call_error);
-    if (data_file_handler == U_INVALID_FD)
+    if (data_file_handle == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
 
     string tmp_file_name = string(sm_globals::db_files_path) +
             string(sm_globals::db_name) + ".setmp";
-    tmp_file_handler = uOpenFile(tmp_file_name.c_str(), U_SHARE_READ,
+    tmp_file_handle = uOpenFile(tmp_file_name.c_str(), U_SHARE_READ,
             U_READ_WRITE, 0, __sys_call_error);
-    if (tmp_file_handler == U_INVALID_FD)
+    if (tmp_file_handle == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
 
     // create buffer pool
@@ -259,10 +259,10 @@ void bm_shutdown()
     d_printf1("Release shared memory: complete\n");
 
 
-    if (uCloseFile(data_file_handler, __sys_call_error) == 0)
+    if (uCloseFile(data_file_handle, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4043, ".sedata file");
 
-    if (uCloseFile(tmp_file_handler, __sys_call_error) == 0)
+    if (uCloseFile(tmp_file_handle, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4043, ".setmp file");
     d_printf1("Close database files: complete\n");
 

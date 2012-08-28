@@ -128,7 +128,7 @@ static void llRcvDecrease(LSN lsn, void *RecBuf)
 
 	old_size = *((uint64_t *)offs);
 
-    if (uSetEndOfFile(data_file_handler, old_size, U_FILE_BEGIN,
+    if (uSetEndOfFile(data_file_handle, old_size, U_FILE_BEGIN,
             __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot decrease data file");
 }

@@ -43,7 +43,9 @@ int main(int argc, char** argv)
 // !FIXME: do we really need SEDNA_DATA in this form?
 
         SEDNA_DATA = sednaGlobalOptions.global.dataDirectory.c_str();
-        
+
+        uSetEnvironmentVariable(SEDNA_DATA_ENVIRONMENT, SEDNA_DATA, NULL, __sys_call_error);
+
         check_data_folder_existence(sednaGlobalOptions.global.dataDirectory.c_str());
         RenameLastSoftFaultDir();
 

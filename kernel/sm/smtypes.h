@@ -4,6 +4,8 @@
 #include "common/sedna.h"
 #include "common/base.h"
 
+#include <stdint.h>
+
 #include "common/errdbg/d_printf.h"
 
 #include "common/llcommon/lfsGlobals.h"
@@ -22,7 +24,14 @@
 #include "sm/sm_globals.h"
 #include "sm/sm_functions.h"
 
-#define MBS2PAGES(s)   ((int64_t) (s) * (int64_t)0x100000 / (int64_t) PAGE_SIZE)
-#define PAGES2MBS(s)   ((int64_t) (s) * (int64_t)PAGE_SIZE / (int64_t) 0x100000)
+inline
+int64_t MBS2PAGES(int64_t s) {
+    return (s * 0x100000ULL / PAGE_SIZE);
+}
+
+inline
+int64_t PAGES2MBS(int64_t s) {
+    return (s * PAGE_SIZE / 0x100000ULL);
+}
 
 #endif /* _SM_TYPE_H_ */

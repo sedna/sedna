@@ -126,8 +126,8 @@ extern USemaphore trigger_sem;
 #endif
 */
 // File handlers
-extern UFile data_file_handler;
-extern UFile tmp_file_handler;
+extern UFile data_file_handle;
+extern UFile tmp_file_handle;
 
 
 // Master block structure definition
