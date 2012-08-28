@@ -10,6 +10,7 @@
 #include <map>
 #include <set>
 #include <queue>
+#include <stack>
 
 
 /* NOTE:
@@ -91,7 +92,10 @@ class ProcessManager {
     SessionMap sessionIndexById;
 
     session_id lastSessionId;
-
+    
+    /* on database drop we shoul push it's db_id here  */     
+    std::stack<int> availaibleDatabaseIds;
+    
     std::queue<CallbackMessage> requestProcessQueue;
 
     void callbackError(IProcessCallback * cb, const char * messageInfo);
@@ -104,7 +108,7 @@ class ProcessManager {
     void execTransactionProcess(const std::string& ticket, SessionProcessInfo * sessionProcessInfo);
     
 public:
-    ProcessManager(GlobalParameters & _parameters) : parameters(_parameters), lastSessionId(0), requestsPending(false) {};
+    ProcessManager(GlobalParameters & _parameters);
     ~ProcessManager();
 
     session_id getNewSessionId() { return lastSessionId++; };

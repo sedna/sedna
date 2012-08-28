@@ -67,7 +67,7 @@ void getSednaConfValues(GlobalParameters * sednaGlobalOptions)
     char procBuf[U_MAX_PATH + 1];
 
     FILE* fs;
-    char buf[1024];
+    char buf[10240];
     size_t size;
     std::string cfgText;
     cfgText.reserve(10240);
@@ -106,7 +106,7 @@ void getSednaConfValues(GlobalParameters * sednaGlobalOptions)
 
         while (true)
         {
-            size = fread(buf, sizeof(char), 1024, fs);
+            size = fread(buf, sizeof(char), 10240, fs);
             if (ferror(fs)) throw USER_EXCEPTION2(SE4044, sednaCfgFile);
             cfgText.append(buf, size);
             if (feof(fs)) break;

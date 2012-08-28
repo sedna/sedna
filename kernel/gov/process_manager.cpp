@@ -1,16 +1,84 @@
-#include "process_manager.h"
+#include "gov/process_manager.h"
 #include "common/procutils/cmdlines.h"
 #include "common/structures/config_data.h"
 #include "common/errdbg/exceptions.h"
 #include "u/uprocess.h"
-#include <stdio.h>
+#include "u/uhdd.h"
 
+#include <stdio.h>
 #include <sstream>
+#include <fstream>
 
 #ifndef _WIN32
 #define SMImageName "se_sm "
 #define TRNImageName "se_trn "
 #endif /* _WIN32 */
+
+ProcessManager::ProcessManager(GlobalParameters& _parameters)
+               : parameters(_parameters), lastSessionId(0), requestsPending(false)
+{
+    UDir dataDirectory;
+    UFindDataStruct currentCfgFile;
+    int res = -1;
+    std::string::size_type suffixPosition;
+    std::fstream fs;
+    std::string cfgText;
+    cfgText.reserve(10240);
+    
+    for (int i = 0; i < MAX_DBS_NUMBER; i++) {
+        availaibleDatabaseIds.push(i);
+    }
+    dataDirectory = uFindFirstFile(_parameters.global.dataDirectory.c_str(), 
+                                        &currentCfgFile,
+                                        __sys_call_error
+                                       );
+    if (U_INVALID_DIR == dataDirectory) {
+        throw SYSTEM_EXCEPTION("Something's wrong; data directory disappered suddenly");
+    }
+    
+    for (int i = 0 ; 1 ;)
+    {
+        if (i >= MAX_DBS_NUMBER) {
+            throw USER_EXCEPTION2(SE4412, _parameters.global.dataDirectory.c_str());
+        }
+        
+        if ( (suffixPosition = std::string(currentCfgFile.fname).find("_cfg.xml") ) != std::string::npos)
+        {
+            std::string dbName = std::string(currentCfgFile.fname).substr(0,suffixPosition);
+            fs.open ((_parameters.global.dataDirectory + 
+                        std::string("/") + 
+                        dbName + 
+                        std::string("_cfg.xml")).c_str(), std::ios::out);
+            if (fs.failbit) {
+                throw USER_EXCEPTION2(SE4042, 
+                                      (_parameters.global.dataDirectory + 
+                                       std::string("/") + 
+                                       dbName + 
+                                       std::string("_cfg.xml")).c_str()
+                                      );
+            }
+            
+            cfgText.clear();
+            
+            fs >> cfgText;
+            fs.close();
+            
+            setDatabaseOptions(dbName, cfgText);
+            ++i;
+        }
+        res = uFindNextFile(dataDirectory, 
+                            &currentCfgFile,
+                            __sys_call_error
+                           );
+        if (0 == res) {
+            break; //all cfg files are already read
+        }
+        if (-1 == res) {
+            throw USER_EXCEPTION2(SE4083, _parameters.global.dataDirectory.c_str());
+        }
+    }
+};
+
 
 DatabaseOptions* ProcessManager::getDatabaseOptions(const std::string& dbName)
 {
@@ -27,6 +95,8 @@ void ProcessManager::setDatabaseOptions(const std::string& dbName, const std::st
 {
     std::stringstream stream(xmlOptions, std::ios_base::out);
     parameters.loadDatabaseFromStream(dbName, &stream);
+    parameters.databaseOptions.at(dbName).databaseId = availaibleDatabaseIds.top();
+    availaibleDatabaseIds.pop();
 };
 
 #define CMD_LINE_BUFFER_LEN 1024

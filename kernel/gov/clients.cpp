@@ -488,7 +488,7 @@ void CreateDatabaseRequestProcessor::writeDatabaseConfig () {
    DatabaseOptions * dbInfo = pm->getDatabaseOptions(dbName);
    dbInfo->saveToXml(&serializedOptions);
    
-   std::string cfgFilePath = pm->getGlobalParameters()->global.dataDirectory + dbName;
+   std::string cfgFilePath = pm->getGlobalParameters()->global.dataDirectory + dbName + "_cfg.xml";
       
    if(uCreateSA(&def_sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) {
        throw USER_EXCEPTION(SE3060);
