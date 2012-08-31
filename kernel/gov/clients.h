@@ -128,7 +128,7 @@ private:
     
 public:
     ServiceConnectionProcessor(WorkerSocketClient * producer, ProtocolVersion _protocolVersion)
-      : WorkerSocketClient(producer, se_Client_Priority_Client), protocolVersion(_protocolVersion) { };
+      : WorkerSocketClient(producer, se_Client_Priority_Client), protocolVersion(_protocolVersion), state(service_client_initial_state) { };
     
     ServiceConnectionProcessor(WorkerSocketClient * producer, bool toContinue)
       : WorkerSocketClient(producer, se_Client_Priority_Client), state(service_client_awaiting_instructions) { };

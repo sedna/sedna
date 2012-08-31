@@ -73,7 +73,7 @@ struct DatabaseOptionsXmlReader : public XmlNodeReader {
         tmpFileSizeReader(&options->tmpFileSize),
         sessionReader(&options->sessionOptions)
     {
-        this->readIntValue(EXPANDR(databaseId));
+//         this->readIntValue(EXPANDR(databaseId));
         this->readStringValue(EXPANDR(databaseName));
         this->readStringValue(EXPANDR(dataFilePath));
         this->readUintValue(EXPANDR(bufferCount));

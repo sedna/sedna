@@ -168,7 +168,7 @@ public:
     virtual void onSuccess(CallbackMessage * cbm) {
         if (client != NULL) {
             client->trninfo = dynamic_cast<SessionProcessInfo *>(cbm->pinfo);
-            client->processSendSocket(client->trninfo.);
+//             client->processSendSocket(client->trninfo.);
         }
     };
 };
@@ -326,6 +326,8 @@ SocketClient* ServiceConnectionProcessor::processData()
         /* TODO: auth check and respondError if auth failed */
         communicator->beginSend(se_AuthenticationOK);    //here we ask what client wants us to do
         communicator->endSend();
+        state = service_client_awaiting_instructions;
+       
         
      case service_client_awaiting_instructions:
        if (!communicator->receive()) { return this; }
@@ -525,7 +527,6 @@ SocketClient* CreateDatabaseRequestProcessor::processData()
     
     switch (state) {
        case cdb_awaiting_db_options:
-          if (!communicator->receive()) return this;
           if (communicator->getInstruction() != se_CreateDbParams) {
               respondError();
               elog(EL_LOG, ("Database creation aborted: unexpected message, database parameters were expected"));
@@ -568,7 +569,7 @@ SocketClient* SessionConnectionProcessor::processData()
     trnInfo = dynamic_cast<SessionProcessInfo *> (pm->getUnregisteredProcess(ticket));
 
     switch (state) {
-        case trn_initial_state:
+        case trn_initial_state: {
             if (NULL == trnInfo) {
                 pm->processRegistrationFailed(ticket, "Invalid ticket");
                 respondError();
@@ -585,7 +586,8 @@ SocketClient* SessionConnectionProcessor::processData()
             communicator->writeString(serializedOptions.str());
             communicator->endSend();
             state = trn_registered;
-        case trn_registered:
+        }
+        case trn_registered: {
             if (!communicator->receive()) return this;
             if (communicator->getInstruction() != se_ReceiveSocket) {
                 pm->processRegistrationFailed(ticket, "Unexpected message received");
@@ -593,6 +595,11 @@ SocketClient* SessionConnectionProcessor::processData()
                 return NULL;
             }
             pm->processRegistered(ticket, this);
+            break;
+        }
+        default: {
+            return this;
+        }
     }        
     
     return this;

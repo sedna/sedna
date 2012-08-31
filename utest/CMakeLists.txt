@@ -25,6 +25,9 @@ add_executable(protocol_test protocol_test.cpp)
 add_dependencies(protocol_test common u)
 target_link_libraries(protocol_test common u)
 
+add_executable(cdb_test cdb_test.cpp)
+add_dependencies(cdb_test u common gtest auxiliary generate_error_codes gen_error_codes errdbg)
+target_link_libraries(cdb_test u common gtest auxiliary ${sysaux_LIB})
 
 add_test(NAME event_log_test COMMAND event_log_test)
 

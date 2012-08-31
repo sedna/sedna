@@ -106,7 +106,7 @@ void ProcessManager::execStorageManagerProcess(const std::string& ticket,
     char command_line_buffer[CMD_LINE_BUFFER_LEN];
 
     databaseProcessInfo->locked = false;
-    snprintf(command_line_buffer, CMD_LINE_BUFFER_LEN, "%s localhost %s %d %s", 
+    snprintf(command_line_buffer, CMD_LINE_BUFFER_LEN, "%s localhost %d %s", 
              SMImageName,
              this->parameters.global.listenPort,
              ticket.c_str());
