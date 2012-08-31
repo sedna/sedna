@@ -3,19 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef _WIN32
-#include <netdb.h>
-#include <string.h>
-#include <sys/types.h>
-#include <netinet/tcp.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#else
-#include <Winsock2.h>
-#include <ws2tcpip.h>
-#endif
-
+#include "u/usocket_int.h"
 
 #include "u/usocket.h"
 #include "common/errdbg/d_printf.h"

@@ -14,7 +14,6 @@
 #include "common/llcommon/llMain.h"
 #include "tr/tr_globals.h"
 #include "common/errdbg/d_printf.h"
-#include "common/tr_debug.h"
 #include "sm/trmgr.h"
 #include "tr/pstr/pstr_long.h"
 #include "tr/rcv/rcv_funcs.h"
@@ -23,6 +22,8 @@
 #include "tr/structures/metadata.h"
 
 #include "tr/structures/nodeinterface.h"
+
+#include "u/usem.h"
 
 #ifdef SE_ENABLE_DTSEARCH
 #include "tr/ft/FTindex.h"
@@ -84,8 +85,8 @@ static bool enable_log = true;
 
 void hl_logical_log_on_session_begin(std::string logical_log_path, bool rcv_active)
 {
-	if ( 0 != USemaphoreOpen(&concurrent_trns_sem, SEDNA_TRNS_FINISHED, __sys_call_error))
-		throw USER_EXCEPTION2(SE4012, "SEDNA_TRNS_FINISHED");
+	if ( 0 != USemaphoreOpen(&concurrent_trns_sem, activeTrnCounterSem, __sys_call_error))
+		throw USER_EXCEPTION2(SE4012, activeTrnCounterSem.name);
 
 	llOpen(logical_log_path.c_str(), tr_globals::db_name, rcv_active);
 

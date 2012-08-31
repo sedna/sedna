@@ -98,7 +98,7 @@ static void llupdateMinRcvLSN()
 {
 	LSN lsn = LFS_INVALID_LSN;
   
-	for (int i = 0; i < CHARISMA_MAX_TRNS_NUMBER; i++)
+	for (int i = 0; i < SEDNA_MAX_TRN_NUMBER; i++)
 	{
   		if (llInfo->llTransInfoTable[i].first_lsn == LFS_INVALID_LSN) continue;
 

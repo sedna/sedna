@@ -82,7 +82,7 @@ struct DatabaseOptionsXmlReader : public XmlNodeReader {
         this->readDoubleValue(EXPANDR(updateCriteria));
         this->readIntValue(EXPANDR(securityOptions));
         this->readIntValue(EXPANDR(sessionPoolSize));
-        this->readIntValue(EXPANDR(layerSize));
+        this->readUintValue(EXPANDR(layerSize));
         // FIXME !!! Uncomment
 //        this->readIntValue(EXPANDR(autoStart));
 

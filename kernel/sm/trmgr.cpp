@@ -19,8 +19,11 @@
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/trmgr.h"
 #include "sm/llsm/physlog.h"
+#include "sm/lockwarden.h"
+#include "sm/sm_globals.h"
 
 #include "common/protocol/int_sp.h"
+#include "auxiliary/processwarden.h"
 
 #include <string>
 #include <vector>
@@ -79,13 +82,12 @@ static bool SnapshotAdvanceCriterion()
 // this function tries to advance snapshots; if fails it will wait for signaled event on ro-transaction end
 void AdvanceSnapshots()
 {
-	while (!WuTryAdvanceSnapshotsExn())
-	{
-   		if (UEventWait(&end_of_rotr_event,  __sys_call_error) != 0)
-   			throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
-	}
-	RECOVERY_CRASH;
-//	ll_updateMinRcvLSN();
+    while (!WuTryAdvanceSnapshotsExn()) {
+        if (UEventWait(&end_of_rotr_event,  __sys_call_error) != 0) {
+            throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
+        }
+    }
+//    ll_updateMinRcvLSN();
 }
 
 /* Important notes on checkpoints during transaction activity.
@@ -109,8 +111,6 @@ void AdvanceSnapshots()
 // new checkpoint and snaphot advancer thread
 U_THREAD_PROC (checkpoint_thread, arg)
 {
-    bool isGiantLockObtained = false;
-
     try
     {
         while (true)
@@ -131,12 +131,11 @@ U_THREAD_PROC (checkpoint_thread, arg)
             // we advance snapshots only if SnapshotAdvanceCriterion() says so
             if (shutdown_event_call || llGetCheckpointActiveFlag()) // checkpoint is needed
             {
-                for (int i=0; i<SEDNA_MAX_TRNS_NUMBER; i++)
+                for (int i=0; i < SEDNA_MAX_TRN_NUMBER; i++)
                 {
                     if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
                         throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
                 }
-                d_printf1("All checkpoint sems acquired\n");
         
                 elog(EL_LOG, ("Starting checkpoint procedure"));
         
@@ -156,32 +155,33 @@ U_THREAD_PROC (checkpoint_thread, arg)
                 WuOnBeginCheckpointExn();
         
                 RECOVERY_CRASH;
-        
-                ObtainGiantLock(); isGiantLockObtained = true;
+
                 {
-                    d_printf1("flushing all data buffers...\n");
+                    GaintLockWarden gaintLock(true);
+
+                    elog(EL_INFO, ("Flushing all data buffers..."));
                     /* Just throw out from SM's buffers dirty pages */
                     flush_data_buffers();
-                    d_printf1("flushing all data buffers completed\n");
+                    elog(EL_INFO, ("Flushing all data buffers completed"));
         
                     WuEnumerateVersionsParams params;
                     WuEnumerateVersionsForCheckpointExn(&params, llLogCheckpoint);
         
                     RECOVERY_CRASH;
         
-                    d_printf1("flushing logical log...\n");
+                    elog(EL_INFO, ("Flushing logical log...\n"));
                     llFlushAll();
-                    d_printf1("flushing logical log completed\n");
+                    elog(EL_INFO, ("Flushing logical log completed"));
         
                     RECOVERY_CRASH;
         
                     llTruncateLog();
         
                     WuOnCompleteCheckpointExn();
+                    gaintLock.release();
                 }
-                ReleaseGiantLock(); isGiantLockObtained = false;
         
-                for (int i=0; i<SEDNA_MAX_TRNS_NUMBER; i++)
+                for (int i=0; i < SEDNA_MAX_TRN_NUMBER; i++)
                     if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
                      throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
                 
@@ -193,25 +193,26 @@ U_THREAD_PROC (checkpoint_thread, arg)
             {
                 if (!is_recovery_mode && SnapshotAdvanceCriterion())
                 {
-                    for (int i=0; i<SEDNA_MAX_TRNS_NUMBER; i++)
-                    {
-                        if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
-                         throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
+                    for (int i=0; i < SEDNA_MAX_TRN_NUMBER; i++) {
+                        if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 ) {
+                            throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
+                        }
                     }
-                    d_printf1("All advancement sems acquired\n");
 
                     elog(EL_LOG, ("Starting snapshot advancement"));
-                    ObtainGiantLock(); isGiantLockObtained = true;
                     {
+                        GaintLockWarden gaintLock(true);
                         AdvanceSnapshots();
+                        gaintLock.release();
                     }
-                    ReleaseGiantLock(); isGiantLockObtained = false;
 
                     RECOVERY_CRASH;
 
-                    for (int i=0; i<SEDNA_MAX_TRNS_NUMBER; i++)
-                        if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
-                         throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
+                    for (int i = 0; i < SEDNA_MAX_TRN_NUMBER; i++) {
+                        if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 ) {
+                            throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
+                        }
+                    }
 
                     elog(EL_LOG, ("Completed snapshot advancement"));
                 }
@@ -222,12 +223,10 @@ U_THREAD_PROC (checkpoint_thread, arg)
     }
     catch(SednaException &e)
     {
-        if (isGiantLockObtained) ReleaseGiantLock();
         sedna_soft_fault(e, EL_SM);
     }
     catch (ANY_SE_EXCEPTION)
     {
-        if (isGiantLockObtained) ReleaseGiantLock();
         sedna_soft_fault(EL_SM);
     }
 
@@ -243,28 +242,25 @@ void start_chekpoint_thread()
     shutdown_checkpoint_thread = false;
 }
 
+static global_name tryAdvanceSnapshotEventName = {GN_DATABASE, "try_advance_snapshot"};
+
 void init_checkpoint_sems()
 {
     USECURITY_ATTRIBUTES *sa;
 
-    if (uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error) != 0)
-        throw USER_EXCEPTION(SE3060);
+    CHECK_ENV(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error),
+        SE3060, "");
 
-    if (0 != UEventCreate(&start_checkpoint_snapshot, sa, U_AUTORESET_EVENT,
-                          false, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error))
-        throw USER_EXCEPTION2(SE4010, "SNAPSHOT_CHECKPOINT_EVENT");
+    CHECK_ENV(UEventCreate(&start_checkpoint_snapshot, sa, U_AUTORESET_EVENT, false, checkpointEventName, __sys_call_error),
+        SE4010, checkpointEventName.name);
 
-    if (0 != UEventCreate(&end_of_rotr_event, sa, U_AUTORESET_EVENT, false,
-                          TRY_ADVANCE_SNAPSHOT_EVENT, __sys_call_error))
-        throw USER_EXCEPTION2(SE4010, "TRY_ADVANCE_SNAPSHOT_EVENT");
+    CHECK_ENV(UEventCreate(&end_of_rotr_event, sa, U_AUTORESET_EVENT, false, tryAdvanceSnapshotEventName, __sys_call_error),
+        SE4010, tryAdvanceSnapshotEventName.name);
 
-    if (uReleaseSA(sa, __sys_call_error) != 0)
-        throw USER_EXCEPTION(SE3063);
+    CHECK_ENV(uReleaseSA(sa, __sys_call_error), SE3063, "");
 
-    if (USemaphoreCreate(&concurrent_trns_sem, SEDNA_MAX_TRNS_NUMBER,
-                         SEDNA_MAX_TRNS_NUMBER, SEDNA_TRNS_FINISHED, NULL,
-                         __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4010, "SEDNA_TRNS_FINISHED");
+    CHECK_ENV(USemaphoreCreate(&concurrent_trns_sem, SEDNA_MAX_TRN_NUMBER, SEDNA_MAX_TRN_NUMBER, activeTrnCounterSem, NULL, __sys_call_error),
+        SE4010, activeTrnCounterSem.name);
 }
 
 void shutdown_chekpoint_thread()
@@ -272,111 +268,49 @@ void shutdown_chekpoint_thread()
     //shutdown thread
     shutdown_checkpoint_thread = true;
 
-    if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0)
-        throw SYSTEM_EXCEPTION("Event signaling for checkpoint_snapshot thread shutdown failed");
+    CHECK_ENV(UEventSet(&start_checkpoint_snapshot,  __sys_call_error),
+        SE1000, "Event signaling for checkpoint_snapshot thread shutdown failed");
 
-    if (uThreadJoin(checkpoint_thread_dsc, __sys_call_error) != 0)
-        throw USER_EXCEPTION(SE4210);
+    CHECK_ENV(uThreadJoin(checkpoint_thread_dsc, __sys_call_error),
+        SE4210, "Checkpoint thread");
 
-    if (uCloseThreadHandle(checkpoint_thread_dsc, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4063, "checkpoint thread");
+    CHECK_ENV(uCloseThreadHandle(checkpoint_thread_dsc, __sys_call_error),
+        SE4063, "Checkpoint thread");
 }
 
 void release_checkpoint_sems()
 {
-    if (USemaphoreRelease(concurrent_trns_sem, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4011, "SEDNA_TRNS_FINISHED");
+    CHECK_ENV(USemaphoreRelease(concurrent_trns_sem, __sys_call_error),
+        SE4011, activeTrnCounterSem.name)
 
-    if (UEventCloseAndUnlink(&start_checkpoint_snapshot, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4011, "SNAPSHOT_CHECKPOINT_EVENT");
+    CHECK_ENV(UEventCloseAndUnlink(&start_checkpoint_snapshot, __sys_call_error),
+        SE4011, checkpointEventName.name);
 
-    if (UEventCloseAndUnlink(&end_of_rotr_event, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4011, "TRY_ADVANCE_SNAPSHOT_EVENT");
+    CHECK_ENV(UEventCloseAndUnlink(&end_of_rotr_event, __sys_call_error),
+        SE4011, tryAdvanceSnapshotEventName.name);
 }
 
-void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn)
+void execute_recovery_by_logical_log_process()
 {
-    int res, res2;
-    char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH + 16];
-    char buf2[1024];
-    UPID pid;
-    UPHANDLE h;
+    try {
+        /* WARNING: There was once semaphore check, but I do not understand why it is needed, so it is commented out
+         * PLEASE, see commit history if any problems found.
+         */
 
-    try
-    {
-        if (USemaphoreCreate(&wait_for_recovery, 0, 1, SEDNA_DB_RECOVERED_BY_LOGICAL_LOG, NULL, __sys_call_error) != 0)
-            throw USER_EXCEPTION2(SE4010, "SEDNA_DB_RECOVERED_BY_LOGICAL_LOG");
+        ExecuteProcess recoveryProcess(NULL, SESSION_EXE, "--recovery");
+        /* All other parameters are passed via environment */
 
-        string command_line = uGetImageProcPath(buf, __sys_call_error) 
-                            + string("/") + SESSION_EXE
-                            + string(" -db-id ") + int2string(sm_globals::db_id) 
-                            + string(" -min-bound ")+ int2string(sm_globals::os_primitives_min_bound) 
-                            + string(" -max-stack-depth ") + int2string(sm_globals::max_stack_depth) 
-                            + string(" -sedna-data ") + string(sm_globals::sedna_data) 
-                            + string(" ") 
-                            + string(sm_globals::db_name) 
-                            + string(" dummy");
-        elog(EL_LOG, (command_line.c_str()));
+        recoveryProcess.execute(0, false);
 
-        strcpy(buf, command_line.c_str());
+        if (0 != recoveryProcess.wait4()) {
+            throw USER_EXCEPTION(SE4501);
+        };
 
-//         uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND,
-//                                 u_itoa(sm_globals::os_primitives_min_bound, buf2, 10),
-//                                 NULL,
-//                                 __sys_call_error);
-
-        // to make se_trn run recovery logic
-        uSetEnvironmentVariable(SEDNA_RUN_RECOVERY_TRANSACTION,
-                                "1",
-                                NULL,
-                                __sys_call_error);
-
-        res = uCreateProcess(
-                      buf,
-                      false,
-                      NULL,
-                      0, //U_DETACHED_PROCESS/*0*/,
-                      &h,
-                      NULL,
-                      &pid,
-                      NULL,
-                      NULL,
-                      __sys_call_error);
-
-        if (res != 0)
-            throw USER_EXCEPTION2(SE4070,"recovery process");
-
-        // wait for recovery to end
-        for (;;)
-        {
-            res = USemaphoreDownTimeout(wait_for_recovery, 15000, __sys_call_error);
-            if (res == 0) /* normal down */
-            {
-                break;
-            }
-            else if (res == 2) /* timeout */
-            {
-                /* We need this call since uIsProcessExist returns 1 on zombies! */
-                uNonBlockingWaitForChildProcess(pid);
-                res2 = uIsProcessExist(pid, h, __sys_call_error);
-                if (res2 != 0) throw USER_EXCEPTION(SE4501);
-            }
-            else /* error */
-            {
-                throw USER_EXCEPTION2(SE4015, "SEDNA_DB_RECOVERED_BY_LOGICAL_LOG");
-            }
-        }
     }
     catch(SednaException &e)
     {
-        if (USemaphoreRelease(wait_for_recovery, __sys_call_error) != 0)
-            throw USER_EXCEPTION2(SE4011, "SEDNA_DB_RECOVERED_BY_LOGICAL_LOG");
-
         sedna_soft_fault(e, EL_SM);
     }
-
-    if (USemaphoreRelease(wait_for_recovery, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4011, "SEDNA_DB_RECOVERED_BY_LOGICAL_LOG");
 }
 
 /*****************************************************************************
@@ -389,7 +323,7 @@ void init_transaction_ids_table()
     if (uMutexInit(&trid_tbl_sync, __sys_call_error) != 0)
         throw SYSTEM_EXCEPTION("cannot initialize trid table sync mutex");
 
-    for (transaction_id i=0; i< SEDNA_MAX_TRNS_NUMBER; i++)
+    for (transaction_id i=0; i < SEDNA_MAX_TRN_NUMBER; i++)
         _ids_table_.push_back(i);
 }
 
@@ -408,7 +342,7 @@ size_t get_active_transaction_num(bool updaters_only)
     if (uMutexLock(&trid_tbl_sync, __sys_call_error) != 0)
         throw SYSTEM_EXCEPTION("cannot obtain trid table sync mutex");
 
-    res = SEDNA_MAX_TRNS_NUMBER - _ids_table_.size();
+    res = SEDNA_MAX_TRN_NUMBER - _ids_table_.size();
 
     if (updaters_only) res -= ro_tr_count;
 
@@ -422,8 +356,8 @@ transaction_id get_transaction_id(bool is_read_only)
     if (uMutexLock(&trid_tbl_sync, __sys_call_error) != 0)
         throw SYSTEM_EXCEPTION("cannot obtain trid table sync mutex");
 
-
     transaction_id id;
+
     if (_ids_table_.empty())
     {
         id = -1;
@@ -451,7 +385,7 @@ void give_transaction_id(transaction_id& trid, bool is_read_only)
     if (uMutexLock(&trid_tbl_sync, __sys_call_error) != 0)
         throw SYSTEM_EXCEPTION("cannot obtain trid table sync mutex");
 
-    if (!(trid < 0 || trid >= SEDNA_MAX_TRNS_NUMBER))
+    if (!(trid < 0 || trid >= SEDNA_MAX_TRN_NUMBER))
     {//check that there is no the same identifier
         for (size_t i=0; i< _ids_table_.size(); i++)
         {
@@ -490,12 +424,14 @@ void xmEnterExclusiveMode(session_id sid)
 void xmExitExclusiveMode()
 {
     USemaphore sem;
-    char buf[1024];
 
     // on exit from exclusive mode we want to unblock all waiting sessions
     for (size_t i = 0; i < wait_list.size(); i++)
     {
-        if (USemaphoreOpen(&sem, SEDNA_TRANSACTION_LOCK(wait_list[i], buf, 1024), __sys_call_error) != 0)
+        /* NOTE: Set valid transaction context for global names */
+        SessionIdString sessid(wait_list[i]);
+
+        if (USemaphoreOpen(&sem, transactionLockName, __sys_call_error) != 0)
             throw SYSTEM_EXCEPTION("Can't open session waiting semaphore");
         if (USemaphoreUp(sem, __sys_call_error) != 0)
             throw SYSTEM_EXCEPTION("Can't up session waiting semaphore");
@@ -516,14 +452,16 @@ void xmBlockSession(session_id sid)
 void xmTryToStartExclusive()
 {
     USemaphore sem;
-    char buf[1024];
 
     U_ASSERT(exclusive_sid != -1);
 
     // wake exclusive transaction only if we've got no other updaters
     if (get_active_transaction_num(true) == 1)
     {
-        if (USemaphoreOpen(&sem, SEDNA_TRANSACTION_LOCK(exclusive_sid, buf, 1024), __sys_call_error) != 0)
+        /* NOTE: Set valid transaction context for global names */
+        SessionIdString sessid(exclusive_sid);
+        
+        if (USemaphoreOpen(&sem, transactionLockName, __sys_call_error) != 0)
             throw SYSTEM_EXCEPTION("Can't open session waiting semaphore");
         if (USemaphoreUp(sem, __sys_call_error) != 0)
             throw SYSTEM_EXCEPTION("Can't up session waiting semaphore");

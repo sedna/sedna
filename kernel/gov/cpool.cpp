@@ -4,16 +4,7 @@
 #include "u/usem.h"
 #include "u/usocket.h"
 
-#ifndef _WIN32
-#include <sys/types.h>
-#include <netinet/tcp.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#else
-#include <Winsock2.h>
-#include <ws2tcpip.h>
-#include <WSPiApi.h>
-#endif
+#include "u/usocket_int.h"
 
 using namespace std;
 

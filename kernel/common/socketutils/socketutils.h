@@ -138,6 +138,8 @@ class BaseMessageExchanger {
     void                    beginSend       (sp_int32 instr); //every message may (and usually SHOULD) contain instruction.
     bool                    receive         (void);
 
+    bool                    wait4           ();
+
     int                     endSend         (void);
     
     USOCKET                 getCommunicationSock (void) const   { return sock; };

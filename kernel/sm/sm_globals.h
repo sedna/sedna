@@ -6,19 +6,33 @@
 #ifndef _SM_GLOBALS_H
 #define _SM_GLOBALS_H
 
-#include "u/u.h"
+#include "common/sedna.h"
+#include "u/ugnames.h"
 
-class MessageExchanger;
 struct DatabaseOptions;
-
 extern DatabaseOptions * databaseOptions;
-extern MessageExchanger * govMessager;
-extern global_name smMessageServerName;
 
-/*
-void         register_sm_on_gov         (MessageExchanger* communicator);
-void         unregister_sm_on_gov       (MessageExchanger* communicator);
-void         register_cdb_on_gov        (MessageExchanger* communicator);
-*/
+struct SessionIdString
+{
+    char s_id_str[16];
+
+    SessionIdString(session_id s_id)
+    {
+        sprintf(s_id_str, "%d", s_id);
+        set();
+    };
+
+    void set()
+    {
+        uSetGlobalNameInstanceId(GN_SESSION, s_id_str);
+    };
+
+    ~SessionIdString() {
+        /* Unset session id from global names */
+        uSetGlobalNameInstanceId(GN_SESSION, "x");
+    }
+};
+
+
 
 #endif /* _SM_GLOBALS_H */

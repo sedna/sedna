@@ -259,15 +259,6 @@ inline static int send_sm_message(int cmd) {
     return 0;
 }
 
-enum sm_command_t {
-    smc_alloc_data = 23,
-    smc_alloc_temp = 24,
-    smc_delete_block = 25,
-    smc_unswap_block = 26,
-    smc_delete_temp_blocks = 34,
-    smc_create_version = 37
-};
-
 /* Asking SM to read the block */
 void vmm_unswap_block(xptr p)
 {

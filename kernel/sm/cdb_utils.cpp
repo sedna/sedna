@@ -1,106 +1,20 @@
+#include "cdb_utils.h"
+
 #include "sm/smtypes.h"
 #include "sm/bufmgr/blk_mngmt.h"
 #include "sm/bufmgr/bm_functions.h"
 
 #include "auxiliary/commutil.h"
+#include "auxiliary/cppcast.h"
+#include "auxiliary/shmwarden.h"
+#include "auxiliary/processwarden.h"
+
 #include "u/uutils.h"
 #include "wu/wu.h"
 
 #include <string>
 
 using namespace std;
-
-class SharedMemoryWarden
-{
-    UShMem shmem;
-    global_name gname;
-    char * _data;
-public:
-    SharedMemoryWarden(global_name gname, size_t sz)
-    {
-        if (uCreateShMem(&shmem, gname, sz, NULL, __sys_call_error) != 0) {
-            throw USER_EXCEPTION(SE4016);
-        };
-        
-        if (NULL == (_data = (char *) uAttachShMem(&gname, NULL, 0, __sys_call_error))) {
-            throw USER_EXCEPTION(SE4023);
-        }
-    };
-
-    ~SharedMemoryWarden() {
-        if (uDettachShMem(&shmem, gname, __sys_call_error) != 0)
-            throw USER_EXCEPTION(SE4024);
-
-        if (uReleaseShMem(&shmem, gname, __sys_call_error) != 0)
-            throw USER_EXCEPTION(SE4020);
-    }
-
-    char * data() { return _data; };
-};
-
-class ExecuteProcess
-{
-#define MAX_CMD_LINE (U_MAX_PATH * 3)
-    UPID pid;
-    UPHANDLE processHandle;
-
-    char commandLine[MAX_CMD_LINE  + 1];
-    bool processStarted;
-public:
-    ExecuteProcess(const char * basePath, const char * executable, const char * args)
-      : processStarted(false)
-    {
-        if (basePath == NULL) {
-            basePath = base_path;
-        };
-
-        if (args == NULL) {
-            snprintf(commandLine, MAX_CMD_LINE, "%s"U_PATH_DELIMITER"%s", basePath, SESSION_EXE);
-        } else {
-            snprintf(commandLine, MAX_CMD_LINE, "%s"U_PATH_DELIMITER"%s %s", basePath, SESSION_EXE, args);
-        };
-    };
-
-    ~ExecuteProcess()
-    {
-        release();
-    };
-
-    void execute(UFlag flags, bool inheritHandles)
-    {
-        if (0 != uCreateProcess(commandLine, inheritHandles, NULL,
-            U_DETACHED_PROCESS, &processHandle, NULL,
-                &pid, NULL, NULL, __sys_call_error))
-        {
-            throw USER_ENV_EXCEPTION("Cannot create process", false);
-        }
-
-        processStarted = true;
-    };
-
-    int wait4()
-    {
-        if (!processStarted) {
-            throw USER_ENV_EXCEPTION("Process not started", false);
-        };
-
-        int statusCode = 0;
-
-        if (0 != uWaitForChildProcess(pid, processHandle, &statusCode, __sys_call_error)) {
-            throw USER_ENV_EXCEPTION("Cannot obtain process result", false);
-        }
-
-        return statusCode;
-    };
-
-    void release()
-    {
-        if (processStarted) {
-            uCloseProcessHandle(processHandle, __sys_call_error);
-            processStarted = false;
-        }
-    };
-};
 
 lsize_t determineLayerSize()
 {
@@ -109,7 +23,7 @@ lsize_t determineLayerSize()
 
     // Result from transaction will be returned to this shared memory segment
     // So, we should create and attach it
-    SharedMemoryWarden layerAddressMemory(LAYER_SIZE_RETURN_NAME, sizeof(lsize_t));
+    SharedMemoryWarden layerAddressMemory(layerSizeReturn, sizeof(lsize_t));
 
     /* setting hint size from command line */
     /* This is a safe cast since attached shared mem is always aligned */
@@ -133,7 +47,7 @@ lsize_t determineLayerSize()
     databaseOptions->layerSize = * (lsize_t *) layerAddressMemory.data();
 
     if (databaseOptions->layerSize < VMM_REGION_MIN_SIZE)
-        throw USER_EXCEPTION2(SE1031, (std::string("Determined layer size: ") + int2string(LAYER_ADDRESS_SPACE_SIZE)).c_str());
+        throw USER_EXCEPTION2(SE1031, (std::string("Determined layer size: ") + cast_to_string(LAYER_ADDRESS_SPACE_SIZE)).c_str());
 
     elog(EL_INFO, ("Layer address space size = 0x%x", databaseOptions->layerSize));
 
@@ -157,6 +71,8 @@ void createDataDirectory()
    uReleaseSA(dir_sa, __sys_call_error);
 }
 
+/** @brief Create files (data and tmp), write master block there
+ */
 void createInitialDbData()
 {
     USECURITY_ATTRIBUTES *sa;
@@ -166,7 +82,7 @@ void createInitialDbData()
     }
 
     /* Just create and close created files
-     * QUESTION: Why do we need this?!
+     * WARNING: Why do we need this?!
      */
 
     data_file_handle = uCreateFile(databaseOptions->dataFileName.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
@@ -187,7 +103,7 @@ void createInitialDbData()
 
     /* Initialize masterblock */
     
-    /* WTF ?? Allcoate master block */
+    /* WARNING: WTF ?? Allcoate master block */
     mb = (bm_masterblock*)(((uintptr_t) bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
 
     memset(mb, MASTER_BLOCK_SIZE, 0);
@@ -209,7 +125,6 @@ void createInitialDbData()
     mb->layer_size = LAYER_ADDRESS_SPACE_SIZE;
 
     /* Open data and tmp files */
-    
     data_file_handle = uOpenFile(databaseOptions->dataFileName.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
 
     if (data_file_handle == U_INVALID_FD)
@@ -247,7 +162,7 @@ void createInitialDbData()
     }
 }
 
-void load_metadata()
+void loadMetadata()
 {
     if(databaseOptions->securityOptions == se_security_off) {
         uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "1", NULL, __sys_call_error);
@@ -269,9 +184,12 @@ void load_metadata()
     } catch (SednaUserEnvException & envE) {
         throw USER_ENV_EXCEPTION("Can't load metadata", false);
     };
+
+    elog(EL_INFO, ("Load metadata successful"));
 }
 
-void createDb() {
+void initializeDatabase()
+{
     LAYER_ADDRESS_SPACE_SIZE = determineLayerSize();
     elog(EL_INFO, ("Layer size determined successfully"));
 
@@ -280,8 +198,6 @@ void createDb() {
 
     elog(EL_INFO, ("Create initial data call successful"));
     
-    const char * db_files_path = databaseOptions->dataFilePath.c_str();
-
     llCreateNew(databaseOptions->dataFilePath.c_str(),
       databaseOptions->databaseName.c_str(),
       databaseOptions->logFileSize * 0x100000ULL);
@@ -296,31 +212,14 @@ void createDb() {
        &is_stopped_correctly,
        false);
 
-    d_printf1("logical_log_startup call successful\n");
-
-    bm_startup(cdbParams->bufs_num, cdbParams->db_files_path, string(cdbParams->db_name));
-//     is_bm_started = true;
-    d_printf1("bm_startup call successful\n");
-
+    bm_startup();
+    
     WuSetTimestamp(0x10000);
 
-    extend_data_file((int)MBS2PAGES(cdbParams->data_file_initial_size));
-    d_printf1("extend_data_file call successful\n");
-
-    extend_tmp_file ((int)MBS2PAGES(cdbParams->tmp_file_initial_size));
-    d_printf1("extend_tmp_file call successful\n");
-
-//              is_bm_started = false;
-    bm_shutdown(cdbParams->bufs_num);
-    d_printf1("bm_shutdown call successful\n");
+    extend_data_file((int)MBS2PAGES(databaseOptions->dataFileSize.initial));
+    extend_tmp_file ((int)MBS2PAGES(databaseOptions->tmpFileSize.initial));
+    
+    bm_shutdown();
 
     llRelease();
-    d_printf1("logical_log_shutdown call successful\n");
-
-    release_checkpoint_sems();
-
-//     if(load_metadata_in_database(sm_globals::db_name, db_security, cfg) != 0)
-//                  throw USER_EXCEPTION2(SE4211, sm_globals::db_name);
-
-
 }

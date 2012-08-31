@@ -35,6 +35,7 @@ USA.
 
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
+#include <ctype.h>
 #endif
 
 #include "argtable2.h"

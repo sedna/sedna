@@ -276,7 +276,7 @@ int UEventOpen(UEvent *uEvent, global_name gn, sys_call_error_fun fun)
 	
 	assert(uEvent);
 	key = USys5IPCKeyFromGlobalName(gn);
-	if (gn == NULL)
+	if (gn.name == NULL)
 	{
 		d_printf1("UEventOpen: NULL invalid in this context\n");
 	}
@@ -311,7 +311,7 @@ int UEventCloseAndUnlink(UEvent *uEvent,
 		SYS_CALL_ERROR(fun,"semctl");
 	else status = 0;
 
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, info); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(GN_NULL, info); };
 
     return (status==0) ? UEventClose(uEvent, fun) : status;
 }

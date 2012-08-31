@@ -12,6 +12,11 @@
 #include "common/xptr/xptr.h"
 #include "common/xptr/wustructures.h"
 #include "common/llcommon/lfsGlobals.h"
+#include "common/lockmantypes.h"
+
+static global_name layerSizeReturn = {GN_DATABASE, "layer_size_return"};
+static global_name smMessageServerName = {GN_DATABASE, "sm_msg_queue"};
+static global_name transactionLockName = {GN_SESSION, "trn_lock"};
 
 struct vmm_sm_blk_hdr
 {
@@ -98,10 +103,53 @@ struct sm_blk_stat
     int64_t used_tmp_blocks_num;
 };
 
+enum sm_msg_messages {
+    msg_ok = 0,
+
+    msg_request_transaction_id = 1,
+    msg_release_transaction_id = 2,
+
+    msg_lock_object = 3,
+    msg_release_locks = 4,
+    msg_unlock_object = 5,
+
+    msg_register_session = 21,
+    msg_unregister_session = 22,
+
+    msg_alloc_data_block = 23,
+    msg_alloc_tmp_block = 24,
+    msg_release_block = 25,
+    msg_unswap_block = 26,
+
+    msg_get_stats = 31,
+
+    msg_delete_tmp_blocks = 34,
+
+    msg_register_transaction = 34,
+    msg_unregister_transaction = 34,
+
+    msg_create_version = 37,
+
+    msg_transaction_finish_notification = 38,
+
+    msg_hot_backup = 39,
+
+    msg_error_max_data_file_size = 101,
+    msg_error_max_tmp_file_size = 102,
+    msg_error_extending_data_file = 103,
+    msg_error_extending_tmp_file = 104,
+    msg_error_transaction_exists = 105,
+    msg_error_transaction_not_found = 106,
+    msg_error_locked_blocks_limit = 107,
+    msg_error_block_not_found = 108,
+    
+    msg_error = 255,
+};
+
 struct sm_msg_struct
 {
     // cmd (what do you want to do)
-    int cmd;
+    sm_msg_messages cmd;
     // transaction identifier
     transaction_id trid;
 
@@ -133,14 +181,23 @@ struct sm_msg_struct
             TIMESTAMP ts;
         } hb_struct;
 
+        bool want_snapshot;
+        bool is_rollback;
         int64_t snp_ts;   // timestamp of snapshot, not used currently, but may be helpful later
 
         sm_blk_stat stat; // sm block statistics
 
-        // for locks: first byte->lock mode, second byte->resource type, other bytes->resource name
-        // for others: first byte->read only?, second byte->need exclusive?
-        char data[2 + MAX_RESOURCE_NAME_LENGTH];
+        struct {
+            lock_reply result;
+            lock_mode mode;
+            resource_kind rkind;
+            char name[MAX_RESOURCE_NAME_LENGTH];
+        } lock;
 
+        struct {
+            bool rdonly;
+            bool excl;
+        } trinfo;
     } data;
 };
 

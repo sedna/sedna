@@ -63,9 +63,15 @@ SSMMsg::SSMMsg(mode _m_,
     sysinf_addr = NULL;
     sems_num = NAMED_SEMS_NUM + 3 * servers_amount;
 
-    snprintf(g_name_shmem, 128, "%s-shm", _g_name_);
-    snprintf(g_name_sems, 128, "%s-sem", _g_name_);
+    gname_sem = _g_name_;
+    gname_shm = _g_name_;
+    
+    snprintf(g_name_shm_name, 128, "%s-shm", _g_name_.name);
+    snprintf(g_name_sem_name, 128, "%s-sem", _g_name_.name);
 
+    gname_shm.name = g_name_shm_name;
+    gname_sem.name = g_name_sem_name;
+    
     server_param = NULL;
 
     millisec = _millisec_;
@@ -89,7 +95,7 @@ int SSMMsg::init()
 
     if (m == Server)
     {
-        if (0 != uCreateShMem(&sh_mem, g_name_shmem, shared_memory_size, NULL, __sys_call_error))
+        if (0 != uCreateShMem(&sh_mem, gname_shm, shared_memory_size, NULL, __sys_call_error))
         {
             d_printf1("uCreateShMem failed\n");
             return 1;
@@ -117,7 +123,7 @@ int SSMMsg::init()
         for (i = NAMED_SEMS_NUM; i < sems_num; i++)
             init_values[i] = 0;
 
-        if (0 != USemaphoreArrCreate(&sems, sems_num, init_values, g_name_sems, NULL, __sys_call_error))
+        if (0 != USemaphoreArrCreate(&sems, sems_num, init_values, gname_sem, NULL, __sys_call_error))
         {
             d_printf1("USemaphoreArrCreate failed\n");
             return 1;
@@ -143,7 +149,7 @@ int SSMMsg::init()
     {
         //d_printf1("!!!!!!!!!!! Client initialization !!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
-        if (0 != uOpenShMem(&sh_mem, g_name_shmem, __sys_call_error))
+        if (0 != uOpenShMem(&sh_mem, gname_shm, __sys_call_error))
         {
             d_printf1("uOpenShMem failed\n");
             return 1;
@@ -159,7 +165,7 @@ int SSMMsg::init()
         //d_printf2("shar_mem 0x%x\n", shar_mem);
         //d_printf2("shared_memory_size %d\n", shared_memory_size);
 
-        if (0 != USemaphoreArrOpen(&sems, sems_num, g_name_sems, __sys_call_error))
+        if (0 != USemaphoreArrOpen(&sems, sems_num, gname_sem, __sys_call_error))
         {
             d_printf1("USemaphoreArrOpen failed\n");
             return 1;
@@ -189,7 +195,7 @@ int SSMMsg::shutdown()
 
     if (m == Server)
     {
-        if (0 != uReleaseShMem(&sh_mem, g_name_shmem, __sys_call_error))
+        if (0 != uReleaseShMem(&sh_mem, gname_shm, __sys_call_error))
         {
             d_printf1("uReleaseShMem failed\n");
             return 1;

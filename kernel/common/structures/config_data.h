@@ -49,7 +49,7 @@ struct DatabaseOptions {
     int securityOptions;
 
     int sessionPoolSize;
-    int layerSize;
+    uint32_t layerSize;
     bool autoStart;
 
     struct DatabaseFileSize {

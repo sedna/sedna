@@ -1,8 +1,17 @@
 include(CheckLibraryExists)
 include(CheckFunctionExists)
+include(CheckIncludeFiles)
 
 message(STATUS "Searching for system libraries")
 set(sysaux_LIB)
+
+#check_include_files("getopt.h" HAVE_GETOPT_H)
+#check_include_files("string.h" HAVE_STRING_H)
+check_include_files(strings.h HAVE_STRINGS_H)
+
+if (NOT HAVE_STRINGS_H)
+  message("-- strings.h NOT found")
+endif (NOT HAVE_STRINGS_H)
 
 if (NOT "${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
     # first, determine shm_open library

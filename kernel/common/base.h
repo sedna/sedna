@@ -84,9 +84,11 @@ extern const char * SEDNA_DATA;
 #define SM_NUMBER_OF_SERVER_THREADS                     1
 #define GOV_NUMBER_OF_SERVER_THREADS                    1
 
+/* Environment variable names */
+
 #define SEDNA_DATA_ENVIRONMENT                          "SEDNA_DATA"
-#define SEDNA_DB_ID_ENVIRONMENT                         "SEDNA_DATABASE_ID"
-#define LAYER_SIZE_RETURN_NAME                          "LAYER_SIZE_RETURN"
+#define SEDNA_DB_ID_ENVIRONMENT                         "SEDNA_DBID"
+
 
 #define CONNECTION_SOCKET_HANDLE                        "CONNECTION_SOCKET_HANDLE"
 #define SEDNA_SERVER_MODE                               "SEDNA_SERVER_MODE"
@@ -98,9 +100,9 @@ extern const char * SEDNA_DATA;
 #define SECURITY_METADATA_DOCUMENT                      "$db_security_data"
 #define INITIAL_SECURITY_METADATA_FILE_NAME             "sedna_auth_md.xml"
 
-#define CHARISMA_MAX_TRNS_NUMBER                        50
-#define MAX_SESSIONS_NUMBER                             50
-#define MAX_DBS_NUMBER                                  10
+#define SEDNA_MAX_TRN_NUMBER                            50
+#define SEDNA_MAX_SESSION_NUMBER                        50
+#define SEDNA_MAX_DBS_NUMBER                            10
 
 #define STRMAXSIZE                                      4000000000lu
 

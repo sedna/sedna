@@ -70,7 +70,7 @@ private:
     lock_head* find_lock(resource_id&, bool sync = true);
 
     // visited flags; we use it to look for nodes already visited during graph traversal
-    transaction_id nodesVisited[CHARISMA_MAX_TRNS_NUMBER];
+    transaction_id nodesVisited[SEDNA_MAX_TRN_NUMBER];
     unsigned int nVisited;
 
 public:

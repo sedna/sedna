@@ -44,7 +44,9 @@ int main(int argc, char** argv)
 
         SEDNA_DATA = sednaGlobalOptions.global.dataDirectory.c_str();
 
-        uSetEnvironmentVariable(SEDNA_DATA_ENVIRONMENT, SEDNA_DATA, NULL, __sys_call_error);
+        if (0 != uSetEnvironmentVariable(SEDNA_DATA_ENVIRONMENT, SEDNA_DATA, NULL, __sys_call_error)) {
+            throw SYSTEM_EXCEPTION("Failed to set environment variable");
+        };
 
         check_data_folder_existence(sednaGlobalOptions.global.dataDirectory.c_str());
         RenameLastSoftFaultDir();
@@ -55,11 +57,11 @@ int main(int argc, char** argv)
         GlobalObjectsCollector collector(sednaGlobalOptions.global.dataDirectory.c_str());
         uSetGlobalNameGeneratorBase(sednaGlobalOptions.global.dataDirectory.c_str(), "0");
 
-         if (event_logger_start_daemon(sednaGlobalOptions.global.dataDirectory.c_str(),
-                                       el_convert_log_level(sednaGlobalOptions.global.logLevel),
-                                       "SE_EVENT_LOG_SHM", 
-                                       "SE_EVENT_LOG_SEM"))
+        if (event_logger_start_daemon(sednaGlobalOptions.global.dataDirectory.c_str(),
+              el_convert_log_level(sednaGlobalOptions.global.logLevel),
+                SE_EVENT_LOG_SHM_NAME, SE_EVENT_LOG_SEM_NAME)) {
             throw SYSTEM_EXCEPTION("Failed to initialize event log");
+        }
 
         log_out_system_information();
         srand(uGetCurrentProcessId(__sys_call_error));

@@ -279,7 +279,7 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
 
     llInfo->next_arch_file = file_head.next_arch_file;
 
-    for (int i = 0; i < CHARISMA_MAX_TRNS_NUMBER; i++) {
+    for (int i = 0; i < SEDNA_MAX_TRN_NUMBER; i++) {
         llInfo->llTransInfoTable[i].last_lsn = LFS_INVALID_LSN;
         llInfo->llTransInfoTable[i].first_lsn = LFS_INVALID_LSN;
         llInfo->llTransInfoTable[i].num_of_log_records = 0;
@@ -309,6 +309,9 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
             fprintf(res_os, "Database is in consistent state. Starting...\n");
         }
     }
+
+    elog(EL_INFO, ("Logical log initialization successful"));
+    
     return 0;
 }
 
@@ -348,6 +351,8 @@ int llRelease()
 
     free(ReadBuf);
 
+    elog(EL_INFO, ("Logical log shutdown successful"));
+    
     return 0;
 }
 
@@ -424,7 +429,7 @@ int llOnTransBegin(transaction_id trid)
 {
     rollback_active = false;
 
-    assert(trid >= 0 && trid < CHARISMA_MAX_TRNS_NUMBER);
+    assert(trid >= 0 && trid < SEDNA_MAX_TRN_NUMBER);
 
     llInfo->llTransInfoTable[trid].last_lsn = LFS_INVALID_LSN;
     llInfo->llTransInfoTable[trid].first_lsn = LFS_INVALID_LSN;
@@ -438,7 +443,7 @@ int llOnTransBegin(transaction_id trid)
 // Should be called for every rolled back or committed transaction.
 int llOnTransEnd(transaction_id trid)
 {
-    assert(trid >= 0 && trid < CHARISMA_MAX_TRNS_NUMBER);
+    assert(trid >= 0 && trid < SEDNA_MAX_TRN_NUMBER);
 
     llInfo->llTransInfoTable[trid].last_lsn = LFS_INVALID_LSN;
     llInfo->llTransInfoTable[trid].first_lsn = LFS_INVALID_LSN;
@@ -482,7 +487,7 @@ int llFlushTransRecs(transaction_id trid)
 {
     RECOVERY_CRASH;
 
-    assert(trid >= 0 && trid < CHARISMA_MAX_TRNS_NUMBER);
+    assert(trid >= 0 && trid < SEDNA_MAX_TRN_NUMBER);
 
     // no sychronization needed since we access trid-specific records
     if (llInfo->llTransInfoTable[trid].last_lsn != LFS_INVALID_LSN) {

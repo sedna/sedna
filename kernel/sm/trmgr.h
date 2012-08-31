@@ -49,8 +49,7 @@ size_t get_active_transaction_num(bool updaters_only);
  * Some recovery stuff
  ******************************************************************************/
 
-void execute_recovery_by_logical_log_process(LSN last_checkpoint_lsn);
-void recover_database_by_physical_and_logical_log(int db_id);
+void execute_recovery_by_logical_log_process();
 
 volatile extern bool is_recovery_mode;
 

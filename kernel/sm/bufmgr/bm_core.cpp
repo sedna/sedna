@@ -4,14 +4,18 @@
  */
 
 #include "common/sedna.h"
-#include <iostream>
-#include "u/uutils.h"
 #include "common/xptr/sm_vmm_data.h"
-#include "sm/bufmgr/bm_core.h"
 #include "common/llcommon/llMain.h"
-#include "sm/sm_globals.h"
 #include "common/errdbg/d_printf.h"
+#include "common/structures/config_data.h"
+
+#include "u/uutils.h"
+
+#include "sm/bufmgr/bm_core.h"
+#include "sm/sm_globals.h"
 #include "sm/wu/wu.h"
+
+#include <iostream>
 
 using namespace std;
 
@@ -489,7 +493,7 @@ void dump_bufmgr_state()
 	char auxInfo[2048]="";
 	char flags[16]="";
 
-	bufsNum = (unsigned)sm_globals::bufs_num;
+	bufsNum = (unsigned) databaseOptions->bufferCount;
 
 	fprintf(stderr,"---STARTING DUMP OF BUFMGR STATE---\n");
 	for (i=0; i<bufsNum; ++i)

@@ -1,8 +1,3 @@
-if(COMMAND cmake_policy)
-    cmake_policy(SET CMP0003 NEW)
-        cmake_policy(SET CMP0015 NEW)
-endif(COMMAND cmake_policy)
-
 OPTION( HAVE_GETOPT_H "Have the getopt library" 0 )
 IF( HAVE_GETOPT_H )
         ADD_DEFINITIONS( -DHAVE_GETOPT_H )
@@ -39,9 +34,9 @@ IF( HAVE_STDC_HEADERS )
 ENDIF( HAVE_STDC_HEADERS )
 
 IF( WIN32 )
-  set( argtable2_SRC arg_dbl.c arg_end.c arg_file.c arg_int.c arg_lit.c arg_rem.c 
+  set(argtable2_SRC arg_dbl.c arg_end.c arg_file.c arg_int.c arg_lit.c arg_rem.c
       arg_str.c argtable2.c argtable2.h getopt.c getopt.h getopt1.c )
 ELSE( WIN32 )
-  set( argtable2_SRC arg_date.c arg_dbl.c arg_end.c arg_file.c arg_int.c arg_lit.c 
+  set(argtable2_SRC arg_date.c arg_dbl.c arg_end.c arg_file.c arg_int.c arg_lit.c
       arg_rem.c arg_rex.c arg_str.c argtable2.c argtable2.h getopt.c getopt.h getopt1.c )
 ENDIF( WIN32 )

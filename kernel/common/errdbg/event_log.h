@@ -156,6 +156,8 @@ int event_logger_shutdown_daemon(global_name shm_name);
 int event_logger_init(int component, const char* component_detail, global_name shm_name, global_name sems_name);
 int event_logger_release();
 
+static global_name eventLogShmName = { GN_GLOBAL, "event_log_shm" };
+static global_name eventLogSemName = { GN_GLOBAL, "event_log_sem" };
 
 /* ============================================================================
  * Set/get functions

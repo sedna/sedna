@@ -1,18 +1,6 @@
 #include "socketutils.h"
 
-#ifndef _WIN32
-#include <ancillary.h>
-
-#include <netdb.h>
-#include <sys/types.h>
-#include <netinet/tcp.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#else
-#include <Winsock2.h>
-#include <ws2tcpip.h>
-#include <WSPiApi.h>
-#endif
+#include "u/usocket_int.h"
 
 #include "common/sedna.h"
 #include "common/protocol/sp.h"
@@ -297,6 +285,16 @@ bool BaseMessageExchanger::receive(void)
         return true;
     }
 }
+
+bool BaseMessageExchanger::wait4()
+{
+    while (!receive()) {
+        uselect_read(sock, NULL, __sys_call_error);
+    }
+
+    return true;
+}
+
 
 int BaseMessageExchanger::endSend(void )
 {

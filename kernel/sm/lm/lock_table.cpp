@@ -4,15 +4,19 @@
  */
 
 #include "common/sedna.h"
-#include <iostream>
-#include <string>
+#include "common/lockmantypes.h"
+
 #include "u/usem.h"
-#include "common/lm_base.h"
+#include "u/ugnames.h"
+
 #include "sm/lm/lm_globals.h"
 #include "sm/lm/lock_table.h"
 #include "sm/lm/trans_table.h"
-#include "common/errdbg/d_printf.h"
-#include "sm/sm_globals.h"
+
+#include "sm/smtypes.h"
+
+#include <iostream>
+#include <string>
 
 using namespace std;
 
@@ -42,12 +46,13 @@ lock_request::lock_request(transaction_id tr_id,
     convert_mode = NULL_LOCK;
     count = 1;
     class_ = c;
-    //open process_sem
-    char buf[1024];
 
-    if (0 != USemaphoreOpen(&process_xsem,
-            SEDNA_TRANSACTION_LOCK(s_id, buf, 1024), __sys_call_error))
-        throw USER_EXCEPTION2(SE4012, "SEDNA_TRANSACTION_LOCK");
+    {
+        /* open process_sem */
+        /* TODO: prepare all sems before creation */
+        SessionIdString sidstr(s_id);
+        CHECK_ENV(USemaphoreOpen(&process_xsem, transactionLockName, __sys_call_error), SE4012, transactionLockName.name);
+    }
 
     //maintain the transaction lock list
     tr_lock_head* tr_l_h = tr_table.find_tr_lock_head(tr_id);

@@ -28,8 +28,9 @@ void InitGiantLock()
 
 void DestroyGiantLock()
 {
-    if (isGiantLockInitialized)
+    if (isGiantLockInitialized) {
         uMutexDestroy(&giantLockMutex, NULL);
+    }
 }
 
 void ObtainGiantLock()

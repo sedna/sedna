@@ -506,7 +506,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 	SnSetup snSetup = {};
 
 	/* static */
-	clSetup.maxClientsCount = CHARISMA_MAX_TRNS_NUMBER;
+	clSetup.maxClientsCount = SEDNA_MAX_TRN_NUMBER;
 	clSetup.maxSizePerClient = 0x10000;
 
 	veSetup.allocateBlock = AllocateDataBlock;
@@ -521,7 +521,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 	veSetup.flushBuffer = FlushBuffer;
 	veSetup.onPersVersionRelocating = OnPersVersionRelocating;
 
-	snSetup.maxClientsCount = CHARISMA_MAX_TRNS_NUMBER;
+	snSetup.maxClientsCount = SEDNA_MAX_TRN_NUMBER;
 	snSetup.freeBlock = VeFreeBlockLowAndUpdateRestrictions;
 	snSetup.getTimestamp = WuGetTimestamp;
 	snSetup.onBeforeDiscardSnapshot = OnBeforeDiscardSnapshot;

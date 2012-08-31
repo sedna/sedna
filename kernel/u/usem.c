@@ -131,7 +131,7 @@ int USemaphoreRelease(USemaphore sem, sys_call_error_fun fun)
     }
 #endif
 
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, info); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(GN_NULL, info); };
 
     return 0;
 }
@@ -455,7 +455,7 @@ int USemaphoreArrRelease(USemaphoreArr sem, unsigned size, sys_call_error_fun fu
 
 #endif
 
-    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(NULL, info); };
+    if (UGlobalObjectsGC) { UGlobalObjectsGC->onDestroy(GN_NULL, info); };
     return 0;
 }
 

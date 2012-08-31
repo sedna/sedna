@@ -101,18 +101,20 @@ struct llGlobalInfo
 	LSN min_rcv_lsn;                                        // lsn of the start record of logical recovery
 	LSN last_chain_lsn;                                     // lsn of the last record in physical chain
 	TIMESTAMP ts;                                           // timestamp of the last persistent snapshot
-	llTransInfo llTransInfoTable[CHARISMA_MAX_TRNS_NUMBER]; // transaction table
+	llTransInfo llTransInfoTable[SEDNA_MAX_TRN_NUMBER];     // transaction table
 	bool checkpoint_flag;                                   // true, if checkpoint is enabled
 	bool checkpoint_on;                                     // true, if checkpoint is currently in progress
 	bool hotbackup_needed;                                  // recover from hotbackup copy needed
-	uint64_t next_arch_file;       							// file from which to archive on next increment; if 0 - then db isn't in incremental mode
+	uint64_t next_arch_file;                                // file from which to archive on next increment; if 0 - then db isn't in incremental mode
 };
 
-static global_name logicalLogShm = "logical_log_shm";
-static global_name logicalLogSem = "logical_log_sem";
+static global_name logicalLogShm = {GN_DATABASE, "logical_log_shm"};
+static global_name logicalLogSem = {GN_DATABASE, "logical_log_sem"};
 
-static global_name checkpointFinishedSemName = "checkpoint_finished_sem";
-static global_name checkpointEventName = "checkpoint_finished_event";
+static global_name checkpointFinishedSemName = {GN_DATABASE, "checkpoint_finished_sem"};
+static global_name checkpointEventName = {GN_DATABASE, "checkpoint_finished_event"};
+
+static global_name activeTrnCounterSem = {GN_DATABASE, "active_trn_counter"};
 
 extern llGlobalInfo *llInfo; // pointer to the global info memory
 

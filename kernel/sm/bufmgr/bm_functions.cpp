@@ -5,13 +5,19 @@
 
 
 #include "common/sedna.h"
-#include <string>
 #include "common/xptr/sm_vmm_data.h"
+#include "common/errdbg/d_printf.h"
+#include "common/structures/config_data.h"
+
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/blk_mngmt.h"
+
 #include "sm/sm_globals.h"
-#include "common/errdbg/d_printf.h"
+
+#include "u/uprocess.h"
+
+#include <string>
 
 using namespace std;
 
@@ -30,12 +36,12 @@ static bool is_recovery_mode = false;
 
 void _bm_set_working_set_size()
 {
-    if ( (unsigned)sm_globals::bufs_num >= (SIZE_MAX - EBS_WORKING_SET_SIZE)/PAGE_SIZE) {
+    if ( (unsigned) databaseOptions->bufferCount >= (SIZE_MAX - EBS_WORKING_SET_SIZE)/PAGE_SIZE) {
         elog(EL_WARN, ("Can't set working set size. Too big bufs-num value is provided."));
         return;
     }
 
-    size_t working_set_size = (size_t)sm_globals::bufs_num * PAGE_SIZE + EBS_WORKING_SET_SIZE;
+    size_t working_set_size = (size_t)databaseOptions->bufferCount * PAGE_SIZE + EBS_WORKING_SET_SIZE;
     int res = 0;
 
     res = uGetCurProcessWorkingSetSize(
@@ -73,10 +79,10 @@ void _bm_init_buffer_pool()
 {
     _bm_set_working_set_size();
 
-    if ( (unsigned)sm_globals::bufs_num >= SIZE_MAX / PAGE_SIZE)
+    if ( (unsigned)databaseOptions->bufferCount >= SIZE_MAX / PAGE_SIZE)
         throw USER_EXCEPTION2(SE1015, "Too big buffers number value.");
     
-    size_t buffer_size = (size_t)sm_globals::bufs_num * PAGE_SIZE;
+    size_t buffer_size = (size_t)databaseOptions->bufferCount * PAGE_SIZE;
     
     if (uCreateShMem(&file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME,  buffer_size , NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION(SE1015);
@@ -106,7 +112,7 @@ void _bm_init_buffer_pool()
         }
     }
 
-    for (int i = 0; i < sm_globals::bufs_num; i++)
+    for (int i = 0; i < databaseOptions->bufferCount; i++)
         free_mem.push((size_t)i * PAGE_SIZE);
 }
 
@@ -117,7 +123,7 @@ void _bm_release_buffer_pool()
     used_mem.clear();
     blocked_mem.clear();
 
-    size_t buffer_size = (size_t)sm_globals::bufs_num * PAGE_SIZE;
+    size_t buffer_size = (size_t)databaseOptions->bufferCount * PAGE_SIZE;
     
     if (lock_memory)
     {
@@ -157,15 +163,15 @@ void bm_startup()
      *
      * For tmp file defaults would be sufficient, of course.
      */
-    string data_file_name = string(sm_globals::db_files_path) +
-            string(sm_globals::db_name) + ".sedata";
-    data_file_handle = uOpenFile(data_file_name.c_str(), U_SHARE_READ,
-            U_READ_WRITE, 0, __sys_call_error);
+    std::string data_file_name = databaseOptions->dataFilePath + databaseOptions->dataFileName + ".sedata";
+
+    data_file_handle = uOpenFile(data_file_name.c_str(), U_SHARE_READ, U_READ_WRITE, 0, __sys_call_error);
+   
     if (data_file_handle == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
 
-    string tmp_file_name = string(sm_globals::db_files_path) +
-            string(sm_globals::db_name) + ".setmp";
+    string tmp_file_name = databaseOptions->dataFilePath + databaseOptions->dataFileName + ".setmp";
+            
     tmp_file_handle = uOpenFile(tmp_file_name.c_str(), U_SHARE_READ,
             U_READ_WRITE, 0, __sys_call_error);
     if (tmp_file_handle == U_INVALID_FD)
@@ -206,7 +212,7 @@ void bm_startup()
 #endif
 
     // init physical xptrs table
-    phys_xptrs = se_new t_xptr_info(sm_globals::bufs_num);
+    phys_xptrs = se_new t_xptr_info(databaseOptions->bufferCount);
 
     mb = (bm_masterblock*)(((uintptr_t)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
     read_master_block();
@@ -214,6 +220,8 @@ void bm_startup()
     LAYER_ADDRESS_SPACE_SIZE = mb->layer_size;
 
     U_ASSERT(LAYER_ADDRESS_SPACE_SIZE != 0);
+
+    elog(EL_INFO, ("BM startup successful"));
 }
 
 void bm_shutdown()
@@ -281,7 +289,9 @@ void bm_shutdown()
     }
 
     // release phys xptrs table
-    se_delete(phys_xptrs);
+    delete phys_xptrs;
+
+    elog(EL_INFO, ("BM shutdown successful"));
 }
 
 void bm_register_session(session_id sid, int is_rcv_mode)
@@ -485,7 +495,7 @@ void bm_enter_exclusive_mode(session_id sid,
 
     xmode_sid = sid;
 
-    *number_of_potentially_allocated_blocks = sm_globals::bufs_num;
+    *number_of_potentially_allocated_blocks = databaseOptions->bufferCount;
 }
 
 void bm_exit_exclusive_mode(session_id sid)
@@ -511,7 +521,7 @@ void bm_memlock_block(session_id sid, xptr p)
         res = blocked_mem.find(offs);
         if (res == 0) return; // block already blocked
 
-        if (blocked_mem.size() >= (unsigned)sm_globals::bufs_num)
+        if (blocked_mem.size() >= (unsigned)databaseOptions->bufferCount)
             throw USER_EXCEPTION(SE1020);
     }
     else throw USER_EXCEPTION(SE1021);

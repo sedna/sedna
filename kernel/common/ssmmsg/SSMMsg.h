@@ -60,8 +60,11 @@ private:
     void *sysinf_addr;
     int sems_num;
 
-    char g_name_shmem[128];
-    char g_name_sems[128];
+    char g_name_shm_name[128];
+    char g_name_sem_name[128];
+
+    _global_name_tag gname_shm;
+    _global_name_tag gname_sem;
 
     SSMMsg_server_thread_param *server_param;
 
