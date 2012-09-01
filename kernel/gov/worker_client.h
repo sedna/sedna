@@ -4,6 +4,7 @@
 #include "common/socketutils/socketutils.h"
 #include <exception>
 
+struct ProcessInfo;
 class Worker;
 
 enum se_socket_client_type
@@ -53,12 +54,13 @@ struct WorkerSocketClientLess {
 class InternalSocketClient : public WorkerSocketClient {
 protected:
     std::string ticket;
+    ProcessInfo * process;
 public:
-    InternalSocketClient(WorkerSocketClient * producer, int _priority, const std::string& _ticket)
-      : WorkerSocketClient(producer, _priority), ticket(_ticket) {};
+    InternalSocketClient(WorkerSocketClient * producer, int _priority, const std::string& _ticket, ProcessInfo * _process)
+      : WorkerSocketClient(producer, _priority), ticket(_ticket), process(_process) {};
 
     InternalSocketClient(InternalSocketClient * producer, int _priority)
-      : WorkerSocketClient(producer, _priority), ticket(producer->ticket) {};
+      : WorkerSocketClient(producer, _priority), ticket(producer->ticket), process(producer->process) {};
 
     virtual void           cleanupOnError() = 0;
 };

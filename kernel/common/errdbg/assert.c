@@ -52,25 +52,13 @@ int se_ExceptionalCondition(const char *conditionName,
     if(SEDNA_DATA != NULL)
     {
         strcpy(buf, SEDNA_DATA);
-#ifdef _WIN32
-        strcat(buf, "\\data\\");
-#else
-        strcat(buf, "/data/");
-#endif
-        if (uMkDir(buf, NULL, NULL) == 0)
-            fprintf(stderr, "Cannot create data directory for soft fault logs\n");   
-
         strcat(buf, SE_LAST_SOFT_FAULT_DIR);
 
-        if (uMkDir(buf, NULL, NULL) == 0)
+        if (uMkDir(buf, NULL, __sys_call_error_nop) == 0)
             fprintf(stderr, "Cannot create directory for soft fault logs\n");
 
+        strcat(buf, U_PATH_DELIMITER);
 
-#ifdef _WIN32
-        strcat(buf, "\\");
-#else
-        strcat(buf, "/");
-#endif
         strcat(buf, SE_ASSERT_FAILED_FILE_NAME);
 
 #if (defined(EL_DEBUG) && (EL_DEBUG == 1))

@@ -118,14 +118,14 @@ public:
     void removeSessionProcess(session_id sid);
     void removeSessionProcess(SessionProcessInfo * session);
 
-    void startDatabase(const std::string& dbName, IProcessCallback * callback);
+    void startDatabase(const std::string& dbName, const std::string& options, IProcessCallback * callback);
     void shutdownDatabase(DatabaseProcessInfo * sm, IProcessCallback * callback);
 
     DatabaseOptions * getDatabaseOptions(const std::string& dbName);
     void setDatabaseOptions(const std::string& dbName, const std::string& xmlOptions);
 
     void removeDatabaseProcess(const std::string& dbName);
-    void createDatabase(const std::string& dbName, IProcessCallback * callback);
+    void createDatabase(const std::string& dbName, const std::string& options, IProcessCallback * callback);
     void onDatabaseCreationFinished(const DatabaseOptions& options);
     
     void requestSession(DatabaseProcessInfo * sm, IProcessCallback * callback);

@@ -15,6 +15,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <limits.h>
 #endif
 
@@ -205,7 +206,6 @@ int uCreateProcess(
 
 #else
 #define MAX_NUMBER_OF_ARGS	256
-#define whitespace(c)		((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 
     pid_t pid = 0;
 
@@ -221,11 +221,11 @@ int uCreateProcess(
             if (close(STDOUT_FILENO) == -1) { sys_call_error("close"); exit(1); }
             if (close(STDERR_FILENO) == -1){ sys_call_error("close"); exit(1); }
             if (close(STDIN_FILENO) == -1) { sys_call_error("close");  exit(1); }
-           
+
             if (dup2(null_dev, STDOUT_FILENO) == -1) { sys_call_error("dup2"); exit(1); }
             if (dup2(null_dev, STDERR_FILENO) == -1) { sys_call_error("dup2"); exit(1); }
             if (dup2(null_dev, STDIN_FILENO) == -1) { sys_call_error("dup2"); exit(1); }
-            
+
             if (close(null_dev) == -1) { sys_call_error("close"); exit(1); }
         }
 
@@ -248,15 +248,15 @@ int uCreateProcess(
 
         while (true)
         {
-            while (whitespace(*cur)) cur++;
+            while (isspace(*cur)) cur++;
 
             pred = cur;
 
-            while (!(whitespace(*cur) || !*cur)) cur++;
+            while (!(isspace(*cur) || !*cur)) cur++;
 
             if (pred < cur)
             {
-                args[args_num] = (char*)malloc(cur - pred + 1);
+                args[args_num] = (char*) malloc(cur - pred + 1);
                 args[args_num][cur - pred] = '\0';
                 memcpy(args[args_num], pred, cur - pred);
                 args_num++;

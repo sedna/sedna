@@ -33,6 +33,8 @@ struct ProcessInfo
     
     bool locked;
     std::set<IProcessCallback *> clientCallbackSet;
+
+    ProcessInfo() : locked(false) {};
 };
 
 typedef std::set<ProcessInfo *>  ProcessList;
@@ -51,7 +53,7 @@ struct SessionProcessInfo : public ProcessInfo
     bool specialTransaction; // True for non-client transactions
 
     DatabaseProcessInfo * database; // Database process for transaction
-    
+
     void sendSocket (USOCKET clientSock);
 };
 
@@ -67,7 +69,12 @@ struct DatabaseProcessInfo : public ProcessInfo
     SessionList sessions;
     SessionList availableSessions;
 
-    DatabaseOptions options;
+    DatabaseOptions & options;
+
+    DatabaseProcessInfo(DatabaseOptions & _options)
+        : databaseName(_options.databaseName),
+          databaseId(_options.databaseId),
+          options(_options) {};
 };
 
 #endif /* _PROCESS_STRUCTURES_H */

@@ -66,9 +66,11 @@ typedef uint16_t shft;
 
 #ifdef _WIN32
 #define SESSION_EXE "se_trn.exe"
+#define SM_EXE "se_sm.exe"
 #define GOV_EXE "se_gov.exe"
 #else
 #define SESSION_EXE "se_trn"
+#define SM_EXE "se_sm"
 #define GOV_EXE "se_gov"
 #endif
 
@@ -88,7 +90,6 @@ extern const char * SEDNA_DATA;
 
 #define SEDNA_DATA_ENVIRONMENT                          "SEDNA_DATA"
 #define SEDNA_DB_ID_ENVIRONMENT                         "SEDNA_DBID"
-
 
 #define CONNECTION_SOCKET_HANDLE                        "CONNECTION_SOCKET_HANDLE"
 #define SEDNA_SERVER_MODE                               "SEDNA_SERVER_MODE"

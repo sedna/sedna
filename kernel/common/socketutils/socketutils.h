@@ -218,6 +218,12 @@ class SocketClient {
                               setObsolete();
                            };
 
+    inline void            respondServiceError(const char * message) {
+                              communicator->beginSend(se_ErrorResponse);
+                              communicator->writeString(message);
+                              communicator->endSend();
+                           };
+
     inline void            respondError(const char * message) {
                               communicator->beginSend(se_ErrorResponse);
                               communicator->writeString(message);

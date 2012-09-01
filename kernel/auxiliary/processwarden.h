@@ -8,12 +8,12 @@
 class ExecuteProcess
 {
 #define MAX_CMD_LINE (U_MAX_PATH * 3)
-    UPID pid;
-    UPHANDLE processHandle;
-
     char commandLine[MAX_CMD_LINE  + 1];
     bool processStarted;
 public:
+    UPID pid;
+    UPHANDLE processHandle;
+
     ExecuteProcess(const char * basePath, const char * executable, const char * args)
       : processStarted(false)
     {
@@ -22,9 +22,9 @@ public:
         };
 
         if (args == NULL) {
-            snprintf(commandLine, MAX_CMD_LINE, "%s"U_PATH_DELIMITER"%s", basePath, SESSION_EXE);
+            snprintf(commandLine, MAX_CMD_LINE, "%s"U_PATH_DELIMITER"%s", basePath, executable);
         } else {
-            snprintf(commandLine, MAX_CMD_LINE, "%s"U_PATH_DELIMITER"%s %s", basePath, SESSION_EXE, args);
+            snprintf(commandLine, MAX_CMD_LINE, "%s"U_PATH_DELIMITER"%s %s", basePath, executable, args);
         };
     };
 
@@ -36,7 +36,7 @@ public:
     void execute(UFlag flags, bool inheritHandles)
     {
         if (0 != uCreateProcess(commandLine, inheritHandles, NULL,
-            U_DETACHED_PROCESS, &processHandle, NULL,
+            flags, &processHandle, NULL,
                 &pid, NULL, NULL, __sys_call_error))
         {
             throw USER_ENV_EXCEPTION("Cannot create process", false);

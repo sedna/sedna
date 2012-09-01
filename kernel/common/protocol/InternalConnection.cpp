@@ -37,7 +37,7 @@ MasterProcessConnection::MasterProcessConnection(const char* address, const char
         throw USER_EXCEPTION (SE3003);
     }
 
-    MessageExchanger * communicator = new MessageExchanger(s);
+    communicator = new MessageExchanger(s);
 }
 
 void MasterProcessConnection::nextMessage()

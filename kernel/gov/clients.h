@@ -72,7 +72,7 @@ class InternalProcessNegotiation : public InternalSocketClient {
 //     } state;
 public:
     InternalProcessNegotiation(WorkerSocketClient* producer)
-        : InternalSocketClient(producer, se_Client_Priority_SM, std::string()) {}
+        : InternalSocketClient(producer, se_Client_Priority_SM, std::string(), NULL) {}
     
     virtual SocketClient* processData();
     virtual void cleanupOnError();
@@ -91,13 +91,11 @@ public:
 class SessionConnectionProcessor : public InternalSocketClient {
 private:
     session_id                  sid;
-    SessionProcessInfo *        trnInfo;
     trn_state                   state;
-    
 public:
-    SessionConnectionProcessor  (WorkerSocketClient * producer, const std::string& _ticket)
-      : InternalSocketClient(producer, se_Client_Priority_TRN, ticket), sid(0), trnInfo(NULL), state(trn_initial_state) { }
-                                
+    SessionConnectionProcessor  (WorkerSocketClient * producer, const std::string& _ticket, ProcessInfo * pinfo)
+      : InternalSocketClient(producer, se_Client_Priority_TRN, ticket, pinfo), sid(0), state(trn_initial_state) { }
+
     virtual SocketClient * processData ();
     virtual void cleanupOnError();
 };
@@ -124,9 +122,8 @@ class ServiceConnectionProcessor : public WorkerSocketClient {
 private:
     ProtocolVersion protocolVersion;
     TopLevelAuthentication authData;
-    
+
     service_client_state_t state;
-    
 public:
     ServiceConnectionProcessor(WorkerSocketClient * producer, ProtocolVersion _protocolVersion)
       : WorkerSocketClient(producer, se_Client_Priority_Client), protocolVersion(_protocolVersion), state(service_client_initial_state) { };
@@ -187,9 +184,11 @@ class DatabaseConnectionProcessor : public InternalSocketClient {
   private:
     sm_internal_state_t         state;
     std::string                 dbName;
-    DatabaseProcessInfo *       dbInfo;
+
+
+    void writeDatabaseConfig();
   public:
-                                DatabaseConnectionProcessor   (WorkerSocketClient * producer, const std::string & ticket);
+                                DatabaseConnectionProcessor   (WorkerSocketClient * producer, const std::string & ticket, ProcessInfo * _process);
     void                        registerCdb              ();
     virtual SocketClient *      processData              ();
     virtual void                cleanupOnError();
@@ -203,9 +202,6 @@ class CreateDatabaseRequestProcessor : public WorkerSocketClient {
 
     std::string                 dbName;
     cdb_state_t                 state;
-    
-    void                        writeDatabaseConfig ();
-    
   public:
                                 CreateDatabaseRequestProcessor (WorkerSocketClient * producer);
     virtual SocketClient *      processData             (void);

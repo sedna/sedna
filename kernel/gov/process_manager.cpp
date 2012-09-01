@@ -7,6 +7,8 @@
 #include "u/uprocess.h"
 #include "u/uhdd.h"
 
+#include "auxiliary/processwarden.h"
+
 #include <stdio.h>
 #include <sstream>
 #include <fstream>
@@ -21,63 +23,41 @@ ProcessManager::ProcessManager(GlobalParameters& _parameters)
 {
     UDir dataDirectory;
     UFindDataStruct currentCfgFile;
-    int res = -1;
+
     std::string::size_type suffixPosition;
-    std::ifstream fs;
-    std::stringstream cfgStream;
-    
+
     for (int i = 0; i < SEDNA_MAX_DBS_NUMBER; i++) {
         availaibleDatabaseIds.push(i);
     }
-    dataDirectory = uFindFirstFile(_parameters.global.dataDirectory.c_str(), 
-                                        &currentCfgFile,
-                                        __sys_call_error
-                                       );
-    if (U_INVALID_DIR == dataDirectory) {
-        throw SYSTEM_EXCEPTION("Something's wrong; data directory disappered suddenly");
-    }
-    
-    for (int i = 0 ; 1 ;)
-    {
-        if (i >= SEDNA_MAX_DBS_NUMBER) {
-            throw USER_EXCEPTION2(SE4412, _parameters.global.dataDirectory.c_str());
-        }
-        
-        if ( (suffixPosition = std::string(currentCfgFile.fname).find("_cfg.xml") ) != std::string::npos)
-        {
-            std::string dbName = std::string(currentCfgFile.fname).substr(0,suffixPosition);
-            fs.open ((_parameters.global.dataDirectory + 
-                        std::string("/") + 
-                        dbName + 
-                        std::string("_cfg.xml")).c_str(), std::ios::out);
-            if (fs.failbit) {
-                throw USER_EXCEPTION2(SE4042, 
-                                      (_parameters.global.dataDirectory + 
-                                       std::string("/") + 
-                                       dbName + 
-                                       std::string("_cfg.xml")).c_str()
-                                      );
-            }
-            
 
-            cfgStream << fs.rdbuf();
-            fs.close();
-            
-            parameters.loadDatabaseFromStream(dbName, &cfgStream);
-            cfgStream.clear();
-            ++i;
-        }
-        res = uFindNextFile(dataDirectory, 
-                            &currentCfgFile,
-                            __sys_call_error
-                           );
-        if (0 == res) {
-            break; //all cfg files are already read
-        }
-        if (-1 == res) {
-            throw USER_EXCEPTION2(SE4083, _parameters.global.dataDirectory.c_str());
-        }
+    dataDirectory = uFindFirstFile(SEDNA_DATA, &currentCfgFile, __sys_call_error);
+
+    if (U_INVALID_DIR == dataDirectory) {
+        throw SYSTEM_EXCEPTION("Data directory not found");
     }
+
+    int res = -1;
+
+    do {
+        if ((suffixPosition = std::string(currentCfgFile.fname).find(".conf.xml") ) != std::string::npos)
+        {
+            std::string dbName = std::string(currentCfgFile.fname).substr(0, suffixPosition);
+            std::ifstream fs(currentCfgFile.fname);
+
+            if (fs.failbit) {
+                throw USER_EXCEPTION2(SE4042, currentCfgFile.fname);
+            }
+
+            parameters.loadDatabaseFromStream(dbName, &fs);
+            fs.close();
+        }
+
+        res = uFindNextFile(dataDirectory, &currentCfgFile, __sys_call_error);
+
+        if (-1 == res) {
+            throw USER_EXCEPTION2(SE4083, SEDNA_DATA);
+        }
+    } while (0 != res);
 };
 
 
@@ -94,33 +74,22 @@ DatabaseOptions* ProcessManager::getDatabaseOptions(const std::string& dbName)
 
 void ProcessManager::setDatabaseOptions(const std::string& dbName, const std::string& xmlOptions)
 {
-    std::stringstream stream(xmlOptions, std::ios_base::out);
+    std::istringstream stream(xmlOptions);
     parameters.loadDatabaseFromStream(dbName, &stream);
-    parameters.databaseOptions.at(dbName).databaseId = availaibleDatabaseIds.top();
-    availaibleDatabaseIds.pop();
 };
 
 #define CMD_LINE_BUFFER_LEN 1024
 
-void ProcessManager::execStorageManagerProcess(const std::string& ticket, 
-                                               DatabaseProcessInfo* databaseProcessInfo) {
-    char command_line_buffer[CMD_LINE_BUFFER_LEN];
+void ProcessManager::execStorageManagerProcess(const std::string& ticket, DatabaseProcessInfo* databaseProcessInfo) {
+    std::ostringstream parameters;
 
-    databaseProcessInfo->locked = false;
-    snprintf(command_line_buffer, CMD_LINE_BUFFER_LEN, "%s localhost %d %s", 
-             SMImageName,
-             this->parameters.global.listenPort,
-             ticket.c_str());
+    parameters << "localhost " << this->parameters.global.listenPort << " " << ticket.c_str();
+    ExecuteProcess smExecutor(NULL, SM_EXE, parameters.str().c_str());
 
-    if (uCreateProcess(command_line_buffer, false, NULL, 0, &(databaseProcessInfo->pHandle), NULL, 
-                      &(databaseProcessInfo->pid), NULL, NULL, __sys_call_error) != 0) {
-        
-        /* TODO:
-        throw EProccessExecutionFailed();
-        */
-        elog(EL_LOG,("SM process start failed"));
-        throw SYSTEM_EXCEPTION("Can't start SM process");
-    }
+    smExecutor.execute(0, true);
+
+    databaseProcessInfo->pHandle = smExecutor.processHandle;
+    databaseProcessInfo->pid = smExecutor.pid;
 };
 
 void ProcessManager::execTransactionProcess(const std::string& ticket, 
@@ -136,7 +105,7 @@ void ProcessManager::execTransactionProcess(const std::string& ticket,
 
     if (uCreateProcess(command_line_buffer, false, NULL, 0, &(sessionProcessInfo->pHandle), NULL, 
                       &(sessionProcessInfo->pid), NULL, NULL, __sys_call_error) != 0) {
-        
+
         /* TODO:
         throw EProccessExecutionFailed();
         */
@@ -145,7 +114,6 @@ void ProcessManager::execTransactionProcess(const std::string& ticket,
     }
 };
 
-
 ProcessManager::~ProcessManager()
 {
 //
@@ -153,7 +121,7 @@ ProcessManager::~ProcessManager()
 
 void ProcessManager::generateTicket(ClientTicket& ticket)
 {
-    size_t ticket_len = 128;
+    size_t ticket_len = 64;
     char * s = (char *) malloc(ticket_len+1);
     static const char alphanum[] =
         "0123456789"
@@ -169,19 +137,28 @@ void ProcessManager::generateTicket(ClientTicket& ticket)
     delete s;
 }
 
-void ProcessManager::startDatabase(const std::string& dbName, IProcessCallback* callback)
+void ProcessManager::startDatabase(const std::string& dbName, const std::string& options, IProcessCallback* callback)
 {
+    if (availaibleDatabaseIds.empty()) {
+        throw std::runtime_error("Maximum number of databases reached.");
+    };
+
     std::string ticket;
     this->generateTicket(ticket);
-    
-    GlobalParameters::DatabaseOptionMap::iterator it = parameters.databaseOptions.find(dbName);
-    // TODO : check for existence and throw exceptions if not exists
-    DatabaseOptions * databaseOptions = &it->second;
 
-    // TODO : make universal process start framework
-    DatabaseProcessInfo * databaseProcessInfo = new DatabaseProcessInfo();
+    GlobalParameters::DatabaseOptionMap::iterator it = parameters.databaseOptions.find(dbName);
+
+    if (it == parameters.databaseOptions.end()) {
+        throw std::runtime_error("Database not exists");
+    }
+
+    setDatabaseOptions(dbName, options);
+
+    it->second.databaseId = availaibleDatabaseIds.top();
+    availaibleDatabaseIds.pop();
+
+    DatabaseProcessInfo * databaseProcessInfo = new DatabaseProcessInfo(it->second);
     databaseProcessInfo->databaseCreationMode = false;
-    databaseProcessInfo->databaseName = dbName;
     databaseProcessInfo->clientCallbackSet.insert(callback);
 
     try {
@@ -194,10 +171,55 @@ void ProcessManager::startDatabase(const std::string& dbName, IProcessCallback* 
     processMap.insert(ProcessMap::value_type(ticket, databaseProcessInfo));
 }
 
+/*TODO this function should be executed in separate thread */
+void ProcessManager::createDatabase(const std::string& dbName, const std::string& options, IProcessCallback* callback)
+{
+    DatabaseProcessInfo * databaseProcessInfo = NULL;
+    try {
+        if (availaibleDatabaseIds.empty()) {
+            throw std::runtime_error("Maximum number of databases reached.");
+        };
+
+        std::string ticket;
+        generateTicket(ticket);
+
+        GlobalParameters::DatabaseOptionMap::iterator it = parameters.databaseOptions.find(dbName);
+
+        if (it != parameters.databaseOptions.end()) {
+            throw std::runtime_error("Database already exists");
+        }
+
+        it = parameters.databaseOptions.insert(
+            GlobalParameters::DatabaseOptionMap::value_type(dbName, parameters.defaultDatabaseParameters)).first;
+
+        setDatabaseOptions(dbName, options);
+
+        it->second.databaseId = availaibleDatabaseIds.top();
+        availaibleDatabaseIds.pop();
+
+        it->second.databaseName = dbName;
+        it->second.dataFilePath = parameters.global.dataDirectory + dbName + U_PATH_DELIMITER;
+
+        databaseProcessInfo = new DatabaseProcessInfo(it->second);
+        databaseProcessInfo->databaseCreationMode = true;
+        databaseProcessInfo->clientCallbackSet.insert(callback);
+
+        execStorageManagerProcess(ticket, databaseProcessInfo);
+
+        processMap.insert(ProcessMap::value_type(ticket, databaseProcessInfo));
+    } catch(std::exception & x) {
+        delete databaseProcessInfo;
+        callbackError(callback, x.what());
+        throw;
+    };
+};
+
+
 void ProcessManager::requestSession(DatabaseProcessInfo* sm, IProcessCallback* callback)
 {
     std::string ticket;
     generateTicket(ticket);
+
     // TODO : make universal process start framework
     SessionProcessInfo * sessionProcessInfo = new SessionProcessInfo();
     sessionProcessInfo->state = trninfo_not_started;
@@ -213,37 +235,6 @@ void ProcessManager::requestSession(DatabaseProcessInfo* sm, IProcessCallback* c
     
     processMap.insert(ProcessMap::value_type(ticket, sessionProcessInfo));
 }
-
-/*TODO this function should be executed in separate thread */
-void ProcessManager::createDatabase(const std::string& dbName, IProcessCallback* callback)
-{
-    std::string ticket;
-  
-    GlobalParameters::DatabaseOptionMap::iterator i = parameters.databaseOptions.find(dbName);
-
-    if (i == parameters.databaseOptions.end()) {
-        U_ASSERT(false);
-    }
-
-    DatabaseProcessInfo * databaseProcessInfo = new DatabaseProcessInfo();
-    databaseProcessInfo->databaseCreationMode = true;
-    databaseProcessInfo->databaseName = dbName;
-
-    databaseProcessInfo->clientCallbackSet.insert(callback);
-
-    // CRITICAL SECTION START TODO
-    
-    try {
-        execStorageManagerProcess(ticket, databaseProcessInfo);
-    } catch(std::exception & x) {
-        delete databaseProcessInfo;
-        callbackError(callback, x.what());
-    };
-    
-    processMap.insert(ProcessMap::value_type(ticket, databaseProcessInfo));
-    
-    // CRITICAL SECTION END
-};
 
 void ProcessManager::callbackSuccess(IProcessCallback* cb, ProcessInfo* pinfo, WorkerSocketClient* socketClient)
 {
@@ -266,13 +257,15 @@ void ProcessManager::doProcessRequests()
     
     while (!requestProcessQueue.empty()) {
         msg = requestProcessQueue.front();
+        requestProcessQueue.pop();
+
         if (msg.result == CallbackMessage::Error) {
-          msg.callback->onError(msg.messageInfo);
+            msg.callback->onError(msg.messageInfo);
         } else {
-          msg.callback->onSuccess(&msg);
+            msg.callback->onSuccess(&msg);
         }
     }
-    
+
     requestsPending = false;
 }
 
@@ -297,14 +290,20 @@ void ProcessManager::processRegistrationFailed(const std::string& ticket, const 
         U_ASSERT(false); //if this happens something is totally wrong
     }
     std::set<IProcessCallback *>::iterator j = i->second->clientCallbackSet.begin();
-    
+
     for (; j != i->second->clientCallbackSet.end(); j++) {
         callbackError(*j, reason.c_str());
     }
-    
+
     i->second->clientCallbackSet.clear();
+
+    if (DatabaseProcessInfo * dbInfo = dynamic_cast<DatabaseProcessInfo *> (i->second)) {
+        parameters.databaseOptions.erase(dbInfo->databaseName);
+        availaibleDatabaseIds.push(dbInfo->databaseId);
+    };
+
     delete i->second;
-    
+
     processMap.erase(ticket);  
 };
 

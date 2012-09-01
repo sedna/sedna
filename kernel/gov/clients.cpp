@@ -22,28 +22,17 @@ using namespace std;
 
 SocketClient* InternalProcessNegotiation::processData()
 {
-//     switch(state) {
-//       case iproc_initial :
-//         if (!communicator->receive()) { return this; }
-//         communicator->beginSend(se_Handshake);
-//         
-//         // Here should be initial key someday
-//         
-//         communicator->endSend();
-//         state = iproc_awaiting_key;
-//       case iproc_awaiting_key :
-//         if (!communicator->receive()) { return this; }
-        
     ticket = communicator->readString(MAX_TICKET_SIZE);
+
     ProcessManager * pm = worker->getProcessManager();
     ProcessInfo * info = pm->getUnregisteredProcess(ticket);
 
     if (DatabaseProcessInfo * dbInfo = dynamic_cast <DatabaseProcessInfo *> (info)) {
-        return new DatabaseConnectionProcessor(this, ticket);
+        return new DatabaseConnectionProcessor(this, ticket, info);
     }
 
     if (SessionProcessInfo * trnInfo = dynamic_cast <SessionProcessInfo *> (info)) {
-        return new SessionConnectionProcessor(this, ticket);
+        return new SessionConnectionProcessor(this, ticket, info);
     }
 
     respondError();
@@ -66,9 +55,7 @@ ServiceConnectionProcessor::~ServiceConnectionProcessor()
 /////////////////////////////class ClientNegotiationManager//////////////////////////////////
 
 SocketClient * ClientNegotiationManager::processData() {
-    if (!communicator->receive()) {
-        return this;
-    }
+    if (!communicator->receive()) { return this; }
 
     size_t length;
     ProtocolVersion protocolVersion;
@@ -186,7 +173,7 @@ bool ClientConnectionProcessor::processStartDatabase()
     if (sminfo == NULL) {
         // Try to start storage manager and wait for SM to start
         // NOTE: this function may instantly call onError function in callback!
-        pm->startDatabase(authData.databaseName, new ClientDatabaseStartCallback(this));
+        pm->startDatabase(authData.databaseName, "<databaseOptions/>", new ClientDatabaseStartCallback(this));
         return false;
     };
 
@@ -259,9 +246,8 @@ SocketClient * ClientConnectionProcessor::processData() {
 //         };
 
         authData.recvInitialAuth(communicator.get());
-        
-        state = client_awaiting_sm_and_trn;
 
+        state = client_awaiting_sm_and_trn;
     case client_awaiting_sm_and_trn:
         if (!processStartDatabase()) {
             return this;
@@ -359,40 +345,39 @@ SocketClient* ServiceConnectionProcessor::processData()
 SocketClient* DatabaseShutdownProcessor::processData()
 {
     U_ASSERT(false);
-    return NULL;
+    return       NULL;
 }
 
 /////////////////////////////class DatabaseConnectionProcessor////////////////////////////////////////
 ///* This class is responsible for communications between se_gov and se_sm (create db and start db) */
 
-DatabaseConnectionProcessor::DatabaseConnectionProcessor(WorkerSocketClient* producer, const string& ticket)
-  : InternalSocketClient(producer, se_Client_Priority_Cdb, ticket), state(sm_initial_state) { }
+DatabaseConnectionProcessor::DatabaseConnectionProcessor(WorkerSocketClient* producer, const string& ticket, ProcessInfo * _process)
+  : InternalSocketClient(producer, se_Client_Priority_Cdb, ticket, _process), state(sm_initial_state) { }
 
 
 SocketClient* DatabaseConnectionProcessor::processData()
 {
     // at this point handshake is over -- we must get here from  internal process negotiation.
     ProcessManager * pm = worker->getProcessManager();
-    
+    DatabaseProcessInfo * dbInfo = static_cast<DatabaseProcessInfo *>(process);
+
     switch (state) {
         case sm_initial_state:
         {
         //       NOTE : do not copy/paste
-            dbInfo = dynamic_cast<DatabaseProcessInfo *>(pm->getUnregisteredProcess(ticket));
-
-            if (dbInfo == NULL) {
+            if (process == NULL) {
                 pm->processRegistrationFailed(ticket, "Invalid ticket");
                 respondError();
                 return NULL;
             };
 
-            XMLBuilder serializedOptions;
-            dbInfo->options.saveToXml(&serializedOptions);
+            std::ostringstream options;
+            pm->getGlobalParameters()->saveDatabaseToStream(dbInfo->databaseName, &options);
 
             if (dbInfo->databaseCreationMode) {
-                proto::StartDatabase(serializedOptions.str(), se_int_CreateDatabaseInternal) >> *communicator;
+                proto::StartDatabase(options.str(), se_int_CreateDatabaseInternal) >> *communicator;
             } else {
-                proto::StartDatabase(serializedOptions.str(), se_int_StartDatabaseInternal) >> *communicator;
+                proto::StartDatabase(options.str(), se_int_StartDatabaseInternal) >> *communicator;
             }
 
             state = sm_confirmation;
@@ -401,12 +386,18 @@ SocketClient* DatabaseConnectionProcessor::processData()
         case sm_confirmation: {
             if (!communicator->receive()) { return this; }
 
-            std::string errorString = "Unknown message from client";
+            std::string errorString = "Unknown message from client or socket closed";
 
             switch(communicator->getInstruction()) {
             case se_int_ProcessReady:
                 pm->processRegistered(ticket, this);
-                return NULL;
+
+                if (dbInfo->databaseCreationMode) {
+                    writeDatabaseConfig();
+                    dbInfo->databaseCreationMode = false;
+                };
+
+                break;
             case se_int_SoftError:
                 communicator->readInt32();
             case se_int_RegistrationFailed:
@@ -425,11 +416,47 @@ SocketClient* DatabaseConnectionProcessor::processData()
 
         //TODO when sm would be more clear: at this point cdb should terminate but sm should wait for shutdown
         // that means that there should be one more message for both.
-        
+
         setObsolete();
         return NULL;
     }
     return NULL;
+}
+
+void DatabaseConnectionProcessor::writeDatabaseConfig () {
+    unsigned int nbytes_written = 0;
+    UFile cfgFileHandle;
+    USECURITY_ATTRIBUTES *def_sa;
+
+    std::ostringstream options;
+
+    GlobalParameters * globals = worker->getProcessManager()->getGlobalParameters();
+    DatabaseProcessInfo * dbInfo = static_cast<DatabaseProcessInfo *>(process);
+    globals->saveDatabaseToStream(dbInfo->databaseName, &options);
+
+    std::string cfgFilePath = globals->global.dataDirectory + dbName + ".conf.xml";
+
+    if(uCreateSA(&def_sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) {
+        throw USER_EXCEPTION(SE3060);
+    }
+
+    cfgFileHandle = uCreateFile(cfgFilePath.c_str(), 0, U_READ_WRITE, 0, def_sa, __sys_call_error);
+
+    if (cfgFileHandle == U_INVALID_FD) {
+        throw USER_EXCEPTION2(SE4040, "Can not create database configuration file");
+    }
+
+    uReleaseSA(def_sa, __sys_call_error);
+
+    int res = uWriteFile(cfgFileHandle, options.str().c_str(), options.str().size(), &nbytes_written, __sys_call_error);
+
+    if (res == 0 || nbytes_written != options.str().size()) {
+        throw USER_EXCEPTION2( SE4045, cfgFilePath.c_str() );
+    }
+
+    if (uCloseFile(cfgFileHandle, __sys_call_error) == 0) {
+        throw USER_EXCEPTION2(SE4043, "Can not close configuration file");
+    }
 }
 
 void DatabaseConnectionProcessor::cleanupOnError()
@@ -455,8 +482,7 @@ public:
     virtual void onError(const char* cause) 
     {
         if (client != NULL) {
-            client->respondError(cause);
-            client->setObsolete(false);
+            client->respondServiceError(cause);
             client->state = cdb_fallthrough;
 
             elog(EL_LOG, ("Request for database creation failed"));
@@ -469,8 +495,6 @@ public:
             client->communicator->beginSend(se_CreateDbOK);
             client->communicator->endSend();
             client->state = cdb_fallthrough;
-            
-            client->writeDatabaseConfig();
 
             elog(EL_LOG, ("Request for database creation satisfied"));
         }
@@ -480,47 +504,6 @@ public:
 CreateDatabaseRequestProcessor::CreateDatabaseRequestProcessor(WorkerSocketClient* producer)
   : WorkerSocketClient(producer, se_Client_Priority_Cdb), activeCallback(NULL), state(cdb_awaiting_db_options) {  }
 
-void CreateDatabaseRequestProcessor::writeDatabaseConfig () {
-   unsigned int nbytes_written = 0;
-   UFile cfgFileHandle;
-   USECURITY_ATTRIBUTES *def_sa;
-   XMLBuilder serializedOptions;
-
-   ProcessManager * pm = worker->getProcessManager();
-   
-   DatabaseOptions * dbInfo = pm->getDatabaseOptions(dbName);
-   dbInfo->saveToXml(&serializedOptions);
-   
-   std::string cfgFilePath = pm->getGlobalParameters()->global.dataDirectory + dbName + "_cfg.xml";
-      
-   if(uCreateSA(&def_sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) {
-       throw USER_EXCEPTION(SE3060);
-   }
-   
-   cfgFileHandle = uCreateFile(cfgFilePath.c_str(),
-                                    0,
-                                    U_READ_WRITE,
-                                    U_WRITE_THROUGH,
-                                    def_sa, __sys_call_error);
-   if (cfgFileHandle == U_INVALID_FD) {
-      throw USER_EXCEPTION2(SE4040, "Can not create database configuration file");
-   }
-
-   uReleaseSA(def_sa, __sys_call_error);
-
-   int res = uWriteFile(cfgFileHandle,
-                        serializedOptions.str().c_str(),
-                        serializedOptions.str().size(),
-                        &nbytes_written,
-                        __sys_call_error);
-
-   if ( res == 0 || nbytes_written != serializedOptions.str().size()) {
-      throw USER_EXCEPTION2( SE4045, cfgFilePath.c_str() );
-   }
-   if (uCloseFile(cfgFileHandle, __sys_call_error) == 0) {
-      throw USER_EXCEPTION2(SE4043, "Can not close configuration file");
-   }
-}
   
 SocketClient* CreateDatabaseRequestProcessor::processData()
 {
@@ -543,8 +526,7 @@ SocketClient* CreateDatabaseRequestProcessor::processData()
               return NULL;
           };
 
-          pm->setDatabaseOptions(dbName, communicator->readString(MAX_XML_PARAMS));
-          pm->createDatabase(dbName, new CreateDatabaseCallback(this));
+          pm->createDatabase(dbName, communicator->readString(MAX_XML_PARAMS), new CreateDatabaseCallback(this));
 
           state = cdb_awaiting_sm_start;
           break;
@@ -567,7 +549,6 @@ SocketClient* SednaShutdownProcessor::processData()
 SocketClient* SessionConnectionProcessor::processData()
 {
     ProcessManager * pm = worker->getProcessManager();
-    trnInfo = dynamic_cast<SessionProcessInfo *> (pm->getUnregisteredProcess(ticket));
 
 /*
     U_ASSERT(false);

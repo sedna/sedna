@@ -232,66 +232,74 @@ int main(int argc, char **argv)
 
     init_base_path(argv[0]);
 
-    if (argc != 3) {
-        throw SYSTEM_EXCEPTION("This application should be started by Sedna master process");
-    };
-
-    char sednaDataDirectory[SEDNA_DATA_VAR_SIZE] = {};
-
-    CHECK_ENV(uGetEnvironmentVariable(SEDNA_DATA_ENVIRONMENT, sednaDataDirectory, SEDNA_DATA_VAR_SIZE, __sys_call_error),
-        SE4074, SEDNA_DATA_ENVIRONMENT);
-
-    SEDNA_DATA = sednaDataDirectory;
-
-    /* Set global settings */
-    GlobalObjectsCollector globalObjectsCollector(sednaDataDirectory);
-    uSetGlobalNameGeneratorBase(SEDNA_DATA);
-
-    /* Init event log, it should be save by now */
-    CHECK_ENV(event_logger_init(EL_SM, databaseOptions->databaseName.c_str(), eventLogShmName, eventLogSemName),
-        SE0001, "Failed to start event log");
-
-    /* This should release event log on exception */
-    struct EventLogWarden {
-        ~EventLogWarden() { event_logger_release(); };
-    };
-
-    EventLogWarden eventLogReleaseWarden;
-    GaintLockGlobalWarden gaintLock;
-
-    /* Register with master process */
-    MasterProcessConnection govConnection(argv[1], argv[2]);
-    govConnection.setDatabaseOptions(databaseOptions);
-    govConnection.registerOnGov(argv[3]); // Pass ticket
-    govConnection.nextMessage();
-
-    sp_int32 instruction = govConnection.communicator->getInstruction();
-
-    if (instruction != se_int_StartDatabaseInternal && instruction != se_int_CreateDatabaseInternal) {
-        return -1;
-    } else {
-        proto::StartDatabase startDb(*govConnection.communicator, govConnection.communicator->getInstruction());
-        std::istringstream options(startDb.options);
-        databaseOptions->loadFromStream(&options);
-    }
-
-    if (instruction == se_int_CreateDatabaseInternal) {
-        initializeDatabase();
-    };
-
-    /* Set local settings */
-    char envVariableDbId[64];
-    snprintf(envVariableDbId, 64, "%d", databaseOptions->databaseId);
-    uSetGlobalNameInstanceId(GN_DATABASE, envVariableDbId);
-
-    CHECK_ENV(uSetEnvironmentVariable(SEDNA_DB_ID_ENVIRONMENT, envVariableDbId, NULL, __sys_call_error),
-        SE4074, SEDNA_DATA_ENVIRONMENT);
-
-    int sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
-
-    recover_database();
+    sp_int32 instruction;
 
     try {
+
+        if (argc != 4) {
+            throw SYSTEM_EXCEPTION("This application should be started by Sedna master process");
+        };
+
+        char sednaDataDirectory[SEDNA_DATA_VAR_SIZE] = {};
+
+        CHECK_ENV(uGetEnvironmentVariable(SEDNA_DATA_ENVIRONMENT, sednaDataDirectory, SEDNA_DATA_VAR_SIZE, __sys_call_error),
+            SE4074, SEDNA_DATA_ENVIRONMENT);
+
+        SEDNA_DATA = sednaDataDirectory;
+
+        /* Set global settings */
+        GlobalObjectsCollector globalObjectsCollector(sednaDataDirectory);
+        uSetGlobalNameGeneratorBase(SEDNA_DATA);
+
+        /* Init event log, it should be safe by now */
+        CHECK_ENV(event_logger_init(EL_SM, "", eventLogShmName, eventLogSemName),
+            SE0001, "Failed to start event log");
+
+        /* This should release event log on exception */
+        struct EventLogWarden {
+            ~EventLogWarden() { event_logger_release(); };
+        };
+
+        EventLogWarden eventLogReleaseWarden;
+        GaintLockGlobalWarden gaintLock;
+
+        /* Register with master process */
+        MasterProcessConnection govConnection(argv[1], argv[2]);
+
+        govConnection.setDatabaseOptions(databaseOptions);
+        govConnection.registerOnGov(argv[3]); // Pass ticket
+        govConnection.nextMessage();
+
+        elog(EL_INFO, ("SM process connected"));
+
+        instruction = govConnection.communicator->getInstruction();
+
+        uSleep(4, __sys_call_error);
+
+        if (instruction != se_int_StartDatabaseInternal && instruction != se_int_CreateDatabaseInternal) {
+            throw SYSTEM_ENV_EXCEPTION("Invalid instruction from master process");
+        } else {
+            proto::StartDatabase startDb(*govConnection.communicator, govConnection.communicator->getInstruction());
+            std::istringstream options(startDb.options);
+            databaseOptions->loadFromStream(&options);
+        }
+
+        if (instruction == se_int_CreateDatabaseInternal) {
+            initializeDatabase();
+        };
+
+        /* Set local settings */
+        char envVariableDbId[64];
+        snprintf(envVariableDbId, 64, "%d", databaseOptions->databaseId);
+        uSetGlobalNameInstanceId(GN_DATABASE, envVariableDbId);
+
+        CHECK_ENV(uSetEnvironmentVariable(SEDNA_DB_ID_ENVIRONMENT, envVariableDbId, NULL, __sys_call_error),
+            SE4074, SEDNA_DATA_ENVIRONMENT);
+
+        int sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
+
+        recover_database();
+
         Warden<TransactionTableBorders> trtable;
         CheckpointThread checkpointThread;
         Warden<LogicalLogBorders> logicalLog;
@@ -323,17 +331,18 @@ int main(int argc, char **argv)
 
         elog(EL_LOG, ("SM has been started"));
 
-
         govConnection.nextMessage();
 
         smvmmServer.stop();
         checkpointThread.stop();
-    } catch (SednaUserException &e) {
-        return 1;
-    } catch (SednaException &e) {
+    } catch (SednaException & e) {
+        elog(EL_FATAL, (e.what()));
         sedna_soft_fault(e, EL_SM);
-    } catch (ANY_SE_EXCEPTION) {
+        return 1;
+    } catch (std::exception & e) {
+        elog(EL_FATAL, (e.what()));
         sedna_soft_fault(EL_SM);
+        return 1;
     }
 
     return 0;

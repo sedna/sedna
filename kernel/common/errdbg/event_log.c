@@ -921,12 +921,6 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
     };
 
     strncpy(buf, log_base_dir, SEDNA_DATA_VAR_SIZE);
-
-    if (uMkDir(buf, NULL, NULL) == 0) {
-        elog(EL_FATAL, ("Cannot create data directory for soft fault logs\n"));
-        return U_INVALID_FD;
-    }
-
     strcat(buf, SE_LAST_SOFT_FAULT_DIR);
 
     if (uMkDir(buf, NULL, NULL) == 0) {
@@ -934,11 +928,7 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
         return U_INVALID_FD;
     }
 
-#ifdef _WIN32
-    strcat(buf, "\\");
-#else
-    strcat(buf, "/");
-#endif
+    strcat(buf, U_PATH_DELIMITER);
 
     strcat(buf, str);
 

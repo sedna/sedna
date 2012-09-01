@@ -245,7 +245,9 @@ void DatabaseOptions::loadFromStream(std::istream* stream)
 void DatabaseOptions::saveToStream(std::ostream* stream) const
 {
     XMLBuilder writer(stream);
+    writer.beginElement("databaseOptions");
     this->saveToXml(&writer);
+    writer.endElement();
     writer.close();
 }
 
@@ -279,6 +281,8 @@ void GlobalParameters::saveDatabaseToStream(const std::string& dbname, std::ostr
     };
 
     XMLBuilder writer(stream);
+    writer.beginElement("databaseOptions");
     dbopt->second.saveToXml(&writer);
+    writer.endElement();
     writer.close();
 }

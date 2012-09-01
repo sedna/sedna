@@ -298,6 +298,10 @@ bool BaseMessageExchanger::wait4()
 
 int BaseMessageExchanger::endSend(void )
 {
+    if (reader.isClosed()) {
+        return U_SOCKET_ERROR;
+    };
+
     length = (size_t) (offset - sizeof(uint32_t) - sizeof(uint32_t));
     writeInt32(instruction, 0);
     writeInt32((uint32_t) length, sizeof(sp_int32));

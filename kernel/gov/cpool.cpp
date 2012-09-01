@@ -104,6 +104,11 @@ WorkerSocketClient * Worker::createListener()
 
 void Worker::run() {
     for (;;) {
+        clientList.insert(clientList.end(), newClients.begin(), newClients.end());
+        newClients.clear();
+
+        processManager->processRequests();
+
         memcpy(&readySet, &allSet, sizeof(readySet));
 
         int readyCount = uselect_read_arr(&readySet, maxfd, NULL, __sys_call_error);
@@ -113,12 +118,9 @@ void Worker::run() {
             throw SYSTEM_EXCEPTION(usocket_error_translator());
         }
 
-        clientList.insert(clientList.end(), newClients.begin(), newClients.end());
-        newClients.clear();
-        
         for (UnsortedSocketClientList::iterator i = clientList.begin(); i != clientList.end(); ) {
             WorkerSocketClient * client = *i;
-            
+
             if (client->isObsolete()) {
                 USOCKET socket = client->getSocket();
                 U_SSET_CLR(socket, &allSet);
@@ -126,9 +128,9 @@ void Worker::run() {
                 delete client;
                 continue;
             }
-            
+
             USOCKET socket = client->getSocket();
-            
+
             if (U_SSET_ISSET(socket, &readySet)) {
                 try {
                     while (client != NULL) {
@@ -144,6 +146,7 @@ void Worker::run() {
                               USOCKET socket = client->getSocket();
                               U_SSET_CLR(socket, &allSet);
                             }
+
                             client = nextProcessor;
                             *i = client;
                         } else {
@@ -158,6 +161,7 @@ void Worker::run() {
                     }
                 } catch (SednaGovSocketException e) {
                     e.ref->cleanupOnError();
+                    elog(EL_ERROR, (e.what()));
                 }
             }
 
