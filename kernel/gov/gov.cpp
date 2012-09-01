@@ -3,17 +3,20 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/errdbg/d_printf.h"
 #include "common/base.h"
+#include "common/globalobjects/globalnames.h"
+#include "common/procutils/version.h"
+#include "common/errdbg/event_log.h"
+#include "common/errdbg/d_printf.h"
 
 #include "gov/cpool.h"
 #include "gov/gov_globals.h"
 #include "gov/gov_functions.h"
-#include "common/procutils/version.h"
+
 #include "u/ugnames.h"
 #include "u/uutils.h"
 #include "u/uprocess.h"
-#include "common/globalobjects/globalnames.h"
+
 
 #ifdef EL_DEBUG
 #include <iostream>
@@ -55,11 +58,11 @@ int main(int argc, char** argv)
             throw SYSTEM_EXCEPTION("Failed to initialize socket library");
 
         GlobalObjectsCollector collector(sednaGlobalOptions.global.dataDirectory.c_str());
-        uSetGlobalNameGeneratorBase(sednaGlobalOptions.global.dataDirectory.c_str(), "0");
+        uSetGlobalNameGeneratorBase(sednaGlobalOptions.global.dataDirectory.c_str());
 
         if (event_logger_start_daemon(sednaGlobalOptions.global.dataDirectory.c_str(),
               el_convert_log_level(sednaGlobalOptions.global.logLevel),
-                SE_EVENT_LOG_SHM_NAME, SE_EVENT_LOG_SEM_NAME)) {
+                eventLogShmName, eventLogSemName)) {
             throw SYSTEM_EXCEPTION("Failed to initialize event log");
         }
 
@@ -74,7 +77,7 @@ int main(int argc, char** argv)
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
 
         elog(EL_LOG, ("SEDNA event log is down"));
-        event_logger_shutdown_daemon("SE_EVENT_LOG_SHM");
+        event_logger_shutdown_daemon(eventLogShmName);
 
         return 0;
     } catch (SednaException &e) {

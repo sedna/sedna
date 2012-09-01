@@ -1,7 +1,9 @@
 #include "gov/process_manager.h"
+
 #include "common/procutils/cmdlines.h"
 #include "common/structures/config_data.h"
 #include "common/errdbg/exceptions.h"
+
 #include "u/uprocess.h"
 #include "u/uhdd.h"
 
@@ -21,11 +23,10 @@ ProcessManager::ProcessManager(GlobalParameters& _parameters)
     UFindDataStruct currentCfgFile;
     int res = -1;
     std::string::size_type suffixPosition;
-    std::fstream fs;
-    std::string cfgText;
-    cfgText.reserve(10240);
+    std::ifstream fs;
+    std::stringstream cfgStream;
     
-    for (int i = 0; i < MAX_DBS_NUMBER; i++) {
+    for (int i = 0; i < SEDNA_MAX_DBS_NUMBER; i++) {
         availaibleDatabaseIds.push(i);
     }
     dataDirectory = uFindFirstFile(_parameters.global.dataDirectory.c_str(), 
@@ -38,7 +39,7 @@ ProcessManager::ProcessManager(GlobalParameters& _parameters)
     
     for (int i = 0 ; 1 ;)
     {
-        if (i >= MAX_DBS_NUMBER) {
+        if (i >= SEDNA_MAX_DBS_NUMBER) {
             throw USER_EXCEPTION2(SE4412, _parameters.global.dataDirectory.c_str());
         }
         
@@ -58,12 +59,12 @@ ProcessManager::ProcessManager(GlobalParameters& _parameters)
                                       );
             }
             
-            cfgText.clear();
-            
-            fs >> cfgText;
+
+            cfgStream << fs.rdbuf();
             fs.close();
             
-            setDatabaseOptions(dbName, cfgText);
+            parameters.loadDatabaseFromStream(dbName, &cfgStream);
+            cfgStream.clear();
             ++i;
         }
         res = uFindNextFile(dataDirectory, 
@@ -297,7 +298,7 @@ void ProcessManager::processRegistrationFailed(const std::string& ticket, const 
     }
     std::set<IProcessCallback *>::iterator j = i->second->clientCallbackSet.begin();
     
-    for (j; j != i->second->clientCallbackSet.end(); j++) {
+    for (; j != i->second->clientCallbackSet.end(); j++) {
         callbackError(*j, reason.c_str());
     }
     
@@ -318,7 +319,7 @@ void ProcessManager::processRegistered(const std::string& ticket, WorkerSocketCl
     
     std::set<IProcessCallback *>::iterator j = i->second->clientCallbackSet.begin();
     
-    for (j; j != i->second->clientCallbackSet.end(); j++) {
+    for (; j != i->second->clientCallbackSet.end(); j++) {
         callbackSuccess(*j, i->second, processor);
     }
     

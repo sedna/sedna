@@ -16,27 +16,6 @@
 #include <iostream>
 #endif /* GOV_DEBUG */
 
-#define DEFAULT_BIND_ADDRESS            "0.0.0.0"
-#define DEFAULT_DATA_DIR                "/var/sedna"
-#define DEFAULT_LISTEN_PORT             5050
-#define DEFAULT_LOG_LEVEL               2
-#define DEFAULT_OS_OBJ_OFFSET           1024
-#define DEFAULT_STACK_DEPTH             4000
-#define DEFAULT_KEEP_ALIVE              0
-
-
-/* !TODO: tune linux_install.sh (or make some more clear procedure to install sedna */
-
-void setDefaultSednaOptions(SednaOptions * sednaOptions)
-{
-    sednaOptions->bindAddress     = DEFAULT_BIND_ADDRESS;
-    sednaOptions->dataDirectory   = DEFAULT_DATA_DIR;
-    sednaOptions->listenPort      = DEFAULT_LISTEN_PORT;
-    sednaOptions->logLevel        = DEFAULT_LOG_LEVEL;
-    sednaOptions->stackDepth      = DEFAULT_STACK_DEPTH;
-    sednaOptions->keepAlive       = DEFAULT_KEEP_ALIVE;
-};
-
 int background_mode = 0;
 
 /* TODO: make gov able to listen multiple addresses and define a max ifaces constant */
@@ -114,7 +93,7 @@ void getSednaConfValues(GlobalParameters * sednaGlobalOptions)
 
         fclose(fs);
         
-        setDefaultSednaOptions( &(sednaGlobalOptions->global) );
+        sednaGlobalOptions->setDefaultOptions();
 
 #ifdef GOV_DEBUG
         std::cout << "\n\nDefault hardcoded defaults are: \n";
@@ -129,7 +108,7 @@ void getSednaConfValues(GlobalParameters * sednaGlobalOptions)
 #endif /* GOV_DEBUG */
         
     } else {
-        setDefaultSednaOptions( &(sednaGlobalOptions->global) );
+        sednaGlobalOptions->setDefaultOptions();
     }
 }
 

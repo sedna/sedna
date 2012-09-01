@@ -98,6 +98,8 @@ struct GlobalParameters {
     
     void saveToStream(std::ostream * stream) const;
     void loadFromStream(std::istream * stream);
+    
+    void setDefaultOptions();
 };
 
 #endif /* _CONFIG_DATA_H_ */

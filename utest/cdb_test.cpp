@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
   std::string cdbOptions;
   cdbOptions = std::string("<sednaOptions><databaseDefaults>") 
     + std::string("<databaseName>") + dbname + std::string("</databaseName>")
-    + std::string("<bufferCount>1600</bufferCount><maxLogFiles>20</maxLogFiles><updateCriteria>0.9</updateCriteria><dataFileSize><initial><![CDATA[104857600]]></initial><max><![CDATA[1048576000]]></max><extension><![CDATA[104857600]]></extension></dataFileSize><tmpFileSize><initial><![CDATA[104857600]]></initial><max><![CDATA[1048576000]]></max><extension><![CDATA[104857600]]></extension></tmpFileSize><sessionOptions><executionStackDepth><![CDATA[54]]></executionStackDepth><queryTimeout><![CDATA[65535]]></queryTimeout></sessionOptions></databaseDefaults></sednaOptions>");
+    + std::string("</databaseDefaults></sednaOptions>");
 
   if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) return -1;
   
@@ -77,7 +77,14 @@ int main(int argc, char **argv) {
   communicator->writeString(cdbOptions);
   communicator->endSend();
 
-    
+  while(!communicator->receive());
+  if (communicator->getInstruction() != se_CreateDbOK) {
+    delete communicator;
+    printf("Database creation failed; maybe SM failed\n");
+    return -4;
+  }
+  
+  printf("Database created successfully\n");
   
   delete communicator;
   ushutdown_close_socket(s, __sys_call_error);

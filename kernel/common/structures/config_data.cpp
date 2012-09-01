@@ -10,6 +10,37 @@
 
 #include <sstream>
 
+/* NOTE: this options are set in the only place: in gov_globals.cpp */
+/* WARNING: Ilya, check please options datafilesize and tmpfilesize. I'm not sure about values */
+void GlobalParameters::setDefaultOptions() {
+    global.bindAddress     = "0.0.0.0";
+    global.dataDirectory   = "/var/sedna";
+    global.listenPort      = 5050;
+    global.logLevel        = 2;
+    global.stackDepth      = 4000;
+    global.keepAlive       = 0;
+    defaultDatabaseParameters.autoStart = true;
+    defaultDatabaseParameters.bufferCount = 1600;
+    defaultDatabaseParameters.databaseId = -1;
+    defaultDatabaseParameters.databaseName = "";
+    defaultDatabaseParameters.dataFileName = "";
+    defaultDatabaseParameters.dataFileSize.max = INT_MAX;
+    defaultDatabaseParameters.dataFileSize.initial = 100;
+    defaultDatabaseParameters.dataFileSize.extension = 100;
+    defaultDatabaseParameters.layerSize = -1;
+    defaultDatabaseParameters.logFileSize = 100;
+    defaultDatabaseParameters.maxLogFiles = 3;
+    defaultDatabaseParameters.securityOptions = 1;
+    defaultDatabaseParameters.sessionOptions.queryTimeout = 0;
+    defaultDatabaseParameters.sessionOptions.executionStackDepth = global.stackDepth;
+    defaultDatabaseParameters.sessionPoolSize = 50;
+    defaultDatabaseParameters.tmpFileName = "";
+    defaultDatabaseParameters.tmpFileSize.max = 1000;
+    defaultDatabaseParameters.tmpFileSize.initial = 1000;
+    defaultDatabaseParameters.tmpFileSize.extension = 1000;
+    defaultDatabaseParameters.updateCriteria = 0.25;
+}
+
 void CommonClientAuthentication::recvInitialAuth(MessageExchanger* comm)
 {
      comm->readString(username, SE_MAX_LOGIN_LENGTH);
