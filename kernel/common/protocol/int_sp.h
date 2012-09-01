@@ -7,6 +7,9 @@
 #define _INT_SP_H
 
 #define MAX_TICKET_SIZE 1024
+#define MAX_ERROR_LENGTH 1024
+#define MAX_DB_NAME 1024
+#define MAX_XML_PARAMS 10000
 
 #include <exception>
 
@@ -41,13 +44,18 @@ enum se_int_sp_instructions {
 
     se_int_StartDatabaseInternal                   = 181,
     se_int_CreateDatabaseInternal                  = 183,
-    se_int_DatabaseRegisterationFailed             = 184,
 
-    se_int_RegisterSession                         = 185,
-    se_int_UnregisterSession                       = 186,
-    se_int_SessionParametersInternal               = 187,
-    se_int_SessionRegistrationFailed               = 188,
+    se_int_RegisterSession                         = 184,
+    se_int_UnregisterSession                       = 185,
 
+    se_int_SessionParametersInternal               = 186,
+
+    se_int_ProcessReady                            = 187,
+    se_int_RegistrationFailed                      = 188,
+
+    se_int_SoftError                               = 192,
+    se_int_SuccessefulStop                         = 193,
+    
 //    se_UnixSocketReady                             = 163,
 
 //    se_SocketReceivedOK                            = 165,

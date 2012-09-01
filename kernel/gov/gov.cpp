@@ -24,7 +24,6 @@
 
 int main(int argc, char** argv)
 {
-    program_name_argv_0 = argv[0];
     char buf[1024];
     char instance[16];
     /* Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
@@ -35,17 +34,30 @@ int main(int argc, char** argv)
 #endif
 
     try {
+        init_base_path(argv[0]);
         GlobalParameters sednaGlobalOptions;
-        if ( parseSednaOptions(argc, argv, &sednaGlobalOptions, program_name_argv_0) ) { return 1; }
+
+        if (parseSednaOptions(argc, argv, &sednaGlobalOptions, program_name_argv_0) ) { return 1; }
 
 #ifdef EL_DEBUG
         std::cout << "\n\nFinal Sedna parameters are: \n";
-        sednaGlobalOptions.saveToStream(&std::cout);     
+        sednaGlobalOptions.saveToStream(&std::cout);
+        std::cout << "\n";
 #endif /* EL_DEBUG */
-        
-// !FIXME: do we really need SEDNA_DATA in this form?
+
+        if (*sednaGlobalOptions.global.dataDirectory.rbegin() != U_PATH_DELIMITER_C) {
+            sednaGlobalOptions.global.dataDirectory += U_PATH_DELIMITER;
+        };
 
         SEDNA_DATA = sednaGlobalOptions.global.dataDirectory.c_str();
+
+        GlobalObjectsCollector collector(SEDNA_DATA);
+        uSetGlobalNameGeneratorBase(SEDNA_DATA);
+
+        if (event_logger_start_daemon(SEDNA_DATA, el_convert_log_level(sednaGlobalOptions.global.logLevel),
+                eventLogShmName, eventLogSemName)) {
+            throw SYSTEM_EXCEPTION("Failed to initialize event log");
+        }
 
         if (0 != uSetEnvironmentVariable(SEDNA_DATA_ENVIRONMENT, SEDNA_DATA, NULL, __sys_call_error)) {
             throw SYSTEM_EXCEPTION("Failed to set environment variable");
@@ -57,18 +69,9 @@ int main(int argc, char** argv)
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR)
             throw SYSTEM_EXCEPTION("Failed to initialize socket library");
 
-        GlobalObjectsCollector collector(sednaGlobalOptions.global.dataDirectory.c_str());
-        uSetGlobalNameGeneratorBase(sednaGlobalOptions.global.dataDirectory.c_str());
-
-        if (event_logger_start_daemon(sednaGlobalOptions.global.dataDirectory.c_str(),
-              el_convert_log_level(sednaGlobalOptions.global.logLevel),
-                eventLogShmName, eventLogSemName)) {
-            throw SYSTEM_EXCEPTION("Failed to initialize event log");
-        }
-
         log_out_system_information();
         srand(uGetCurrentProcessId(__sys_call_error));
-        
+
         ProcessManager processManager(sednaGlobalOptions);
         Worker * govWorker = new Worker(&processManager);
         govWorker->createListener();

@@ -29,15 +29,17 @@
 #define MASTER_BLOCK_SIZE          4096U
 #define VMM_SM_BLK_HDR_MAX_SIZE    4096U
 
+extern lsize_t layerAddressSpaceSize;
+
 /*
  * NOTE: xptr layers start with 1, but data-file layers start with 0
  */
 #define ABS_DATA_OFFSET(p)       ((uint64_t)((p).layer - 1) *                  \
-                                 (uint64_t)(LAYER_ADDRESS_SPACE_SIZE) +        \
+                                 (uint64_t)(layerAddressSpaceSize) +        \
                                  (uint64_t)((p).getOffs()))
 
 #define ABS_TMP_OFFSET(p)        ((uint64_t)((p).layer - TMP_LAYER_STARTS_WITH) * \
-                                 (uint64_t)(LAYER_ADDRESS_SPACE_SIZE) +           \
+                                 (uint64_t)(layerAddressSpaceSize) +           \
                                  (uint64_t)((p).getOffs()))
 
 

@@ -1,24 +1,25 @@
-#ifndef _MSTARTDATABASE_H_
-#define _MSTARTDATABASE_H_
+#ifndef _MUSERCREATEDATABASE_H_
+#define _MUSERCREATEDATABASE_H_
 
 #include "common/protocol/int_sp.h"
 #include "common/socketutils/socketutils.h"
 
 namespace proto {
 
-struct StartDatabase {
-    enum { default_msgid = se_int_StartDatabaseInternal };
+struct UserCreateDatabase {
+    enum { msgid = se_CreateDatabaseRequest };
 
-    int32_t msgid;
+    std::string dbname;
     std::string options;
 
-    explicit StartDatabase(MessageExchanger & comm, int32_t msg = default_msgid) : msgid(msg) { *this << comm; };
+    explicit UserCreateDatabase(MessageExchanger & comm) { *this << comm; };
 
-    explicit StartDatabase(const std::string & _options, int32_t msg = default_msgid) 
-        : msgid(msg), options(_options) {};
+    explicit UserCreateDatabase(const std::string & _dbname, const std::string & _options) 
+        : dbname(_dbname), options(_options) {};
 
     MessageExchanger & operator >>(MessageExchanger & comm) {
         comm.beginSend(msgid);
+        comm.writeString(dbname);
         comm.writeString(options);
         comm.endSend();
         return comm;
@@ -29,6 +30,7 @@ struct StartDatabase {
             throw proto::InvalidMessage(msgid, comm.getInstruction());
         };
 
+        comm.readString(dbname, MAX_DB_NAME);
         comm.readString(options, MAX_XML_PARAMS);
         return comm;
     };
@@ -37,4 +39,4 @@ struct StartDatabase {
 
 };
 
-#endif /* _MSTARTDATABASE_H_ */
+#endif /* _MUSERCREATEDATABASE_H_ */

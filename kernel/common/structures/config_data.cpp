@@ -6,39 +6,41 @@
 #include "auxiliary/cppcast.h"
 #include "auxiliary/options/xml_options.h"
 
+#include "common/base.h"
 #include "common/socketutils/socketutils.h"
 
 #include <sstream>
 
-/* NOTE: this options are set in the only place: in gov_globals.cpp */
-/* WARNING: Ilya, check please options datafilesize and tmpfilesize. I'm not sure about values */
-void GlobalParameters::setDefaultOptions() {
-    global.bindAddress     = "0.0.0.0";
-    global.dataDirectory   = "/var/sedna";
-    global.listenPort      = 5050;
-    global.logLevel        = 2;
-    global.stackDepth      = 4000;
-    global.keepAlive       = 0;
-    defaultDatabaseParameters.autoStart = true;
-    defaultDatabaseParameters.bufferCount = 1600;
-    defaultDatabaseParameters.databaseId = -1;
-    defaultDatabaseParameters.databaseName = "";
-    defaultDatabaseParameters.dataFileName = "";
-    defaultDatabaseParameters.dataFileSize.max = INT_MAX;
-    defaultDatabaseParameters.dataFileSize.initial = 100;
-    defaultDatabaseParameters.dataFileSize.extension = 100;
-    defaultDatabaseParameters.layerSize = -1;
-    defaultDatabaseParameters.logFileSize = 100;
-    defaultDatabaseParameters.maxLogFiles = 3;
-    defaultDatabaseParameters.securityOptions = 1;
-    defaultDatabaseParameters.sessionOptions.queryTimeout = 0;
-    defaultDatabaseParameters.sessionOptions.executionStackDepth = global.stackDepth;
-    defaultDatabaseParameters.sessionPoolSize = 50;
-    defaultDatabaseParameters.tmpFileName = "";
-    defaultDatabaseParameters.tmpFileSize.max = 1000;
-    defaultDatabaseParameters.tmpFileSize.initial = 1000;
-    defaultDatabaseParameters.tmpFileSize.extension = 1000;
-    defaultDatabaseParameters.updateCriteria = 0.25;
+DatabaseOptions::DatabaseOptions()
+{
+    autoStart = false;
+    bufferCount = 1600;
+    databaseId = -1;
+    dataFilePath = "";
+    dataFileSize.max = 0;
+    dataFileSize.initial = 100;
+    dataFileSize.extension = 100;
+    layerSize = -1;
+    logFileSize = 100;
+    maxLogFiles = 3;
+    securityOptions = 1;
+    sessionOptions.queryTimeout = 0;
+    sessionOptions.executionStackDepth = 4000;
+    sessionPoolSize = 50;
+    tmpFileSize.max = 0;
+    tmpFileSize.initial = 100;
+    tmpFileSize.extension = 100;
+    updateCriteria = 0.25;
+};
+
+SednaOptions::SednaOptions()
+{
+    bindAddress     = "127.0.0.1";
+    dataDirectory   = std::string(base_path) + U_PATH_DELIMITER".."U_PATH_DELIMITER"data"U_PATH_DELIMITER;
+    listenPort      = 5050;
+    logLevel        = 2;
+    stackDepth      = 4000;
+    keepAlive       = 0;
 }
 
 void CommonClientAuthentication::recvInitialAuth(MessageExchanger* comm)
@@ -263,8 +265,9 @@ void GlobalParameters::loadDatabaseFromStream(const std::string& dbname, std::is
     XmlReader parser;
     parser.getDocNodeReader()->setElementReader("databaseOptions", &dbOptionsReader);
     parser.readStream(stream);
-    
+
     dbopts->databaseName = dbname;
+    dbopts->dataFilePath = global.dataDirectory + dbname + U_PATH_DELIMITER;
 }
 
 void GlobalParameters::saveDatabaseToStream(const std::string& dbname, std::ostream* stream) const

@@ -267,6 +267,9 @@ static int __event_log_write_hdr(int elevel,
             char buf[U_MAX_PATH];
 
             uGetFileNameFromFilePath(filename, buf, U_MAX_PATH, __sys_call_error);
+#ifdef EL_DEBUG
+            fprintf(stderr, "[%s:%d] ", buf, lineno);
+#endif /* EL_DEBUG */
             res = fprintf(el_ostr, " [%s:%s:%d]", buf, funcname, lineno);
 
             if (res == -1) {
@@ -290,11 +293,6 @@ event_log_init_file:
         /* initialize output stream */
         char buf[SEDNA_DATA_VAR_SIZE + 128];
         strcpy(buf, log_base_dir);
-#ifdef _WIN32
-        strcat(buf, "\\data\\");
-#else
-        strcat(buf, "/data/");
-#endif
         strcat(buf, SE_EVENT_LOG_FILENAME);
 
         el_ostr = fopen(buf, "at");
@@ -302,17 +300,14 @@ event_log_init_file:
         if (!el_ostr) {
 /* this is needed if data dir doesn't exist */            
             strcpy(buf, log_base_dir);
-#ifdef _WIN32
-            strcat(buf, "\\data\\");
-#else
-            strcat(buf, "/data/");
-#endif
             uMkDir(buf, NULL, NULL);
             
             strcat(buf, SE_EVENT_LOG_FILENAME);
 
             el_ostr = fopen(buf, "at");
+
             if (!el_ostr) {
+                fprintf(stderr, "Event log creation failed.\n");
                 return;
             }
         }
@@ -320,6 +315,7 @@ event_log_init_file:
         /// We must make it non inheritable, other way sessions created by
         /// governor inherit it and block log file rename.
         if(uMakeLowLevelDescriptorNonInheritable(el_ostr, NULL) == -1) {
+            fprintf(stderr, "Event log creation failed.\n");
             fclose(el_ostr);
             el_ostr = NULL;
             return;
@@ -343,21 +339,11 @@ event_log_init_file:
 
         /* backup file if needed */
         strcpy(buf1, log_base_dir);
-#ifdef _WIN32
-        strcat(buf1, "\\data\\");
-#else
-        strcat(buf1, "/data/");
-#endif
         strcat(buf1, SE_EVENT_LOG_FILENAME);
 
 
         if (event_log_truncate) {
             strcpy(buf2, log_base_dir);
-#ifdef _WIN32
-            strcat(buf2, "\\data\\");
-#else
-            strcat(buf2, "/data/");
-#endif
             strcat(buf2, SE_EVENT_LOG_FILENAME_BACKUP);
 
             if (remove(buf2)) {
@@ -381,11 +367,6 @@ event_log_init_file:
                 counter = 0;
             }
             strcpy(buf2, log_base_dir);
-#ifdef _WIN32
-            strcat(buf2, "\\data\\");
-#else
-            strcat(buf2, "/data/");
-#endif
             strcat(buf2, SE_EVENT_LOG_FILENAME_BU_BASE);
             strcat(buf2, dt_buf);
             strcat(buf2, SE_EVENT_LOG_FILENAME_BU_SUFX);
@@ -411,12 +392,22 @@ static void __event_log_dump_str_replacing_newlines(const char * str, const char
         i=strchr(str,'\n');
         sz=i?i-str:strlen(str);
         fwrite(str,1,sz,el_ostr);
+#ifdef EL_DEBUG
+        fwrite(str,1,sz,stderr);
+#endif /* EL_DEBUG */
         if(!i) {
             break;
         }
         fwrite(replace,1,replace_sz,el_ostr);
+#ifdef EL_DEBUG
+        fwrite(replace,1,replace_sz,stderr);
+#endif /* EL_DEBUG */
         str+=sz+1;
     }
+#ifdef EL_DEBUG
+    fwrite("\n",1,1,stderr);
+    fflush(stderr);
+#endif /* EL_DEBUG */
 }
 
 static void __event_log_write_short_msg()
@@ -638,7 +629,7 @@ int event_log_long_msg(int elevel,
     bool copy = true;
 
     /* temporary solution for infinite loop on event_log failure */
-    if (1 == USemaphoreArrDown(el_sems, 0, __sys_call_error)) {
+    if (0 != USemaphoreArrDown(el_sems, 0, __sys_call_error)) {
         event_log_initialized = false;
         return -1;
     }
@@ -674,14 +665,14 @@ int event_log_long_msg(int elevel,
     }
 
     /* temporary solution for infinite loop on event_log failure */
-    if (1 == USemaphoreArrUp(el_sems, 1, __sys_call_error)) {
+    if (0 != USemaphoreArrUp(el_sems, 1, __sys_call_error)) {
         event_log_initialized = false;
         return -1;
     }
 
     while (copy) {
         /* temporary solution for infinite loop on event_log failure */
-        if (1 == USemaphoreArrDown(el_sems, 2, __sys_call_error)) {
+        if (0 != USemaphoreArrDown(el_sems, 2, __sys_call_error)) {
             event_log_initialized = false;
             return -1;
         }
@@ -930,12 +921,6 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
     };
 
     strncpy(buf, log_base_dir, SEDNA_DATA_VAR_SIZE);
-
-#ifdef _WIN32
-    strcat(buf, "\\data\\");
-#else
-    strcat(buf, "/data/");
-#endif
 
     if (uMkDir(buf, NULL, NULL) == 0) {
         elog(EL_FATAL, ("Cannot create data directory for soft fault logs\n"));

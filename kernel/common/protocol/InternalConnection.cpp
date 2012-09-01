@@ -53,16 +53,6 @@ MasterProcessConnection::~MasterProcessConnection()
 void MasterProcessConnection::registerOnGov(const char* ticket)
 {
     proto::ConnectProcess(ticket) >> *communicator;
-    nextMessage();
-
-    if (communicator->getInstruction() == se_int_StartDatabaseInternal ||
-      communicator->getInstruction() == se_int_CreateDatabaseInternal) {
-        proto::StartDatabase startDb(*communicator, communicator->getInstruction());
-        std::istringstream options(startDb.options);
-        databaseOptions->loadFromStream(&options);
-    } else {
-        throw 1;
-    };
 }
 
 

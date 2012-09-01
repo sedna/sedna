@@ -138,6 +138,8 @@ enum se_item_type
  */
 enum se_sp_instructions
 {   
+    se_Ok = 001,
+
     se_ErrorResponse                               = 100,
     se_StartUp                                     = 110,
     se_SessionParameters                           = 120,
@@ -148,13 +150,12 @@ enum se_sp_instructions
     se_AuthenticationOK                            = 160,
     se_AuthenticationFailed                        = 170,
 
-    se_CreateDbRequest                             = 185, /// for cdb-client
-    se_CreateDbParams                              = 186,
-    se_CreateDbOK                                  = 187,
-    se_CreateDbFailed                              = 188,
-    se_CreateDbFailedExists                        = 189,
-    
-    se_DropDbRequest                               = 190,
+    se_CreateDatabaseRequest                       = 172,
+    se_DropDatabaseRequest                         = 173,
+
+    se_CreateDbOK                                  = 174,
+    se_CreateDbFailed                              = 175,
+    se_CreateDbFailedExists                        = 176,
 
     se_BeginTransaction                            = 210,
     se_CommitTransaction                           = 220,

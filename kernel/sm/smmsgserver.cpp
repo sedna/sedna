@@ -1,29 +1,31 @@
 #include "smmsgserver.h"
 
 #include "common/lockmantypes.h"
+#include "common/llcommon/llMain.h"
+#include "common/structures/config_data.h"
 
-#include "sm/smtypes.h"
-#include "sm/trmgr.h"
 #include "sm/lm/lm_globals.h"
-#include "sm/bufmgr/bm_functions.h"
-#include "sm/wu/wu.h"
-#include "sm/hb_utils.h"
-
 #include "sm/lockwarden.h"
+#include "sm/trmgr.h"
+#include "sm/wu/wu.h"
+#include "sm/bufmgr/bm_functions.h"
+#include "sm/bufmgr/bm_core.h"
+#include "sm/sm_globals.h"
+#include "sm/hb_utils.h"
 
 static
 sm_msg_messages
 sm_register_transaction(sm_msg_struct * msg)
 {
     // even in an exclusive mode we don't block ro-transactions
-    if (xmGetExclusiveModeId() != -1 && !msg->trinfo.rdonly) {
+    if (xmGetExclusiveModeId() != -1 && !msg->data.trinfo.rdonly) {
         xmBlockSession(msg->sid);
         return msg_error; // come again later
     } else {
-        msg->trid = get_transaction_id(msg->trinfo.rdonly);
+        msg->trid = get_transaction_id(msg->data.trinfo.rdonly);
 
         if (msg->trid != -1) {
-            if (msg->trinfo.excl) {
+            if (msg->data.trinfo.excl) {
                 xmEnterExclusiveMode(msg->sid);
             }
         }
@@ -38,9 +40,9 @@ sm_release_transaction(sm_msg_struct * msg)
 {
     session_id excl_sid = xmGetExclusiveModeId();
 
-    give_transaction_id(msg->trid, msg->trinfo.rdonly);
+    give_transaction_id(msg->trid, msg->data.trinfo.rdonly);
 
-    if (msg->trinfo.rdonly) {
+    if (msg->data.trinfo.rdonly) {
       // Read-only query has just finished; snapshot advancement might be possible
         if (UEventSet(&end_of_rotr_event, __sys_call_error) != 0) {
             throw SYSTEM_EXCEPTION("Event signaling for possibility of snapshot advancement failed");
@@ -70,16 +72,16 @@ static
 sm_msg_messages
 sm_lock_entity(sm_msg_struct * msg)
 {
-    msg->lock.result =
+    msg->data.lock.result =
       lm_table.lock(msg->trid, msg->sid,
-        resource_id(msg->lock.name, msg->lock.rkind),
-          msg->lock.mode, LOCK_LONG, 0);
+        resource_id(msg->data.lock.name, msg->data.lock.rkind),
+          msg->data.lock.mode, LOCK_LONG, 0);
 
-    if (msg->lock.result != LOCK_OK) {
-        U_ASSERT(msg->lock.result == LOCK_NOT_LOCKED);
+    if (msg->data.lock.result != LOCK_OK) {
+        U_ASSERT(msg->data.lock.result == LOCK_NOT_LOCKED);
 
         if (lm_table.deadlock(msg->trid, true)) {
-            msg->lock.result = LOCK_DEADLOCK;
+            msg->data.lock.result = LOCK_DEADLOCK;
             tr_lock_head* tr_head = tr_table.find_tr_lock_head(msg->trid);
 
             if (tr_head == NULL) {
@@ -114,13 +116,15 @@ int sm_server_handler(void *arg)
             lm_table.release_tr_locks(msg->trid);
             break;
         case msg_unlock_object:
-            lm_table.unlock(msg->trid, resource_id(msg->lock.name, msg->lock.rkind));
+            lm_table.unlock(msg->trid, resource_id(msg->data.lock.name, msg->data.lock.rkind));
             break;
+  /* Former shutdown commands */
+/*
         case 10:
         case 11:
-            /* Former shutdown commands */
             U_ASSERT(false);
             break;
+*/
         case msg_register_session:
             bm_reset_io_statistics();
             bm_register_session(msg->sid, msg->data.reg.num);
@@ -162,21 +166,21 @@ int sm_server_handler(void *arg)
             break;
 
         /* These are about xclusive modes. Do not know what they are. */
-        case 27:
+        case msg_enter_excl_mode:
             U_ASSERT(false);
-            bm_enter_exclusive_mode(msg->sid, &(msg->data.reg.num), databaseOptions->bufferCount);
+            bm_enter_exclusive_mode(msg->sid, &(msg->data.reg.num));
             msg->cmd = msg_ok;
             break;
-        case 28:
+        case msg_exit_excl_mode:
             U_ASSERT(false);
             bm_exit_exclusive_mode(msg->sid);
             msg->cmd = msg_ok;
             break;
-        case 29:
-            bm_memlock_block(msg->sid, *(xptr*)(&(msg->data.ptr)), databaseOptions->bufferCount);
+        case msg_lock_block:
+            bm_memlock_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
             msg->cmd = msg_ok;
             break;
-        case 30:
+        case msg_unlock_block:
             bm_memunlock_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
             msg->cmd = msg_ok;
             break;
@@ -184,11 +188,13 @@ int sm_server_handler(void *arg)
             bm_block_statistics(&(msg->data.stat));
             msg->cmd = msg_ok;
             break;
+/*
         case 32:
         case 33: // WARNING: WTF???
             U_ASSERT(false);
             msg->cmd = msg_ok;
             break;
+*/
         case msg_delete_tmp_blocks:
             bm_delete_tmp_blocks(msg->sid);
             msg->cmd = msg_ok;
@@ -197,7 +203,7 @@ int sm_server_handler(void *arg)
             bm_register_transaction(msg->sid, msg->trid);
 
             try {
-                WuOnRegisterTransactionExn(msg->sid, msg->want_snapshot, (TIMESTAMP*) &msg->data.snp_ts);
+                WuOnRegisterTransactionExn(msg->sid, msg->data.want_snapshot, (TIMESTAMP*) &msg->data.snp_ts);
             } catch(ANY_SE_EXCEPTION) {
                 bm_unregister_transaction(msg->sid, msg->trid);
                 throw;
@@ -261,11 +267,10 @@ int sm_server_handler(void *arg)
 
             msg->cmd = msg_ok;
             break;
-        default: {
-                      //d_printf2("query unknown (%d)\n", msg->cmd);
-                      msg->cmd = 1;
-                      break;
-                  }
+        default:
+            throw SYSTEM_EXCEPTION("Unknown message in sm_vmm");
+            msg->cmd = msg_error;
+            break;
         }
 
         gaintLock.release();

@@ -1,24 +1,25 @@
-#ifndef _MSTARTDATABASE_H_
-#define _MSTARTDATABASE_H_
+#ifndef _MREGISTERSESSION_H_
+#define _MREGISTERSESSION_H_
 
 #include "common/protocol/int_sp.h"
 #include "common/socketutils/socketutils.h"
 
 namespace proto {
 
-struct StartDatabase {
-    enum { default_msgid = se_int_StartDatabaseInternal };
+struct RegisterSession {
+    enum { msgid = se_int_SessionParametersInternal };
 
-    int32_t msgid;
+    int32_t session_id;
     std::string options;
 
-    explicit StartDatabase(MessageExchanger & comm, int32_t msg = default_msgid) : msgid(msg) { *this << comm; };
+    explicit RegisterSession(MessageExchanger & comm) { *this << comm; };
 
-    explicit StartDatabase(const std::string & _options, int32_t msg = default_msgid) 
-        : msgid(msg), options(_options) {};
+    explicit RegisterSession(int32_t _session_id, const std::string & _options) 
+        : session_id(_session_id), options(_options) {};
 
     MessageExchanger & operator >>(MessageExchanger & comm) {
         comm.beginSend(msgid);
+        comm.writeInt32(session_id);
         comm.writeString(options);
         comm.endSend();
         return comm;
@@ -29,6 +30,7 @@ struct StartDatabase {
             throw proto::InvalidMessage(msgid, comm.getInstruction());
         };
 
+        session_id = comm.readInt32();
         comm.readString(options, MAX_XML_PARAMS);
         return comm;
     };
@@ -37,4 +39,4 @@ struct StartDatabase {
 
 };
 
-#endif /* _MSTARTDATABASE_H_ */
+#endif /* _MREGISTERSESSION_H_ */

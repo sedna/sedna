@@ -3,10 +3,16 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "smtypes.h"
+#include "common/errdbg/exceptions.h"
+#include "common/structures/config_data.h"
+
+#include "sm/sm_functions.h"
+#include "sm/bufmgr/bm_core.h"
+#include "sm/bufmgr/blk_mngmt.h"
+#include "sm/sm_globals.h"
 
 #include "u/umutex.h"
-#include "common/errdbg/exceptions.h"
+#include "u/uhdd.h"
 
 #include <string>
 
@@ -43,11 +49,6 @@ void ReleaseGiantLock()
 {
     if (!isGiantLockInitialized || uMutexUnlock(&giantLockMutex, __sys_call_error)!=0)
         throw SYSTEM_EXCEPTION("failed to release giant lock");
-}
-
-void set_layer_parameters(lsize_t layer_size)
-{
-    LAYER_ADDRESS_SPACE_SIZE = layer_size;
 }
 
 void recreate_tmp_file()

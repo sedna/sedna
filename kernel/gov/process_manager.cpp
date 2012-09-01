@@ -160,7 +160,7 @@ void ProcessManager::generateTicket(ClientTicket& ticket)
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz";
 
-    for (int i = 0; i < ticket_len; ++i) {
+    for (size_t i = 0; i < ticket_len; ++i) {
         s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
     }
 

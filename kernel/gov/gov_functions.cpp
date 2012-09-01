@@ -65,29 +65,16 @@ void log_out_system_information()
         elog(EL_WARN, ("Can't get system information!"));
     else
 
-#ifdef _WIN32
-        elog(EL_INFO, ("System: %s %s (%s) %s", buf.sysname, buf.release, buf.version, buf.machine));
-#else
-        elog(EL_INFO, ("System: %s %s %s", buf.sysname, buf.release, buf.machine));
-#endif
+    elog(EL_INFO, ("System: %s %s (%s) %s", buf.sysname, buf.release, buf.version, buf.machine));
 }
 
 
 void check_data_folder_existence(const char * dataDirectory)
 {
-    char buf[U_MAX_PATH + 10]; /// should be enough to place "%SEDNA_DATA%/data"!
-    strcpy(buf, dataDirectory);
-
-#ifdef _WIN32
-    strcat(buf, "\\data");
-#else
-    strcat(buf, "/data");
-#endif
-
-    if (!uIsFileExist(buf, __sys_call_error))
+    if (!uIsFileExist(dataDirectory, __sys_call_error))
     {
-        if (uMkDir(buf, NULL, __sys_call_error) == 0)
-            throw USER_EXCEPTION2(SE4300, buf);
+        if (uMkDir(dataDirectory, NULL, __sys_call_error) == 0)
+            throw USER_EXCEPTION2(SE4300, dataDirectory);
     }
 }
 
@@ -96,16 +83,10 @@ void RenameLastSoftFaultDir()
 
   std::string buf;
   std::string last_sf_dir;
-   
+
   buf = SEDNA_DATA;
 
-#ifdef _WIN32
-  buf += "\\data";
-  last_sf_dir = buf + std::string("\\") + SE_LAST_SOFT_FAULT_DIR;
-#else
-  buf += "/data";
-  last_sf_dir = buf + std::string("/") + SE_LAST_SOFT_FAULT_DIR;
-#endif
+  last_sf_dir = buf + std::string(U_PATH_DELIMITER) + SE_LAST_SOFT_FAULT_DIR;
 
   if(uIsFileExist(last_sf_dir.c_str(), NULL))
   {
@@ -164,11 +145,7 @@ void RenameLastSoftFaultDir()
 #endif
 
 
-#ifdef _WIN32
-    std::string new_name = buf + std::string("\\") + std::string(SE_SOFT_FAULT_LOG_DIR) + buf2;
-#else
-    std::string new_name = buf + std::string("/") + std::string(SE_SOFT_FAULT_LOG_DIR) + buf2;
-#endif
+    std::string new_name = buf + std::string(U_PATH_DELIMITER) + std::string(SE_SOFT_FAULT_LOG_DIR) + buf2;
 
     if (uIsFileExist(new_name.c_str(), NULL))
     { //need to find free xxxxx_i  directory
@@ -177,7 +154,7 @@ void RenameLastSoftFaultDir()
        for (;;)
        {
          if (!uIsFileExist((new_name + std::string(".")  + u_itoa(i, val, 10)).c_str(), NULL)) break;
-        
+
          i++;
        }
 

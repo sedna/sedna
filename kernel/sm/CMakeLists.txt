@@ -16,7 +16,7 @@ list(APPEND common_libs common expat ${sysaux_LIB})
 endif (UNIX)
 
 # se_sm
-set(sm_SRC sm.cpp sm_functions.cpp trmgr.cpp hb_utils.cpp cdb_utils.cpp ${common_SRC})
+set(sm_SRC sm.cpp sm_functions.cpp trmgr.cpp hb_utils.cpp cdb_utils.cpp smmsgserver.cpp ${common_SRC})
 SET_SOURCES(sm_SRC 1)
 
 add_executable(se_sm ${sm_SRC})

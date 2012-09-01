@@ -5,6 +5,8 @@
 
 #include "common/sedna.h"
 #include "common/lockmantypes.h"
+#include "common/xptr/sm_vmm_data.h"
+#include "common/errdbg/d_printf.h"
 
 #include "u/usem.h"
 #include "u/ugnames.h"
@@ -12,8 +14,7 @@
 #include "sm/lm/lm_globals.h"
 #include "sm/lm/lock_table.h"
 #include "sm/lm/trans_table.h"
-
-#include "sm/smtypes.h"
+#include "sm/sm_globals.h"
 
 #include <iostream>
 #include <string>
@@ -50,7 +51,7 @@ lock_request::lock_request(transaction_id tr_id,
     {
         /* open process_sem */
         /* TODO: prepare all sems before creation */
-        SessionIdString sidstr(s_id);
+        SetSessionIdString sidstr(s_id);
         CHECK_ENV(USemaphoreOpen(&process_xsem, transactionLockName, __sys_call_error), SE4012, transactionLockName.name);
     }
 

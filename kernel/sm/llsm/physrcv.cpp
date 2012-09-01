@@ -6,10 +6,16 @@
  *
  */
 
-#include "sm/smtypes.h"
-
 #include "u/uutils.h"
+
+#include "common/llcommon/llMain.h"
+#include "common/structures/config_data.h"
+#include "common/xptr/sm_vmm_data.h"
+
+#include "sm/sm_globals.h"
 #include "sm/wu/wu.h"
+#include "sm/bufmgr/blk_mngmt.h"
+#include "sm/bufmgr/bm_core.h"
 
 #include <stdlib.h>
 #include <string>

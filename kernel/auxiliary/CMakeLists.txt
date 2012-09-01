@@ -14,7 +14,6 @@ SET_SOURCES(auxiliary_SRC 1)
 
 add_library(auxiliary STATIC ${auxiliary_SRC})
 
-add_dependencies(auxiliary generate_error_codes gen_error_codes) # build error codes before common (devenv parallel build freaks out without this)
 add_dependencies(auxiliary u) 
 # find/build expat before common
 add_dependencies(auxiliary custom_expat) 

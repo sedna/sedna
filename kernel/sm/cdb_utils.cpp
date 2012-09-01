@@ -1,8 +1,10 @@
 #include "cdb_utils.h"
 
-#include "sm/smtypes.h"
 #include "sm/bufmgr/blk_mngmt.h"
 #include "sm/bufmgr/bm_functions.h"
+#include "sm/bufmgr/bm_core.h"
+#include "sm/wu/wu.h"
+#include "sm/sm_globals.h"
 
 #include "auxiliary/commutil.h"
 #include "auxiliary/cppcast.h"
@@ -10,8 +12,12 @@
 #include "auxiliary/processwarden.h"
 
 #include "u/uutils.h"
-#include "wu/wu.h"
+#include "u/uhdd.h"
 
+#include "common/llcommon/llMain.h"
+#include "common/structures/config_data.h"
+
+#include <sp_defs.h>
 #include <string>
 
 using namespace std;
@@ -47,7 +53,7 @@ lsize_t determineLayerSize()
     databaseOptions->layerSize = * (lsize_t *) layerAddressMemory.data();
 
     if (databaseOptions->layerSize < VMM_REGION_MIN_SIZE)
-        throw USER_EXCEPTION2(SE1031, (std::string("Determined layer size: ") + cast_to_string(LAYER_ADDRESS_SPACE_SIZE)).c_str());
+        throw USER_EXCEPTION2(SE1031, (std::string("Determined layer size: ") + cast_to_string(layerAddressSpaceSize)).c_str());
 
     elog(EL_INFO, ("Layer address space size = 0x%x", databaseOptions->layerSize));
 
@@ -122,7 +128,7 @@ void createInitialDbData()
         SET_FLAG(mb->transaction_flags, TR_AUTHENTICATION_FLAG);
     }
 
-    mb->layer_size = LAYER_ADDRESS_SPACE_SIZE;
+    mb->layer_size = layerAddressSpaceSize;
 
     /* Open data and tmp files */
     data_file_handle = uOpenFile(databaseOptions->dataFileName.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
@@ -190,7 +196,7 @@ void loadMetadata()
 
 void initializeDatabase()
 {
-    LAYER_ADDRESS_SPACE_SIZE = determineLayerSize();
+    layerAddressSpaceSize = determineLayerSize();
     elog(EL_INFO, ("Layer size determined successfully"));
 
     createDataDirectory();

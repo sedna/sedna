@@ -73,6 +73,8 @@ struct DatabaseOptions {
 
     void saveToStream(std::ostream * stream) const;
     void loadFromStream(std::istream * stream);
+
+    DatabaseOptions();
 };
 
 struct SednaOptions {
@@ -83,9 +85,11 @@ struct SednaOptions {
     int stackDepth;
     int logLevel;
     int keepAlive;
-    
+
     void saveToXml(XMLBuilder * xmlBuilder) const;
     XmlNodeReader * createReader();
+
+    SednaOptions();
 };
 
 struct GlobalParameters {
@@ -98,11 +102,9 @@ struct GlobalParameters {
 
     void saveDatabaseToStream(const std::string &dbname, std::ostream * stream) const;
     void loadDatabaseFromStream(const std::string &dbname, std::istream * stream);
-    
+
     void saveToStream(std::ostream * stream) const;
     void loadFromStream(std::istream * stream);
-    
-    void setDefaultOptions();
 };
 
 #endif /* _CONFIG_DATA_H_ */

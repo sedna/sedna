@@ -162,7 +162,7 @@ int main()
 
             switch (fld.type) {
               case STRING: fld.tname = "std::string"; break;
-              case CHAR:   fld.tname = "char"; break;
+              case CHAR:   fld.tname = "uint8_t"; break;
               case INT32:  fld.tname = "int32_t"; break;
               case INT64:  fld.tname = "int64_t"; break;
               default:
@@ -238,7 +238,7 @@ int main()
 
         outstream << "\n    MessageExchanger & operator <<(MessageExchanger & comm) {";
         outstream << "\n        if (comm.getInstruction() != msgid) {";
-        outstream << "\n            throw proto::InvalidMessage(se_int_ConnectProcess, comm.getInstruction());";
+        outstream << "\n            throw proto::InvalidMessage(msgid, comm.getInstruction());";
         outstream << "\n        };\n";
 
         for (std::vector<Field>::iterator jt = msg.fields.begin(); jt != msg.fields.end(); ++jt) {
@@ -246,9 +246,9 @@ int main()
 
             switch (fld.type) {
               case STRING: outstream << "\n        comm.readString(" << fld.name << ", " << fld.args["max"] << ");"; break;
-              case CHAR:   outstream << "\n        comm.readChar(" << fld.name << ");"; break;
-              case INT32:  outstream << "\n        comm.readInt32(" << fld.name << ");"; break;
-              case INT64:  outstream << "\n        comm.readInt64(" << fld.name << ");"; break;
+              case CHAR:   outstream << "\n        " << fld.name << " = comm.readChar();"; break;
+              case INT32:  outstream << "\n        " << fld.name << " = comm.readInt32();"; break;
+              case INT64:  outstream << "\n        " << fld.name << " = comm.readInt64();"; break;
               default:
                 throw std::runtime_error("Unexpected type");
             };

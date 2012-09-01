@@ -136,9 +136,8 @@ public:
 
     ProcessInfo * getUnregisteredProcess(const std::string& ticket);
     void processRegistered(const std::string& ticket, WorkerSocketClient * processor);
-    
     void processRegistrationFailed(const std::string& ticket, const std::string& reason);
-    
+
     DatabaseProcessInfo * getDatabaseProcess(const std::string& dbName)
     {
         DatabaseMap::iterator it = databaseMap.find(dbName);

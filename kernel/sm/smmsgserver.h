@@ -19,6 +19,8 @@ struct SSMMsgServerWrapper
 
     void start()
     {
+        elog(EL_INFO, ("Starting SSMMsg..."));
+
         if (smMessageServer->init() != 0) {
             throw USER_EXCEPTION(SE3030);
         }

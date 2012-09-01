@@ -643,7 +643,7 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
         vmm_preliminary_call(msg.data.reg.layer_size);
 
         /* Open buffer memory */
-        if (uOpenShMem(&file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error) != 0)
+        if (uOpenShMem(&file_mapping, bufferSharedMemoryName, __sys_call_error) != 0)
             throw USER_EXCEPTION(SE1037);
 
         char buf[100];

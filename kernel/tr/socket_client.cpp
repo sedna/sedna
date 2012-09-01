@@ -366,7 +366,7 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
             }
 
             /* Create tmpfile for bulkload */
-            tmp_file_path_str = string(SEDNA_DATA) + string("/data/") + string(tr_globals::db_name) + string("_files");
+            tmp_file_path_str = string(SEDNA_DATA) + string(tr_globals::db_name) + string("_files");
             res = uGetUniqueFileStruct(tmp_file_path_str.c_str(), &fs, tr_globals::sid, __sys_call_error);
             if(res == 0)
                 throw USER_EXCEPTION(SE4052);

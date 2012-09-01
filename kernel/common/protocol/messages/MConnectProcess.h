@@ -25,7 +25,7 @@ struct ConnectProcess {
 
     MessageExchanger & operator <<(MessageExchanger & comm) {
         if (comm.getInstruction() != msgid) {
-            throw proto::InvalidMessage(se_int_ConnectProcess, comm.getInstruction());
+            throw proto::InvalidMessage(msgid, comm.getInstruction());
         };
 
         comm.readString(ticket, MAX_TICKET_SIZE);

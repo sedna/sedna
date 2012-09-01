@@ -39,6 +39,7 @@ enum cdb_state_t {
 
 enum sm_internal_state_t {
       sm_initial_state,
+      sm_confirmation,
       sm_awaiting_db_stop
 };
 

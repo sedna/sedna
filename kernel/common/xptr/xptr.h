@@ -31,18 +31,28 @@ typedef uint32_t lsize_t;
 
 // TODO : move operations and boundaries to VMM
 /* xptr layer-specific values */
+/*
 extern void  *LAYER_ADDRESS_SPACE_START_ADDR;
 extern void  *LAYER_ADDRESS_SPACE_BOUNDARY;
 extern uintptr_t LAYER_ADDRESS_SPACE_START_ADDR_INT;
 extern uintptr_t LAYER_ADDRESS_SPACE_BOUNDARY_INT;
 extern lsize_t LAYER_ADDRESS_SPACE_SIZE;
+*/
 
 #define TMP_LAYER_STARTS_WITH	0x40000000
 /* catalog tmp layers go down as: -2, -3, -4, etc. depending on context chunk */
 #define TEMPORARY_CATALOG_LAYER_START     -2
 #define INVALID_LAYER			0xFFFFFFFF
 
+#define IS_TMP_BLOCK(p)         ((p).layer >= TMP_LAYER_STARTS_WITH)
+#define IS_DATA_BLOCK(p)        ((p).layer <  TMP_LAYER_STARTS_WITH)
+
+#define IS_TMP_BLOCK_LP(ptr)    (((vmm_sm_blk_hdr*)(ptr))->p.layer >= TMP_LAYER_STARTS_WITH)
+#define IS_DATA_BLOCK_LP(ptr)   (((vmm_sm_blk_hdr*)(ptr))->p.layer <  TMP_LAYER_STARTS_WITH)
+
+
 /* use this macros when you want obtain pointer in terms of process' virtual address space */
+/*
 #define XADDR(p)                ((void *)(LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs()))
 #define XADDR_INT(p)            (LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs())
 #define BLOCKXPTR(a)            cxptr(a.layer,((a).getOffs() & PAGE_BIT_MASK))
@@ -54,15 +64,9 @@ extern lsize_t LAYER_ADDRESS_SPACE_SIZE;
 #define ALIGN_ADDR(a)           ((void*)((uintptr_t)(a) & PAGE_BIT_MASK))
 #define ALIGN_OFFS(a)           ((lsize_t)((lsize_t)(a) & PAGE_BIT_MASK))
 
-#define IS_TMP_BLOCK(p)         ((p).layer >= TMP_LAYER_STARTS_WITH)
-#define IS_DATA_BLOCK(p)        ((p).layer <  TMP_LAYER_STARTS_WITH)
-
-#define IS_TMP_BLOCK_LP(ptr)    (((vmm_sm_blk_hdr*)(ptr))->p.layer >= TMP_LAYER_STARTS_WITH)
-#define IS_DATA_BLOCK_LP(ptr)   (((vmm_sm_blk_hdr*)(ptr))->p.layer <  TMP_LAYER_STARTS_WITH)
-
 #define XOFFS2ADDR(p)           ((void *)(LAYER_ADDRESS_SPACE_START_ADDR_INT + (p)))
 #define LAYERS_EQUAL(a, p)      (*(t_layer*)((uintptr_t)(a) & PAGE_BIT_MASK) == ((p).layer))
-
+*/
 
 union uint64_lh_t { struct uint64_lh { uint32_t l; uint32_t h; } lh; uint64_t v; };
 
@@ -103,7 +107,6 @@ struct xptr
 
     inline void setOffs(lsize_t offs_)
     {
-        U_ASSERT(layer <= TEMPORARY_CATALOG_LAYER_START || offs_ < LAYER_ADDRESS_SPACE_SIZE);
         offs = offs_;
     }
 
@@ -165,10 +168,12 @@ inline xptr cxptr(t_layer l, lsize_t a) {
     return p;
 }
 
+/*
 inline
 void * xaddr(const xptr p) {
     return XADDR(p);
 }
+*/
 
 inline xptr operator+(const xptr &p, int n)
 {
@@ -218,14 +223,14 @@ inline xptr block_xptr(const xptr p)
 {
     return cxptr(p.layer, (p.getOffs()) & PAGE_BIT_MASK);
 }
-
+/*
 inline xptr addr2xptr(const void * p)
 {
     U_ASSERT(LAYER_ADDRESS_SPACE_START_ADDR_INT + ((xptr *) (((uintptr_t)p) & PAGE_BIT_MASK))->offs ==
              (((uintptr_t) p ) & PAGE_BIT_MASK));
     return cxptr(* (t_layer*) (((uintptr_t) p) & PAGE_BIT_MASK), (lsize_t)(((uintptr_t)p) - LAYER_ADDRESS_SPACE_START_ADDR_INT));
 }
-
+*/
 inline
 xptr block_offset(const xptr block, shft d) {
     return block_xptr(block) + d;
@@ -251,11 +256,13 @@ inline int xptr_compare(const xptr& p1, const xptr& p2)
     }
 }
 
+/*
 inline bool same_block(const xptr& a, const xptr& b) {
     return (BLOCKXPTR(a) == BLOCKXPTR(b));
 }
+*/
 
-inline bool isTmpBlock(const xptr &p) { return p.layer >= TMP_LAYER_STARTS_WITH; };
+// inline bool isTmpBlock(const xptr &p) { return p.layer >= TMP_LAYER_STARTS_WITH; };
 
 /* NULL for xpointers */
 /* Actually, any xptr with 0-layer equals XNULL    A.K. */

@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "smtypes.h"
 #include "trmgr.h"
 
 #include "common/errdbg/d_printf.h"
+#include "common/structures/config_data.h"
 
 #include "u/usem.h"
 #include "u/umutex.h"
@@ -429,7 +429,7 @@ void xmExitExclusiveMode()
     for (size_t i = 0; i < wait_list.size(); i++)
     {
         /* NOTE: Set valid transaction context for global names */
-        SessionIdString sessid(wait_list[i]);
+        SetSessionIdString sessid(wait_list[i]);
 
         if (USemaphoreOpen(&sem, transactionLockName, __sys_call_error) != 0)
             throw SYSTEM_EXCEPTION("Can't open session waiting semaphore");
@@ -459,7 +459,7 @@ void xmTryToStartExclusive()
     if (get_active_transaction_num(true) == 1)
     {
         /* NOTE: Set valid transaction context for global names */
-        SessionIdString sessid(exclusive_sid);
+        SetSessionIdString sessid(exclusive_sid);
         
         if (USemaphoreOpen(&sem, transactionLockName, __sys_call_error) != 0)
             throw SYSTEM_EXCEPTION("Can't open session waiting semaphore");

@@ -12,11 +12,11 @@
 struct DatabaseOptions;
 extern DatabaseOptions * databaseOptions;
 
-struct SessionIdString
+struct SetSessionIdString
 {
     char s_id_str[16];
 
-    SessionIdString(session_id s_id)
+    SetSessionIdString(session_id s_id)
     {
         sprintf(s_id_str, "%d", s_id);
         set();
@@ -27,12 +27,21 @@ struct SessionIdString
         uSetGlobalNameInstanceId(GN_SESSION, s_id_str);
     };
 
-    ~SessionIdString() {
+    ~SetSessionIdString() {
         /* Unset session id from global names */
         uSetGlobalNameInstanceId(GN_SESSION, "x");
     }
 };
 
 
+inline
+int64_t MBS2PAGES(int64_t s) {
+    return (s * 0x100000ULL / PAGE_SIZE);
+}
+
+inline
+int64_t PAGES2MBS(int64_t s) {
+    return (s * PAGE_SIZE / 0x100000ULL);
+}
 
 #endif /* _SM_GLOBALS_H */

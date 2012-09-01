@@ -1,23 +1,22 @@
 #include "gov/clients.h"
-
 #include "gov/cpool.h"
-#include "common/structures/listener_states.h"
 
+#include "common/structures/listener_states.h"
 #include "common/protocol/int_sp.h"
+#include "common/protocol/messages/MStartDatabase.h"
+
 #include "auxiliary/internstr.h"
 #include "auxiliary/options/xml_options.h"
+
 #include "u/uhdd.h"
+
+#include <sp_defs.h>
 
 #include <set>
 
 #ifdef EL_DEBUG
 #include "common/errdbg/d_printf.h"
 #endif /* EL_DEBUG */
-
-#define MAX_TICKET_SIZE 1024
-#define MAX_ERROR_LENGTH 1024
-#define MAX_DB_NAME 1024
-#define MAX_XML_PARAMS 10240
 
 using namespace std;
 
@@ -83,10 +82,10 @@ SocketClient * ClientNegotiationManager::processData() {
         if (length == 2) {
             // New protocol
 
-            protocolVersion.min = communicator->readChar();
             protocolVersion.maj = communicator->readChar();
+            protocolVersion.min = communicator->readChar();
 
-            d_printf1("New protocol connection established");
+            d_printf1("New protocol connection established\n");
 
             return new ServiceConnectionProcessor(this, protocolVersion);
         } else {
@@ -330,7 +329,7 @@ SocketClient* ServiceConnectionProcessor::processData()
 //          case se_StartSM: need to think if we need this at all
 
          case se_StartUp:   //start new session;
-         case se_CreateDbRequest:
+         case se_CreateDatabaseRequest:
            return new CreateDatabaseRequestProcessor(this);
          case se_Stop:
            return new SednaShutdownProcessor(this);
@@ -338,7 +337,7 @@ SocketClient* ServiceConnectionProcessor::processData()
            return new DatabaseShutdownProcessor(this);
          case se_RuntimeConfig:
 //            return new RuntimeConfigProcessor(this);
-         case se_DropDbRequest:
+         case se_DropDatabaseRequest:
 //            return new DropDatabaseProcessor(this);
          case se_StartHotBackup:
 //           return new HotBackupConnectionProcessor(this);
@@ -376,8 +375,8 @@ SocketClient* DatabaseConnectionProcessor::processData()
     ProcessManager * pm = worker->getProcessManager();
     
     switch (state) {
-         case sm_initial_state:
-         {
+        case sm_initial_state:
+        {
         //       NOTE : do not copy/paste
             dbInfo = dynamic_cast<DatabaseProcessInfo *>(pm->getUnregisteredProcess(ticket));
 
@@ -387,35 +386,42 @@ SocketClient* DatabaseConnectionProcessor::processData()
                 return NULL;
             };
 
+            XMLBuilder serializedOptions;
+            dbInfo->options.saveToXml(&serializedOptions);
+
             if (dbInfo->databaseCreationMode) {
-                communicator->beginSend(se_int_CreateDatabaseInternal); //send params to cdb
-                state = sm_awaiting_db_stop;
+                proto::StartDatabase(serializedOptions.str(), se_int_CreateDatabaseInternal) >> *communicator;
             } else {
-                communicator->beginSend(se_int_StartDatabaseInternal);
+                proto::StartDatabase(serializedOptions.str(), se_int_StartDatabaseInternal) >> *communicator;
             }
 
-            XMLBuilder serializedOptions;
+            state = sm_confirmation;
+        }
 
-            dbInfo->options.saveToXml(&serializedOptions);
-            communicator->writeString(serializedOptions.str());
-            communicator->endSend();
+        case sm_confirmation: {
+            if (!communicator->receive()) { return this; }
+
+            std::string errorString = "Unknown message from client";
+
+            switch(communicator->getInstruction()) {
+            case se_int_ProcessReady:
+                pm->processRegistered(ticket, this);
+                return NULL;
+            case se_int_SoftError:
+                communicator->readInt32();
+            case se_int_RegistrationFailed:
+                errorString = communicator->readString(MAX_ERROR_LENGTH);
+            default:
+                pm->processRegistrationFailed(ticket, errorString);
+                setObsolete();
+                return NULL;
+            };
         }
         case sm_awaiting_db_stop:
-        if (!communicator->receive()) { return this; }
+            if (!communicator->receive()) { return this; }
+        default: {
 
-        if (se_RegistrationFailed == communicator->getInstruction()) {
-            pm->processRegistrationFailed(ticket, communicator->readString(MAX_ERROR_LENGTH));
-            setObsolete();
-            return NULL;
         }
-        
-        if (!(se_UnRegisterDB == communicator->getInstruction())) {
-            pm->processRegistrationFailed(ticket, "Invalid CDB response");
-            respondError("Invalid response");
-            return NULL;
-        }
-
-        pm->processRegistered(ticket, this);
 
         //TODO when sm would be more clear: at this point cdb should terminate but sm should wait for shutdown
         // that means that there should be one more message for both.
@@ -522,7 +528,7 @@ SocketClient* CreateDatabaseRequestProcessor::processData()
     
     switch (state) {
        case cdb_awaiting_db_options:
-          if (communicator->getInstruction() != se_CreateDbParams) {
+          if (communicator->getInstruction() != se_CreateDatabaseRequest) {
               respondError();
               elog(EL_LOG, ("Database creation aborted: unexpected message, database parameters were expected"));
               return NULL;
@@ -539,7 +545,7 @@ SocketClient* CreateDatabaseRequestProcessor::processData()
 
           pm->setDatabaseOptions(dbName, communicator->readString(MAX_XML_PARAMS));
           pm->createDatabase(dbName, new CreateDatabaseCallback(this));
-          
+
           state = cdb_awaiting_sm_start;
           break;
        case cdb_awaiting_sm_start:
@@ -563,6 +569,8 @@ SocketClient* SessionConnectionProcessor::processData()
     ProcessManager * pm = worker->getProcessManager();
     trnInfo = dynamic_cast<SessionProcessInfo *> (pm->getUnregisteredProcess(ticket));
 
+/*
+    U_ASSERT(false);
     switch (state) {
         case trn_initial_state: {
             if (NULL == trnInfo) {
@@ -575,11 +583,11 @@ SocketClient* SessionConnectionProcessor::processData()
                     
             pm->getDatabaseOptions(trnInfo->database->databaseName)->saveToXml(&serializedOptions);
             
-            /* send database options to trn */
             communicator->beginSend(se_TrnRegisterOK);
             communicator->writeInt32(trnInfo->sessionId);
             communicator->writeString(serializedOptions.str());
             communicator->endSend();
+
             state = trn_registered;
         }
         case trn_registered: {
@@ -596,7 +604,7 @@ SocketClient* SessionConnectionProcessor::processData()
             return this;
         }
     }        
-    
+*/
     return this;
 }
 

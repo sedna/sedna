@@ -27,6 +27,8 @@ using namespace std;
 ********************************************************************************
 *******************************************************************************/
 
+lsize_t layerAddressSpaceSize = 0;
+
 // IO statistics
 struct bm_core_io_stats {
   int64_t reads;
@@ -373,7 +375,7 @@ xptr put_block_to_buffer(session_id sid,
 		read_block(p, *offs);
 		vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)OFFS2ADDR(*offs);
 		hdr->trid_wr_access = -1;
-        U_ASSERT(hdr->p.getOffs() < LAYER_ADDRESS_SPACE_SIZE);
+        U_ASSERT(hdr->p.getOffs() < layerAddressSpaceSize);
 	}
 	else
 	{
@@ -436,8 +438,7 @@ void flush_buffers()
     for (it = buffer_table.begin(); it != buffer_table.end(); ++it)
     {
         blk = (vmm_sm_blk_hdr*)OFFS2ADDR((ramoffs)(*it));
-        blk->p.print();
-		flush_buffer((ramoffs)(*it), false);
+        flush_buffer((ramoffs)(*it), false);
     }
 
     d_printf1("Flush buffers: complete\n");

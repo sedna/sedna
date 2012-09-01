@@ -736,20 +736,13 @@ const char *program_name_argv_0 = NULL;
 
 char* uGetImageProcPath(char* buf, sys_call_error_fun fun)
 {
+    char * p = buf;
+
 #ifdef _WIN32
-    char *p = buf;
     if (GetModuleFileName(0, buf, U_MAX_PATH + 1) != 0)
     {
-        p = strrchr(buf, '\\');
-        if (!p) p = buf;
-    }
-    else
-       sys_call_error("GetModuleFileName");
-
-    return buf;
 #else
 #ifdef HAVE_PROC_EXE
-    const char *p = buf;
     int len = 0;
     char tmp[U_MAX_PATH + 1];
 
@@ -761,23 +754,20 @@ char* uGetImageProcPath(char* buf, sys_call_error_fun fun)
     if (len != -1)
     {
         buf[len] = '\0';
-        p = strrchr(buf, '/');
-        if (!p) p = buf;
-    }
-    else sys_call_error("uGetImageProcPath");
-    
-    return buf;
 #else
-    char *p = buf;
     if (find_executable(program_name_argv_0, buf, U_MAX_PATH + 1) == 0)
     {
+#endif
         p = strrchr(buf, '/');
         if (!p) p = buf;
+    } else {
+        sys_call_error("uGetImageProcPath");
+        return NULL;
     }
 
     *p = '\0';
+
     return buf;
-#endif
 #endif
 }
 

@@ -10,6 +10,8 @@
 #include "common/sedna.h"
 #include "common/xptr/xptr.h"
 
+struct tr_info;
+
 int push_to_persistent_free_blocks_stack(xptr *hd, xptr p, bool canStoreFreeBlocks = true);
 int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p);
 int64_t count_elems_of_persistent_free_blocks_stack(xptr hd, bool examineHeadOnly = false);

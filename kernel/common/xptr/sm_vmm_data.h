@@ -14,9 +14,18 @@
 #include "common/llcommon/lfsGlobals.h"
 #include "common/lockmantypes.h"
 
-static global_name layerSizeReturn = {GN_DATABASE, "layer_size_return"};
-static global_name smMessageServerName = {GN_DATABASE, "sm_msg_queue"};
-static global_name transactionLockName = {GN_SESSION, "trn_lock"};
+static global_name layerSizeReturn        = {GN_DATABASE, "layer_size_return"};
+static global_name smMessageServerName    = {GN_DATABASE, "sm_msg_queue"};
+static global_name transactionLockName    = {GN_SESSION, "trn_lock"};
+static global_name bufferSharedMemoryName = {GN_DATABASE, "buffer_memory"};
+static global_name xmodeSemaphoreName     = {GN_DATABASE, "xmode_sem"};
+static global_name vmmLockName            = {GN_DATABASE, "vmm_lock"}; /* SM_VMM_SEMAPHORE */
+static global_name catNametableLockName   = {GN_DATABASE, "catalog_nametable"};
+static global_name catMasterLockName      = {GN_DATABASE, "catalog_masterlock"};
+static global_name smCallbackName         = {GN_DATABASE, "sm_callback"}; /* SM_CALLBACK */
+static global_name lruCounterName         = {GN_DATABASE, "lru_counter"}; /* LRU_SHMEM */
+static global_name smCallbackSem1         = {GN_SESSION, "sm_callback_sem_1"}; /* SM_CALLBACK_SEM1 */
+static global_name smCallbackSem2         = {GN_SESSION, "sm_callback_sem_2"}; /* SM_CALLBACK_SEM2 */
 
 struct vmm_sm_blk_hdr
 {
@@ -121,17 +130,20 @@ enum sm_msg_messages {
     msg_release_block = 25,
     msg_unswap_block = 26,
 
+    msg_enter_excl_mode = 27,
+    msg_exit_excl_mode = 28,
+    msg_lock_block = 29,
+    msg_unlock_block = 30,
+
     msg_get_stats = 31,
 
     msg_delete_tmp_blocks = 34,
 
-    msg_register_transaction = 34,
-    msg_unregister_transaction = 34,
+    msg_register_transaction = 35,
+    msg_unregister_transaction = 36,
 
     msg_create_version = 37,
-
     msg_transaction_finish_notification = 38,
-
     msg_hot_backup = 39,
 
     msg_error_max_data_file_size = 101,

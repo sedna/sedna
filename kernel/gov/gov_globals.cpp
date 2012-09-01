@@ -92,13 +92,6 @@ void getSednaConfValues(GlobalParameters * sednaGlobalOptions)
         }
 
         fclose(fs);
-        
-        sednaGlobalOptions->setDefaultOptions();
-
-#ifdef GOV_DEBUG
-        std::cout << "\n\nDefault hardcoded defaults are: \n";
-        sednaGlobalOptions->saveToStream(&std::cout);     
-#endif /* GOV_DEBUG */
 
         sednaGlobalOptions->loadFromStream(scoped_ptr<std::stringstream>(new std::stringstream(cfgText)).get());
 
@@ -106,9 +99,6 @@ void getSednaConfValues(GlobalParameters * sednaGlobalOptions)
         std::cout << "\n\nParameters from file are: \n";
         sednaGlobalOptions->saveToStream(&std::cout);     
 #endif /* GOV_DEBUG */
-        
-    } else {
-        sednaGlobalOptions->setDefaultOptions();
     }
 }
 
