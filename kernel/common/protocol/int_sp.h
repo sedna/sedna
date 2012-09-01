@@ -8,6 +8,19 @@
 
 #define MAX_TICKET_SIZE 1024
 
+#include <exception>
+
+namespace proto {
+    class InvalidMessage : public std::exception
+    {
+        int awaiting;
+        int received;
+
+    public:
+        InvalidMessage(int _awaiting, int _received) : awaiting(_awaiting), received(_received) {};
+    };
+}
+
 /* Attenttion! You should be very careful:
  * If you want to define new protocol constants for internal Sedna processes 
  * communications you should do it there. If you want to add some constants for
@@ -16,31 +29,30 @@
  * intersect by numeric values, otherwise you will debug it very-very long
  */
 
+/* internal messages are prefixed se_int_* */
+
 enum se_int_sp_instructions {
 /* TODO: sort signals in the order of they appear */
-    se_ConnectProcess                              = 180,
+    se_int_Handshake                               = 123,
 
-    se_ReceiveSocket                               = 164,
-    se_Handshake                                   = 121,
-    se_RegisterDB                                  = 123,
-    se_UnRegisterDB                                = 125,
+    se_int_ConnectProcess                          = 180,
 
-    se_SMRegisteringOK                             = 181,
-    se_RegistrationFailed                          = 182,
-    se_CdbRegisteringOK                            = 183,
-    se_CdbRegisteringFailed                        = 184,
-    
-    se_RegisterNewSession                          = 121,
-    se_UnRegisterSession                           = 122,
+//    se_int_ReceiveSocket                           = 164,
 
-    se_TrnRegisterOK                               = 161,
-    se_TrnRegisterOKFirstTransaction               = 162,
-    se_UnixSocketReady                             = 163,
-    
-    se_SocketReceivedOK                            = 165,
-    se_TrnRegisterFailedNotRunningOrSpecialMode    = 171,
-    se_TrnRegisterFailedMaxSessLimit               = 172
-    
+    se_int_StartDatabaseInternal                   = 181,
+    se_int_CreateDatabaseInternal                  = 183,
+    se_int_DatabaseRegisterationFailed             = 184,
+
+    se_int_RegisterSession                         = 185,
+    se_int_UnregisterSession                       = 186,
+    se_int_SessionParametersInternal               = 187,
+    se_int_SessionRegistrationFailed               = 188,
+
+//    se_UnixSocketReady                             = 163,
+
+//    se_SocketReceivedOK                            = 165,
+//    se_TrnRegisterFailedNotRunningOrSpecialMode    = 171,
+//    se_TrnRegisterFailedMaxSessLimit               = 172
 };
 
 #endif /* _INT_SP_H */

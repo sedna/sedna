@@ -79,7 +79,7 @@ class ProcessManager {
 
     /* List of all launched process of Sedna instance */
     ProcessList processList;
-    
+
 //    SystemSocketMap systemSocketMap;
 
     /* Lookup for launched processes by ticket id */
@@ -87,15 +87,15 @@ class ProcessManager {
 
     /* Database lookup by dbmap */
     DatabaseMap databaseMap;
-    
+
     /* Session process lookup by session */
     SessionMap sessionIndexById;
 
     session_id lastSessionId;
-    
+
     /* on database drop we shoul push it's db_id here  */     
     std::stack<int> availaibleDatabaseIds;
-    
+
     std::queue<CallbackMessage> requestProcessQueue;
 
     void callbackError(IProcessCallback * cb, const char * messageInfo);

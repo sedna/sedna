@@ -117,17 +117,17 @@ U_THREAD_PROC (checkpoint_thread, arg)
         {
             if (UEventWait(&start_checkpoint_snapshot,  __sys_call_error) != 0)
                throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
-        
+
             shutdown_event_call = shutdown_checkpoint_thread;
-        
+
             // we come to this thread at the end of each updater transaction to check if we need to
             // make checkpoint or advance snapshots
-        
+
             // we do checkpoint if:
             //	1) when transaction says so (currently only at commit via se:checkpoint() user call or bulk-load optimizations)
             //  2) when se_sm is being shutdowned
             //  3) when we need truncation of log
-        
+
             // we advance snapshots only if SnapshotAdvanceCriterion() says so
             if (shutdown_event_call || llGetCheckpointActiveFlag()) // checkpoint is needed
             {

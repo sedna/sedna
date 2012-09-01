@@ -1,11 +1,17 @@
 #include "InternalConnection.h"
 #include "int_sp.h"
 
+#include "common/protocol/messages/MConnectProcess.h"
+#include "common/protocol/messages/MStartDatabase.h"
+
 #include "common/sedna.h"
 #include "common/socketutils/socketutils.h"
+#include "common/structures/config_data.h"
 
 #include "u/usocket.h"
 #include "u/usocket_int.h"
+
+#include <sstream>
 
 MasterProcessConnection::MasterProcessConnection(const char* address, const char* port)
   : communicator(NULL)
@@ -46,19 +52,16 @@ MasterProcessConnection::~MasterProcessConnection()
 
 void MasterProcessConnection::registerOnGov(const char* ticket)
 {
-    communicator->beginSend(se_ConnectProcess);
-    communicator->writeString(ticket);
-
-    if (0 != communicator->endSend()) {
-      throw USER_EXCEPTION2(SE3006, usocket_error_translator());;
-    }
-
+    proto::ConnectProcess(ticket) >> *communicator;
     nextMessage();
 
-    switch (communicator->getInstruction()) {
-      default:
-        throw SYSTEM_ENV_EXCEPTION("Invalid message from server");
-//        se
+    if (communicator->getInstruction() == se_int_StartDatabaseInternal ||
+      communicator->getInstruction() == se_int_CreateDatabaseInternal) {
+        proto::StartDatabase startDb(*communicator, communicator->getInstruction());
+        std::istringstream options(startDb.options);
+        databaseOptions->loadFromStream(&options);
+    } else {
+        throw 1;
     };
 }
 

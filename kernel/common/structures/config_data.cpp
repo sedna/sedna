@@ -232,6 +232,22 @@ void GlobalParameters::saveToStream(std::ostream* stream) const
     writer.close();
 }
 
+void DatabaseOptions::loadFromStream(std::istream* stream)
+{
+    DatabaseOptionsXmlReader dbOptionsReader(this);
+    XmlReader parser;
+    parser.getDocNodeReader()->setElementReader("databaseOptions", &dbOptionsReader);
+    parser.readStream(stream);
+}
+
+void DatabaseOptions::saveToStream(std::ostream* stream) const
+{
+    XMLBuilder writer(stream);
+    this->saveToXml(&writer);
+    writer.close();
+}
+
+
 void GlobalParameters::loadDatabaseFromStream(const std::string& dbname, std::istream* stream)
 {
     DatabaseOptionMap::iterator dboptIt = databaseOptions.find(dbname);

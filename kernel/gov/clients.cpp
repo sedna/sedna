@@ -38,10 +38,11 @@ SocketClient* InternalProcessNegotiation::processData()
     ticket = communicator->readString(MAX_TICKET_SIZE);
     ProcessManager * pm = worker->getProcessManager();
     ProcessInfo * info = pm->getUnregisteredProcess(ticket);
+
     if (DatabaseProcessInfo * dbInfo = dynamic_cast <DatabaseProcessInfo *> (info)) {
         return new DatabaseConnectionProcessor(this, ticket);
     }
-    
+
     if (SessionProcessInfo * trnInfo = dynamic_cast <SessionProcessInfo *> (info)) {
         return new SessionConnectionProcessor(this, ticket);
     }
@@ -72,12 +73,8 @@ SocketClient * ClientNegotiationManager::processData() {
 
     size_t length;
     ProtocolVersion protocolVersion;
-    
-    switch (communicator->getInstruction()) {
 
-#ifdef EL_DEBUG
-    d_printf1("Got new connection");
-#endif /* EL_DEBUG */
+    switch (communicator->getInstruction()) {
       case se_StartUp :
         length = communicator->getMessageLength();
 
@@ -88,18 +85,16 @@ SocketClient * ClientNegotiationManager::processData() {
 
             protocolVersion.min = communicator->readChar();
             protocolVersion.maj = communicator->readChar();
-            
-#ifdef EL_DEBUG
+
             d_printf1("New protocol connection established");
-#endif /* EL_DEBUG */
-            
+
             return new ServiceConnectionProcessor(this, protocolVersion);
         } else {
             return new ClientConnectionProcessor(this, ClientConnectionProcessor::CommonProtocolClient());
         };
 
         break;
-      case se_ConnectProcess :
+      case se_int_ConnectProcess :
         return new InternalProcessNegotiation(this);
 
       default:
@@ -393,14 +388,14 @@ SocketClient* DatabaseConnectionProcessor::processData()
             };
 
             if (dbInfo->databaseCreationMode) {
-                communicator->beginSend(se_CdbRegisteringOK); //send params to cdb
+                communicator->beginSend(se_int_CreateDatabaseInternal); //send params to cdb
                 state = sm_awaiting_db_stop;
             } else {
-                communicator->beginSend(se_SMRegisteringOK);
+                communicator->beginSend(se_int_StartDatabaseInternal);
             }
 
             XMLBuilder serializedOptions;
-            
+
             dbInfo->options.saveToXml(&serializedOptions);
             communicator->writeString(serializedOptions.str());
             communicator->endSend();

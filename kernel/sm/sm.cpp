@@ -13,6 +13,8 @@
 #include "u/uevent.h"
 #include "u/ugnames.h"
 
+#include "auxiliary/warden.h"
+
 #include "sm/hb_utils.h"
 #include "sm/trmgr.h"
 #include "sm/lm/lm_globals.h"
@@ -27,99 +29,71 @@
 
 #include <iostream>
 
-struct BufferManagerWrapper
+struct BufferManagerBorders
 {
-    bool started;
-
     void start() {
         bm_startup();
         elog(EL_LOG, ("Buffer manager started"));
-        started = true;
     }
 
     void stop() {
-        if (started) {
-            bm_shutdown();
-            elog(EL_LOG, ("Buffer manager stopped"));
-            started = false;
-        }
-    };
-    
-    BufferManagerWrapper() : started(false) {
-        start();
-    };
-
-    ~BufferManagerWrapper() {
-        stop();
+        bm_shutdown();
+        elog(EL_LOG, ("Buffer manager stopped"));
     };
 };
 
-struct LogicalLogWrapper
+struct LogicalLogBorders
 {
     int sedna_db_version;
     bool is_stopped_correctly;
-    bool ready;
-    
-    void init() {
+
+    void start() {
         llInit(databaseOptions->dataFilePath.c_str(),
             databaseOptions->databaseName.c_str(),
             databaseOptions->maxLogFiles,
             &sedna_db_version,
             &is_stopped_correctly,
             false);
-
-        ready = true;
     };
 
-    void release()
-    {
-        if (ready) {
-            llRelease();
-            ready = false;
-        }
+    void stop() {
+        llRelease();
     };
 
-    LogicalLogWrapper() : ready(false) { init(); };
-    ~LogicalLogWrapper() { release(); };
-    
     void disableCheckpoints() {
-        if (ready) {
-            llDisableCheckpoints();
-            elog(EL_LOG, ("Checkpoints are disabled"));
-        }
+        llDisableCheckpoints();
+        elog(EL_LOG, ("Checkpoints are disabled"));
     }
-    
+
     void enableCheckpoints() {
-        if (ready) {
-            llEnableCheckpoints();
-            elog(EL_LOG, ("Checkpoints are enabled"));
-        }
+        llEnableCheckpoints();
+        elog(EL_LOG, ("Checkpoints are enabled"));
     }
 };
 
 
-struct TransactionTableWrapper
+struct TransactionTableBorders
 {
-    TransactionTableWrapper() {
+    start() {
         init_transaction_ids_table();
         elog(EL_DBG, ("init_transaction_ids_table done"));
     };
 
-    ~TransactionTableWrapper() {
+    stop() {
         release_transaction_ids_table();
     };
 };
 
-struct CheckpointWrapper
+struct CheckpointThread
 {
     bool checkpointThreadStarted;
 
-    CheckpointWrapper() : checkpointThreadStarted(false) {
+    CheckpointThread() : checkpointThreadStarted(false) {
         init_checkpoint_sems();
         elog(EL_DBG, ("init_checkpoint_sems done"));
     };
 
-    ~CheckpointWrapper() {
+    ~CheckpointThread() {
         stop();
         release_checkpoint_sems();
     };
@@ -130,7 +104,7 @@ struct CheckpointWrapper
             checkpointThreadStarted = false;
         };
     };
-    
+
     void start() {
         start_chekpoint_thread();
         elog(EL_DBG, ("start_chekpoint_thread done"));
@@ -138,135 +112,33 @@ struct CheckpointWrapper
     }
 };
 
-struct WuWrapper
+struct WuBorders
 {
-    bool started;
-
-    WuWrapper() : started(false) { init(); };
-    ~WuWrapper() { release(); };
-
-    void init()
-    {
+    void start() {
         WuSetTimestamp(llGetPersTimestamp() + 1);
         WuInitExn(0,0, llGetPersTimestamp());
         elog(EL_LOG, ("Wu is initialized"));
-
-        started = true;
     };
 
-    void release()
-    {
-        if (started) {
-            WuReleaseExn();
-            elog(EL_LOG, ("Wu is released"));
-            started = false;
-        }
+    void stop() {
+        WuReleaseExn();
+        elog(EL_LOG, ("Wu is released"));
     };
 };
 
-struct LockManagerWrapper
+struct LockManagerBorders
 {
-    LockManagerWrapper() {
+    start() {
         lm_table.init_lock_table();
         elog(EL_DBG, ("init_lock_table done"));
     };
 
-    ~LockManagerWrapper() { lm_table.release_lock_table(); };
+    stop() {
+        lm_table.release_lock_table();
+    };
 };
 
-int main(int argc, char **argv)
-{
-    /* Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL, so we must block SIGPIPE with sigignore.*/
-#if defined(SunOS)
-    sigignore(SIGPIPE);
-#endif
-
-    init_base_path(argv[0]);
-
-    if (argc != 3) {
-        throw SYSTEM_EXCEPTION("This application should be started by Sedna master process");
-    };
-
-    char sednaDataDirectory[SEDNA_DATA_VAR_SIZE] = {};
-
-    CHECK_ENV(uGetEnvironmentVariable(SEDNA_DATA_ENVIRONMENT, sednaDataDirectory, SEDNA_DATA_VAR_SIZE, __sys_call_error),
-        SE4074, SEDNA_DATA_ENVIRONMENT);
-
-    SEDNA_DATA = sednaDataDirectory;
-    
-    /* Set global settings */
-
-    GlobalObjectsCollector globalObjectsCollector(sednaDataDirectory);
-    uSetGlobalNameGeneratorBase(SEDNA_DATA);
-
-    /* Init event log, it should be save by now */
-    CHECK_ENV(event_logger_init(EL_SM, databaseOptions->databaseName.c_str(), eventLogShmName, eventLogSemName),
-        SE0001, "Failed to start event log");
-
-    /* This should release event log on exception */
-    struct EventLogWarden {
-        ~EventLogWarden() { event_logger_release(); };
-    };
-    
-    EventLogWarden eventLogReleaseWarden;
-    GaintLockGlobalWarden gaintLock;
-    
-    /* Register with master process */
-    MasterProcessConnection govConnection(argv[1], argv[2]);
-    govConnection.setDatabaseOptions(databaseOptions);
-    govConnection.registerOnGov(argv[3]); // Pass ticket
-
-    /* Set local settings */
-    char envVariableDbId[64];
-    snprintf(envVariableDbId, 64, "%d", databaseOptions->databaseId);
-    uSetGlobalNameInstanceId(GN_DATABASE, envVariableDbId);
-
-    CHECK_ENV(uSetEnvironmentVariable(SEDNA_DB_ID_ENVIRONMENT, envVariableDbId, NULL, __sys_call_error),
-        SE4074, SEDNA_DATA_ENVIRONMENT);
-
-    int sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
-
-    try {
-        TransactionTableWrapper trtable;
-        CheckpointWrapper checkpointThread;
-        LogicalLogWrapper logicalLog;
-
-        checkpointThread.start();
-        logicalLog.enableCheckpoints();
-
-        //cleanup temporary files
-        if(uCleanupUniqueFileStructs(databaseOptions->dataFilePath.c_str(), __sys_call_error) == 1) {
-            elog(EL_LOG,  ("Temporary files have been deleted"));
-        } else {
-            elog(EL_WARN, ("Temporary files haven't been (or partially) deleted"));
-        }
-
-        LockManagerWrapper lockman;
-        BufferManagerWrapper bufferManager;
-
-        SSMMsgServerWrapper smvmmServer;
-        elog(EL_INFO, ("Starting SSMMsg..."));
-        smvmmServer.start();
-
-        WuWrapper wu;
-
-        loadMetadata(cdb_params, &cfg);
-            
-        elog(EL_LOG, ("SM has been started"));
-
-        smvmmServer.stop();
-        checkpointThread.stop();
-    } catch (SednaUserException &e) {
-        return 1;
-    } catch (SednaException &e) {
-        sedna_soft_fault(e, EL_SM);
-    } catch (ANY_SE_EXCEPTION) {
-        sedna_soft_fault(EL_SM);
-    }
-
-    return 0;
-}
-
+static
 void check_tmp_file()
 {
     /* check for tmp file (may be absent in hot-backup copy) */
@@ -294,6 +166,105 @@ void check_tmp_file()
         }
     }
 };
+
+
+int main(int argc, char **argv)
+{
+    /* Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL, so we must block SIGPIPE with sigignore.*/
+#if defined(SunOS)
+    sigignore(SIGPIPE);
+#endif
+
+    init_base_path(argv[0]);
+
+    if (argc != 3) {
+        throw SYSTEM_EXCEPTION("This application should be started by Sedna master process");
+    };
+
+    char sednaDataDirectory[SEDNA_DATA_VAR_SIZE] = {};
+
+    CHECK_ENV(uGetEnvironmentVariable(SEDNA_DATA_ENVIRONMENT, sednaDataDirectory, SEDNA_DATA_VAR_SIZE, __sys_call_error),
+        SE4074, SEDNA_DATA_ENVIRONMENT);
+
+    SEDNA_DATA = sednaDataDirectory;
+
+    /* Set global settings */
+    GlobalObjectsCollector globalObjectsCollector(sednaDataDirectory);
+    uSetGlobalNameGeneratorBase(SEDNA_DATA);
+
+    /* Init event log, it should be save by now */
+    CHECK_ENV(event_logger_init(EL_SM, databaseOptions->databaseName.c_str(), eventLogShmName, eventLogSemName),
+        SE0001, "Failed to start event log");
+
+    /* This should release event log on exception */
+    struct EventLogWarden {
+        ~EventLogWarden() { event_logger_release(); };
+    };
+
+    EventLogWarden eventLogReleaseWarden;
+    GaintLockGlobalWarden gaintLock;
+
+    /* Register with master process */
+    MasterProcessConnection govConnection(argv[1], argv[2]);
+    govConnection.setDatabaseOptions(databaseOptions);
+    govConnection.registerOnGov(argv[3]); // Pass ticket
+
+    /* Set local settings */
+    char envVariableDbId[64];
+    snprintf(envVariableDbId, 64, "%d", databaseOptions->databaseId);
+    uSetGlobalNameInstanceId(GN_DATABASE, envVariableDbId);
+
+    CHECK_ENV(uSetEnvironmentVariable(SEDNA_DB_ID_ENVIRONMENT, envVariableDbId, NULL, __sys_call_error),
+        SE4074, SEDNA_DATA_ENVIRONMENT);
+
+    int sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
+
+    try {
+        Warden<TransactionTableBorders> trtable;
+        CheckpointThread checkpointThread;
+        Warden<LogicalLogBorders> logicalLog;
+
+        checkpointThread.start();
+        logicalLog.base.enableCheckpoints();
+
+        //cleanup temporary files
+        if(uCleanupUniqueFileStructs(databaseOptions->dataFilePath.c_str(), __sys_call_error) == 1) {
+            elog(EL_LOG,  ("Temporary files have been deleted"));
+        } else {
+            elog(EL_WARN, ("Temporary files haven't been (or partially) deleted"));
+        }
+
+        Warden<LockManagerBorders> lockman;
+        Warden<BufferManagerBorders> bufferManager;
+
+        SSMMsgServerWrapper smvmmServer;
+        elog(EL_INFO, ("Starting SSMMsg..."));
+        smvmmServer.start();
+
+        Warden<WuBorders> wu;
+
+        /* Main thread */
+
+        if (govConnection.communicator->getInstruction() == );
+        govConnection.nextMessage();
+        if ()
+
+        loadMetadata(cdb_params, &cfg);
+
+        elog(EL_LOG, ("SM has been started"));
+
+        smvmmServer.stop();
+        checkpointThread.stop();
+    } catch (SednaUserException &e) {
+        return 1;
+    } catch (SednaException &e) {
+        sedna_soft_fault(e, EL_SM);
+    } catch (ANY_SE_EXCEPTION) {
+        sedna_soft_fault(EL_SM);
+    }
+
+    return 0;
+}
 
 void recover_database(int db_id)
 {

@@ -67,9 +67,12 @@ struct DatabaseOptions {
 
     std::string dataFileName;
     std::string tmpFileName;
-    
+
     void saveToXml(XMLBuilder * xmlBuilder) const;
     XmlNodeReader * createReader();
+
+    void saveToStream(std::ostream * stream) const;
+    void loadFromStream(std::istream * stream);
 };
 
 struct SednaOptions {
