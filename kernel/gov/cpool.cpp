@@ -132,41 +132,36 @@ void Worker::run() {
             USOCKET socket = client->getSocket();
 
             if (U_SSET_ISSET(socket, &readySet)) {
+                readyCount--;
+
                 try {
                     while (client != NULL) {
                         WorkerSocketClient * nextProcessor =
                             static_cast<WorkerSocketClient *>(client->processData());
-                        readyCount--;
 
                         if (client != nextProcessor) {
-                            /* NOTE: we really need this check for the case
-                             * when send fails to handle broken pipe/hanged connection
-                             */
-                            if ((NULL == nextProcessor) && (client->isObsolete()) ) {
-                              USOCKET socket = client->getSocket();
-                              U_SSET_CLR(socket, &allSet);
-                            }
-
+                            /* NOTE: socket cannot be changed in client */
+                            U_ASSERT(socket == client->getSocket());
+                            delete client;
                             client = nextProcessor;
                             *i = client;
                         } else {
                             break;
                         };
                     }
-
-                    if (client == NULL) {
-                        U_SSET_CLR(socket, &allSet);
-                        i = clientList.erase(i);
-                        continue;
-                    }
                 } catch (SednaClientSocketException e) {
-                    USOCKET socket = e.ref->getSocket();
-                    U_SSET_CLR(socket, &allSet);
-                    elog(EL_ERROR, (e.what()));
-                    delete e.ref;
+                    U_ASSERT(client == e.ref);
+                    delete client;
+                    client = NULL;
                 } catch (SednaGovSocketException e) {
                     e.ref->cleanupOnError();
                     elog(EL_ERROR, (e.what()));
+                }
+
+                if (client == NULL) {
+                    U_SSET_CLR(socket, &allSet);
+                    i = clientList.erase(i);
+                    continue;
                 }
             }
 
