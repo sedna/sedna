@@ -24,8 +24,6 @@
 
 int main(int argc, char** argv)
 {
-    char buf[1024];
-    char instance[16];
     /* Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
      * so we must block SIGPIPE with sigignore.
      */
@@ -81,8 +79,6 @@ int main(int argc, char** argv)
 
         elog(EL_LOG, ("SEDNA event log is down"));
         event_logger_shutdown_daemon(eventLogShmName);
-
-        return 0;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_GOV);
     } catch (ANY_SE_EXCEPTION) {

@@ -55,7 +55,7 @@ ServiceConnectionProcessor::~ServiceConnectionProcessor()
 /////////////////////////////class ClientNegotiationManager//////////////////////////////////
 
 SocketClient * ClientNegotiationManager::processData() {
-    if (!communicator->receive()) { return this; }
+    WORKER_READ_MESSAGE_SAFE
 
     size_t length;
     ProtocolVersion protocolVersion;
@@ -224,7 +224,7 @@ SocketClient * ClientConnectionProcessor::processData() {
         state = client_awaiting_parameters;
 
     case client_awaiting_parameters:
-        if (!communicator->receive()) return this;
+        WORKER_READ_MESSAGE_SAFE
 
         if (communicator->getInstruction() != se_SessionParameters) {
             respondError("Waiting for session parameters");
@@ -253,7 +253,7 @@ SocketClient * ClientConnectionProcessor::processData() {
             return this;
         };
     case client_awaiting_auth:
-        if (!communicator->receive()) return this;
+        WORKER_READ_MESSAGE_SAFE
 
         if (communicator->getInstruction() != se_AuthenticationParameters) {
             respondError("");
@@ -295,7 +295,7 @@ SocketClient* ServiceConnectionProcessor::processData()
         state = service_client_awaiting_auth;
         
      case service_client_awaiting_auth:
-        if (!communicator->receive()) { return this; }
+        WORKER_READ_MESSAGE_SAFE
         if (communicator->getInstruction() != se_SendServiceAuth) {
             respondError("");
             return NULL;
@@ -310,7 +310,7 @@ SocketClient* ServiceConnectionProcessor::processData()
        
         
      case service_client_awaiting_instructions:
-       if (!communicator->receive()) { return this; }
+       WORKER_READ_MESSAGE_SAFE
        switch (communicator->getInstruction()) {
 //          case se_StartSM: need to think if we need this at all
 
@@ -384,7 +384,7 @@ SocketClient* DatabaseConnectionProcessor::processData()
         }
 
         case sm_confirmation: {
-            if (!communicator->receive()) { return this; }
+            WORKER_READ_MESSAGE_SAFE
 
             std::string errorString = "Unknown message from client or socket closed";
 
@@ -409,7 +409,7 @@ SocketClient* DatabaseConnectionProcessor::processData()
             };
         }
         case sm_awaiting_db_stop:
-            if (!communicator->receive()) { return this; }
+            WORKER_READ_MESSAGE_SAFE
         default: {
 
         }
@@ -572,7 +572,7 @@ SocketClient* SessionConnectionProcessor::processData()
             state = trn_registered;
         }
         case trn_registered: {
-            if (!communicator->receive()) return this;
+            WORKER_READ_MESSAGE_SAFE
             if (communicator->getInstruction() != se_ReceiveSocket) {
                 pm->processRegistrationFailed(ticket, "Unexpected message received");
                 respondError();

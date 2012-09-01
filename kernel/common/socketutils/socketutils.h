@@ -186,7 +186,7 @@ class SocketClient {
 
     explicit SocketClient(const ListenerConstructor &c) 
       : clientSocket(c._clientSocket), communicator(NULL), aIsObsolete(false) {}
-    
+
     SocketClient(USOCKET socket) : clientSocket(socket), aIsObsolete(false)
     { 
         communicator = new MessageExchanger(socket); 
@@ -200,7 +200,7 @@ class SocketClient {
 
     inline USOCKET         getSocket() const { return clientSocket; };
     inline bool            isObsolete() const { return aIsObsolete; };
-    
+
     inline void            setObsolete(bool shutdown = true) 
     { 
         if (!aIsObsolete) { 

@@ -159,6 +159,11 @@ void Worker::run() {
                         i = clientList.erase(i);
                         continue;
                     }
+                } catch (SednaClientSocketException e) {
+                    USOCKET socket = e.ref->getSocket();
+                    U_SSET_CLR(socket, &allSet);
+                    elog(EL_ERROR, (e.what()));
+                    delete e.ref;
                 } catch (SednaGovSocketException e) {
                     e.ref->cleanupOnError();
                     elog(EL_ERROR, (e.what()));
