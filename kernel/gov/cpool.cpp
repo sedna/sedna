@@ -8,6 +8,8 @@
 
 using namespace std;
 
+extern bool shutdownIssued;
+bool shutdownInProgress = false;
 /////////////////////////////// WORKER implementation
 
 WorkerSocketClient * Worker::addClient(WorkerSocketClient * stream) {
@@ -103,6 +105,8 @@ WorkerSocketClient * Worker::createListener()
 }
 
 void Worker::run() {
+    struct timeval timeout;
+
     for (;;) {
         clientList.insert(clientList.end(), newClients.begin(), newClients.end());
         newClients.clear();
@@ -111,67 +115,105 @@ void Worker::run() {
 
         memcpy(&readySet, &allSet, sizeof(readySet));
 
-        int readyCount = uselect_read_arr(&readySet, maxfd, NULL, __sys_call_error);
+        timeout.tv_sec = 1;
+        int readyCount = uselect_read_arr(&readySet, maxfd, &timeout, __sys_call_error);
 
         if (readyCount == U_SOCKET_ERROR) {
             U_ASSERT(false);
             throw SYSTEM_EXCEPTION(usocket_error_translator());
         }
 
-        for (UnsortedSocketClientList::iterator i = clientList.begin(); i != clientList.end(); ) {
-            WorkerSocketClient * client = *i;
+        //we are not supposed to get into this cycle if no messages arrived
+        if (readyCount != 0) {
+            for (UnsortedSocketClientList::iterator i = clientList.begin(); i != clientList.end(); ) {
+                WorkerSocketClient * client = *i;
 
-            if (client->isObsolete()) {
-                USOCKET socket = client->getSocket();
-                U_SSET_CLR(socket, &allSet);
-                i = clientList.erase(i);
-                delete client;
-                continue;
-            }
-
-            USOCKET socket = client->getSocket();
-
-            if (U_SSET_ISSET(socket, &readySet)) {
-                readyCount--;
-
-                try {
-                    while (client != NULL) {
-                        WorkerSocketClient * nextProcessor =
-                            static_cast<WorkerSocketClient *>(client->processData());
-
-                        if (client != nextProcessor) {
-                            /* NOTE: socket cannot be changed in client */
-                            U_ASSERT(socket == client->getSocket());
-                            delete client;
-                            client = nextProcessor;
-                            *i = client;
-                        } else {
-                            break;
-                        };
-                    }
-                } catch (SednaClientSocketException e) {
-                    U_ASSERT(client == e.ref);
-                    delete client;
-                    client = NULL;
-                } catch (SednaGovSocketException e) {
-                    e.ref->cleanupOnError();
-                    elog(EL_ERROR, (e.what()));
-                }
-
-                if (client == NULL) {
+                if (client->isObsolete()) {
+                    USOCKET socket = client->getSocket();
                     U_SSET_CLR(socket, &allSet);
                     i = clientList.erase(i);
+                    delete client;
                     continue;
                 }
+
+                USOCKET socket = client->getSocket();
+
+                if (U_SSET_ISSET(socket, &readySet)) {
+                    readyCount--;
+
+                    try {
+                        while (client != NULL) {
+                            WorkerSocketClient * nextProcessor =
+                                static_cast<WorkerSocketClient *>(client->processData());
+
+                            if (client != nextProcessor) {
+                                /* NOTE: socket cannot be changed in client */
+                                U_ASSERT(socket == client->getSocket());
+                                delete client;
+                                client = nextProcessor;
+                                *i = client;
+                            } else {
+                                break;
+                            };
+                        }
+                    } catch (SednaClientSocketException e) {
+                        U_ASSERT(client == e.ref);
+                        delete client;
+                        client = NULL;
+                    } catch (SednaGovSocketException e) {
+                        e.ref->cleanupOnError();
+                        elog(EL_ERROR, (e.what()));
+                    }
+
+                    if (client == NULL) {
+                        U_SSET_CLR(socket, &allSet);
+                        i = clientList.erase(i);
+                        continue;
+                    }
+                }
+
+                ++i;
+
+                /* If we already read all desciptors, break inner loop */
+                /* NOTE: readyCount may be negative, really */
+                if (readyCount <= 0) {
+                    break;
+                };
             }
-
-            ++i;
-
-            /* If we already read all desciptors, break inner loop */
-            /* NOTE: readyCount may be negative, really */
-            if (readyCount <= 0) {
-                break;
-            };
         }
+        
+        if (shutdownIssued) {
+            for (UnsortedSocketClientList::iterator i = clientList.begin(); i != clientList.end(); i++) {
+                InternalSocketClient * client = static_cast<InternalSocketClient *> (*i);
+                if (NULL != client) {
+                    try {
+                        client->shutdown();
+                    } catch (SednaClientSocketException e) {
+                        U_ASSERT(client == e.ref);
+                        delete client;
+                        client = NULL;
+                    } catch (SednaGovSocketException e) {
+                        e.ref->cleanupOnError();
+                        elog(EL_ERROR, (e.what()));
+                    }
+                }
+            }
+            shutdownInProgress = true;
+            shutdownIssued = false;
+        }
+        
+        if (shutdownInProgress) {
+            int aliveClients = 0;
+            for (UnsortedSocketClientList::iterator i = clientList.begin(); i != clientList.end(); i++) {
+                InternalSocketClient * client = static_cast<InternalSocketClient *> (*i);
+                if (NULL != client) {
+                    aliveClients++;
+                }
+            }
+            if (aliveClients == 0) {
+                return;
+            }
+        }
+        
     }
 }

@@ -88,6 +88,7 @@ public:
       : WorkerSocketClient(producer, _priority), ticket(producer->ticket), process(producer->process) {};
 
     virtual void           cleanupOnError() = 0;
+    virtual void           shutdown() = 0;
 };
 
 class ListenerSocket : public WorkerSocketClient {

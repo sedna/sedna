@@ -247,7 +247,7 @@ void GlobalObjectsCollector::cleanup()
     gcimpl->objects.clear();
 }
 
-GlobalObjectsCollector::GlobalObjectsCollector(const char * sedna_base_dir)
+GlobalObjectsCollector::GlobalObjectsCollector()
 {
     if (gcimpl != NULL) {
         throw SYSTEM_EXCEPTION("Global object collector singleton violation");

@@ -34,18 +34,21 @@ enum service_client_state_t {
 enum cdb_state_t {
       cdb_awaiting_db_options,
       cdb_awaiting_sm_start,
-      cdb_fallthrough
+      cdb_fallthrough,
+      cdb_shutdown
 };
 
 enum sm_internal_state_t {
       sm_initial_state,
       sm_confirmation,
-      sm_awaiting_db_stop
+      sm_awaiting_db_stop,
+      sm_shutdown
 };
 
 enum trn_state {
     trn_initial_state,
-    trn_registered
+    trn_registered,
+    trn_shutdown
 };
 
 struct ProtocolVersion {

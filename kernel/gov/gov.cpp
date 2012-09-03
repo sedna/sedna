@@ -22,6 +22,47 @@
 #include <iostream>
 #endif /* EL_DEBUG */
 
+GlobalObjectsCollector gboCollector;
+
+void cleanup()
+{
+    gboCollector.cleanup();
+};
+
+bool shutdownIssued = false;
+
+#ifdef _WIN32
+BOOL GOVCtrlHandler(DWORD fdwCtrlType)
+{
+    switch (fdwCtrlType)
+    {
+        case CTRL_C_EVENT               : // Handle the CTRL+C signal.
+        case CTRL_CLOSE_EVENT   : // CTRL+CLOSE: confirm that the user wants to exit.
+        case CTRL_BREAK_EVENT   :
+        case CTRL_LOGOFF_EVENT  :
+        case CTRL_SHUTDOWN_EVENT:
+        {
+            shutdownIssued = true;
+            return TRUE;
+        }
+        default : return FALSE;
+    }
+}
+
+#else /* !_WIN32 */
+void GOVCtrlHandler(int signo)
+{
+
+    if (   signo == SIGINT
+        || signo == SIGQUIT
+        || signo == SIGTERM)
+     {
+        shutdownIssued = true;
+     }
+}
+#endif /* _WIN32 */
+
+
 int main(int argc, char** argv)
 {
     /* Under Solaris there is no SO_NOSIGPIPE/MSG_NOSIGNAL/SO_NOSIGNAL,
@@ -32,6 +73,23 @@ int main(int argc, char** argv)
 #endif
 
     try {
+#ifdef _WIN32
+      BOOL fSuccess;
+      SetProcessShutdownParameters(0x3FF, 0);
+      fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) GOVCtrlHandler, TRUE);                           // add to list
+      if (!fSuccess) throw USER_EXCEPTION(SE4403);
+#else
+        if (signal(SIGINT, GOVCtrlHandler) == SIG_ERR)
+           throw USER_EXCEPTION(SE4403);
+                // For Control-backslash
+        if (signal(SIGQUIT, GOVCtrlHandler) == SIG_ERR)
+           throw USER_EXCEPTION(SE4403);
+                //For reboot or halt
+        if (signal(SIGTERM, GOVCtrlHandler) == SIG_ERR)
+           throw USER_EXCEPTION(SE4403);
+#endif
+
+        
         init_base_path(argv[0]);
         GlobalParameters sednaGlobalOptions;
 
@@ -49,7 +107,6 @@ int main(int argc, char** argv)
 
         SEDNA_DATA = sednaGlobalOptions.global.dataDirectory.c_str();
 
-        GlobalObjectsCollector collector(SEDNA_DATA);
         uSetGlobalNameGeneratorBase(SEDNA_DATA);
 
         if (event_logger_start_daemon(SEDNA_DATA, el_convert_log_level(sednaGlobalOptions.global.logLevel),
@@ -79,10 +136,14 @@ int main(int argc, char** argv)
 
         elog(EL_LOG, ("SEDNA event log is down"));
         event_logger_shutdown_daemon(eventLogShmName);
+        cleanup();
+        
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_GOV);
+        cleanup();
     } catch (ANY_SE_EXCEPTION) {
         sedna_soft_fault(EL_GOV);
+        cleanup();
     }
 
     return 0;

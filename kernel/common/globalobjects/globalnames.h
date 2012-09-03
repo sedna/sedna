@@ -33,7 +33,7 @@ public:
     static void add(GlobalObjectDescriptor * );
     static void clear(const std::string & id);
 
-    GlobalObjectsCollector(const char * sedna_base_dir);
+    GlobalObjectsCollector();
     ~GlobalObjectsCollector();
 
     void cleanup();
