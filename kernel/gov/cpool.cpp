@@ -185,7 +185,7 @@ void Worker::run() {
         
         if (shutdownIssued) {
             for (UnsortedSocketClientList::iterator i = clientList.begin(); i != clientList.end(); i++) {
-                InternalSocketClient * client = static_cast<InternalSocketClient *> (*i);
+                InternalSocketClient * client = dynamic_cast<InternalSocketClient *> (*i);
                 if (NULL != client) {
                     try {
                         client->shutdown();
@@ -206,7 +206,7 @@ void Worker::run() {
         if (shutdownInProgress) {
             int aliveClients = 0;
             for (UnsortedSocketClientList::iterator i = clientList.begin(); i != clientList.end(); i++) {
-                InternalSocketClient * client = static_cast<InternalSocketClient *> (*i);
+                InternalSocketClient * client = dynamic_cast<InternalSocketClient *> (*i);
                 if (NULL != client) {
                     aliveClients++;
                 }

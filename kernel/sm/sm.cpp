@@ -248,7 +248,7 @@ int main(int argc, char **argv)
         SEDNA_DATA = sednaDataDirectory;
 
         /* Set global settings */
-        GlobalObjectsCollector globalObjectsCollector(sednaDataDirectory);
+        GlobalObjectsCollector globalObjectsCollector();
         uSetGlobalNameGeneratorBase(SEDNA_DATA);
 
         /* Init event log, it should be safe by now */
@@ -276,8 +276,13 @@ int main(int argc, char **argv)
 
         uSleep(4, __sys_call_error);
 
-        if (instruction != se_int_StartDatabaseInternal && instruction != se_int_CreateDatabaseInternal) {
+        if (instruction != se_int_StartDatabaseInternal 
+            && instruction != se_int_CreateDatabaseInternal
+            && instruction != se_Stop) {
             throw SYSTEM_ENV_EXCEPTION("Invalid instruction from master process");
+        } else if (instruction == se_Stop) {
+            elog(EL_INFO, ("SM process has been shut down correctly"));
+            return 0;
         } else {
             proto::StartDatabase startDb(*govConnection.communicator, govConnection.communicator->getInstruction());
             std::istringstream options(startDb.options);
@@ -332,9 +337,17 @@ int main(int argc, char **argv)
         elog(EL_LOG, ("SM has been started"));
 
         govConnection.nextMessage();
-
+        instruction = govConnection.communicator->getInstruction();
+        if (instruction != se_Stop) {
+            throw SYSTEM_ENV_EXCEPTION("Invalid instruction from master process");
+        }
+        
         smvmmServer.stop();
         checkpointThread.stop();
+        
+        elog(EL_INFO, ("SM process for database %s has been shut down", 
+             govConnection.databaseOptions->databaseName.c_str()));
+        
     } catch (SednaException & e) {
         elog(EL_FATAL, (e.what()));
         sedna_soft_fault(e, EL_SM);
