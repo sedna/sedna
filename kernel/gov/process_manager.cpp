@@ -78,6 +78,18 @@ void ProcessManager::setDatabaseOptions(const std::string& dbName, const std::st
     parameters.loadDatabaseFromStream(dbName, &stream);
 };
 
+void ProcessManager::removeDatabaseProcess ( const std::string& dbName )
+{
+    parameters.databaseOptions.erase(dbName);
+}
+
+void ProcessManager::removeSessionProcess ( session_id sid )
+{
+    sessionIndexById.erase(sid);
+}
+
+
+
 #define CMD_LINE_BUFFER_LEN 1024
 
 void ProcessManager::execStorageManagerProcess(const std::string& ticket, DatabaseProcessInfo* databaseProcessInfo) {

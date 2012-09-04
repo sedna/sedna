@@ -45,6 +45,14 @@ void InternalProcessNegotiation::cleanupOnError()
 
 }
 
+void InternalProcessNegotiation::shutdown()
+{
+    communicator->beginSend(se_Stop);
+    communicator->endSend();
+    //no states here; we don't even know what process has been connected so we don't care
+    setObsolete();
+}
+
 
 ServiceConnectionProcessor::~ServiceConnectionProcessor()
 {
@@ -408,19 +416,33 @@ SocketClient* DatabaseConnectionProcessor::processData()
                 return NULL;
             };
         }
-        case sm_awaiting_db_stop:
+        case sm_shutdown: {
             WORKER_READ_MESSAGE_SAFE
+            
+            if (se_int_SuccessefulStop != communicator->getInstruction()) {
+              elog(EL_ERROR, ("Database %s has failed during shutdown", dbInfo->databaseName.c_str()));
+            } else {
+              elog(EL_INFO, ("Database %s has been shut down successfully", dbInfo->databaseName.c_str()));
+            }
+            pm->removeDatabaseProcess(dbInfo->databaseName);
+            setObsolete();
+            return NULL;
+        }
         default: {
 
         }
-
-        //TODO when sm would be more clear: at this point cdb should terminate but sm should wait for shutdown
-        // that means that there should be one more message for both.
 
         setObsolete();
         return NULL;
     }
     return NULL;
+}
+
+void DatabaseConnectionProcessor::shutdown()
+{
+    communicator->beginSend(se_Stop);
+    communicator->endSend();
+    state = sm_shutdown;
 }
 
 void DatabaseConnectionProcessor::writeDatabaseConfig () {
@@ -586,6 +608,20 @@ SocketClient* SessionConnectionProcessor::processData()
         }
     }        
 */
+
+/*      case trn_shutdown: {
+ *          WORKER_READ_MESSAGE_SAFE
+ *          if (se_int_SuccessefulStop != communicator->getInstruction())
+ *             elog(EL_ERROR, ("TRN from database %s has failed during shutdown", trnInfo->database->databaseName.c_str()));
+            } else {
+              elog(EL_INFO, ("Database %s has been shut down successfully", dbInfo->database->databaseName.c_str()));
+            }
+            pm->removeSessionProcess(trnInfo->sid);
+            setObsolete();
+            return NULL;
+ */
+
+
     return this;
 }
 
@@ -594,5 +630,11 @@ void SessionConnectionProcessor::cleanupOnError()
 
 }
 
+void SessionConnectionProcessor::shutdown()
+{
+    communicator->beginSend(se_Stop);
+    communicator->endSend();
+    state = trn_shutdown;
+}
 
 

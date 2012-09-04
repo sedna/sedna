@@ -116,6 +116,7 @@ void Worker::run() {
         memcpy(&readySet, &allSet, sizeof(readySet));
 
         timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
         int readyCount = uselect_read_arr(&readySet, maxfd, &timeout, __sys_call_error);
 
         if (readyCount == U_SOCKET_ERROR) {

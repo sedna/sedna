@@ -34,14 +34,12 @@ enum service_client_state_t {
 enum cdb_state_t {
       cdb_awaiting_db_options,
       cdb_awaiting_sm_start,
-      cdb_fallthrough,
-      cdb_shutdown
+      cdb_fallthrough
 };
 
 enum sm_internal_state_t {
       sm_initial_state,
       sm_confirmation,
-      sm_awaiting_db_stop,
       sm_shutdown
 };
 
@@ -79,8 +77,8 @@ public:
     
     virtual SocketClient* processData();
     virtual void cleanupOnError();
+    virtual void shutdown();
 };
-
 
 
 class ClientNegotiationManager : public WorkerSocketClient {
@@ -101,6 +99,7 @@ public:
 
     virtual SocketClient * processData ();
     virtual void cleanupOnError();
+    virtual void shutdown();
 };
 
 class SednaShutdownProcessor : public WorkerSocketClient {
@@ -195,6 +194,7 @@ class DatabaseConnectionProcessor : public InternalSocketClient {
     void                        registerCdb              ();
     virtual SocketClient *      processData              ();
     virtual void                cleanupOnError();
+    virtual void                shutdown();
 };
 
 
