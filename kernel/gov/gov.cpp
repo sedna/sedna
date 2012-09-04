@@ -136,14 +136,11 @@ int main(int argc, char** argv)
 
         elog(EL_LOG, ("SEDNA event log is down"));
         event_logger_shutdown_daemon(eventLogShmName);
-        cleanup();
         
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_GOV);
-        cleanup();
     } catch (ANY_SE_EXCEPTION) {
         sedna_soft_fault(EL_GOV);
-        cleanup();
     }
 
     return 0;

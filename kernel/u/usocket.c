@@ -421,29 +421,24 @@ int uselect_read_arr(U_SSET *s, USOCKET maxfd, struct timeval *timeout, sys_call
 #ifdef _WIN32
     int res = 0;
 
-    res = select(1, s, (fd_set *) NULL, (fd_set *) NULL, timeout);
+    res = select(1, s, (fd_set *) NULL, (fd_set *) NULL, timeout);      
     if (res == U_SOCKET_ERROR) sys_call_error("select");
 
     return res;
 #else
-	int res = 0;
+    int res = 0;
 
-    while (1)
-    {
-        res = select(maxfd + 1, s, (fd_set *) NULL, (fd_set *) NULL, timeout);
+    res = select(maxfd + 1, s, (fd_set *) NULL, (fd_set *) NULL, timeout);
 
-        if (res == U_SOCKET_ERROR)
-            if (errno == EINTR)
-			{
-                continue;
-            }
-            else
-            {
-                sys_call_error("select");
-                return U_SOCKET_ERROR;
-            }
-        else
-        	return res;
+    if (res == U_SOCKET_ERROR) {
+        if (errno == EINTR) {
+            return 0;
+        } else {
+            sys_call_error("select");
+            return U_SOCKET_ERROR;
+        }
+    } else {
+        return res;
     }
 
 #endif

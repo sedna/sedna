@@ -15,7 +15,7 @@
 #include <cstdlib>
 std::string elog_location(std::getenv("TEMP"));
 #else
-std::string elog_location = "/tmp";
+std::string elog_location = "/tmp/";
 #endif /* _WIN32 */
 
 TEST(eventLog, SimpleWorkTest) {
@@ -26,8 +26,7 @@ TEST(eventLog, SimpleWorkTest) {
         int res = 0;
         res = event_logger_start_daemon(elog_location.c_str(),
                                         el_convert_log_level(log_level),
-                                        "SE_EVENT_LOG_SHARED_MEMORY_NAME", 
-                                        "SE_EVENT_LOG_SEMAPHORES_NAME");
+                                        eventLogShmName, eventLogSemName);
         switch (res) {
           case 0: break;
           case 1: throw std::string("Failed to initialize event log: can not create shared memory\n");
@@ -44,7 +43,7 @@ TEST(eventLog, SimpleWorkTest) {
         elog(log_level, ("Hi, I'm log and I'm started successfully!"));
         elog_long(log_level, "Hi, I'm long message in log!", " Not really very long but I'm needed just for test"); 
         
-        res = event_logger_shutdown_daemon("SE_EVENT_LOG_SHARED_MEMORY_NAME");
+        res = event_logger_shutdown_daemon(eventLogShmName);
         switch (res) {
           case 0: break;
           case 1: throw std::string("Failed to shutdown event log: can not join thread\n");
@@ -73,8 +72,7 @@ TEST(eventLog, InfiniteLoopOnDownCheck) {
         int res = 0;
         res = event_logger_start_daemon(elog_location.c_str(),
                                         el_convert_log_level(log_level), 
-                                        "SE_EVENT_LOG_SHARED_MEMORY_NAME", 
-                                        "SE_EVENT_LOG_SEMAPHORES_NAME");
+                                        eventLogShmName, eventLogSemName);
         switch (res) {
           case 0: break;
           case 1: throw std::string("Failed to initialize event log: can not create shared memory\n");
@@ -87,7 +85,7 @@ TEST(eventLog, InfiniteLoopOnDownCheck) {
                   break;
           default: break;
         }
-        event_logger_shutdown_daemon("SE_EVENT_LOG_SHARED_MEMORY_NAME");
+        event_logger_shutdown_daemon(eventLogShmName);
       
       
         /* TODO: when syslog would be done we need to check it for this message */
@@ -118,9 +116,8 @@ int main(int argc, char** argv) {
     }
     ::testing::InitGoogleTest(&argc, argv);   
     
-    GlobalObjectsCollector collector(elog_location.c_str());
-    uSetGlobalNameGeneratorBase(elog_location.c_str(), "0");
-
+    GlobalObjectsCollector collector;
+    uSetGlobalNameGeneratorBase(elog_location.c_str());
   
     return RUN_ALL_TESTS();
 }

@@ -64,11 +64,19 @@ int event_log_truncate = 0;
 #define SE_EVENT_LOG_SEMS_NUM          4
 #define SE_EVENT_LOG_THREAD_STACK_SIZE (1024 * 1024)
 
+#define EVENT_LOG_SEM(OP, SEMNO, RETVAL) do {\
+    event_log_initialized = false;\
+    if (0 != USemaphoreArr##OP(SEMNO, 0, __sys_call_error)) { \
+        return RETVAL; \
+    } \
+    event_log_initialized = true;\
+} while (false)
+
 
 #define EVENT_LOG_START_MSG_PROCESSING \
     va_list ap; \
     int res = 0; \
-    USemaphoreArrDown(el_sems, 0, __sys_call_error); \
+    EVENT_LOG_SEM(Down, 0, -1); \
     va_start(ap, fmt); \
     res = _vsnprintf(el_msg->content, SE_EVENT_LOG_CONTENT_LEN, fmt, ap); \
     va_end(ap);
@@ -500,17 +508,12 @@ static bool __event_log_write_long_msg_next_end()
     return (el_msg->type == SE_EVENT_LOG_LONG_MSG_NEXT);
 }
 
-
-/* ============================================================================
- * Event log daemon function
- * ============================================================================
- */
-static U_THREAD_PROC(__event_log_daemon, arg)
-{
+static
+int event_log_deamon_int() {
     bool long_msg_next = true;
 
     while (1) {
-        USemaphoreArrDown(el_sems, 1, __sys_call_error);
+        EVENT_LOG_SEM(Down, 1, -1);
 
         if (el_shutdown_daemon && el_msg->processed) {
             return 0;
@@ -524,8 +527,8 @@ static U_THREAD_PROC(__event_log_daemon, arg)
         case SE_EVENT_LOG_LONG_MSG_START:
             __event_log_write_long_msg_start();
             while (long_msg_next) {
-                USemaphoreArrUp(el_sems, 2, __sys_call_error);
-                USemaphoreArrDown(el_sems, 3, __sys_call_error);
+                EVENT_LOG_SEM(Up, 2, -1);
+                EVENT_LOG_SEM(Down, 3, -1);
                 long_msg_next = __event_log_write_long_msg_next_end();
             }
             long_msg_next = true;
@@ -534,9 +537,23 @@ static U_THREAD_PROC(__event_log_daemon, arg)
 
         el_msg->processed = 1;
 
-        USemaphoreArrUp(el_sems, 0, __sys_call_error);
+        EVENT_LOG_SEM(Up, 0, -1);
     }
 
+    return 0;
+};
+
+
+/* ============================================================================
+ * Event log daemon function
+ * ============================================================================
+ */
+static U_THREAD_PROC(__event_log_daemon, arg)
+{
+    if (event_log_deamon_int() != 0) {
+        sedna_soft_fault(EL_GOV);
+    };
+    
     return 0;
 }
 
@@ -562,10 +579,8 @@ int event_log_short_msg_macro(int elevel,
     }
 
     /* temporary solution for infinite recursion on event_log failure*/
-    if (1 == USemaphoreArrUp(el_sems, 1, __sys_call_error)) {
-        event_log_initialized = false;
-    }
-
+    EVENT_LOG_SEM(Up, 1, 0);
+    
     return 0;
 }
 
@@ -629,10 +644,7 @@ int event_log_long_msg(int elevel,
     bool copy = true;
 
     /* temporary solution for infinite loop on event_log failure */
-    if (0 != USemaphoreArrDown(el_sems, 0, __sys_call_error)) {
-        event_log_initialized = false;
-        return -1;
-    }
+    EVENT_LOG_SEM(Down, 0, -1);
 
     __event_log_set_msg_attrs(elevel, filename, lineno, funcname);
 
@@ -664,20 +676,11 @@ int event_log_long_msg(int elevel,
         }
     }
 
-    /* temporary solution for infinite loop on event_log failure */
-    if (0 != USemaphoreArrUp(el_sems, 1, __sys_call_error)) {
-        event_log_initialized = false;
-        return -1;
-    }
+    EVENT_LOG_SEM(Up, 0, -1);
 
     while (copy) {
-        /* temporary solution for infinite loop on event_log failure */
-        if (0 != USemaphoreArrDown(el_sems, 2, __sys_call_error)) {
-            event_log_initialized = false;
-            return -1;
-        }
-
-
+        EVENT_LOG_SEM(Down, 2, -1);
+        
         portion_size = s_min(SE_EVENT_LOG_CONTENT_LEN - 1, long_str_len - pos);
         memcpy(el_msg->content, long_str + pos, portion_size);
         el_msg->content[portion_size] = '\0';
@@ -689,12 +692,8 @@ int event_log_long_msg(int elevel,
             el_msg->type = SE_EVENT_LOG_LONG_MSG_END;
             copy = false;
         }
-
-        /* temporary solution for infinite loop on event_log failure */
-        if (1 == USemaphoreArrUp(el_sems, 3, __sys_call_error)) {
-            event_log_initialized = false;
-            return -1;
-        }
+        
+        EVENT_LOG_SEM(Up, 3, -1);
     }
 
     return 0;
@@ -760,7 +759,7 @@ int event_logger_shutdown_daemon(global_name shm_name)
 
         /* stop daemon thread */
         el_shutdown_daemon = true;
-        USemaphoreArrUp(el_sems, 1, __sys_call_error);
+        EVENT_LOG_SEM(Up, 1, 6);
 
         if (uThreadJoin(el_thread_handle, __sys_call_error) != 0) {
             return 1;
