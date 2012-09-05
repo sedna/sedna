@@ -66,7 +66,7 @@ int event_log_truncate = 0;
 
 #define EVENT_LOG_SEM(OP, SEMNO, RETVAL) do {\
     event_log_initialized = false;\
-    if (0 != USemaphoreArr##OP(SEMNO, 0, __sys_call_error)) { \
+    if (0 != USemaphoreArr##OP(el_sems, SEMNO, __sys_call_error)) { \
         return RETVAL; \
     } \
     event_log_initialized = true;\
@@ -676,7 +676,7 @@ int event_log_long_msg(int elevel,
         }
     }
 
-    EVENT_LOG_SEM(Up, 0, -1);
+    EVENT_LOG_SEM(Up, 1, -1);
 
     while (copy) {
         EVENT_LOG_SEM(Down, 2, -1);
