@@ -163,19 +163,16 @@ void bm_startup()
      *
      * For tmp file defaults would be sufficient, of course.
      */
-    std::string data_file_name = databaseOptions->dataFilePath + databaseOptions->dataFileName + ".sedata";
 
-    data_file_handle = uOpenFile(data_file_name.c_str(), U_SHARE_READ, U_READ_WRITE, 0, __sys_call_error);
+    data_file_handle = uOpenFile(databaseOptions->dataFileName.c_str(), U_SHARE_READ, U_READ_WRITE, 0, __sys_call_error);
    
     if (data_file_handle == U_INVALID_FD)
-        throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
+        throw USER_EXCEPTION2(SE4042, databaseOptions->dataFileName.c_str());
 
-    string tmp_file_name = databaseOptions->dataFilePath + databaseOptions->dataFileName + ".setmp";
-            
-    tmp_file_handle = uOpenFile(tmp_file_name.c_str(), U_SHARE_READ,
+    tmp_file_handle = uOpenFile(databaseOptions->tmpFileName.c_str(), U_SHARE_READ,
             U_READ_WRITE, 0, __sys_call_error);
     if (tmp_file_handle == U_INVALID_FD)
-        throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
+        throw USER_EXCEPTION2(SE4042, databaseOptions->tmpFileName.c_str());
 
     // create buffer pool
     _bm_init_buffer_pool();

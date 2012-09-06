@@ -39,7 +39,7 @@ struct DatabaseOptions {
     
     std::string databaseName;
     std::string dataFilePath; /* Path to database files */
-//    std::string tmpFilePath; /* Path to temporary files */
+//     std::string tmpFilePath; /* Path to temporary files */
 
     uint32_t bufferCount;
     uint32_t maxLogFiles;

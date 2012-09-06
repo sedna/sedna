@@ -6,6 +6,7 @@
 #include "common/lockmantypes.h"
 #include "common/protocol/InternalConnection.h"
 #include "common/protocol/messages/MStartDatabase.h"
+#include <common/protocol/messages/MOkAnswer.h>
 #include "common/globalobjects/globalnames.h"
 #include "common/llcommon/llMain.h"
 #include "common/structures/config_data.h"
@@ -173,14 +174,12 @@ void check_tmp_file()
 
 
 static
-void recover_database()
+void recover_database(CheckpointThread & checkpointThread)
 {
     is_recovery_mode = true;
 
     elog(EL_LOG, ("Starting database recovery or hot-backup restoration..."));
 
-    Warden<TransactionTableBorders> trtable;
-    CheckpointThread checkpointThread;
     Warden<LogicalLogBorders> logicalLog;
 
     if (logicalLog.base.sedna_db_version != SEDNA_DATA_STRUCTURES_VER) {
@@ -248,7 +247,7 @@ int main(int argc, char **argv)
         SEDNA_DATA = sednaDataDirectory;
 
         /* Set global settings */
-        GlobalObjectsCollector globalObjectsCollector();
+        GlobalObjectsCollector globalObjectsCollector;
         uSetGlobalNameGeneratorBase(SEDNA_DATA);
 
         /* Init event log, it should be safe by now */
@@ -271,42 +270,41 @@ int main(int argc, char **argv)
         govConnection.nextMessage();
 
         elog(EL_INFO, ("SM process connected"));
-
+ 
         instruction = govConnection.communicator->getInstruction();
-
-        uSleep(4, __sys_call_error);
-
+ 
         if (instruction != se_int_StartDatabaseInternal 
             && instruction != se_int_CreateDatabaseInternal
             && instruction != se_Stop) {
-            throw SYSTEM_ENV_EXCEPTION("Invalid instruction from master process");
+             throw SYSTEM_ENV_EXCEPTION("Invalid instruction from master process");
         } else if (instruction == se_Stop) {
-            elog(EL_INFO, ("SM process has been shut down correctly"));
-            return 0;
+             elog(EL_INFO, ("SM process has been shut down correctly"));
+             return 0;
         } else {
             proto::StartDatabase startDb(*govConnection.communicator, govConnection.communicator->getInstruction());
             std::istringstream options(startDb.options);
             databaseOptions->loadFromStream(&options);
         }
-
-        if (instruction == se_int_CreateDatabaseInternal) {
-            initializeDatabase();
-        };
-
-        /* Set local settings */
+ 
+         /* Set local settings */
         char envVariableDbId[64];
         snprintf(envVariableDbId, 64, "%d", databaseOptions->databaseId);
         uSetGlobalNameInstanceId(GN_DATABASE, envVariableDbId);
 
         CHECK_ENV(uSetEnvironmentVariable(SEDNA_DB_ID_ENVIRONMENT, envVariableDbId, NULL, __sys_call_error),
-            SE4074, SEDNA_DATA_ENVIRONMENT);
-
+            SE4074, SEDNA_DB_ID_ENVIRONMENT);
+ 
         int sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
-
-        recover_database();
 
         Warden<TransactionTableBorders> trtable;
         CheckpointThread checkpointThread;
+        
+        if (instruction == se_int_CreateDatabaseInternal) {
+            initializeDatabase();
+        } else {
+            recover_database(checkpointThread);
+        }
+
         Warden<LogicalLogBorders> logicalLog;
 
         checkpointThread.start();
@@ -335,7 +333,10 @@ int main(int argc, char **argv)
         };
 
         elog(EL_LOG, ("SM has been started"));
-
+        
+        
+        proto::OkAnswer(databaseOptions->databaseName) >> *(govConnection.communicator);
+        
         govConnection.nextMessage();
         instruction = govConnection.communicator->getInstruction();
         if (instruction != se_Stop) {

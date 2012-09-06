@@ -32,7 +32,7 @@ void init_checkpoint_sems();
 void shutdown_chekpoint_thread();
 void release_checkpoint_sems();
 
-extern UEvent start_checkpoint_snapshot;
+extern UEvent CheckpointEvent;
 extern UEvent end_of_rotr_event;
 
 /******************************************************************************

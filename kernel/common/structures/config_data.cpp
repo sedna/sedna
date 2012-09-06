@@ -38,7 +38,7 @@ SednaOptions::SednaOptions()
     bindAddress     = "127.0.0.1";
     dataDirectory   = std::string(base_path) + U_PATH_DELIMITER".."U_PATH_DELIMITER"data"U_PATH_DELIMITER;
     listenPort      = 5050;
-    logLevel        = 2;
+    logLevel        = 5;
     stackDepth      = 4000;
     keepAlive       = 0;
 }
@@ -109,6 +109,8 @@ struct DatabaseOptionsXmlReader : public XmlNodeReader {
 //         this->readIntValue(EXPANDR(databaseId));
         this->readStringValue(EXPANDR(databaseName));
         this->readStringValue(EXPANDR(dataFilePath));
+        this->readStringValue(EXPANDR(dataFileName));
+        this->readStringValue(EXPANDR(tmpFileName));
         this->readUintValue(EXPANDR(bufferCount));
         this->readUintValue(EXPANDR(maxLogFiles));
         this->readUintValue(EXPANDR(logFileSize));
@@ -131,6 +133,8 @@ void DatabaseOptions::saveToXml(XMLBuilder* xmlBuilder) const
     xmlBuilder->addElement(EXPANDWC(databaseId));
     xmlBuilder->addElement(EXPANDW(databaseName));
     xmlBuilder->addElement(EXPANDW(dataFilePath));
+    xmlBuilder->addElement(EXPANDW(dataFileName));
+    xmlBuilder->addElement(EXPANDW(tmpFileName));
     xmlBuilder->addElement(EXPANDWC(bufferCount));
     xmlBuilder->addElement(EXPANDWC(maxLogFiles));
     xmlBuilder->addElement(EXPANDWC(updateCriteria));

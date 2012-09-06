@@ -226,7 +226,7 @@ int llInit(const char *db_files_path, const char *db_name, int max_log_files_par
 
     // sync semaphore
     if (USemaphoreCreate(&SyncSem, 1, 1, logicalLogSem, NULL, __sys_call_error) != 0) {
-        LL_ERROR("internal ll error: cannot create semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
+        LL_ERROR("internal ll error: cannot create semaphore: SEDNA_LOGICAL_LOG_SEM");
     }
 
     // to wait for checkpoint to finish

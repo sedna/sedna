@@ -39,7 +39,7 @@ static volatile bool shutdown_checkpoint_thread = false;
 volatile bool shutdown_event_call = false;
 volatile bool is_recovery_mode = false;
 
-UEvent start_checkpoint_snapshot; // this event signals the need for checkpoint/snapshot advancement
+UEvent CheckpointEvent; // this event signals the need for checkpoint/snapshot advancement
 UEvent end_of_rotr_event; // this event signals
 
 static USemaphore wait_for_recovery;
@@ -115,7 +115,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
     {
         while (true)
         {
-            if (UEventWait(&start_checkpoint_snapshot,  __sys_call_error) != 0)
+            if (UEventWait(&CheckpointEvent,  __sys_call_error) != 0)
                throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
 
             shutdown_event_call = shutdown_checkpoint_thread;
@@ -251,7 +251,7 @@ void init_checkpoint_sems()
     CHECK_ENV(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error),
         SE3060, "");
 
-    CHECK_ENV(UEventCreate(&start_checkpoint_snapshot, sa, U_AUTORESET_EVENT, false, checkpointEventName, __sys_call_error),
+    CHECK_ENV(UEventCreate(&CheckpointEvent, sa, U_AUTORESET_EVENT, false, checkpointEventName, __sys_call_error),
         SE4010, checkpointEventName.name);
 
     CHECK_ENV(UEventCreate(&end_of_rotr_event, sa, U_AUTORESET_EVENT, false, tryAdvanceSnapshotEventName, __sys_call_error),
@@ -268,7 +268,7 @@ void shutdown_chekpoint_thread()
     //shutdown thread
     shutdown_checkpoint_thread = true;
 
-    CHECK_ENV(UEventSet(&start_checkpoint_snapshot,  __sys_call_error),
+    CHECK_ENV(UEventSet(&CheckpointEvent,  __sys_call_error),
         SE1000, "Event signaling for checkpoint_snapshot thread shutdown failed");
 
     CHECK_ENV(uThreadJoin(checkpoint_thread_dsc, __sys_call_error),
@@ -283,7 +283,7 @@ void release_checkpoint_sems()
     CHECK_ENV(USemaphoreRelease(concurrent_trns_sem, __sys_call_error),
         SE4011, activeTrnCounterSem.name)
 
-    CHECK_ENV(UEventCloseAndUnlink(&start_checkpoint_snapshot, __sys_call_error),
+    CHECK_ENV(UEventCloseAndUnlink(&CheckpointEvent, __sys_call_error),
         SE4011, checkpointEventName.name);
 
     CHECK_ENV(UEventCloseAndUnlink(&end_of_rotr_event, __sys_call_error),

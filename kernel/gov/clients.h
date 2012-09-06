@@ -185,8 +185,6 @@ public:
 class DatabaseConnectionProcessor : public InternalSocketClient {
   private:
     sm_internal_state_t         state;
-    std::string                 dbName;
-
 
     void writeDatabaseConfig();
   public:

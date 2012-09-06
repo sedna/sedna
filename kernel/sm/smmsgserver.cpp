@@ -52,7 +52,7 @@ sm_release_transaction(sm_msg_struct * msg)
         if (llNeedCheckpoint()) {
             llActivateCheckpoint(); // maintenance checkpoint
         } else {
-            if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0) {
+            if (UEventSet(&CheckpointEvent,  __sys_call_error) != 0) {
                 throw SYSTEM_EXCEPTION("Event signaling for checking of snapshot advancement failed");
             }
         }

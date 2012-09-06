@@ -38,7 +38,7 @@ lsize_t determineLayerSize()
     try {
         ExecuteProcess determineVMM(NULL, SESSION_EXE, "--vmm-region");
 
-        determineVMM.execute(U_DETACHED_PROCESS, false);
+        determineVMM.execute(0, true);
 
         if (determineVMM.wait4() != 0) {
             throw USER_ENV_EXCEPTION("Cannot create process to determine VMM region", false);
@@ -179,8 +179,7 @@ void loadMetadata()
     try {
         ExecuteProcess determineVMM(NULL, SESSION_EXE, "--load-metadata");
 
-        /* WARNING: Why should inheritHandles be true here? */
-        determineVMM.execute(U_DETACHED_PROCESS, true);
+        determineVMM.execute(0, true);
 
         if (determineVMM.wait4() != 0) {
             throw USER_ENV_EXCEPTION("Can't load metadata", false);

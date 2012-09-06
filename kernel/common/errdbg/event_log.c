@@ -6,6 +6,7 @@
 #include "event_log.h"
 #include "errors.h"
 
+#include "u/uatomic.h"
 #include "u/uutils.h"
 #include "u/uthread.h"
 #include "u/uprocess.h"
@@ -49,7 +50,7 @@ typedef struct event_log_msg {
 /* Until the configuration file is read and the value is obtained,
  * the default value for event_log_level is EL_ERROR */
 int event_log_elevel = EL_ERROR;
-int event_log_initialized = 0;
+volatile int event_log_initialized = 0;
 int event_log_location = 1;
 int event_log_detailed_location = 1;
 int event_log_recommended_size = 1024 * 1024;
@@ -70,7 +71,7 @@ int event_log_truncate = 0;
         return RETVAL; \
     } \
     event_log_initialized = true;\
-} while (false)
+} while (false);
 
 
 #define EVENT_LOG_START_MSG_PROCESSING \
@@ -508,12 +509,19 @@ static bool __event_log_write_long_msg_next_end()
     return (el_msg->type == SE_EVENT_LOG_LONG_MSG_NEXT);
 }
 
+
+#define EVENT_LOG_SEM_INT(OP, SEMNO, RETVAL) do {\
+    if (0 != USemaphoreArr##OP(el_sems, SEMNO, __sys_call_error_nop)) { \
+        return RETVAL; \
+    } \
+} while (false);
+
 static
 int event_log_deamon_int() {
     bool long_msg_next = true;
 
     while (1) {
-        EVENT_LOG_SEM(Down, 1, -1);
+        EVENT_LOG_SEM_INT(Down, 1, -1);
 
         if (el_shutdown_daemon && el_msg->processed) {
             return 0;
@@ -527,8 +535,8 @@ int event_log_deamon_int() {
         case SE_EVENT_LOG_LONG_MSG_START:
             __event_log_write_long_msg_start();
             while (long_msg_next) {
-                EVENT_LOG_SEM(Up, 2, -1);
-                EVENT_LOG_SEM(Down, 3, -1);
+                EVENT_LOG_SEM_INT(Up, 2, -1);
+                EVENT_LOG_SEM_INT(Down, 3, -1);
                 long_msg_next = __event_log_write_long_msg_next_end();
             }
             long_msg_next = true;
@@ -537,7 +545,7 @@ int event_log_deamon_int() {
 
         el_msg->processed = 1;
 
-        EVENT_LOG_SEM(Up, 0, -1);
+        EVENT_LOG_SEM_INT(Up, 0, -1);
     }
 
     return 0;
@@ -551,6 +559,8 @@ int event_log_deamon_int() {
 static U_THREAD_PROC(__event_log_daemon, arg)
 {
     if (event_log_deamon_int() != 0) {
+        event_log_initialized = false;
+        AO_compiler_barrier();
         sedna_soft_fault(EL_GOV);
     };
     

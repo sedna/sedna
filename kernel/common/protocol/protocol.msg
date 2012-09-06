@@ -36,3 +36,8 @@ begin
   string dbname max=MAX_DB_NAME
   string options max=MAX_XML_PARAMS
 end
+
+message OkAnswer se_Ok fixed
+begin
+  string explain max=MAX_ERROR_LENGTH
+end

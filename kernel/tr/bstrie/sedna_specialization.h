@@ -5,7 +5,7 @@
 
 #include "common/sedna.h"
 #include "common/base.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 #include "tr/vmm/vmm.h"
 

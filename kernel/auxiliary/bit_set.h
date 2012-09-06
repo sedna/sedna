@@ -32,12 +32,12 @@ private:
     void operator = (const Bitset&);
 public:
     //_size_ is needed size in bits
-    bit_set (int _size_) : size(_size_), external_memory(false)
+    Bitset (int _size_) : size(_size_), external_memory(false)
     {
         U_ASSERT(size > 0);
 
         capacity = ROUND_SIZE_UP(_size_,8)/8;
-        bits = se_new unsigned char[capacity];
+        bits = new unsigned char[capacity];
         initialize();
     }
 
@@ -112,15 +112,15 @@ public:
     }
 
 
-    bit_set (void* _bits_, int _size_)
+    Bitset (void* _bits_, int _size_)
       : size(_size_), bits((unsigned char*)_bits_), external_memory(true)
     {
         capacity = ROUND_SIZE_UP(_size_,8)/8;
     }
 
-#undefine OFFSET_PTR
-#undefine ROUND_SIZE_UP
-#undefine PTR_DISTANCE
+#undef OFFSET_PTR
+#undef ROUND_SIZE_UP
+#undef PTR_DISTANCE
 
 };
 

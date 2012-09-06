@@ -397,7 +397,7 @@ SocketClient* DatabaseConnectionProcessor::processData()
             std::string errorString = "Unknown message from client or socket closed";
 
             switch(communicator->getInstruction()) {
-            case se_int_ProcessReady:
+            case se_Ok:
                 pm->processRegistered(ticket, this);
 
                 if (dbInfo->databaseCreationMode) {
@@ -415,6 +415,7 @@ SocketClient* DatabaseConnectionProcessor::processData()
                 setObsolete();
                 return NULL;
             };
+            break;
         }
         case sm_shutdown: {
             WORKER_READ_MESSAGE_SAFE
@@ -456,7 +457,7 @@ void DatabaseConnectionProcessor::writeDatabaseConfig () {
     DatabaseProcessInfo * dbInfo = static_cast<DatabaseProcessInfo *>(process);
     globals->saveDatabaseToStream(dbInfo->databaseName, &options);
 
-    std::string cfgFilePath = globals->global.dataDirectory + dbName + ".conf.xml";
+    std::string cfgFilePath = globals->global.dataDirectory + dbInfo->databaseName + ".conf.xml";
 
     if(uCreateSA(&def_sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) {
         throw USER_EXCEPTION(SE3060);

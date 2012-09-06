@@ -211,6 +211,8 @@ void ProcessManager::createDatabase(const std::string& dbName, const std::string
 
         it->second.databaseName = dbName;
         it->second.dataFilePath = parameters.global.dataDirectory + dbName + U_PATH_DELIMITER;
+        it->second.dataFileName = it->second.dataFilePath + dbName + std::string(".sedata");
+        it->second.tmpFileName = it->second.dataFilePath + dbName + std::string(".setmp");
 
         databaseProcessInfo = new DatabaseProcessInfo(it->second);
         databaseProcessInfo->databaseCreationMode = true;

@@ -97,7 +97,7 @@ extern int event_log_detailed_location; /* output filename, function, line */
 extern int event_log_recommended_size;  /* after exceeding this size the log file rotate is done */
 extern int event_log_truncate;          /* delete file after log rotation? */
 
-extern int event_log_initialized;
+extern volatile int event_log_initialized;
 
 /* ============================================================================
  * Client functions for logging short messages
