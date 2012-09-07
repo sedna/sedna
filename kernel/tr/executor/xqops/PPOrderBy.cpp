@@ -169,7 +169,7 @@ void PPOrderBy::do_next (tuple &t)
             child.op -> next(source);
             if (source.is_eos()) break;
 
-            for (i = 0; i < source.cells_number; i++)
+            for (i = 0; i < source.size(); i++)
             {
                 if (i < data_size) {
                     data_tuple.cells[i] = source.cells[i];

@@ -22,6 +22,9 @@ struct scm_elem;
 
 typedef std::vector<struct scm_elem> scheme_list;
 
+#define CL_CHECK_SYMBOL(X, Pos, Symb) (((X)->at(Pos).type == SCM_SYMBOL) && strcmpex((X)->at(Pos).internal.symb, (Symb)) == 0)
+#define CL_TYPE(X, Pos, Tp) ((X)->at(Pos).type == Tp)
+
 union scm_elem_internal
 {
     bool b;                /* SCM_BOOL   */
@@ -36,6 +39,33 @@ struct scm_elem
 {
     scheme_type type;
     scm_elem_internal internal;
+};
+
+inline static
+scheme_list * scmGetList(const scheme_list * list, unsigned index, const char * error) {
+    if ((list->size() <= index) || (list->at(index).type != SCM_LIST)) {
+        throw USER_EXCEPTION2(SE1004, error);
+    };
+
+    return (list->at(index).internal.list);
+};
+
+inline static
+const char * scmGetSymbol(const scheme_list * list, unsigned index, const char * error) {
+    if ((list->size() <= index) || (list->at(index).type != SCM_SYMBOL)) {
+        throw USER_EXCEPTION2(SE1004, error);
+    };
+
+    return (list->at(index).internal.symb);
+};
+
+inline static
+const char * scmGetString(const scheme_list * list, unsigned index, const char * error) {
+    if ((list->size() <= index) || (list->at(index).type != SCM_STRING)) {
+        throw USER_EXCEPTION2(SE1004, error);
+    };
+
+    return (list->at(index).internal.str);
 };
 
 scheme_list *make_tree_from_scheme_list(const char *);

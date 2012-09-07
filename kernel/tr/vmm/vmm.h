@@ -12,20 +12,59 @@
 
 #include "common/sedna.h"
 
-#include "common/xptr.h"
-#include "common/wutypes.h"
-#include "common/SSMMsg.h"
-#include "common/u/uthread.h"
-#include "common/u/uatomic.h"
+#include "common/xptr/xptr.h"
+#include "common/xptr/wutypes.h"
+#include "common/ssmmsg/SSMMsg.h"
+#include "u/uthread.h"
+#include "u/uatomic.h"
 
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 
 #include "tr/vmm/os_exceptions.h"
-#include "tr/rcv/rcv_test_tr.h"
 #include "tr/vmm/vmmtrace.h"
 
 // #define VMM_LINUX_DEBUG_CHECKP
 // #define VMM_DEBUG_CHECKP
+extern void  *LAYER_ADDRESS_SPACE_START_ADDR;
+extern void  *LAYER_ADDRESS_SPACE_BOUNDARY;
+extern uintptr_t LAYER_ADDRESS_SPACE_START_ADDR_INT;
+extern uintptr_t LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+extern lsize_t LAYER_ADDRESS_SPACE_SIZE;
+
+
+/* use this macros when you want obtain pointer in terms of process' virtual address space */
+#define XADDR(p)                ((void *)(LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs()))
+#define XADDR_INT(p)            (LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs())
+#define BLOCKXPTR(a)            cxptr(a.layer,((a).getOffs() & PAGE_BIT_MASK))
+
+#define ADDR2XPTR(a)            cxptr(*(t_layer*)(((uintptr_t)(a)) & PAGE_BIT_MASK),   \
+                                      *(lsize_t *)((((uintptr_t)(a)) & PAGE_BIT_MASK) + sizeof(t_layer)) + \
+                                      (lsize_t)(((uintptr_t)(a)) & PAGE_REVERSE_BIT_MASK))
+#define TEST_XPTR(p)            (*(t_layer*)((LAYER_ADDRESS_SPACE_START_ADDR_INT + (p).getOffs()) & PAGE_BIT_MASK) == (p).layer)
+#define ALIGN_ADDR(a)           ((void*)((uintptr_t)(a) & PAGE_BIT_MASK))
+#define ALIGN_OFFS(a)           ((lsize_t)((lsize_t)(a) & PAGE_BIT_MASK))
+
+#define XOFFS2ADDR(p)           ((void *)(LAYER_ADDRESS_SPACE_START_ADDR_INT + (p)))
+#define LAYERS_EQUAL(a, p)      (*(t_layer*)((uintptr_t)(a) & PAGE_BIT_MASK) == ((p).layer))
+
+
+inline
+void * xaddr(const xptr p) {
+    return XADDR(p);
+}
+
+inline xptr addr2xptr(const void * p)
+{
+    U_ASSERT(LAYER_ADDRESS_SPACE_START_ADDR_INT + ((xptr *) (((uintptr_t)p) & PAGE_BIT_MASK))->offs ==
+             (((uintptr_t) p ) & PAGE_BIT_MASK));
+    return cxptr(* (t_layer*) (((uintptr_t) p) & PAGE_BIT_MASK), (lsize_t)(((uintptr_t)p) - LAYER_ADDRESS_SPACE_START_ADDR_INT));
+}
+
+inline bool same_block(const xptr& a, const xptr& b) {
+    return (BLOCKXPTR(a) == BLOCKXPTR(b));
+}
+
+inline bool isTmpBlock(const xptr &p) { return p.layer >= TMP_LAYER_STARTS_WITH; };
 
 namespace tr_globals {
     extern session_id sid;

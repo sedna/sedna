@@ -23,7 +23,7 @@
 
 #include "tr/executor/base/SequenceType.h"
 #include "tr/executor/base/static_context.h"
-#include "tr/executor/base/INamespaceMap.h"
+#include "tr/models/INamespaceMap.h"
 
 /*******************************************************************************
  * List of classes used
@@ -225,9 +225,6 @@ private:
 public:
     dynamic_context(static_context *_st_cxt_);
     ~dynamic_context();
-
-    // Sequence for virtual elements
-    std::stack<sequence *> tmp_sequence;
 
     /*
      * This function creates new variable context for local vars

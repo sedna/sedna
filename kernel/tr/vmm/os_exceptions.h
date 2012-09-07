@@ -8,7 +8,7 @@
 #define _OS_EXCEPTIONS_H
 
 #include "common/sedna.h"
-#include "common/commutil.h"
+#include "auxiliary/commutil.h"
 
 extern "C" int TRmain(int argc, char **argv);
 extern "C" int IsAccessViolationNonFatal(void *addr, void *context);

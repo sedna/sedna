@@ -275,7 +275,7 @@ int sm_server_handler(void *arg)
 
         gaintLock.release();
     } catch (SednaUserException &e) {
-        switch (e.get_code())
+        switch (e.getCode())
         {
         case SE1011:  // Data file has reached its maximum size.
             msg->cmd = msg_error_max_data_file_size;

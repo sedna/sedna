@@ -7,7 +7,7 @@
 
 #include "tr/vmm/os_exceptions.h"
 #include "common/errdbg/d_printf.h"
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 #include "tr/vmm/vmm.h"
 #include "tr/tr_globals.h"
 

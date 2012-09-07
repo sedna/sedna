@@ -6,7 +6,8 @@
 
 #include <math.h>
 #include <map>
-#include <ostream>
+#include <iostream>
+#include <fstream>
 
 #include "bulkload.h"
 
@@ -20,8 +21,9 @@
 #endif
 
 #include "tr/updates/updates.h"
-#include "tr/structures/producer.h"
-#include "tr/executor/base/SCElementProducer.h"
+
+#include "tr/models/IElementProducer.h"
+#include "tr/models/SCElementProducer.h"
 
 #define BUFFER_SIZE (16*1024)
 #define MAX_QNAME 1024
@@ -117,12 +119,14 @@ int minInt(int a, int b) { return MIN(a, b); }
 typedef std::vector<int> NodeCountStatistics;
 
 class BulkLoader {
-  private:
+private:
     char parseBuffer[BUFFER_SIZE];
-
     IElementProducer * producer;
     std::stack<IElementProducer *> producerStack;
-
+public:
+    std::istream * inputStream;
+private:
+    
     void parseDocument(bool parseSchema) {
         SafeParser xmlParser;
 
@@ -140,39 +144,20 @@ class BulkLoader {
             XML_SetCdataSectionHandler(p, startCDataHandler, endCDataHandler);
         }
 
-        /*
-         * We have to cast since Expat uses 'int' instead of size_t,
-         * it's safe since BUFFSIZE < INT_MAX
-         */
-
-        int len;
-        int isFinal;
-
         do {
-            len = (int) fread(parseBuffer, 1, BUFFER_SIZE, inputFile);
+            if (inputStream->read(parseBuffer, BUFFER_SIZE).bad()) {
+                throw USER_ENV_EXCEPTION("Error while reading file", true);
+            };
 
-            if (ferror(inputFile)) {
-                throw USER_ENV_EXCEPTION("Read error", true);
-            }
-
-            if (len == 0) {
-                break;
-            }
-
-            isFinal = feof(inputFile);
-            if (XML_Parse(p, parseBuffer, len, isFinal) != XML_STATUS_OK) {
+            if (XML_Parse(p, parseBuffer, inputStream->gcount(), inputStream->eof()) != XML_STATUS_OK) {
                 char errorDetails[256];
-
                 sprintf(errorDetails, "line %d:\n%s\n", (int) XML_GetCurrentLineNumber(p), XML_ErrorString(XML_GetErrorCode(p)));
-
                 throw USER_EXCEPTION2(SE2005, errorDetails);
             }
-        } while (!isFinal);
+        } while (!inputStream->eof());
     }
 
-  public:
-    FILE * inputFile;
-
+public:
     char textBuffer[TEXT_BUFFER_SIZE];
     size_t textBufferSize;
     bool updateIndexes;
@@ -186,7 +171,7 @@ class BulkLoader {
     std::vector< nid_hint_t > numbSchemeHints;
 
     BulkLoader(bool newDocumentOpt) :
-        producer(NULL), inputFile(NULL),
+        producer(NULL), inputStream(NULL),
         textBufferSize(0), updateIndexes(false), saveWSOption(false), loadNewDocument(newDocumentOpt)
     { /* qnameBuffer[MAX_QNAME - 1] = '\0'; */ };
 
@@ -684,8 +669,6 @@ class DataParser : public IElementProducer {
     virtual bool hasNode(const tuple_cell& node) { U_ASSERT(false); return false; };
 };
 
-
-
 void BulkLoader::loadDocument(xptr doc_node, schema_node_cptr schema_node)
 {
     nid_set_proportion(fnumber()); // Nobody knows WTF.
@@ -693,7 +676,8 @@ void BulkLoader::loadDocument(xptr doc_node, schema_node_cptr schema_node)
     scoped_ptr<SchemaParser> schemaParser(new SchemaParser(this, schema_node, 0));
     producer = schemaParser.get();
 
-    fseek(inputFile, 0, SEEK_SET);
+    inputStream->clear();
+    inputStream->seekg(0);
     parseDocument(true);
 
     /* TODO: process node count statistics */
@@ -715,12 +699,13 @@ void BulkLoader::loadDocument(xptr doc_node, schema_node_cptr schema_node)
     U_ASSERT(producerStack.empty());
     producer = dataParser.get();
 
-    fseek(inputFile, 0, SEEK_SET);
+    inputStream->clear();
+    inputStream->seekg(0);
     parseDocument(false);
 }
 
 
-BulkLoadFrontend::BulkLoadFrontend() : file(NULL)
+BulkLoadFrontend::BulkLoadFrontend() : inputStream(NULL)
 {
     options.preserveCDataSection = false;
     options.stripBoundarySpaces = true;
@@ -728,7 +713,11 @@ BulkLoadFrontend::BulkLoadFrontend() : file(NULL)
 
 BulkLoadFrontend::~BulkLoadFrontend()
 {
+}
 
+void BulkLoadFrontend::setSourceStream(std::istream* _stream)
+{
+    inputStream = _stream;
 }
 
 Node BulkLoadFrontend::loadDocument(const char* documentName)
@@ -737,7 +726,7 @@ Node BulkLoadFrontend::loadDocument(const char* documentName)
 
     loader.options = options;
     loader.updateIndexes = false;
-    loader.inputFile = file;
+    loader.inputStream = inputStream;
 
     xptr docNode = insert_document(documentName);
 
@@ -752,7 +741,7 @@ Node BulkLoadFrontend::loadCollectionDocument(const char* collectionName, const 
 
     loader.options = options;
     loader.updateIndexes = true;
-    loader.inputFile = file;
+    loader.inputStream = inputStream;
 
     xptr docNode = insert_document_into_collection(collectionName, documentName);
 

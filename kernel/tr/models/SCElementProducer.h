@@ -7,9 +7,11 @@
 #ifndef SCELEMENTPRODUCER_H
 #define SCELEMENTPRODUCER_H
 
-#include "tr/structures/producer.h"
+#include "tr/models/IElementProducer.h"
 
 class sequence;
+
+text_source_t concatTextSequence(sequence * textSequence);
 
 class SCElementProducer : public IElementProducer
 {
@@ -39,6 +41,8 @@ class SCElementProducer : public IElementProducer
     virtual tuple_cell addAtomic(const tuple_cell& atomic);
 
     virtual tuple_cell addAttribute(const xsd::QName& qname, const text_source_t value, xmlscm_type type);
+    virtual tuple_cell addAttributeValue(const xsd::QName& qname, const tuple_cell value);
+
     virtual tuple_cell addComment(const text_source_t value);
     virtual IElementProducer* addElement(const xsd::QName& qname, xmlscm_type type);
     virtual tuple_cell addNS(const xmlns_ptr ns);

@@ -35,6 +35,10 @@ typedef struct {
 SE_EXTERN_C
 utm getLocalTime();
 
+typedef double ex_time_t;
+
+SE_EXTERN_C
+ex_time_t uGetTime();
 
 #endif /* UTIME_H */
 

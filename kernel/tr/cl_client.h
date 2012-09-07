@@ -58,6 +58,7 @@ public:
     virtual void process_unknown_instruction(int instruction, bool in_transaction);
     virtual void error(int code, const std::string& body);
     virtual void show_time(u_timeb qep_time);
+    virtual void show_time_ex(uint64_t qep_time);
     virtual void write_user_query_to_log();
     virtual void user_statement_begin();
 

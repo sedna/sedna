@@ -12,6 +12,9 @@
 #include "tr/crmutils/serialization.h"
 #include "tr/locks/locks.h"
 #include "tr/tr_globals.h"
+#include "tr/opt/algebra/IndependentPlan.h"
+#include "tr/opt/algebra/PlanAlgorithms.h"
+#include "tr/models/XmlConstructor.h"
 
 PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
                          PPOpIn _child_) :       PPQueryEssence("PPQueryRoot"),
@@ -81,6 +84,36 @@ bool PPQueryRoot::next()
     return result;
 }
 
+static
+std::string schemaPath(schema_node_cptr snode) {
+    std::stringstream path;
+    std::stack<schema_node_cptr> path_sn;
+
+    while (snode.found()) {
+        path_sn.push(snode);
+        snode = snode->parent;
+    };
+
+    while (!path_sn.empty()) {
+        path << path_sn.top()->get_qname().getColonizedName().c_str() << "/";
+        path_sn.pop();
+    }
+
+    return path.str();
+};
+
+void sendTupleCellToClient(const tuple_cell & tc)
+{
+    GlobalSerializationOptions options;
+    bool is_node = tc.is_node();
+    
+    tr_globals::create_serializer(tr_globals::client->get_result_type());
+    tr_globals::serializer->prepare(tr_globals::client->get_se_ostream(), &options);
+    tr_globals::client->begin_item(is_node, xs_untyped, element, "");
+    tr_globals::serializer->serialize(tuple(tc));
+    
+};
+
 bool PPQueryRoot::do_next()
 {
     if (first) {
@@ -91,7 +124,7 @@ bool PPQueryRoot::do_next()
 
     if (data.is_eos()) return false;
 
-    if(data.cells_number != 1)
+    if(data.size() != 1)
         throw XQUERY_EXCEPTION2(SE1003, "Result of the query contains nested sequences");
 
     tuple_cell tc = data.cells[0];
@@ -143,15 +176,12 @@ bool PPQueryRoot::do_next()
     }
 
     tr_globals::serializer->prepare(tr_globals::client->get_se_ostream(), options);
+
+    XmlConstructor xmlConstructor(VirtualRootConstructor(0));
+    data.cells[0] = optimizedPlan->toXML(xmlConstructor).getLastChild();
     tr_globals::serializer->serialize(data);
 
-//    data.cells[0].set_eos();
-    while (!cxt->tmp_sequence.empty()) { delete cxt->tmp_sequence.top(); cxt->tmp_sequence.pop(); }
-    // data tuple is unusable after this kind of serialization
-
-    if (first) {
-        first = false;
-    }
+    first = false;
 
     return true;
 }
@@ -249,7 +279,7 @@ bool PPSubQuery::do_next()
     if (data.is_eos())
         return false;
 
-    if (data.cells_number != 1)
+    if (data.size() != 1)
         throw XQUERY_EXCEPTION2(SE1003, "Result of a subquery contains nested sequences");
 
     return true;

@@ -103,11 +103,6 @@ dynamic_context::~dynamic_context()
     for (size_t i = 0; i < var_cxts.size(); i++)
         delete var_cxts[i];
 
-    while (!tmp_sequence.empty()) {
-        delete tmp_sequence.top();
-        tmp_sequence.pop();
-    }
-
     // destroy static context
     delete st_cxt;
 }

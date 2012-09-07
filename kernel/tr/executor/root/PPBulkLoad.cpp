@@ -76,6 +76,8 @@ void PPBulkLoad::do_execute()
     tuple_cell tc, tc_filename, tc_document, tc_collection;
     tuple t(1);
 
+    U_ASSERT(tc.is_eos());
+    
     filename.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
 
@@ -139,7 +141,7 @@ void PPBulkLoad::do_execute()
             bulkLoadManager.options.preserveCDataSection = false;
         }
 
-        bulkLoadManager.setSourceFile(cf_vec[0].f);
+        bulkLoadManager.setSourceStream(cf_vec.at(0).stream);
 
         if (collection.op == NULL)
         {

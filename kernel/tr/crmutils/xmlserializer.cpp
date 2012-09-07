@@ -202,17 +202,17 @@ void XDMSerializer::printNode(IXDMNode * node)
     }
 }
 
-void XDMSerializer::serialize(tuple & t) {
+void XDMSerializer::serialize(const tuple& t) {
     if (crmout == NULL) { return; }
 
     if (t.is_eos()) { return; }
 
-    for (int i = 0; i < t.cells_number; i++) {
+    for (int i = 0; i < t.size(); i++) {
         if (separatorNeeded && i > 0) { (*crmout) << " "; }
         const tuple_cell tc = t.cells[i];
 
         if (tc.is_portal()) {
-            portal::VirtualNode element(tc);
+            portal::VirtualNodeIterator element(tc);
             printElement(&element);
         } else if (tc.is_node()) {
             printNode(tc.get_node());

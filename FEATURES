@@ -1,0 +1,62 @@
+* Virtual constructors
+
+  Virtual (or lightweight) constructors construct lightweight elements.
+  They are atomic values of special type. They may be considered as atomic
+  representation of xml node. The main difference is that they can include
+  other elements as children, so in most cases there is no need in deep
+  node copying.
+
+  Currently, optimizer cannot automatically decide, where we can use
+  virtual constructors instead of normal ones. So we introduce special
+  pragma direcitves, that tells plan generator whether or not to generate
+  lightweight constructors:
+
+   (# se:light-constructors #) { (: Here constructors will be light :) }
+   (# se:no-light-constructors #) { (: Here constructors will be normal :) }
+
+  This is an example of real query:
+
+(# se:light-constructors #) {
+  let $elem as element() := (# se:no-light-constructors #) { <get doc="1" ok="ok" /> (: 1 :) },
+  return
+    if ($elem/@ok) then
+	<query> (: 2 :)
+		{$elem}
+		<result>{doc($elem/@doc) (: 6 :) }</result> (: 3 :)
+	</query>
+    else
+	<query> (: 4 :)
+		<error /> (: 5 :)
+	</query>
+}
+
+  In this case constructors 2,3,4,5 will be generated as lightweight,
+  and constructor for element 1 will be normal.
+
+  If constructor 1 is virtual, it will lead to an error, because XPath
+  expression (6) cannot contain atomic expressions.
+
+=== Notes ============
+
+ 1. Lightweight constructors cannot be in the content expression of
+  normal constructors, because they are not castable to xs:string.
+  So this expression will lead to an error:
+
+	<query>{
+	(# se:light-constructors #) {
+		<error />
+	}
+	}</query>
+
+  However, this expression will work fine:
+
+(# se:light-constructors #) {
+	<query>{
+	(# se:no-light-constructors #) {
+		<error />
+	}
+	}</query>
+}
+
+ 2. Lightweight constructors are an experimental featurw, so there
+  can be various bugs about them, in such expressions like castable.

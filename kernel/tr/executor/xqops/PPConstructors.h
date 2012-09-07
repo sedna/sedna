@@ -77,6 +77,7 @@ public:
 
     /* May return NULL if name is not predefined */
     inline const char* get_name() { return el_name; }
+    inline bool is_virtual() { return virtualElement; }
 };
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -379,7 +379,7 @@ void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq, 
             node = indirectionDereferenceCP(*it1);
 		CHECKP(node);
         scn = getSchemaNode(*it1);
-        if(docs_statement_triggers.find(scn->root)!=docs_statement_triggers.end())
+        if(docs_statement_triggers.find(scn->root.ptr())!=docs_statement_triggers.end())
         {
             scm_nodes_iter=scm_nodes_map.find(scn.ptr());
 	        if(scm_nodes_iter==scm_nodes_map.end())

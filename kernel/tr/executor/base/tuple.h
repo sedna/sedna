@@ -23,8 +23,7 @@
 class sequence;
 
 /// Array of int pairs
-typedef std::pair<int, int>			int_pair;
-typedef std::vector<int_pair>		arr_of_int_pairs;
+typedef std::vector< std::pair<unsigned, unsigned> > TupleMap;
 
 typedef counted_ptr<char, de_delete_array<char> > str_counted_ptr;
 //typedef counted_ptr<protal_node> portalnode_ptr;
@@ -40,7 +39,6 @@ typedef counted_ptr<char, de_delete_array<char> > str_counted_ptr;
 /// analyzer.
 
 #define MAX_ATOMIC_LEX_REPR_SIZE        2000
-
 
 /// Possible types of tuple cell
 #define tc_eos                         (uint32_t)(0x80000000) // cell stores end of sequence
@@ -205,10 +203,11 @@ private:
             data = tc.data;
         }
     }
+
     void release()
     {
         if (t & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) {
-            ((str_counted_ptr*)(&data))->~str_counted_ptr();
+            (*(str_counted_ptr*)(&data)) = NULL;
             data.x = data.y = (int64_t) 0;
         }
     }
@@ -216,6 +215,9 @@ private:
     void set_size(int64_t _size_) { *(int64_t*)((char*)(&data) + sizeof(xptr)) = _size_; }
 
 public:
+    uint32_t __type() const { return t; };
+    const tcdata & __data() const { return data; };
+  
     ////////////////////////////////////////////////////////////////////////////
     /// SET AND GET FUNCTIONS (SOME OF THEM ARE VERY DANGEROUS)
     ////////////////////////////////////////////////////////////////////////////
@@ -253,16 +255,17 @@ public:
         case tc_safenode : return get_safenode();
         case tc_node : return get_smartnode();
         case tc_unsafenode : return get_unsafenode();
-        default: return XNULL;
+        default: return get_xptr();
       }
     }
 
     xptr get_node_inderection() const {
       switch (t & TC_TYPE_MASK) {
-        case tc_safenode : return get_xptr();
+        case tc_safenode : return get_xptr(); 
         case tc_node : return get_smartnode_indir();
         case tc_unsafenode : return getIndirectionSafeCP(checkp(get_xptr()));
-        default: return XNULL;
+        // TODO: fixthis
+        default: return get_xptr();
       }
     }
 
@@ -320,6 +323,13 @@ public:
     }
     // all fields constructor
     explicit tuple_cell(uint32_t _t_, const tcdata &_data_) : t(_t_), data(_data_) {}
+
+    explicit tuple_cell(uint32_t _t_, char * str, int x, int y) : t(_t_) {
+        U_ASSERT((_t_ & TC_LIGHT_ATOMIC_VAR_SIZE_MASK) > 0);
+        data.x = data.y = (int64_t)0;
+        *(str_counted_ptr*)(&data) = str;
+    }
+    
     // copy constructor
     tuple_cell(const tuple_cell& tc)
     {
@@ -353,7 +363,7 @@ public:
     explicit tuple_cell(int64_t _data_)
     {
         t = tc_light_atomic_fix_size | xs_integer;
-		*(int64_t*)(&(data)) = _data_;
+        *(int64_t*)(&(data)) = _data_;
     }
     // for xs_decimal atomics
     explicit tuple_cell(xs_decimal_t _data_)
@@ -415,6 +425,14 @@ public:
         data.x = data.y = (int64_t)0;
         *(str_counted_ptr*)(&data) = str_counted_ptr(tmp);
     }
+
+    explicit tuple_cell(xmlscm_type _xtype_, const str_counted_ptr & x)
+    {
+        t = tc_light_atomic_var_size | _xtype_;
+        data.x = data.y = (int64_t)0;
+        *(str_counted_ptr*)(&data) = x;
+    }
+
     // for heavy atomics
     explicit tuple_cell(uint32_t _t_, xmlscm_type _xtype_, const xptr &_p_, int64_t _size_)
     {
@@ -464,9 +482,29 @@ public:
         return tuple_cell(tc_unsafenode, _p_);
     }
 
+    static tuple_cell atomic_int(int64_t _data_)
+    {
+        tuple_cell t;
+        t.t = tc_light_atomic_fix_size | xs_integer;
+        *(int64_t*)(&(t.data)) = _data_;
+        return t;
+    }
+
     static tuple_cell atomic(int64_t _data_)
     {
-        return tuple_cell(_data_);
+        tuple_cell t;
+        t.t = tc_light_atomic_fix_size | xs_integer;
+        *(int64_t*)(&(t.data)) = _data_;
+        return t;
+    }
+
+    static tuple_cell atomic_deep(xmlscm_type _xtype_, const char *_str_, size_t size)
+    {
+        char *tmp = se_new char[size + 1];
+        strncpy(tmp, _str_, size);
+        tmp[size] = '\0';
+
+        return tuple_cell(tc_light_atomic_var_size | _xtype_, str_counted_ptr(tmp));
     }
 
     static tuple_cell atomic_portal(xptr _data_)
@@ -550,6 +588,24 @@ public:
     static tuple_cell atomic_estr(xmlscm_type _xtype_, int64_t _size_, const xptr &_p_)
     {
         return tuple_cell(tc_heavy_atomic_estr, _xtype_, _p_, _size_);
+    }
+
+    static tuple_cell atomic_any_text(xmlscm_type _xtype_, text_source_t text)
+    {
+        if (text_is_null(text)) {
+            return EMPTY_STRING_TC;
+        };
+
+        switch (text.type) {
+            case text_source_t::text_mem :
+                return atomic_deep(_xtype_, text.u.cstr, text._text_size);
+            case text_source_t::text_estr :
+                return atomic_estr(_xtype_, text._text_size, text.u.data);
+            case text_source_t::text_pstr :
+                return atomic_pstr(_xtype_, text._text_size, text.u.data);
+            case text_source_t::text_pstrlong :
+                return atomic_pstr(_xtype_, pstr_long_bytelength2(text.u.data), text.u.data);
+        };
     }
 
     static tuple_cell atomic_text(CommonTextNode node)
@@ -657,26 +713,62 @@ public:
 
 struct tuple
 {
-    int cells_number;	// number of cells in the array
-    tuple_cell *cells;	// array of cells
-    bool eos;			// is eos?
+private:
+    int cells_number;   // number of cells in the array
+public:
+    scoped_ptr<tuple_cell, de_delete_array<tuple_cell> > cells; // array of cells
+    bool eos;       // is eos?
 
     tuple() : cells_number(0), cells(NULL), eos(true) {}
-    tuple(int _n_) : cells_number(_n_), eos(false) { cells = se_new tuple_cell[_n_]; }
-    tuple(const tuple &t);
-
-    explicit tuple(const tuple_cell tc) : cells_number(1), eos(false) {
-        cells = se_new tuple_cell[1];
-        this->copy(tc);
-    }
-
-    tuple &operator=(const tuple& t);
+    tuple(int _n_) : cells_number(_n_), cells(NULL), eos(false) { cells = new tuple_cell[_n_]; }
+    ~tuple() { };
 
     void copy(const tuple &t)
     {
         eos = t.eos;
+        U_ASSERT(cells_number == t.cells_number);
         if (!eos) for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
     }
+
+    tuple(const tuple &t) : cells_number(t.cells_number), cells(NULL), eos(t.eos) {
+        if (!t.cells.isnull()) {
+            cells = new tuple_cell[cells_number];
+            copy(t);
+        };
+    };
+
+    explicit tuple(const tuple_cell tc) : cells_number(1), eos(false) {
+        cells = new tuple_cell[1];
+        this->copy(tc);
+    }
+
+    int size() const { return cells_number; }
+
+    tuple & reinit(int new_size) {
+        cells.clear();
+        cells_number = new_size;
+        cells = new tuple_cell[cells_number];
+
+        return *this;
+    };
+
+    tuple &operator=(const tuple& t) {
+        if (this != &t) {
+            if (cells_number != t.cells_number) {
+                cells.clear();
+                cells_number = t.cells_number;
+                cells = new tuple_cell[t.cells_number];
+            };
+
+            copy(t);
+        }
+
+        return *this;
+    };
+
+    tuple_cell & operator[](int i) { return cells.get()[i]; };
+    const tuple_cell & operator[](int i) const { return cells.get()[i]; };
+
     void copy(const tuple_cell &tc)
     {
         if (cells_number != 1) throw USER_EXCEPTION2(SE1003, "Cannot construct tuple from tuple cell (size mismatch)");
@@ -707,19 +799,7 @@ struct tuple
         cells[cells_number - 2] = tc1;
         cells[cells_number - 1] = tc2;
     }
-    void copy(const tuple &s1, const tuple &s2, const arr_of_int_pairs &order)
-    {
-        eos = false;
-        if (s1.cells_number + s2.cells_number != cells_number)
-            throw USER_EXCEPTION2(SE1003, "Cannot construct tuple from two tuples (size mismatch)");
-        const tuple* arr[2] = {&s1, &s2};
-        for (int i = 0; i < cells_number; i++) cells[i] = arr[order[i].first - 1]->cells[order[i].second - 1];
-    }
-    ~tuple() { clear(); }
-    void clear()
-    {
-		if (cells != NULL) delete [] cells;
-    }
+
     bool is_eos() const { return eos; }
     void set_eos() { eos = true; }
 

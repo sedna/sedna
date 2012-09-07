@@ -36,6 +36,16 @@ tuple_cell SCElementProducer::addAttribute(const xsd::QName& qname, const text_s
     return tuple_cell::node_indir(left);
 }
 
+tuple_cell SCElementProducer::addAttributeValue(const xsd::QName& qname, const tuple_cell value)
+{
+    if (!value.is_atomic()) {
+        throw XQUERY_EXCEPTION2(XPTY0004, "Atomic type needed");
+    };
+
+    return addAttribute(qname, text_source_tuple_cell(cast(value, xs_string)), value.get_atomic_type());
+}
+
+
 tuple_cell SCElementProducer::addNS(const xmlns_ptr ns)
 {
     processAtomics();
@@ -214,25 +224,36 @@ tuple_cell SCElementProducer::close()
     return tuple_cell::node_indir(self);
 }
 
+text_source_t concatTextSequence(sequence* textSequence)
+{
+    if (textSequence->size() == 0) {
+        return NULL_TEXT;
+    }
+
+    executor_globals::tmp_op_str_buf.clear();
+
+    sequence::iterator it = textSequence->begin();
+
+    while (it != textSequence->end()) {
+        executor_globals::tmp_op_str_buf.append(cast(tuple_cell::make_sure_light_atomic((*it).cells[0]), xs_string));
+        it++;
+    };
+
+    if (executor_globals::tmp_op_str_buf.get_size() > 0) {
+        return text_source_strbuf(&(executor_globals::tmp_op_str_buf));
+    } else {
+        return NULL_TEXT;
+    }
+}
+
+
 tuple_cell SCElementProducer::processAtomics()
 {
-    if (textAccum->size() > 0) {
-        executor_globals::tmp_op_str_buf.clear();
-        tuple_cell tcc;
-        sequence::iterator it = textAccum->begin();
-
-        do {
-            tcc = tuple_cell::make_sure_light_atomic((*it).cells[0]);
-            tcc = cast(tcc, xs_string);
-            executor_globals::tmp_op_str_buf.append(tcc);
-            it++;
-        } while (it != textAccum->end());
-
+    if (textAccum->size() > 0) { // This check is just for optimization purposes
+        text_source_t ts = concatTextSequence(textAccum);
         textAccum->clear();
 
-        if (executor_globals::tmp_op_str_buf.get_size() > 0) {
-            text_source_t ts = text_source_strbuf(&(executor_globals::tmp_op_str_buf));
-
+        if (!text_is_null(ts)) {
             if (left != XNULL) {
                 insert_text(indirectionDereferenceCP(left), XNULL, XNULL, ts);
             } else {
@@ -255,6 +276,10 @@ Node SCElementProducer::getNode()
 
 SCElementProducer::~SCElementProducer()
 {
+    if (this == virtualRootProducer) {
+        virtualRootProducer = NULL;
+    };
+
     delete textAccum;
 }
 

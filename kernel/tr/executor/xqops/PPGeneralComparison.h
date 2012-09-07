@@ -13,8 +13,11 @@
 
 inline tuple_cell getAtomizedCell(tuple& tup)
 {
-	if (!(tup.cells_number==1 )) throw XQUERY_EXCEPTION2(XPTY0004, "Name argument of Constructor is not a single atomic value");
-	return atomize(tup.cells[0]);
+    if (tup.size() != 1) {
+        throw XQUERY_EXCEPTION2(XPTY0004, "Name argument of Constructor is not a single atomic value");
+    };
+
+    return atomize(tup.cells[0]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

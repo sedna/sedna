@@ -143,7 +143,7 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
        }
        catch(SednaUserException &e)
        {
-           if(e.get_code() == FORG0009) throw XQUERY_EXCEPTION2(XQST0038, "Unknown collation in prolog (possibly, base-uri contains relative URI).");
+           if(e.getCode() == FORG0009) throw XQUERY_EXCEPTION2(XQST0038, "Unknown collation in prolog (possibly, base-uri contains relative URI).");
            throw;
        }
     }
@@ -199,7 +199,7 @@ int static_context::get_collation(const char *uri, /* out */ CollationHandler** 
        }
        catch(SednaUserException &e)
        {
-           if(e.get_code() == FORG0009) return COLLATION_RESOLVE_ERR;
+           if(e.getCode() == FORG0009) return COLLATION_RESOLVE_ERR;
            throw;
        }
     }

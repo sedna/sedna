@@ -9,6 +9,7 @@
 #include "ASTNode.h"
 #include "ASTNameTest.h"
 #include "ASTElementTest.h"
+#include "ASTAttribTest.h"
 #include "ASTPiTest.h"
 
 class ASTVisitor;

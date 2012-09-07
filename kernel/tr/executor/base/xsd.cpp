@@ -12,8 +12,11 @@
 #include "tr/executor/base/xs_names.h"
 #include "tr/structures/nodeinterface.h"
 #include "tr/executor/base/dm_accessors.h"
+#include "tr/opt/path/SchemaTests.h"
 
 using namespace xsd;
+
+const char * xsd::QNameWildcard = "*";
 
 /* Storage of strings, used as QName
   WARNING: name storage's main goal is to save char array even after qname is destroyed
@@ -67,13 +70,6 @@ NCName NCName::check(const char* name, bool quietly)
 AnyURI AnyURI::check(const char* uri)
 {
     return AnyURI(nameStorage.intern(uri));
-}
-
-QName::QName() : ns(NULL_XMLNS), localName(NULL) { }
-
-QName::QName(const xsd::QName& from) : ns(from.ns)
-{
-    this->localName = from.localName;
 }
 
 QName::QName(xmlns_ptr ns, const char* aLocalName) : ns(ns), localName(NULL)
@@ -265,6 +261,24 @@ QName QName::createUCn(const char* uri, const char* prefixAndLocal, bool quietly
     return QName(xmlns_touch(cn.first.getValue(), uri), cn.second.getValue());
 }
 
+QName QName::resolve(const char* prefix, const char* local, INamespaceMap* namespaces)
+{
+    NCName name = NCName::check(local, false);
+    
+    if (prefix == NULL || prefix[0] == '\0') {
+        return QName(namespaces->getDefaultNamespace(), name.getValue());
+    } else {
+        xmlns_ptr ns = namespaces->resolvePrefix(prefix);
+
+        if (ns == NULL_XMLNS) {
+            return QName();
+        } else {
+            return QName(ns, name.getValue());
+        }
+    };
+}
+
+
 QName QName::createResolve(const char* prefixAndLocal, INamespaceMap* namespaces, bool quietly)
 {
     ColonizedName cn = resolveColonizedName(prefixAndLocal, quietly);
@@ -281,6 +295,7 @@ QName QName::createResolve(const char* prefixAndLocal, INamespaceMap* namespaces
           We should check for xmlns prefix before resolving it, it's kinda hack.
           The worst thing is that there are different errors for attrbutes and for elements  */
 
+        // TODO : 
         if (strcmp(cn.first.getValue(), "xmlns") == 0) {
             ns = xmlns_touch("xmlns", "http://www.w3.org/2000/xmlns/");
         } else {
@@ -300,6 +315,64 @@ QName QName::createResolve(const char* prefixAndLocal, INamespaceMap* namespaces
         return QName(ns, cn.second.getValue());
     }
 }
+
+#define IS_WILDCARD(x) ((x) == NULL || (x) == QNameWildcard || strcmp((x), QNameWildcard) == 0)
+
+TemplateQName::TemplateQName(const char* _uri, const char* _localName)
+  : uri(NULL), localName(NULL)
+{
+    if (IS_WILDCARD(_uri)) {
+        uri = QNameWildcard;
+    } else {
+        uri = nameStorage.intern(_uri);
+    };
+
+    if (IS_WILDCARD(_localName) || _localName[0] == '\0') {
+        localName = QNameWildcard;
+    } else {
+        localName = nameStorage.intern(_localName);
+    };
+}
+
+std::string TemplateQName::getColonizedName() const
+{
+    std::stringstream ss;
+
+    if (uri == QNameWildcard) {
+      ss << QNameWildcard;
+    } else {
+      ss << "{" << uri << "}";
+    }
+
+    ss << ":" << localName;
+    return ss.str();
+}
+
+std::string TemplateQName::getXPathName() const
+{
+    std::stringstream ss;
+
+    ss << "(";
+    
+    if (uri == QNameWildcard) {
+      ss << QNameWildcard << ":";
+    } else if (uri[0] == '\0') {
+    } else {
+      ss << "{" << uri << "}" << ":";
+    }
+
+    ss << localName << ")";
+
+    return ss.str();
+}
+
+SchemaTestData* TemplateQName::getTestData(SchemaTestData* _td) const
+{
+    _td->m_uri = uri;
+    _td->m_local = localName;
+    return _td;
+}
+
 
 QName QName::bulkloadParse(const char* triplet)
 {

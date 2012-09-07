@@ -11,11 +11,21 @@
 #include "tr/executor/xqops/PPTest.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
+#include "tr/opt/path/XPathTypes.h"
+
 #include "tr/strings/strings.h"
 #include "tr/pstr/pstr.h"
 
 #include "tr/structures/nodeutils.h"
 #include "tr/mo/nodemoutils.h"
+
+#include "tr/opt/graphs/Predicates.h"
+#include "tr/opt/graphs/DataGraphs.h"
+
+#include "tr/models/SCElementProducer.h"
+
+#include "tr/opt/path/XPathLookup.h"
+#include "tr/models/XmlConstructor.h"
 
 using namespace std;
 //#include <atlstr.h>
@@ -31,7 +41,7 @@ bool fit;
 PPTest::PPTest(dynamic_context *_cxt_,
                operation_info _info_,
                PPOpIn _seq_) : PPIterator(_cxt_, _info_, "PPTest"),
-                               seq(_seq_)
+                               seq(_seq_), data(NULL)
 {
 	this->test_fun=&PPTest::checkTreeConsistency;
 }
@@ -57,122 +67,94 @@ void PPTest::do_close()
 {
     seq.op->close();
 }
+
+static
+std::string schemaPath(schema_node_cptr snode) {
+    std::stringstream path;
+    std::stack<schema_node_cptr> path_sn;
+
+    while (snode.found()) {
+        path_sn.push(snode);
+        snode = snode->parent;
+    };
+
+    while (!path_sn.empty()) {
+        path << path_sn.top()->get_qname().getColonizedName().c_str() << "/";
+        path_sn.pop();
+    }
+
+    return path.str();
+};
+
 void PPTest::do_next (tuple &t)
 {
-	tuple t1(seq.ts);
-	seq.op->next(t1);
-	//Preliminary node analysis
-	if (t1.is_eos())
-	{
-		t.set_eos();
-		return;
-	}
-	tuple_cell& tc= t1.cells[0];
-	if (!tc.is_node())
-	{
-		throw XQUERY_EXCEPTION(SE2031);
-	}
-	xptr node=tc.get_node();
-	CHECKP(node);
-	std::ostringstream strg;
-	strg<< "checking the node: xptr=(" << node.layer<< ",0x"<< hex << node.getOffs() <<")\n";
-	try
-	{
-		test_fun(node);
-		strg<<"true";
+/*
 
-	}
-	catch(SednaException &e)
-	{
-       strg << e.getMsg() << endl;
-	   throw ;
+// Path parsing
+   
+    seq.op->next(t);
+
+    if (t.eos) {
+        return;
     }
-	t.copy(tuple_cell::atomic_deep(xs_string,strg.str().c_str())) ;
 
-	/*while (true)
-	{
-		seq.op->next(t);
-		//Preliminary node analysis
-		if (t.is_eos())
-		{
-			//t.set_eos();
-			return;
-		}
-		tuple_cell& tc= t.cells[0];
-		if (!tc.is_node())
-		{
-			//throw USER_EXCEPTION(SE2031);
-			req_buf.set(tc);
-		}
-		else
-		{
-			xptr node=tc.get_node();
-			CHECKP(node);
-			if (checkFT(node)) return;
-		}
-	}*/
-	/*if (fit)
-	{
-		seq.op->next(t);
-		//Preliminary node analysis
-		if (t.is_eos())
-		{
-			//t.set_eos();
-			return;
-		}
-		tuple_cell& tc= t.cells[0];
-		int command;
-		if (!tc.is_node())
-		{
-			//throw USER_EXCEPTION(SE2031);
-			command=tc.get_xs_integer();
-		}
-		seq.op->next(t);
-		//Preliminary node analysis
-		if (t.is_eos())
-		{
-			//t.set_eos();
-			return;
-		}
-		tc= t.cells[0];
-		if (!tc.is_node())
-		{
-			//throw USER_EXCEPTION(SE2031);
-			if (command==1)
-			{
-				req_buf.set(tc);
-				sj=se_new SednaSearchJob(&seq);
-				sj->set_request(tc);
-			}
-			else if (command==2)
-			{
-				req_buf.set(tc);
-				sj=se_new SednaSearchJob();
-				sj->set_request(tc);
-				seq.op->next(t);
-				tc= t.cells[0];
-				sj->set_index(tc);
-			}
-			else
-			{
-				req_buf.set(tc);
-				SednaIndexJob si(&seq);
-				si.set_index_name(tc);
-				si.create_index();
-				si.SetActionCompress();
-				si.Execute();
-				t.set_eos();
-				return;
-			}
-		}
-		fit=false;
-	}
-	sj->get_next_result(t);
-	if (t.is_eos())
-		fit=true;
-	//int res= checkFT(seq);
-	//t.copy(tuple_cell::atomic(res));
-	*/
+    TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
+    reader.read();
+    std::string list(reader.buffer, reader.size);
+    AutoSchemeList scml(list.c_str());
+    pe::Path path(scml.get());
+    pe::AtomizedPath ap = path.atomize();
+
+    t.cells[0] = tuple_cell::atomic_deep(xs_string, ap.reverse().__toString().c_str());
+    t.eos = false;
+
+// Schema traverse
+  
+    __test_tmp * snodes = NULL;
+    
+    if (data != NULL) {
+        snodes = (__test_tmp *) data;
+    } else {
+        seq.op->next(t);
+
+        if (t.eos) {
+            return;
+        }
+    
+        DataRoot root(DataRoot::drt_document, "auction");
+        const char * name = t.cells[0].get_str_mem();
+        doc_schema_node_cptr dataroot_snode(root.getSchemaNode().ptr());
+        snodes = new __test_tmp();
+        dataroot_snode->find_descendant(name, element, &snodes->x);
+        snodes->i = 0;
+        data = snodes;
+    };
+
+    if (snodes->i == snodes->x.size()) {
+        delete snodes;
+        data = NULL;
+        return do_next(t);
+    };
+
+    schema_node_cptr snode = snodes->x.at(snodes->i);
+
+    std::stringstream path;
+    std::stack<schema_node_cptr> path_sn;
+
+    while (snode.found()) {
+        path_sn.push(snode);
+        snode = snode->parent;
+    };
+
+    while (!path_sn.empty()) {
+        path << path_sn.top()->get_qname().getColonizedName().c_str() << "/";
+        path_sn.pop();
+    }
+
+    t.cells[0] = tuple_cell::atomic_deep(xs_string, path.str().c_str());
+    t.eos = false;
+    snodes->i++;
+*/    
 }
 
 PPIterator* PPTest::do_copy(dynamic_context *_cxt_)
@@ -324,3 +306,200 @@ void PPTest::do_accept(PPVisitor &v)
     seq.op->accept(v);
     v.pop();
 }
+
+void PPDataGraph::do_next(tuple& t)
+{
+/*
+    static opt::VariableUsageGraph dgm;
+
+    if (data != NULL) {
+        phop::ITupleOperator * op = (phop::ITupleOperator *) data;
+        
+        op->next();
+        
+        if (op->get().eos) {
+            data = NULL;
+            u_ftime(&t_end);
+
+            t.cells[0] = tuple_cell::atomic_deep(xs_string,
+              (to_string(t_end - t_start) + " " +
+               to_string(t_end - t_opt) + " " +
+               to_string(t_opt - t_start) + " ").c_str());
+
+            return;
+        };
+        
+        t.cells[0] = op->get().cells[idx];
+
+        return;
+    };
+
+    inputString.op->next(t);
+
+    if (!t.eos) {
+        u_ftime(&t_start);
+      
+        TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
+        reader.read();
+
+        std::string list(reader.buffer, reader.size);
+        AutoSchemeList scml(list.c_str());
+
+//        DataRoot dr(scml.get()->at(0).internal.list);
+//        pe::Path x(scml.get()->at(1).internal.list);
+
+        opt::DataGraph *dg = dgm.createGraphFromLR(scml.get());
+
+        IElementProducer * rootProducer = SCElementProducer::getVirtualRoot(XNULL);
+//        IElementProducer * dgElement = dg->toXML(rootProducer);
+
+        phop::GraphExecutionBlock * block  = new phop::GraphExecutionBlock();
+        phop::GraphExecutionBlock::push(block);
+
+        phop::ITupleOperator * op = dgm.compile(dg);
+        
+        idx = phop::GraphExecutionBlock::current()->resultMap[dg->outputNodes.at(0)->absoluteIndex];
+
+        block->context = new phop::ExecutionContext();
+        block->context->collation = cxt->get_static_context()->get_default_collation();
+        
+        op->reset();
+
+        phop::MappedTupleIn mt = dynamic_cast<phop::BinaryTupleOperator *>(
+            dynamic_cast<phop::UnaryTupleOperator *>(op)->__in().op
+            )->__left();
+        
+        op = mt.op;
+        idx = 4;
+        data = op;
+
+        u_ftime(&t_opt);
+
+//        do_next(t);
+        XmlConstructor vroot(VirtualRootConstructor(0));
+        t.cells[0] = op->toXML(vroot).getLastChild();
+        PPOpIn op(dgm.compile(dg), 1);
+    }
+*/
+}
+
+PPDataGraph::PPDataGraph(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)
+: PPInternalFunction(_cxt_, _info_, _seq_), data(NULL) {}
+
+
+PPIterator* PPDataGraph::do_copy(dynamic_context* _cxt_)
+{
+    return new PPDataGraph(_cxt_, info, PPOpIn(inputString.op->copy(_cxt_), 1));
+}
+
+
+PPInternalFunction::PPInternalFunction(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)
+    : PPIterator(_cxt_, _info_, "InternalFunction"), inputString(_seq_) { }
+
+PPInternalFunction::~PPInternalFunction()
+{
+    delete inputString.op;
+    inputString.op = NULL;
+}
+
+void PPInternalFunction::do_open()
+{
+    inputString.op->open();
+}
+
+void PPInternalFunction::do_reopen()
+{
+    inputString.op->reopen();
+}
+
+void PPInternalFunction::do_accept(PPVisitor& v)
+{
+    // inputString.op->
+}
+
+void PPInternalFunction::do_close()
+{
+    inputString.op->close();
+}
+
+
+
+PPAbsPathExec::PPAbsPathExec(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)
+    : PPInternalFunction(_cxt_, _info_, _seq_) { }
+
+PPIterator* PPAbsPathExec::do_copy(dynamic_context* _cxt_)
+{
+    return new PPAbsPathExec(_cxt_, info, inputString);
+}
+
+void PPAbsPathExec::do_next(tuple& t)
+{
+    inputString.op->next(t);
+
+    if (!t.eos) {
+        TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
+        reader.read();
+
+        std::string list(reader.buffer, reader.size);
+        AutoSchemeList scml(list.c_str());
+
+        pe::Path path(scml.get());
+    }
+}
+
+PPSchemaScan::PPSchemaScan(dynamic_context* _cxt_, operation_info _info_, PPOpIn _seq_)
+    : PPInternalFunction(_cxt_, _info_, _seq_), data(NULL) { }
+
+PPIterator* PPSchemaScan::do_copy(dynamic_context* _cxt_)
+{
+    return new PPSchemaScan(_cxt_, info, inputString);
+}
+
+struct __test_tmp {
+    SchemaNodePtrList x;
+    std::vector<schema_node_xptr>::size_type i;
+};
+
+void PPSchemaScan::do_next(tuple& t)
+{
+    __test_tmp * snodes = NULL;
+
+    if (data != NULL) {
+        snodes = (__test_tmp *) data;
+    } else {
+        inputString.op->next(t);
+
+        if (t.eos) {
+            return;
+        }
+
+        DataRoot root(DataRoot::drt_document, "auction");
+        TextBufferReader reader(text_source_tuple_cell(atomize(t.cells[0])));
+        reader.read();
+        std::string list(reader.buffer, reader.size);
+        AutoSchemeList scml(list.c_str());
+        pe::Path path(scml.get());
+        pe::SchemaLookup sclkp(path);
+        snodes = new __test_tmp();
+
+        sclkp.compile();
+//        sclkp.findSomething(root, &snodes->x);
+        sclkp.execute(root.getSchemaNode(), &snodes->x);
+
+        snodes->i = 0;
+        data = snodes;
+    };
+
+    if (snodes->i == snodes->x.size()) {
+        delete snodes;
+        data = NULL;
+        return do_next(t);
+    };
+
+    schema_node_cptr snode = snodes->x.at(snodes->i);
+
+    t.cells[0] = tuple_cell::atomic_deep(xs_string, schemaPath(snode).c_str());
+    t.eos = false;
+    snodes->i++;
+}
+

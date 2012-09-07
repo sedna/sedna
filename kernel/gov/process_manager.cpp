@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <sstream>
 #include <fstream>
+#include <stdexcept>
 
 #ifndef _WIN32
 #define SMImageName "se_sm "

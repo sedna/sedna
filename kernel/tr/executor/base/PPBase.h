@@ -18,6 +18,10 @@
 #include "tr/executor/base/sequence.h"
 #include "tr/tr_globals.h"
 
+namespace rqp {
+  class RPBase;
+}
+
 
 
 /*******************************************************************************
@@ -116,8 +120,9 @@ struct PPOpIn
 
     PPOpIn(PPIterator *_op_, int _ts_) : op(_op_), ts(_ts_) {}
     PPOpIn() : op(NULL), ts(0) {}
-    tuple_cell &get(tuple &t) { return t.cells[0]; }
-    tuple_cell &get(tuple &t) const { return t.cells[0]; }
+
+    tuple_cell &get(tuple &t) { return t[0]; }
+    const tuple_cell & get(tuple &t) const { return t[0]; }
 };
 
 /* Array of PPOpIn */
@@ -389,13 +394,16 @@ private:
     virtual void do_accept(PPVisitor &v) = 0;
 
 public:
+    // FIXME: Temporary
+    rqp::RPBase * optimizedPlan;
+  
     inline void open()                   
     { 
         if(executor_globals::profiler_mode || 1 == tr_globals::debug_mode)
              info.initialize();
         do_open();
     }
-    
+
     inline void execute() 
     { 
         if(executor_globals::profiler_mode)
@@ -467,70 +475,19 @@ protected:
     int xquery_col;
 
 public:
-    SednaXQueryException(const char* _file_, 
-                         const char* _function_,
-                         int _line_,
-                         int _internal_code_,
-                         PPIterator* _current_physop_) : SednaUserException(_file_,
-                                                                            _function_,
-                                                                            _line_,
-                                                                            "",
-                                                                            _internal_code_),
-                                                                            xquery_line(0),
-                                                                            xquery_col(0) {
-        if(_current_physop_)
-        {
+    SednaXQueryException(EXCEPTION_PARAMETERS_DECL, int _internal_code_, PPIterator* _current_physop_)
+        : SednaUserException(SEDNA_EXCEPTION_INHERIT, _internal_code_), xquery_line(0), xquery_col(0)
+    {
+        if(_current_physop_) {
             xquery_line = _current_physop_->get_operation_info().query_line;
             xquery_col  = _current_physop_->get_operation_info().query_col;
         }
-        RESET_CURRENT_PP;
-    }
-    
-    SednaXQueryException(const char* _file_, 
-                         const char* _function_,
-                         int _line_,
-                         const char* _err_msg_,
-                         int _internal_code_,
-                         PPIterator* _current_physop_) : SednaUserException(_file_,
-                                                                            _function_,
-                                                                            _line_,
-                                                                            _err_msg_,
-                                                                            _internal_code_), 
-                                                                            xquery_line(0),
-                                                                            xquery_col(0) {
-        if(_current_physop_)
-        {
-            xquery_line = _current_physop_->get_operation_info().query_line;
-            xquery_col  = _current_physop_->get_operation_info().query_col;
-        }
+
         RESET_CURRENT_PP;
     }
 
 protected:
-    virtual std::string getMsg2() const
-    {
-        std::string res;
-        res += "SEDNA Message: ERROR ";
-        res += std::string(user_error_code_entries[internal_code].code) + "\n";
-        res += std::string(user_error_code_entries[internal_code].descr) + "\n";
-        
-        if (err_msg.length() != 0)
-        {
-            res += "Details: ";
-            res += err_msg + "\n";
-        }
-        if (xquery_line != 0)
-        {
-            res += "Query line: " + int2string(xquery_line);
-            if(xquery_col != 0)
-                res += ", column:" + int2string(xquery_col);
-            res += "\n";
-        }
-#if (EL_DEBUG == 1)
-        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
-#endif
-        return res;
-    }
+    virtual const char* createMessage(char* buffer) const;
 };
 
 /* On Darwin we need this hack to compile Sedna with gcc 4.0.1 */

@@ -91,13 +91,13 @@ std::string prepare_modules(const std::vector<client_file> &cf_vec, std::string 
 
     for (unsigned int i = 0; i < cf_vec.size(); i++)
     {
+        const client_file & f = cf_vec.at(i);
         plain_batch_text = "";
 
-        while (!feof(cf_vec[i].f))
+        while (!f.stream->eof()) 
         {
-            size_t len = fread(buf, sizeof(char), sizeof(buf), cf_vec[i].f);
-
-            plain_batch_text.append(buf, len);
+            f.stream->read(buf, sizeof(buf));
+            plain_batch_text.append(buf, f.stream->gcount());
         }
 
         batch.push_back(plain_batch_text);

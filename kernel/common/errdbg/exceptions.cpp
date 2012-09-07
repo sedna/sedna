@@ -3,140 +3,96 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "errors.h"
-#include "exceptions.h"
-#include "event_log.h"
-
 #include "u/uprocess.h"
-#include "auxiliary/cppcast.h"
 
-/*	SednaException is derived from std::exception, hence
-	it must implement the following method:
-	
-	const char *what() const throw();
+#include "common/sedna.h"
+#include "common/errdbg/exceptions.h"
+#include "common/errdbg/event_log.h"
 
-	SednaException defines virtual function to obtain
-	error description as std::string, namely getMsg2().
-	The string must not vanish when what() function
-	returns. We have descriptCache member for this purpose.
-*/ 
-const std::string &SednaException::getMsg() const
+const char * SednaSystemException::description = "FATAL ERROR\n System error. This error means system malfunction.";
+const char * SednaSystemEnvException::description = "FATAL ERROR\n"
+      "Environment error. This error is caused by environment (operating system) and "
+      "it means that the system cannot continue execution anymore.";
+
+char SednaException::error_buffer[EXCEPTION_BUFFER_SIZE] = {};
+
+#define CHECK_SNPRINTF_RET(VAL, BUF, BUF0) \
+    if (VAL < 0) { return NULL; } \
+    if (VAL >= EXCEPTION_BUFFER_SIZE) { return BUF0; }; \
+    BUF += VAL;
+
+const char* SednaException::createMessage(char* buffer) const
 {
-	if (descriptCache.empty()) 
-	{
-		std::string descript = getMsg2();
-		descriptCache.swap(descript);
-	}
-	return descriptCache;
-}
+    const char * buf0 = buffer;
+    int len;
 
-std::string SednaSystemException::getMsg2() const
-{
-    std::string res;
-	res.reserve(1024);
-    res += "SEDNA Message: FATAL ERROR\n";
-    res += "System error. This error means system malfunction.\n";
-    res += "Details: " + err_msg + "\n";
+    len = snprintf(buffer, EXCEPTION_BUFFER_SIZE,
+        "SEDNA Message: %s\n"
+        "Details: %s\n"
 #if (EL_DEBUG == 1)
-    res += "Position: [" + file + ":" + function + ":" + cast_to_string(line) + "]\n";
+        "Position: [%s, %s, %d]\n"
 #endif
-    return res;
-}
-	
-std::string SednaSystemEnvException::getMsg2() const
-{
-    std::string res;
-	res.reserve(1024);
-    res += "SEDNA Message: FATAL ERROR\n";
-    res += "Environment error. This error is caused by environment (operating system) and ";
-    res += "it means that the system cannot continue execution anymore.\n";
-    res += "Details: " + err_msg + "\n";
+        , global_description, err_msg,
 #if (EL_DEBUG == 1)
-    res += "Position: [" + file + ":" + function + ":" + cast_to_string(line) + "]\n";
+        file, function, line
 #endif
-    return res;
+    );
+
+    return buf0;
 }
 
-std::string SednaUserException::getMsg2() const
+const char* SednaUserException::createMessage(char* buffer) const
 {
-    std::string res;
-	res.reserve(1024);
-    res += "SEDNA Message: ERROR ";
-    res += std::string(user_error_code_entries[internal_code].code) + "\n";
-    res += std::string(user_error_code_entries[internal_code].descr) + "\n";
-    if (err_msg.length() != 0)
-    {
-        res += "Details: " + err_msg + "\n";
-    }
+    const char * buf0 = buffer;
+    int len;
+
+    len = snprintf(buffer, EXCEPTION_BUFFER_SIZE,
+        "SEDNA Message: ERROR %s\n%s",
+        error_name, error_descr);
+
+    CHECK_SNPRINTF_RET(len, buffer, buf0);
+
+    if (err_msg[0] != '\0') {
+        len = snprintf(buffer, EXCEPTION_BUFFER_SIZE - (buffer-buf0),
+            "Details: %s\n", err_msg);
+
+        CHECK_SNPRINTF_RET(len, buffer, buf0);
+    };
+
 #if (EL_DEBUG == 1)
-    res += "Position: [" + file + ":" + function + ":" + cast_to_string(line) + "]\n";
+    len = snprintf(buffer, EXCEPTION_BUFFER_SIZE - (buffer-buf0),
+        "Position: [%s, %s, %d]\n", file, function, line);
+
+    CHECK_SNPRINTF_RET(len, buffer, buf0);
 #endif
-    return res;
+
+    return buf0;
 }
 
-std::string SednaUserExceptionFnError::getMsg2() const
+const char* SednaUserEnvException::createMessage(char* buffer) const
 {
-    U_ASSERT(error_name.size() != 0);
+    const char * buf0 = buffer;
 
-    std::string res;
-	res.reserve(1024);
-    res += "SEDNA Message: ERROR ";
-    res += error_name + "\n";
-    res += "    " + (error_descr.size() == 0 ? std::string("User defined error") : error_descr) + "\n";
-#if (EL_DEBUG == 1)
-    res += "Position: [" + file + ":" + function + ":" + cast_to_string(line) + "]\n";
-#endif
-    return res;
+    SednaUserException::createMessage(buffer);
+    int len = strlen(buffer);
+
+    CHECK_SNPRINTF_RET(len, buffer, buf0);
+
+    if (explanation[0] != '\0') {
+        len = snprintf(buffer, EXCEPTION_BUFFER_SIZE - (buffer-buf0),
+            "System error: %s\n", explanation);
+    };
+
+    return buf0;
 }
-
-std::string SednaUserEnvException::getDescription() const 
-{ 
-    return err_msg + 
-            (explanation.length() != 0 ? " (" + explanation + ")"
-                                        : ""); 
-}
-
-std::string SednaUserEnvException::getMsg2() const
-{
-    std::string res;
-	res.reserve(1024);
-    res += "SEDNA Message: ERROR ";
-    res += std::string(user_error_code_entries[internal_code].code) + "\n";
-    res += std::string(user_error_code_entries[internal_code].descr) + "\n";
-    res += "Details: " + err_msg;
-    if (explanation.length() != 0)
-    {
-        res += " (" + explanation + ")";
-    }
-    res += "\n";
-#if (EL_DEBUG == 1)
-    res += "Position: [" + file + ":" + function + ":" + cast_to_string(line) + "]\n";
-#endif
-    return res;
-}
-
 
 void sedna_soft_fault(const SednaException &e,  int component)
 {
     SEDNA_SOFT_FAULT_BASE_MSG;
 
-    char log_message[SE_SOFT_FAULT_LOG_CONTENT_LEN];
-    size_t log_message_len = e.getDescription().length();
+    char log_message[EXCEPTION_BUFFER_SIZE];
 
-    if (log_message_len != 0)
-        fprintf(stderr, "Details: %s\n", e.getDescription().c_str());
-    if(log_message_len < SE_SOFT_FAULT_LOG_CONTENT_LEN)
-        strcpy(log_message, e.getDescription().c_str());
-    else
-        strcpy(log_message, "Failed to record exception description into the log\n");
-#if (EL_DEBUG == 1)
-    fprintf(stderr, "Position: [%s:%s:%d]\n", e.getFile().c_str(), e.getFunction().c_str(), e.getLine());
-    sprintf(log_message+(log_message_len),"\nPosition: [%s:%s:%d]\n", e.getFile().c_str(), e.getFunction().c_str(), e.getLine());
-#endif
-    sedna_soft_fault_log(log_message, component);
-#ifdef SE_MEMORY_TRACK
-    DumpUnfreed(component);
-#endif
+    sedna_soft_fault_log(e.getMsg(log_message), component);
 
     SEDNA_SOFT_FAULT_FINALIZER;
 }
@@ -144,12 +100,9 @@ void sedna_soft_fault(const SednaException &e,  int component)
 void sedna_soft_fault(const char* s, int  component)
 {
     SEDNA_SOFT_FAULT_BASE_MSG;
+
     fprintf(stderr, "Details: %s\n", s);
     sedna_soft_fault_log(s, component);
-
-#ifdef SE_MEMORY_TRACK
-	DumpUnfreed(component);
-#endif
 
     SEDNA_SOFT_FAULT_FINALIZER;
 }

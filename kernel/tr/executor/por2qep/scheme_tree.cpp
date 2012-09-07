@@ -50,21 +50,30 @@ private:
     token get_symbol(char c);
 };
 
+
+
 token Tokenizer::get_token()
 {
     char c = getch();
-    if (c == '\0') return token(LEX_EOF);
-    else if (c == '(') return token(LEX_LBR);
-    else if (c == ')') return token(LEX_RBR);
-    else if (c == '#') return get_bool();
-    else if (c == '\"') return get_string();
-    else if (c == ' ') return get_token();
-	else if (c == '\n') return get_token();
-	else if (c == '\r') return get_token();
-    else if (('0' <= c && c <= '9') || c == '-' || c == '+') return get_number(c);
-    else if (c == '\'') return get_char();
-    else if (isalpha(c) || c == '<' || c == '>' || c == '=' || c == '_' || c == '$' || c == '%' || c == '!') return get_symbol(c);
-    else throw USER_EXCEPTION2(SE1005, "Tokenizer bad string error (1)");
+
+    switch(c) {
+        case '\0' : return token(LEX_EOF);
+        case '('  : return token(LEX_LBR);
+        case ')'  : return token(LEX_RBR);
+        case '#'  : return get_bool();
+        case '\"' : return get_string();
+        case ' '  : return get_token();
+        case '\n' : return get_token();
+        case '\r' : return get_token();
+        case '\'' : return get_char();
+        default:
+            if (('0' <= c && c <= '9') || c == '-' || c == '+') return get_number(c);
+            else if (isalpha(c) || c == '<' || c == '=' || c == '>' || c == '=' || c == '_' || c == '$' || c == '%' || c == '!') return get_symbol(c);
+            else {
+                U_ASSERT(false);
+                throw USER_EXCEPTION2(SE1005, "Tokenizer bad string error (1)");
+            }
+    };
 }
 
 token Tokenizer::get_bool()
@@ -140,7 +149,7 @@ token Tokenizer::get_symbol(char ch)
     char c = getch();
     string str;
     str += ch;
-    while (isalpha(c) || isdigit(c) || c == '@' || c == '-' || c == '_' || c == '%' || c == '!') 
+    while (isalpha(c) || isdigit(c) || c == '@' || c == '-' || c == '_' || c == '%' || c == '!' || c == ':')
     {
         str += c;
         c = getch();

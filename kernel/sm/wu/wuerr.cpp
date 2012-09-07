@@ -172,6 +172,8 @@ void PackStrings(char *buf, size_t sz, ...)
 	va_end(marker);
 }
 
+#define CHECK_EXCEPTION(ETYPE, EVAR, EIN) const ETYPE * EVAR = dynamic_cast<const ETYPE * >(&(EIN))
+
 void WuSetLastExceptionObject(const SednaException &e)
 {
 	int error = WUERR_SEDNA_EXCEPTION, code=0, line=e.getLine();
@@ -186,39 +188,22 @@ void WuSetLastExceptionObject(const SednaException &e)
 				function.c_str(),&cFunction,
 				NULL);
 
-	try
-	{
-		e.raise();
-	}
-	catch (SednaSystemEnvException)
-	{
-		error = WUERR_SEDNA_SYSTEM_ENV_EXCEPTION;
-	}
-	catch (SednaSystemException)
-	{
-		error = WUERR_SEDNA_SYSTEM_EXCEPTION;
-	}
-	catch (const SednaUserExceptionFnError &e)
-	{
-		error = WUERR_SEDNA_USER_FN_ERROR_EXCEPTION;
-		code = e.get_code();
-	}
-	catch (const SednaUserEnvException &e)
-	{
-		error = WUERR_SEDNA_USER_ENV_EXCEPTION;
-		code = e.get_code();
-	}
-	catch (const SednaUserSoftException &e)
-	{
-		error = WUERR_SEDNA_USER_SOFT_EXCEPTION;
-		code = e.get_code();
-	}
-	catch (const SednaUserException &e)
-	{
-		error = WUERR_SEDNA_USER_EXCEPTION;
-		code = e.get_code();
-	}
-	catch (ANY_SE_EXCEPTION) {}
+    if (CHECK_EXCEPTION(SednaSystemEnvException, ex, e)) {
+        error = WUERR_SEDNA_SYSTEM_ENV_EXCEPTION;
+    } else if (CHECK_EXCEPTION(SednaSystemException, ex, e)) {
+        error = WUERR_SEDNA_SYSTEM_EXCEPTION;
+    } else if (CHECK_EXCEPTION(SednaUserEnvException, ex, e)) {
+        error = WUERR_SEDNA_USER_ENV_EXCEPTION;
+        code = ex->getCode();
+    } else if (CHECK_EXCEPTION(SednaUserSoftException, ex, e)) {
+        error = WUERR_SEDNA_USER_SOFT_EXCEPTION;
+        code = ex->getCode();
+    } else if (CHECK_EXCEPTION(SednaUserException, ex, e)) {
+        error = WUERR_SEDNA_USER_EXCEPTION;
+        code = ex->getCode();
+    } else {
+        error = WUERR_SEDNA_EXCEPTION;
+    };
 
 	WuSetLastError2(cFile,line,cFunction,error);
 	errorProperties.description = cDescription;
@@ -254,9 +239,6 @@ void WuThrowException()
 		break;
 	case WUERR_SEDNA_USER_EXCEPTION:
 		throw SednaUserException(file,function,line,description,code);
-		break;
-	case WUERR_SEDNA_USER_FN_ERROR_EXCEPTION:
-		throw SednaUserExceptionFnError(file,function,line,"error aux info lost (TODO: preserve it)",NULL);
 		break;
 	case WUERR_SEDNA_USER_ENV_EXCEPTION:
 		throw SednaUserEnvException(file,function,line,description,true);

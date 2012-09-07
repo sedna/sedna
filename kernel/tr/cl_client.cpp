@@ -298,14 +298,21 @@ void command_line_client::get_file_from_client(std::vector<string>* filenames, s
         {
             const char* client_filename = filenames->at(i).c_str();
             client_file &cf = cf_vec->at(i);
+            std::ifstream * fs;
 
             if (tr_globals::first_transaction)
             {   /* Load metadata case (client_filename must be absolute path) */
-                if ((cf.f = fopen (client_filename, "r")) == NULL)
+                fs = new std::ifstream(client_filename);
+                cf.stream = fs;
+
+                if (!fs->is_open()) {
                     throw USER_EXCEPTION2(SE4042, client_filename);
-                if (uGetFileSizeByName(client_filename, &(cf.file_size), __sys_call_error) == 0)
+                }
+
+                if (uGetFileSizeByName(client_filename, &(cf.size), __sys_call_error) == 0)
                     throw USER_EXCEPTION2(SE4050, client_filename);
-                strcpy(cf.name, client_filename);
+
+                cf.name = client_filename;
                 return;
             }
 
@@ -330,47 +337,32 @@ void command_line_client::get_file_from_client(std::vector<string>* filenames, s
                 throw USER_EXCEPTION2(SE4604, new_dir);
 
             res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
-            
+
             if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
                 throw USER_EXCEPTION2(SE4604, cur_dir_abspath);
-            if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
-            {
+
+            if (!uIsFileExist(cfile_abspath, __sys_call_error)) {
                 res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
-                if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
-                    throw USER_EXCEPTION2(SE4042, client_filename);
-                if (uGetFileSizeByName(cfile_abspath, &(cf.file_size), __sys_call_error) == 0)
-                    throw USER_EXCEPTION2(SE4050, client_filename);
-            }
-            else
-            {
-                if (uGetFileSizeByName(cfile_abspath, &(cf.file_size), __sys_call_error) == 0)
-                    throw USER_EXCEPTION2(SE4050, client_filename);
-            }
-            strcpy(cf.name, client_filename);
+            } else {
+                res = cfile_abspath;
+            };
+
+            fs = new std::ifstream(cfile_abspath);
+
+            if (!fs->is_open()) {
+                throw USER_EXCEPTION2(SE4050, client_filename);
+            };
+
+            cf.stream = fs;
+            cf.name = client_filename;
         }
     } catch (ANY_SE_EXCEPTION) {
-        /* Close all files from cf_vec */
-        for (std::vector<string>::size_type j = 0; j < i; j++)
-        {
-            if (cf_vec->at(j).f && (fclose(cf_vec->at(j).f) != 0))
-            {
-                cf_vec->at(j).f = NULL;
-                throw USER_EXCEPTION(SE3020);
-            }
-            cf_vec->at(j).f = NULL;
-        }
         throw;
     }
 }
 
 void command_line_client::close_file_from_client(client_file &cf)
 {
-    if (cf.f && (fclose(cf.f) != 0))
-    {
-        cf.f = NULL;
-        throw USER_EXCEPTION(SE3020);
-    }
-    cf.f = NULL;
 }
 
 void command_line_client::respond_to_client(int instruction)
@@ -481,6 +473,12 @@ void command_line_client::show_time(u_timeb qep_time)
 {
     d_printf2("Execution time of the latest query %s\n secs", to_string(qep_time).c_str());
 }
+
+void command_line_client::show_time_ex(uint64_t qep_time)
+{
+    d_printf2("Execution time of the latest query %d\n secs", qep_time);
+}
+
 
 void command_line_client::write_user_query_to_log()
 {

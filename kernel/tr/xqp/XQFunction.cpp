@@ -189,6 +189,9 @@ namespace sedna
     {
         {"", "checkpoint",  0,  0, 0xFF, "!se!checkpoint", false, &resultOne, &l2pFnSeCheckpoint},
         {"", "get-property",  1,  1, 0xFF, "!se!get-property", false, &resultOne, &l2pFnSeGetProperty},
+        {"", "dg",  1,  1, 0xFF, "!se!dg", false, &resultOne, &l2pFnSeDatagraph},
+        {"", "abspath",  1,  1, 0xFF, "!se!abspath", false, &resultOne, &l2pFnSeAbsPath},
+        {"", "schemascan",  1,  1, 0xFF, "!se!schemascan", false, &resultOne, &l2pFnSeSchemaScan},
         {"", "", 0, 0, 0xFF, "", false, &resultOne} // dummy record to mark the end
     };
 }

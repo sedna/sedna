@@ -169,7 +169,7 @@ void index_cell_object::on_schema_node_created(schema_node_cptr snode) const
 {
     t_scmnodes res;
     t_scmnodes objs;
-    executePathExpression(snode->root, *object, &objs, NULL, NULL);
+    executePathExpression(snode->root.ptr(), *object, &objs, NULL, NULL);
 
     const xpath::NodeTest node_test_nodes_deep(xpath::axis_descendant, xpath::node_test_text);
 
@@ -370,7 +370,7 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
                             throw USER_EXCEPTION2(SE1008, "The size of the index key exceeds max key limit");
                           };
                         } catch (SednaUserException e) {
-                          if (e.get_code() != SE1003) { throw; }
+                          if (e.getCode() != SE1003) { throw; }
 
                           //IX. Increment the counter, which shows the number of
                           //    items that were not inserted because they have
@@ -429,7 +429,7 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
             }
             catch (SednaUserException e) {
                 // FIXME : we MUST check for a error type here
-                if (e.get_code() != SE1003) { throw; }
+                if (e.getCode() != SE1003) { throw; }
 
                 //XIV. Increment the counter, which shows the number of
                 //     items that were not inserted because they have

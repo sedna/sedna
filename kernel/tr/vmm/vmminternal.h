@@ -8,8 +8,8 @@
 
 #include "common/sedna.h"
 #include "common/base.h"
-#include "common/u/ummap.h"
-#include "common/sm_vmm_data.h"
+#include "u/ummap.h"
+#include "common/xptr/sm_vmm_data.h"
 
 #include "tr/vmm/vmm.h"
 

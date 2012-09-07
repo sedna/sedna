@@ -10,15 +10,6 @@
 
 #include "common/sedna.h"
 #include "common/base.h"
-#include "common/u/usem.h"
-// #include "common/pping.h"
-
-#include "tr/client_core.h"
-#include "tr/tr_base.h"
-
-#define ENV_BUF_SIZE 1000
-
-void parse_trn_command_line(int argc, char** argv);
 
 namespace tr_globals
 {
@@ -54,7 +45,7 @@ namespace tr_globals
     extern char login[];
     extern char output_file[];
 
-    extern QueryType query_type;
+//     extern QueryType query_type;
 
     extern transaction_id trid;
     extern session_id     sid;
@@ -62,9 +53,6 @@ namespace tr_globals
     extern bool is_need_checkpoint_on_transaction_commit;
     extern bool is_ro_mode;       // may change during transaction execution!
     extern bool is_log_less_mode; // true, if we write only one record on every bulkload
-
-//     extern pping_client* ppc;
-    extern client_core*  client;
 
     extern int internal_auth_switch;
     
@@ -74,7 +62,7 @@ namespace tr_globals
      * the waiting. SM will up it when it's possible for  transaction to
      * continue.
      */
-    extern USemaphore wait_sem;
+//     extern USemaphore wait_sem;
 
     /*
      * Signals that there is timeout. Pointer to this flag is passed to the
@@ -83,19 +71,19 @@ namespace tr_globals
      * use this flag through CHECK_TIMER_FLAG macro to ROLLBACK current
      * transaction.
      */
-    extern TLS_VAR_DECL
-    volatile bool is_timer_fired;
-
-    extern Serializer * serializer;
-    void create_serializer(enum se_output_method method);
+//     extern TLS_VAR_DECL
+//     volatile bool is_timer_fired;
+// 
+//     extern Serializer * serializer;
+//     void create_serializer(enum se_output_method method);
 }
 
 /* 
  * Check in time is out.
  * See tr_globals::is_timer_fired for the description.
  */
-#define CHECK_TIMER_FLAG         if (tr_globals::is_timer_fired) \
-                                     throw USER_EXCEPTION(SE4620);
+// #define CHECK_TIMER_FLAG         if (tr_globals::is_timer_fired) \
+//                                      throw USER_EXCEPTION(SE4620);
 
 
 #endif /* _TR_GLOBALS_H */

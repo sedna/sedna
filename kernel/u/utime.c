@@ -8,6 +8,21 @@
 
 #include "u/utime.h"
 
+#ifndef _WIN32
+#include <time.h> 
+#endif
+
+ex_time_t uGetTime()
+{
+#ifdef _WIN32
+    U_ASSERT(false);
+#else
+    clock_t timer;
+    struct timespec t;
+    clock_gettime(CLOCK_REALTIME, &t);
+    return (t.tv_sec + t.tv_nsec / 1000000) / (60*60*24);
+#endif
+}
 
 utm getLocalTime()
 {

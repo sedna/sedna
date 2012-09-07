@@ -273,7 +273,7 @@ static const char *getStringParameter(PPOpIn content, const char *err_pref)
     }
     while (!(value.is_eos()))
     {
-        if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPSQL");
+        if (!(value.size()==1 )) throw USER_EXCEPTION2(SE1003, "in PPSQL");
         at_vals.add(value);
         content.op->next(value);
     }

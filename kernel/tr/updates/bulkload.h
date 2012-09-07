@@ -15,14 +15,15 @@ struct BulkLoadOptions {
 
 class BulkLoadFrontend {
   private:
-    FILE * file;
+    bool ownStream;
+    std::istream * inputStream;
   public:
     BulkLoadOptions options;
 
     BulkLoadFrontend();
     ~BulkLoadFrontend();
 
-    void setSourceFile(FILE * _file) { file = _file; };
+    void setSourceStream(std::istream * _stream);
 
     Node loadDocument(const char * documentName);
     Node loadCollectionDocument(const char * collectionName, const char * documentName);

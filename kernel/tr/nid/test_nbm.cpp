@@ -200,7 +200,7 @@ void main(void) {
 
 	} catch (CharismaException &e) {
         cout << "Charisma exception" << endl;
-        cout << e.getMsg() << endl;
+        cout << e.what() << endl;
     } catch (exception &e) {
         cout << "Library catched" << endl;
         cout << e.what() << endl;

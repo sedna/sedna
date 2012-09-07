@@ -14,6 +14,9 @@
 #include "tr/xqp/modules.h"
 #include "tr/xqp/serial/deser.h"
 
+#include "tr/opt/algebra/IndependentPlan.h"
+#include "tr/models/XmlConstructor.h"
+
 namespace sedna
 {
     XQStdFunctionInfo XQueryDriver::stdFuncs;
@@ -430,6 +433,19 @@ namespace sedna
         xqv->mod->getLReturnVariableInfo(name, &xqv);
 
         return xqv;
+    }
+
+    rqp::RPBase * XQueryDriver::getRQPForModule(unsigned int ind, bool is_subquery)
+    {
+        rqp::RPBase * res = (mods[ind])->getOPT(is_subquery);
+
+        if (gotErrors())
+        {
+            delete res;
+            emitErrors(); // this function will throw an exception
+        }
+
+        return res;
     }
 
     PPQueryEssence *XQueryDriver::getQEPForModule(unsigned int ind, bool is_subquery)

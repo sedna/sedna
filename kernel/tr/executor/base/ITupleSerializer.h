@@ -9,6 +9,7 @@
 class ITupleSerializer
 {
 public:
+    virtual ~ITupleSerializer() {};
     virtual size_t serialize(const tuple &t, void *buf) = 0;
     virtual void deserialize(tuple &t, void *buf, size_t size) = 0;
     virtual int compare(void *buf1, size_t size1, void *buf2, size_t size2) = 0;

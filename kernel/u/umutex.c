@@ -23,11 +23,11 @@ int uMutexInit(uMutexType *mutex, sys_call_error_fun fun)
       return res;
     }
 
-	if (res = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE), res!=0)
-	{
-		sys_call_error("pthread_mutexattr_settype");
-		return res;
-	}
+    if (res = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE), res!=0)
+    {
+            sys_call_error("pthread_mutexattr_settype");
+            return res;
+    }
 
     if ((res = pthread_mutex_init(mutex, &attr)) != 0)
        sys_call_error("pthread_mutex_init");
@@ -77,7 +77,87 @@ int uMutexDestroy(uMutexType *mutex, sys_call_error_fun fun)
 }
 
 
+int uCondInit(uCondType *event, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+#else
+    int res;
 
+    if ((res = pthread_cond_init(event, NULL)) != 0)
+       sys_call_error("pthread_cond_init");
+
+    return res;
+#endif
+};
+
+int uCondSignal(uCondType *event, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+  U_ASSERT(false);
+#else
+    int res;
+
+    if ((res = pthread_cond_signal(event)) != 0)
+       sys_call_error("pthread_cond_signal");
+
+    return res;
+#endif
+};
+
+int uCondWait(uCondType *event, uMutexType * mutex, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+  U_ASSERT(false);
+#else
+    int res;
+
+    if ((res = pthread_cond_wait(event, mutex)) != 0)
+       sys_call_error("pthread_cond_wait");
+
+    return res;
+#endif
+};
+
+int uCondTimedWait(uCondType* event, uMutexType * mutex, unsigned int time, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+  U_ASSERT(false);
+#else
+    int res;
+    struct timeval tv;
+    struct timespec timeout;
+
+    if (gettimeofday(&tv, NULL) == -1)
+    {
+        sys_call_error("gettimeofday");
+        return 1;
+    }
+
+    timeout.tv_sec = tv.tv_sec + time;
+    timeout.tv_nsec = tv.tv_usec * 1000;
+
+    if ((res = pthread_cond_timedwait(event, mutex, &timeout)) != 0) {
+       if (res != ETIMEDOUT) {
+          sys_call_error("pthread_cond_timedwait");
+       }
+    }
+
+    return res;
+#endif
+};
+
+int uCondDestroy(uCondType *event, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+#else
+    int res;
+
+    if ((res = pthread_cond_destroy(event)) != 0)
+       sys_call_error("pthread_cond_destroy");
+
+    return res;
+#endif
+};
 
 
 /*

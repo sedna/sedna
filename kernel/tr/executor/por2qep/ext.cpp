@@ -121,7 +121,7 @@ ExtFunction *ExtFunction::copy()
 
 SEDNA_SEQUENCE_ITEM *ExtFunction::make_item(const tuple &t)
 {
-	if (t.cells_number != 1)
+	if (t.size() != 1)
 		throw USER_EXCEPTION2(SE1003, "bad tuple_cells count (in external function's arguments)");
 
 	tuple_cell res = atomize(t.cells[0]);

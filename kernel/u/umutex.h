@@ -30,6 +30,12 @@ typedef CRITICAL_SECTION	uMutexType;
 typedef pthread_mutex_t		uMutexType;
 #endif
 
+#ifdef _WIN32
+typedef int                     uCondType;
+#else
+typedef pthread_cond_t          uCondType;
+#endif
+
 /*
 #ifdef _WIN32
 typedef HANDLE			uMutex2Type;
@@ -39,13 +45,15 @@ typedef pthread_mutex_t		uMutex2Type;
 */
 
 int uMutexInit(uMutexType *mutex, sys_call_error_fun fun);
-
 int uMutexLock(uMutexType *mutex, sys_call_error_fun fun);
-
 int uMutexUnlock(uMutexType *mutex, sys_call_error_fun fun);
-
 int uMutexDestroy(uMutexType *mutex, sys_call_error_fun fun);
 
+int uCondInit(uCondType* event, sys_call_error_fun fun);
+int uCondSignal(uCondType *event, sys_call_error_fun fun);
+int uCondWait(uCondType* event, uMutexType* mutex, sys_call_error_fun fun);
+int uCondTimedWait(uCondType* event, uMutexType* mutex, unsigned int time, sys_call_error_fun fun);
+int uCondDestroy(uCondType *event, sys_call_error_fun fun);
 
 /*
 int uMutex2Create(uMutex2Type *mutex, int inheritable, sys_call_error_fun fun);

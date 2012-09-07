@@ -41,20 +41,7 @@ struct data_ptr
 
 class SortedSequence
 {
-    //Comparator for STL sort
-    class TupleComparator
-    {
-    private:
-        SortedSequence *parent;
-
-    public:
-        TupleComparator(SortedSequence *parent)
-        {
-            this -> parent = parent;
-        }
-
-        bool operator() (const data_ptr ptr1, const data_ptr ptr2);
-    };
+    friend class SortedSequenceTupleComparator;
 
     //Sorted chain
     struct SSChain

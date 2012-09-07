@@ -73,9 +73,6 @@ private:
     /// stores pointer to default collation handler already resolved using default collation uri and base uri
     CollationHandler *default_collation_handler;
 
-    // it seems that collation_manager should be static since it doesn't contatin any dynamic info
-    static CollationManager collation_manager;
-
     StaticallyKnownNamespaces staticallyKnownNamespaces;
 
     std::vector<xmlns_ptr> prologueNamespaces; /* It is here only for PPExplain. WHYY?? */
@@ -92,6 +89,9 @@ private:
     }
 
 public:
+    // it seems that collation_manager should be static since it doesn't contatin any dynamic info
+    static CollationManager collation_manager;
+
     static_context();
     ~static_context();
 

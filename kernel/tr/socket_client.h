@@ -84,6 +84,7 @@ public:
     virtual void error(int code, const std::string& body);
     virtual void error();
     virtual void show_time(u_timeb qep_time);
+    virtual void show_time_ex(uint64_t qep_time);
     virtual void write_user_query_to_log() {}
     virtual void set_keep_alive_timeout(int sec);
     virtual void user_statement_begin();

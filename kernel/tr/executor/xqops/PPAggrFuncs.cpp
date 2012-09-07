@@ -142,8 +142,7 @@ void PPFnMaxMin::do_next(tuple &t)
             if (!(is_numeric_type(type) || type == xs_boolean || type == xs_string || type == xs_date || type == xs_time || type == xs_dateTime || type == xs_yearMonthDuration || type == xs_dayTimeDuration))
                 throw XQUERY_EXCEPTION2(FORG0006, (string("Bad argument type in ") + function_name).c_str());
 
-            if (res.is_eos()) 
-            {
+            if (res.is_eos()) {
                 res = tca;
                 least_common_type = tca.get_atomic_type();
                 continue;
@@ -161,16 +160,14 @@ void PPFnMaxMin::do_next(tuple &t)
                 least_common_type = evaluate_common_type(tca.get_atomic_type(), least_common_type);
         }
 
-        if (res.is_eos())
-            t.set_eos();
-        else
+        if (!res.is_eos()) {
             t.copy(cast((has_NaN ? tuple_cell::atomic(float_NaN) : res), least_common_type));
+            return;
+        }
     }
-    else
-    {
-        t.set_eos();
-        handler = NULL;
-    }
+    //Not first time or 'res' was eos even after full walk through input sequence
+    t.set_eos();
+    handler = NULL;
 }
 
 PPIterator* PPFnMaxMin::do_copy(dynamic_context *_cxt_)

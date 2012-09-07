@@ -1400,6 +1400,7 @@ namespace sedna
         }
         else
         {
+            return;
             xqf = getFunctionInfo(int_name);
 
             // we're using this function
@@ -1407,7 +1408,6 @@ namespace sedna
 
             if (xqf->mod)
                 xqf->mod->set_module_as_needed();
-
         }
 
         if (n.params)

@@ -27,8 +27,8 @@
 #include "tr/structures/nodeutils.h"
 
 #include "tr/structures/portal.h"
-#include "tr/structures/producer.h"
-#include "tr/executor/base/SCElementProducer.h"
+#include "tr/models/IElementProducer.h"
+#include "tr/models/SCElementProducer.h"
 
 using namespace std;
 
@@ -44,7 +44,7 @@ tuple_cell getNameTuple(const PPOpIn &qname, bool quietly)
     tuple name(qname.ts);
 
     qname.op->next(name);
-    if (name.is_eos() || name.cells_number != 1)
+    if (name.is_eos() || name.size() != 1)
         throw XQUERY_EXCEPTION2(XPTY0004, "single atomic value is expected in the name expression of an attribute/element constructor");
 
     tuple_cell res = atomize(name.cells[0]);
@@ -95,7 +95,7 @@ void getAtomicSequence(const char * direct_content, PPOpIn content, sequence * a
         content.op->next(value);
 
         while (!value.is_eos()) {
-            if (value.cells_number != 1) {
+            if (value.size() != 1) {
                 throw USER_EXCEPTION2(SE1003, "in PPConstructor");
             }
 
@@ -106,24 +106,11 @@ void getAtomicSequence(const char * direct_content, PPOpIn content, sequence * a
     }
 }
 
-void concatSequence(sequence * a) {
-    executor_globals::tmp_op_str_buf.clear();
-
-    sequence::iterator it = a->begin();
-    while (it != a->end()) {
-        executor_globals::tmp_op_str_buf.append(tuple_cell::make_sure_light_atomic((*it).cells[0]));
-        it++;
-    };
-}
-
 text_source_t getTextContent(const char * cstr, PPOpIn op) {
     if (cstr == NULL) {
         sequence atvals(1);
-
         getAtomicSequence(cstr, op, &atvals);
-        concatSequence(&atvals);
-
-        return text_source_strbuf(&(executor_globals::tmp_op_str_buf));
+        return concatTextSequence(&atvals);
     } else {
         return text_source_mem(cstr, strlen(cstr));
     }
@@ -222,13 +209,25 @@ xsd::QName resolveQName(const char* nameString, PPOpIn qname, INamespaceMap * sk
 
 struct constructor_context_t {
     IElementProducer * producer;
+
     IElementProducer * virtualRoot;
+    IElementProducer * virtualElementRoot;
 
     IElementProducer * getParent(bool deep_copy) {
         if (producer == NULL || deep_copy) {
             return virtualRoot;
         } else {
             return producer;
+        }
+    }
+
+    IElementProducer * getParentEx(bool deep_copy, bool virt) {
+        if (!deep_copy && producer != NULL) {
+            return producer;
+        } else if (virt) {
+            return virtualElementRoot;
+        } else {
+            return virtualRoot;
         }
     }
 };
@@ -238,18 +237,25 @@ static constructor_context_t constructorContext = { NULL, NULL };
 void PPConstructor::checkInitial()
 {
     if (constructorContext.virtualRoot == NULL) {
-        constructorContext.virtualRoot = SCElementProducer::getVirtualRoot(XNULL);
+        SCElementProducer * vr = SCElementProducer::getVirtualRoot(XNULL);
+        constructorContext.virtualRoot = vr;
+        constructorContext.virtualElementRoot = new portal::VirtualElementGenerator(vr->getNode().getSchemaNode());
     }
 }
 
 /*
  * Clears global state of constructors.
- * It's called in kernel statement end in trn.
+ * It is called in kernel statement end in trn.
  */
 void PPConstructor::clear_virtual_root()
 {
     if (constructorContext.virtualRoot != NULL) {
-        SCElementProducer::deleteVirtualRoot();
+        delete constructorContext.virtualElementRoot;
+        constructorContext.virtualElementRoot = NULL;
+
+#warning: do something with virtual root!
+        // TODO:
+//        SCElementProducer::deleteVirtualRoot();
         constructorContext.virtualRoot = NULL;
     }
 }
@@ -419,8 +425,8 @@ void PPElementConstructor::do_next (tuple &t)
 
         bool preserveType = cxt->get_static_context()->get_construction_mode();
 
-        scoped_ptr<IElementProducer> producer
-            (constructorContext.getParent(deep_copy)->
+        scoped_ptr<IElementProducer> producer =
+            (constructorContext.getParentEx(deep_copy, virtualElement)->
                 addElement(name, preserveType ? xs_anyType : xs_untyped));
 
         /* Save context */
@@ -757,8 +763,7 @@ void PPNamespaceConstructor::do_next (tuple &t)
         first_time = false;
 
         text_source_t content_value = getTextContent(at_value, content);
-        xsd::AnyURI uri = xsd::AnyURI::check(content_value.u.cstr);
-        xmlns_ptr ns = xmlns_touch(at_name, uri.getValue());
+        xmlns_ptr ns = xmlns_touch(at_name, content_value.u.cstr);
 
         tuple_cell result = constructorContext.getParent(deep_copy)->addNS(ns);
 
@@ -1116,11 +1121,12 @@ void PPTextConstructor::do_next (tuple &t)
             sequence atomized_content(1);
             getAtomicSequence(NULL, content, &atomized_content);
 
+            text_source_t ts = concatTextSequence(&atomized_content);
+
             if (atomized_content.size() == 0) {
                 result = tuple_cell::eos();
             } else {
-                concatSequence(&atomized_content);
-                result = constructorContext.getParent(deep_copy)->addText(text_source_strbuf(&executor_globals::tmp_op_str_buf));
+                result = constructorContext.getParent(deep_copy)->addText(concatTextSequence(&atomized_content));
             }
         }
 

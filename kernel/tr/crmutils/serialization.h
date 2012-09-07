@@ -20,7 +20,7 @@ class Serializer {
     inline Serializer() : options(NULL), crmout(NULL) {};
     virtual ~Serializer() {};
 
-    virtual void serialize(tuple &t) = 0;
+    virtual void serialize(const tuple &t) = 0;
 
     virtual bool supports(enum se_output_method method) = 0;
     virtual void initialize() = 0;

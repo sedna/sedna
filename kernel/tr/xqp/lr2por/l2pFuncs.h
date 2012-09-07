@@ -138,4 +138,8 @@ PPOpIn l2pFnSqlRollback(dynamic_context *dyn_cxt, const operation_info &opi, arr
 PPOpIn l2pFnSeCheckpoint(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnSeGetProperty(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 
+PPOpIn l2pFnSeDatagraph(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
+PPOpIn l2pFnSeAbsPath(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
+PPOpIn l2pFnSeSchemaScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
+
 #endif

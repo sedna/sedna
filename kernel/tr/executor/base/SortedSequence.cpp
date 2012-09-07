@@ -22,6 +22,30 @@
 
 //Initialization and deinitialization
 
+//Comparator for STL sort
+class SortedSequenceTupleComparator
+{
+private:
+    SortedSequence *parent;
+
+public:
+    SortedSequenceTupleComparator(SortedSequence *_parent)
+        : parent(_parent) {};
+
+    bool operator() (const data_ptr ptr1, const data_ptr ptr2)
+    {
+        void *tuple_buf1 = parent -> buf1;
+        void *tuple_buf2 = parent -> buf2;
+
+        size_t tuple_size1 = ptr1.size;
+        parent -> readData(tuple_buf1, tuple_size1, ptr1.value);
+        size_t tuple_size2 = ptr2.size;
+        parent -> readData(tuple_buf2, tuple_size2, ptr2.value);
+
+        return parent -> serializer -> compare(tuple_buf1, tuple_size1, tuple_buf2, tuple_size2) < 0;
+    }
+};
+
 void SortedSequence::init()
 {
     finalized = false;
@@ -240,23 +264,9 @@ size_t SortedSequence::getVal(void *buf, xptr block, int ind)
     return size;
 }
 
-//TupleComparator compare method implementation
-bool SortedSequence::TupleComparator::operator() (const data_ptr ptr1, const data_ptr ptr2)
-{
-    void *tuple_buf1 = parent -> buf1;
-    void *tuple_buf2 = parent -> buf2;
-
-    size_t tuple_size1 = ptr1.size;
-    parent -> readData(tuple_buf1, tuple_size1, ptr1.value);
-    size_t tuple_size2 = ptr2.size;
-    parent -> readData(tuple_buf2, tuple_size2, ptr2.value);
-
-    return parent -> serializer -> compare(tuple_buf1, tuple_size1, tuple_buf2, tuple_size2) < 0;
-}
-
 void SortedSequence::inBlockSort(xptr p, int amount)
 {
-    SortedSequence::TupleComparator comparator(this);
+    SortedSequenceTupleComparator comparator(this);
 
     //Tricky: We should copy all the pointers in block to other place to avoid CHECKP on getting any pointer
 

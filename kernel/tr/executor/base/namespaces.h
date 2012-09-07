@@ -8,7 +8,7 @@
 #define NAMESPACES_H
 
 #include "tr/structures/xmlns.h"
-#include "INamespaceMap.h"
+#include "tr/models/INamespaceMap.h"
 
 #include <map>
 #include <vector>
@@ -25,6 +25,12 @@ struct PredefinedNamespace
 };
 
 extern PredefinedNamespace predefinedNamespaces[];
+
+enum predefined_namespaces_t {
+    namespace_xml = 0,
+    namespace_fn = 3,
+    namespace_se = 5,
+};
 
 xmlns_ptr generateUniquePrefix(const char * prefix, const char * uri, INamespaceMap * namespaces);
 

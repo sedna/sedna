@@ -80,7 +80,8 @@ on_kernel_statement_end(PPQueryEssence *&qep_tree)
         qep_tree = NULL;
 
         //  TODO: We should carefully clear virtual root here. To review it later.
-        PPConstructor::clear_virtual_root();
+#warning UNCOMMENT THIS!        
+//        PPConstructor::clear_virtual_root();
 
         stmt_str_buf::reset();
         tr_globals::estr_global.clear();
@@ -161,7 +162,7 @@ qepNextAnswer execute(PPQueryEssence* qep_tree)
     } catch (SednaUserException &e) {
         if (1 == tr_globals::debug_mode) 
             print_pp_stack(tr_globals::client->get_debug_ostream());
-        if (e.get_code() == SE2041) return se_result_is_cut_off;
+        if (e.getCode() == SE2041) return se_result_is_cut_off;
         throw;
     }
 
@@ -177,7 +178,7 @@ qepNextAnswer next(PPQueryEssence* qep_tree)
     } catch (SednaUserException &e) {
         if (1 == tr_globals::debug_mode) 
             print_pp_stack(tr_globals::client->get_debug_ostream());
-        if (e.get_code() == SE2041) return se_result_is_cut_off;
+        if (e.getCode() == SE2041) return se_result_is_cut_off;
         throw;
     }
 

@@ -36,6 +36,16 @@ struct GlobalSerializationOptions {
     Stringmap charmap;
 
     bool separateTuples;
+
+    GlobalSerializationOptions()
+        : xquery_output_method(se_output_method_xml),
+          preserveNamespaces(true),
+          useCharmap(false),
+          indentSequence("  "),
+          indent(true),
+          separateTuples(true)
+    {
+    };
 };
 
 #endif /* _GLOBAL_OPTIONS_H_ */

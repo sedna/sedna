@@ -2,10 +2,13 @@
  * File:  exceptions.h
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
+#ifndef _SEDNA_EXCEPTIONS_H
+#define _SEDNA_EXCEPTIONS_H
 
+#include <exception>
+#include <string>
 
-
-/**
+/*
 The following primary exceptions are defined for Sedna (later referred as 
 "the system").
 
@@ -129,15 +132,10 @@ Errors could be outputted to the user in the format of <sedna-message>:
 */
 
 
-
-#ifndef __EXCEPTIONS_H
-#define __EXCEPTIONS_H
-
-#include <stdexcept>
-#include <string>
-
 #include "common/errdbg/error_codes.h"
 #include "common/errdbg/event_log.h"
+
+#define EXCEPTION_PARAMETERS __FILE__, __SE_FUNCTION__, __LINE__
 
 /*	Never use catch(...), use catch(ANY_SE_EXCEPTION) instead. Catch(...) 
 	statement is missinterpreted by cl version 13 and earlier ones. It catches
@@ -160,7 +158,7 @@ Errors could be outputted to the user in the format of <sedna-message>:
     (elog(EL_ERROR, ("(%s) %s", \
                      user_error_code_entries[internal_code].code, \
                      user_error_code_entries[internal_code].descr)), \
-     SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, internal_code))
+     SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, "", internal_code))
 
 #define USER_EXCEPTION2(internal_code, details) \
     (elog(EL_ERROR, ("(%s) %s Details: %s", \
@@ -173,7 +171,7 @@ Errors could be outputted to the user in the format of <sedna-message>:
     (elog(EL_ERROR, ("(%s) %s", \
                      user_error_code_entries[internal_code].code, \
                      user_error_code_entries[internal_code].descr)), \
-     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, internal_code, executor_globals::__current_physop))
+     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, "", internal_code, executor_globals::__current_physop))
 
 #define XQUERY_EXCEPTION2(internal_code, details) \
     (elog(EL_ERROR, ("(%s) %s Details: %s", \
@@ -186,7 +184,7 @@ Errors could be outputted to the user in the format of <sedna-message>:
     (elog(EL_ERROR, ("(%s) %s", \
                      err_name, \
                      err_descr)), \
-     SednaUserExceptionFnError(__FILE__, __SE_FUNCTION__, __LINE__, err_name, err_descr))
+     SednaUserExceptionFnError(__FILE__, __SE_FUNCTION__, __LINE__, "Sedna user error", err_name, err_descr))
 
 #define USER_ENV_EXCEPTION(msg, rollback) \
     (elog(EL_ERROR, ("(%s) %s Details: %s", \
@@ -207,73 +205,41 @@ Errors could be outputted to the user in the format of <sedna-message>:
 #define USER_SOFT_EXCEPTION(msg) \
      SednaUserSoftException(__FILE__, __SE_FUNCTION__, __LINE__, msg)
 
-
 //////////////////////////////////////////////////////////////////////////////
 /// SednaException
 //////////////////////////////////////////////////////////////////////////////
 
+#define EXCEPTION_PARAMETERS_DECL const char* _file_, const char* _function_, int _line_, const char* _err_msg_
+#define SEDNA_EXCEPTION_INHERIT _file_, _function_, _line_, _err_msg_
+#define EXCEPTION_BUFFER_SIZE SE_SOFT_FAULT_LOG_CONTENT_LEN
+
 class SednaException : public std::exception
 {
-private:
-	/* see SednaException::getMsg() for explanation (in cpp file) */ 
-	mutable std::string descriptCache;
-
 protected:
-    std::string file; 
-    std::string function;
+    const char * file;
+    const char * function;
     int line;
-    std::string err_msg;
 
-    virtual std::string getMsg2()         const = 0;
+    const char * err_msg;
+    const char * global_description;
 
+     static char error_buffer[EXCEPTION_BUFFER_SIZE];
+
+    virtual const char * createMessage(char * buffer) const;
 public:
-	/*	Since SednaException is derived from std::exception, throw() specification
-		established in base class must be met. The compiler-generated destructor
-		has wrong throw() specification since std::string destructor doesn't
-		manifest anything about exceptions. 
-		
-		GCC is the jerk! */ 
-	~SednaException() throw() { ; }
+    SednaException(EXCEPTION_PARAMETERS_DECL, const char * _global_description)
+      : file(_file_), function(_function_), line(_line_), err_msg(_err_msg_), global_description(_global_description) {}
 
-	SednaException(const char* _file_, 
-                   const char* _function_,
-                   int _line_,
-                   const char* _err_msg_) : file(_file_),
-                                            function(_function_),
-                                            line(_line_),
-                                            err_msg(_err_msg_) {}
+    const char * getMsg (char * buffer) const { return createMessage(buffer); };
 
-	const std::string &getMsg()          const;
-    virtual std::string getDescription() const { return err_msg; }
-    virtual std::string getFile()        const { return file; }
-    virtual std::string getFunction()    const { return function; }
-    virtual int         getLine()        const { return line; }
+    const char * getDescription() const { return err_msg; }
+    const char * getFile()        const { return file; }
+    const char * getFunction()    const { return function; }
+    int          getLine()        const { return line; }
 
-	/*	Throw self. Used somewhere to determine the preciese type
-		of the exception object given a reference to SednaException.
-		The code is similar to this snippet:
-		
-		void DispatchSednaException(SednaException *e)
-		{
-			try
-			{
-				e.rase();
-			}
-			catch(const SednaSystemEnvException &sysEnvE)
-			{
-				-- the exception is SednaSystemEnvException, act accordingly --
-			}
-			catch(const SednaSystemException &sysE)
-			{
-				-- the exception is SednaSystemException, act accordingly --
-			}
-			-- etc --
-		}*/ 
-	virtual void raise() const = 0;
-
-	/*	The standard method to obtain exception info defined by 
-		all std::exception descendants. */ 
-	const char *what() const throw() { return getMsg().c_str(); }
+    /*  The standard method to obtain exception info defined by
+          all std::exception descendants. */
+    virtual const char * what() const throw() { return getMsg(error_buffer); }
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -282,18 +248,13 @@ public:
 
 class SednaSystemException : public SednaException
 {
+    static const char * description;
 protected:
-	virtual std::string getMsg2() const;
-
+    SednaSystemException(EXCEPTION_PARAMETERS_DECL, const char * _global_description)
+      : SednaException(SEDNA_EXCEPTION_INHERIT, _global_description) {}
 public:
-    SednaSystemException(const char* _file_, 
-                         const char* _function_,
-                         int _line_,
-                         const char* _err_msg_) : SednaException(_file_,
-                                                                        _function_,
-                                                                        _line_,
-                                                                        _err_msg_) {}
-	virtual void raise() const { throw *this; }
+    SednaSystemException(EXCEPTION_PARAMETERS_DECL)
+      : SednaException(SEDNA_EXCEPTION_INHERIT, description) {}
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -302,18 +263,10 @@ public:
 
 class SednaSystemEnvException : public SednaSystemException
 {
-protected:
-	virtual std::string getMsg2() const;
-
+    static const char * description;
 public:
-    SednaSystemEnvException(const char* _file_, 
-                            const char* _function_,
-                            int _line_,
-                            const char* _err_msg_) : SednaSystemException(_file_, 
-                                                                                 _function_, 
-                                                                                 _line_, 
-                                                                                 _err_msg_) {}
-	virtual void raise() const { throw *this; }
+    SednaSystemEnvException(EXCEPTION_PARAMETERS_DECL)
+        : SednaSystemException(SEDNA_EXCEPTION_INHERIT, description) {}
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -324,32 +277,27 @@ class SednaUserException : public SednaException
 {
 protected:
     int internal_code;
-	virtual std::string getMsg2() const;
 
+    const char * error_name;
+    const char * error_descr;
+
+    virtual const char * createMessage(char* buffer) const;
+
+    SednaUserException(EXCEPTION_PARAMETERS_DECL, const char* _error_name_, const char* _error_descr_)
+      : SednaException(SEDNA_EXCEPTION_INHERIT, "ERROR"), internal_code(-1),
+          error_name(_error_name_), error_descr(_error_descr_) {}
 public:
-    SednaUserException(const char* _file_, 
-                       const char* _function_,
-                       int _line_,
-                       int _internal_code_) : SednaException(_file_,
-                                                             _function_,
-                                                             _line_,
-                                                             ""), 
-                                              internal_code(_internal_code_) {}
-    SednaUserException(const char* _file_, 
-                       const char* _function_,
-                       int _line_,
-                       const char* _err_msg_,
-                       int _internal_code_) : SednaException(_file_,
-                                                             _function_,
-                                                             _line_,
-                                                             _err_msg_), 
-                                              internal_code(_internal_code_) {}
-    virtual int  get_code() const { return internal_code; }
-    virtual bool need_rollback() 
-	{
-		return user_error_code_entries[internal_code].act == ueca_ROLLBACK_TRN; 
-	}
-	virtual void raise() const { throw *this; }
+    SednaUserException(EXCEPTION_PARAMETERS_DECL, int _internal_code_)
+      : SednaException(SEDNA_EXCEPTION_INHERIT, "ERROR"), internal_code(_internal_code_),
+        error_name(""), error_descr("")
+    {
+        error_name = user_error_code_entries[internal_code].code;
+        error_descr = user_error_code_entries[internal_code].descr;
+    }
+
+    int getCode() const { return internal_code; }
+
+    virtual bool needRollback() const { return user_error_code_entries[internal_code].act == ueca_ROLLBACK_TRN; }
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -358,30 +306,9 @@ public:
 
 class SednaUserExceptionFnError : public SednaUserException
 {
-protected:
-    std::string error_name;
-    std::string error_descr;
-	virtual std::string getMsg2() const;
-
 public:
-	/* see ~SednaException() for explanation */ 
-	~SednaUserExceptionFnError() throw() { ; }
-
-    SednaUserExceptionFnError(const char* _file_, 
-                              const char* _function_,
-                              int _line_,
-                              const char* _error_name_,
-                              const char* _error_descr_) : 
-                                    SednaUserException(_file_,
-                                                       _function_,
-                                                       _line_,
-                                                       SE9000), 
-                                    error_name(_error_name_),
-                                    error_descr(_error_descr_ ? _error_descr_ : "") {}
-
-    virtual int  get_code() const { return internal_code; }
-    virtual bool need_rollback() { return true; }
-	virtual void raise() const { throw *this; }
+    SednaUserExceptionFnError(EXCEPTION_PARAMETERS_DECL, const char* _error_name_, const char* _error_descr_)
+      : SednaUserException(SEDNA_EXCEPTION_INHERIT, _error_name_, _error_descr_ ? _error_descr_ : "User defined error") {}
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -392,39 +319,18 @@ class SednaUserEnvException : public SednaUserException
 {
 protected:
     bool rollback;
-    std::string explanation;
-	virtual std::string getMsg2() const;
+    const char * explanation;
 
+    virtual const char * createMessage(char* buffer) const;
 public:
-	/* see ~SednaException() for explanation */ 
-	~SednaUserEnvException() throw() { ; }
+    SednaUserEnvException(EXCEPTION_PARAMETERS_DECL, bool _rollback_)
+        : SednaUserException(SEDNA_EXCEPTION_INHERIT, 0), rollback(_rollback_), explanation("") {}
 
-    SednaUserEnvException(const char* _file_, 
-                          const char* _function_,
-                          int _line_,
-                          const char* _err_msg_,
-                          bool _rollback_) : SednaUserException(_file_,
-                                                                _function_,
-                                                                _line_,
-                                                                _err_msg_,
-                                                                0),
-                                             rollback(_rollback_) {}
-    SednaUserEnvException(const char* _file_, 
-                          const char* _function_,
-                          int _line_,
-                          const char* _err_msg_,
-                          const char* _explanation_,
-                          bool _rollback_) : SednaUserException(_file_,
-                                                                _function_,
-                                                                _line_,
-                                                                _err_msg_,
-                                                                0),
-                                             rollback(_rollback_),
-					     explanation(_explanation_){}
+    SednaUserEnvException(EXCEPTION_PARAMETERS_DECL, const char* _explanation_, bool _rollback_)
+        : SednaUserException(SEDNA_EXCEPTION_INHERIT, 0), rollback(_rollback_), explanation(_explanation_) {}
 
-    virtual std::string getDescription() const;
-    virtual bool need_rollback() { return rollback; }
-	virtual void raise() const { throw *this; }
+    const char * getDescription(char * buffer) const;
+    virtual bool needRollback() { return rollback; }
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -433,20 +339,11 @@ public:
 
 class SednaUserSoftException : public SednaUserException
 {
-protected:
-	virtual std::string getMsg2() const { return err_msg; }
-
 public:
-    SednaUserSoftException(const char* _file_, 
-                           const char* _function_,
-                           int _line_,
-                           const char* _err_msg_) : SednaUserException(_file_,
-                                                                       _function_,
-                                                                       _line_,
-                                                                       _err_msg_,
-                                                                       -1) {}
-    virtual bool need_rollback() { return false; }
-	virtual void raise() const { throw *this; }
+    SednaUserSoftException(EXCEPTION_PARAMETERS_DECL)
+        : SednaUserException(SEDNA_EXCEPTION_INHERIT, "Sedna soft fault", "") {}
+
+    virtual bool needRollback() { return false; }
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -557,4 +454,4 @@ inline SednaUserSoftException __user_soft_exception(const char *file, const char
 //////////////////////////////////////////////////////////////////////////////
 
 
-#endif
+#endif /* _SEDNA_EXCEPTIONS_H */

@@ -17,10 +17,14 @@
 #include "tr/crmutils/global_options.h"
 #include "tr/tr_base.h"
 
-struct client_file{
-    FILE* f;
-    char name[1024];
-    int64_t file_size;
+struct client_file
+{
+    std::istream * stream;
+    std::string name;
+    int64_t size;
+
+    client_file() : stream(NULL) {};
+    ~client_file() { delete stream; };
 };
 
 class Serializer;
@@ -34,7 +38,7 @@ protected:
     enum se_output_method output_method;
 
 public:
-    //virtual ~client_core() {}
+    virtual ~client_core() {}
 
     virtual void init() = 0;
     virtual void register_session_on_gov() = 0;
@@ -56,6 +60,7 @@ public:
     virtual void process_unknown_instruction(int instruction, bool in_transaction) = 0;
     virtual void error(int code, const std::string& body) = 0;
     virtual void show_time(u_timeb qep_time) = 0;
+    virtual void show_time_ex(uint64_t qep_time) = 0;
     virtual void write_user_query_to_log() = 0;
     virtual void set_keep_alive_timeout(int sec) = 0;
     

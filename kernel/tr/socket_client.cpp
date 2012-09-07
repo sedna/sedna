@@ -408,10 +408,11 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
 
             uCloseFile(fs.f, __sys_call_error);
 
-            cf.f = fopen(string(fs.name).c_str(), "r");
-            strcpy(cf.name, fs.name);
-            if (uGetFileSizeByName(cf.name, &(cf.file_size), __sys_call_error) == 0)
-                throw USER_EXCEPTION2(SE4050, cf.name);
+            cf.stream = new std::ifstream(fs.name);
+
+            cf.name = fs.name;
+            if (uGetFileSizeByName(fs.name, &(cf.size), __sys_call_error) == 0)
+                throw USER_EXCEPTION2(SE4050, fs.name);
 
             i++;
 
@@ -419,32 +420,24 @@ socket_client::get_file_from_client(std::vector<string>* filenames,
 
     } catch (ANY_SE_EXCEPTION) {
         // close and delete all files from cf_vec
-        for (unsigned int j=0; j<i; j++)
-        {
-            if (cf_vec->at(j).f && (fclose(cf_vec->at(j).f) != 0))
-            {
-                cf_vec->at(j).f = NULL;
-                throw USER_EXCEPTION(SE3020);
-            }
-            cf_vec->at(j).f = NULL;
-            if(uDeleteFile(cf_vec->at(j).name, __sys_call_error) == 0) d_printf1("tmp file delete error");
-        }
+
+        for (std::vector<client_file>::iterator it = cf_vec->begin(); it != cf_vec->end(); ++it) {
+            client_file & f = *it;
+            static_cast<std::ifstream *>(f.stream)->close();
+            uDeleteFile(f.name.c_str(), __sys_call_error);
+        };
+
         throw;
     }
 }
 
 void socket_client::close_file_from_client(client_file &cf)
 {
-    if (cf.f && (fclose(cf.f) != 0))
-    {
-        cf.f = NULL;
-        throw USER_EXCEPTION(SE3020);
-    }
-    cf.f = NULL;	
-    if(uIsFileExist(cf.name, __sys_call_error))
-    {
-        if(!uDeleteFile(cf.name, __sys_call_error)) throw USER_EXCEPTION(SE3021);
-        elog(EL_DBG, ("Temporary file has been deleted %s", cf.name));
+    if(uIsFileExist(cf.name.c_str(), __sys_call_error)) {
+        if(!uDeleteFile(cf.name.c_str(), __sys_call_error)) {
+            throw USER_EXCEPTION(SE3021);
+        }
+        elog(EL_DBG, ("Temporary file has been deleted %s", cf.name.c_str()));
     }
 
 }
@@ -640,13 +633,21 @@ void socket_client::authentication_result(bool res, const string& body)
 
 void socket_client::process_unknown_instruction(int instruction, bool in_transaction)
 {
+    if (instruction == se_SetSessionOptions) {
+        set_session_options(&sp_msg);
+        return;
+    } else if (instruction == se_ResetSessionOptions) {
+        reset_session_options();
+        return;
+    };
+
     if(in_transaction)
     {
         switch (instruction)
         {
         case se_BeginTransaction:
             {
-                error(SE4612, USER_EXCEPTION(SE4612).getMsg());
+                error(SE4612, USER_EXCEPTION(SE4612).what());
                 break;
             }
         default: throw USER_EXCEPTION(SE3009);
@@ -658,32 +659,32 @@ void socket_client::process_unknown_instruction(int instruction, bool in_transac
         {
         case se_CommitTransaction:
             {
-                error(SE4610, USER_EXCEPTION(SE4610).getMsg());
+                error(SE4610, USER_EXCEPTION(SE4610).what());
                 break;
             }
         case se_RollbackTransaction:
             {
-                error(SE4611, USER_EXCEPTION(SE4611).getMsg());
+                error(SE4611, USER_EXCEPTION(SE4611).what());
                 break;
             }
         case se_GetNextItem:
             {
-                error(SE4614, USER_EXCEPTION(SE4614).getMsg());
+                error(SE4614, USER_EXCEPTION(SE4614).what());
                 break;
             }
         case se_ExecuteLong:
             {
-                error(SE4615, USER_EXCEPTION(SE4615).getMsg());
+                error(SE4615, USER_EXCEPTION(SE4615).what());
                 break;
             }
         case se_Execute:
             {
-                error(SE4615, USER_EXCEPTION(SE4615).getMsg());
+                error(SE4615, USER_EXCEPTION(SE4615).what());
                 break;
             }
         case se_ExecuteSchemeProgram:
             {
-                error(SE4615, USER_EXCEPTION(SE4615).getMsg());
+                error(SE4615, USER_EXCEPTION(SE4615).what());
                 break;
             }
         default: throw USER_EXCEPTION(SE3009);
@@ -722,6 +723,12 @@ void socket_client::show_time(u_timeb qep_time)
     strcpy(sp_msg.body + 1 + sizeof(int), ex_time.c_str());
 
     if(sp_send_msg(client_sock, &sp_msg) != 0) THROW_SOCKET_EXCEPTION(SE3006);
+}
+
+void socket_client::show_time_ex(uint64_t qep_time)
+{
+    U_ASSERT(false);
+//    show_time();
 }
 
 void socket_client::set_keep_alive_timeout(int sec)

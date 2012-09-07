@@ -470,7 +470,7 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 	std::vector<tuple_cell> at_vals;
 	int charsize=1;
 
-	if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPFnSQLExecute");
+	if (!(value.size()==1 )) throw USER_EXCEPTION2(SE1003, "in PPFnSQLExecute");
 	tuple_cell res=atomize(value.cells[0]);
 	content.op->next(value);
 	if (value.is_eos())
@@ -495,7 +495,7 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 
 	while (!(value.is_eos()))
 	{
-		if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPFnSQLExecute");
+		if (!(value.size()==1 )) throw USER_EXCEPTION2(SE1003, "in PPFnSQLExecute");
 		res=atomize(value.cells[0]);
 
 		res=cast(res, xs_string);
@@ -966,7 +966,7 @@ SQLConnection*	SQLODBCDriver::new_connection(const char *connect_str, int connec
 			if (t.is_eos())
 				break;
 
-			if (t.cells_number != 1)
+			if (t.size() != 1)
 				throw XQUERY_EXCEPTION(SE2100);
 
 			tuple_cell opt = options->get(t);

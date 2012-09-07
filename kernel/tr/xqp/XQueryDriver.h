@@ -93,6 +93,7 @@ namespace sedna
             void doSemanticAnalysis();
             void doLReturnAnalysis();
 
+            rqp::RPBase *getRQPForModule(unsigned int ind, bool is_subquery);
             PPQueryEssence *getQEPForModule(unsigned int ind, bool is_subquery);
 
             size_t getModulesCount() const

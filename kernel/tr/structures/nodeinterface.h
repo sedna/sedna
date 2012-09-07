@@ -74,19 +74,10 @@ public:
     bool isTmpNode() const { return isTmpBlock(node); }
 
     /* Legacy: has a bad name */
-    inline
-    bool isNodeChild() const { CHECKP(node); t_item t = getNodeType(); return (t & ti_first_children) == 0; }
-
-    inline
-    bool isNodeInCollection() const { CHECKP(node); return getSchemaNode()->root->nodecnt > 1; }
-
-    inline
-    bool isTextBasedNode() const { return internal::isTextType(internal::getBlockHeader(node)->node_type); };
-
-    inline
-    bool operator==(const Node & other) const {
-        return node == other.node;
-    }
+    inline bool isNodeChild() const { CHECKP(node); t_item t = getNodeType(); return (t & ti_first_children) == 0; }
+    inline bool isNodeInCollection() const { CHECKP(node); return getSchemaNode()->root->nodecnt > 1; }
+    inline bool isTextBasedNode() const { return internal::isTextType(internal::getBlockHeader(node)->node_type); };
+    inline bool operator==(const Node & other) const { return node == other.node; }
 
     inline
     bool operator<(const Node & other) const {
@@ -308,26 +299,14 @@ public:
     NodeBlockHeader(const Node &node);
     NodeBlockHeader(const xptr p) : header(block_xptr(p)) {};
 
-    inline
-    NodeBlockHeader & checkp() { CHECKP(header); return *this; }
-
-    inline
-    Node getLastDescriptor() { return Node(getLastBlockNode(header)); };
-
-    inline
-    Node getFirstDescriptor() { return Node(getFirstBlockNode(header)); };
-
-    inline
-    t_item getNodeType() { return getNodeHeader()->node_type; };
-
-    inline
-    int getNodeCount() { return getNodeHeader()->count; };
-
-    inline
-    schema_node_cptr getSchemaNode() { return schema_node_cptr(getNodeHeader()->snode); };
-
-    inline
-    int getNodeChildCount() { return internal::getNodeChildCount(getNodeHeader()); };
+    inline NodeBlockHeader & checkp() { CHECKP(header); return *this; }
+    inline Node getLastDescriptor() { return Node(getLastBlockNode(header)); };
+    inline Node getFirstDescriptor() { return Node(getFirstBlockNode(header)); };
+    inline t_item getNodeType() { return getNodeHeader()->node_type; };
+    inline int getNodeCount() { return getNodeHeader()->count; };
+    inline schema_node_cptr getSchemaNode() { return schema_node_cptr(getNodeHeader()->snode); };
+    inline xptr getNextBlock() { return getNodeHeader()->nblk; }
+    inline int getNodeChildCount() { return internal::getNodeChildCount(getNodeHeader()); };
 };
 
 

@@ -24,7 +24,6 @@ struct t_nid {
 
 typedef struct t_nid t_nid;
 
-
 extern int nid_block_count;
 extern t_nid NIDNULL;
 
