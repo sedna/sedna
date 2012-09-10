@@ -26,6 +26,7 @@ static global_name smCallbackName         = {GN_DATABASE, "sm_callback"}; /* SM_
 static global_name lruCounterName         = {GN_DATABASE, "lru_counter"}; /* LRU_SHMEM */
 static global_name smCallbackSem1         = {GN_SESSION, "sm_callback_sem_1"}; /* SM_CALLBACK_SEM1 */
 static global_name smCallbackSem2         = {GN_SESSION, "sm_callback_sem_2"}; /* SM_CALLBACK_SEM2 */
+static global_name smShmMappingName       = {GN_DATABASE, "sm_shm_mapping"}; /* SEDNA_GLOBAL_MEMORY_MAPPING */
 
 struct vmm_sm_blk_hdr
 {

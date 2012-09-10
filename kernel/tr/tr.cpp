@@ -198,7 +198,7 @@ int TRmain(int argc, char *argv[])
         /* Determine if we run via GOV or via command line */
         bool server_mode = false;
 
-        event_logger_set_sid(sid);
+//         event_logger_set_sid(sid);
 
 //         sm_msg_struct client_msg;
 

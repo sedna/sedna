@@ -34,6 +34,9 @@
 
 #include <sstream>
 
+static void *globalMemory;
+UShMem smMemoryMapping;
+
 struct BufferManagerBorders
 {
     void start() {
@@ -299,6 +302,17 @@ int main(int argc, char **argv)
         Warden<TransactionTableBorders> trtable;
         CheckpointThread checkpointThread;
         
+        CHECK_ENV(uCreateShMem(&smMemoryMapping, smShmMappingName, PAGE_SIZE, NULL, __sys_call_error),
+                  SE4074, smShmMappingName);
+
+        globalMemory = uAttachShMem(&smMemoryMapping, NULL, 0, __sys_call_error);
+        if (globalMemory == NULL) {
+            throw SYSTEM_ENV_EXCEPTION(SE4078);
+        }
+
+        memset(globalMemory, '\0', PAGE_SIZE);
+        *(t_layer*)globalMemory = INVALID_LAYER;
+        
         if (instruction == se_int_CreateDatabaseInternal) {
             initializeDatabase();
         } else {
@@ -344,6 +358,12 @@ int main(int argc, char **argv)
         }
         
         smvmmServer.stop();
+        
+        CHECK_ENV(uDettachShMem(&smMemoryMapping, globalMemory, __sys_call_error),
+                  SE4079, smShmMappingName);
+        CHECK_ENV(uReleaseShMem(&smMemoryMapping, smShmMappingName, __sys_call_error),
+                  SE4076, smShmMappingName);
+        
         checkpointThread.stop();
         
         elog(EL_INFO, ("SM process for database %s has been shut down", 

@@ -120,7 +120,7 @@ void vmm_unmap(void *addr)
     if (mapped_pages->testAt(i)) {
         mapped_pages->clearAt(i);
 
-        if (_uvmm_unmap(addr) || _uvmm_map(addr, 0, &global_memory_mapping, access_null)) {
+        if (_uvmm_unmap(addr) || _uvmm_map(addr, 0, &smMemoryMapping, access_null)) {
             throw USER_EXCEPTION(SE1035);
         }
     }
@@ -184,9 +184,8 @@ inline static void vmm_swap_unmap_unconditional(const xptr p) {
  */
 void vmm_preliminary_call(lsize_t layer_size)
 {
-    open_global_memory_mapping(SE4400);
-
-    global_memory_mapping = get_global_memory_mapping();
+    CHECK_ENV(uOpenShMem(&smMemoryMapping, smShmMappingName, __sys_call_error),
+              SE4400, smShmMappingName.name);
 
     if (__vmm_check_region(layer_size, &LAYER_ADDRESS_SPACE_START_ADDR,
             &LAYER_ADDRESS_SPACE_SIZE, false, NULL) != 1)
@@ -222,7 +221,7 @@ void vmm_preliminary_call(lsize_t layer_size)
         cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
         cur += (uint32_t)PAGE_SIZE)
     {
-        if (_uvmm_map((void*)cur, 0, &global_memory_mapping, access_null) == -1)
+        if (_uvmm_map((void*)cur, 0, &smMemoryMapping, access_null) == -1)
             throw USER_EXCEPTION(SE1031);
     }
 
@@ -754,7 +753,8 @@ void vmm_on_session_end()
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
     USemaphoreClose(vmm_sm_sem, __sys_call_error);
 
-    close_global_memory_mapping();
+    CHECK_ENV(uCloseShMem(&smMemoryMapping, __sys_call_error),
+              SE4077, smShmMappingName.name);
 
     delete mapped_pages; mapped_pages = NULL;
     delete mtrBlocks; mtrBlocks = NULL;
