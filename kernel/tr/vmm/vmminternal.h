@@ -29,8 +29,7 @@ enum vmm_map_protection_t {
 
 int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protection_t p);
 int _uvmm_unmap(void *addr);
-int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size,
-        bool log, FILE * logfile);
+int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size);
 
 void __vmm_set_sigusr_handler();
 

@@ -57,19 +57,22 @@ int _uvmm_unmap(void *addr)
     return 0;
 }
 
-int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size,
-        bool log, FILE * logfile)
+int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size)
 {
     /* additional PAGE_SIZE needed for alignment of res_addr on page boundary */
     *res_addr = mmap(0, cur + (uint32_t)PAGE_SIZE, PROT_READ, MAP_PRIVATE | U_MAP_NORESERVE | U_MAP_ANONYMOUS, -1, 0);
 
     if (*res_addr != MAP_FAILED) {
-        if (log) fprintf(logfile, "PASSED\n");
+#ifdef EL_DEBUG
+        elog(EL_TRN, ("Vmm heck region passed"));
+#endif /* EL_DEBUG */        
         *segment_size = cur;
         *res_addr = (void*)(((uintptr_t)*res_addr + (uint32_t)PAGE_SIZE) & PAGE_BIT_MASK);
         return 1;
-    } else if(log) {
-        fprintf(logfile, "FAILED with error: %s\n", strerror(errno));
+    } else {
+#ifdef EL_DEBUG
+        elog(EL_TRN, ("FAILED with error: %s\n", strerror(errno)));
+#endif /* EL_DEBUG */
     }
 
     return 0;

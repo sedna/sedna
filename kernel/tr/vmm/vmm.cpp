@@ -36,8 +36,6 @@ void  *LAYER_ADDRESS_SPACE_BOUNDARY;
 uintptr_t LAYER_ADDRESS_SPACE_START_ADDR_INT;
 uintptr_t LAYER_ADDRESS_SPACE_BOUNDARY_INT;
 lsize_t LAYER_ADDRESS_SPACE_SIZE;
-static bool vmm_session_initialized = false;
-static bool vmm_transaction_initialized = false;
 
 static UShMem file_mapping;
 
@@ -184,13 +182,13 @@ inline static void vmm_swap_unmap_unconditional(const xptr p) {
  *
  * In case of any problems we should think of another solution
  */
-void vmm_preliminary_call(lsize_t layer_size)
+void VirtualMemoryManager::preliminaryCall(lsize_t layer_size)
 {
     CHECK_ENV(uOpenShMem(&smMemoryMapping, smShmMappingName, __sys_call_error),
               SE4400, smShmMappingName.name);
 
     if (__vmm_check_region(layer_size, &LAYER_ADDRESS_SPACE_START_ADDR,
-            &LAYER_ADDRESS_SPACE_SIZE, false, NULL) != 1)
+            &LAYER_ADDRESS_SPACE_SIZE) != 1)
         throw SYSTEM_ENV_EXCEPTION("Cannot map vmm region in transaction!");
 
     /*
@@ -372,33 +370,6 @@ void vmm_delete_tmp_blocks()
     sem.Release();
 }
 
-/* Log file for determine region */
-static FILE * f_se_trn_log;
-#define VMM_SE_TRN_LOG "se_trn_log"
-
-void read_write_cdb_layer_size(lsize_t *data, bool write)
-{
-    UShMem p_cdb_callback_file_mapping;
-    lsize_t *p_cdb_callback_data;
-
-    if (uOpenShMem(&p_cdb_callback_file_mapping, smCallbackName, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4021, "smCallbackName");
-
-    p_cdb_callback_data = (lsize_t *)uAttachShMem(&p_cdb_callback_file_mapping, NULL, 0, __sys_call_error);
-    if (p_cdb_callback_data == NULL)
-        throw USER_EXCEPTION2(SE4023, "smCallbackName");
-
-    if (write)
-        *p_cdb_callback_data = *data;
-    else
-        *data = *p_cdb_callback_data;
-
-    if (uDettachShMem(&p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4024, "smCallbackName");
-
-    if (uCloseShMem(&p_cdb_callback_file_mapping, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4022, "smCallbackName");
-}
 /*
  * vmm_determine_region is called the first time the Sedna server starts
  * to find active layer region.
@@ -424,54 +395,70 @@ void read_write_cdb_layer_size(lsize_t *data, bool write)
  *       return;
  *   }
  */
-void vmm_determine_region(bool log)
-{
-    if (log) {
-        f_se_trn_log = fopen(VMM_SE_TRN_LOG, "w");
-        if (f_se_trn_log == NULL) {
-            printf("Can't open file se_trn_log\n");
-            return;
-        }
-    }
 
+void VirtualMemoryManager::readWriteLayerSizeOnCreateDatabase(lsize_t* data, bool write)
+{
+    UShMem p_cdb_callback_file_mapping;
+    lsize_t *p_cdb_callback_data;
+
+    if (uOpenShMem(&p_cdb_callback_file_mapping, smCallbackName, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4021, "smCallbackName");
+
+    p_cdb_callback_data = (lsize_t *)uAttachShMem(&p_cdb_callback_file_mapping, NULL, 0, __sys_call_error);
+    if (p_cdb_callback_data == NULL)
+        throw USER_EXCEPTION2(SE4023, "smCallbackName");
+
+    if (write)
+        *p_cdb_callback_data = *data;
+    else
+        *data = *p_cdb_callback_data;
+
+    if (uDettachShMem(&p_cdb_callback_file_mapping, p_cdb_callback_data, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4024, "smCallbackName");
+
+    if (uCloseShMem(&p_cdb_callback_file_mapping, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4022, "smCallbackName");    
+}
+
+#define VMM_SE_TRN_LOG "se_trn_log"
+void VirtualMemoryManager::determineRegion()
+{
     lsize_t cur = 0;
     lsize_t segment_size = 0, start_segment_size;
 
     void *res_addr = NULL;
 
-    read_write_cdb_layer_size(&start_segment_size, false /* read */);
+    readWriteLayerSizeOnCreateDatabase(&start_segment_size, false /* read */);
 
-    if (start_segment_size == 0)
+    if (start_segment_size == 0) {
         start_segment_size = VMM_REGION_SEARCH_MAX_SIZE;
+    }
 
     for (cur = start_segment_size; cur >= VMM_REGION_MIN_SIZE; cur -= (uint32_t)PAGE_SIZE)
     {
-        if (log) fprintf(f_se_trn_log, "Probing size %u... ", cur);
-        if (__vmm_check_region(cur, &res_addr, &segment_size, log, f_se_trn_log)) { break; }
+#ifdef EL_DEBUG
+        elog(EL_TRN, ("Probing size %u... ", cur));
+#endif /* EL_DEBUG */
+        if (__vmm_check_region(cur, &res_addr, &segment_size)) { 
+            break; 
+        }
     }
-
-    if (log) {
-        if (0 == segment_size) fprintf(f_se_trn_log, "Nothing has been found\n");
-        else fprintf(f_se_trn_log, "\nvmm_determine_region:\nregion size (in pages) = %u\nsystem given addr = %"PRIxPTR"\n", segment_size / (uint32_t)PAGE_SIZE, (uintptr_t)res_addr);
-        if (fclose(f_se_trn_log) != 0) printf("Can't close file se_trn_log\n");
+    
+    if (0 == segment_size) {
+        elog(EL_TRN, ("Nothing has been found\n"));
+        throw USER_EXCEPTION(SE1040);
     } else {
-        if (0 == segment_size) {
-            printf("Nothing has been found\n");
-            vmm_determine_region(true);
-            throw USER_EXCEPTION(SE1040);
-        }
-        else
-        {
-            d_printf3("\nvmm_determine_region:\nregion size (in pages) = %u\nsystem given addr = %"PRIxPTR"\n", segment_size / (uint32_t)PAGE_SIZE, (uintptr_t)res_addr);
+#ifdef EL_DEBUG
+        d_printf3("\nvmm_determine_region:\nregion size (in pages) = %u\nsystem given addr = %"PRIxPTR"\n", segment_size / (uint32_t)PAGE_SIZE, (uintptr_t)res_addr);
+#endif /* EL_DEBUG */
+        if (segment_size > VMM_REGION_MAX_SIZE)
+            segment_size = VMM_REGION_MAX_SIZE;
 
-            if (segment_size > VMM_REGION_MAX_SIZE)
-                segment_size = VMM_REGION_MAX_SIZE;
-
-            // need to give the result back to cdb
-            read_write_cdb_layer_size(&segment_size, true /* write */);
-        }
+        // need to give the result back to cdb
+        readWriteLayerSizeOnCreateDatabase(&segment_size, true /* write */);
     }
 }
+
 
 static uint64_t block_counter = 0;
 
@@ -617,9 +604,41 @@ void __vmmdcp_vmm_signal_modification(xptr p)
     ((vmm_sm_blk_hdr*)(XADDR(block_xptr(p))))->is_changed = true;
 }
 #endif /* VMM_LINUX_DEBUG_CHECKP */
+static void unmapAllBlocks(sedna::Bitset * map)
+{
+    int p = -1;
 
+    while ((p = map->getNextSetBitIdx(p + 1)) != -1)
+        vmm_unmap((char *)LAYER_ADDRESS_SPACE_START_ADDR + PAGE_SIZE * p);
 
-void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
+    map->clear();
+}
+
+void VMMMicrotransaction::begin() {
+    if (activeMT != NULL || mStarted)
+    {
+        /* Nested microtransactions are not allowed */
+        throw SYSTEM_EXCEPTION("Nested microtransactions detected");
+    }
+    mStarted = true;
+    activeMT = this;
+
+    mtrBlocks->clear();
+}
+
+void VMMMicrotransaction::end() {
+    SafeSemaphore sem(vmm_sm_sem);
+
+    mStarted = false;
+    activeMT = NULL;
+
+    sem.Aquire();
+    unmapAllBlocks(mtrBlocks);
+    __vmm_init_current_xptr();
+    sem.Release();
+}
+
+void VirtualMemoryManager::onSessionBegin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
 {
     if (USemaphoreOpen(&vmm_sm_sem, vmmLockName, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "vmmLockName");
@@ -679,10 +698,10 @@ void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
     }
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
-    vmm_session_initialized = true;
+    sessionInitialized = true;
 }
 
-void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts)
+void VirtualMemoryManager::onTransactionBegin(bool is_query, TIMESTAMP &ts)
 {
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
@@ -707,114 +726,11 @@ void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts)
     }
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
-    vmm_transaction_initialized = true;
+    transactionInitialized = true;
 }
 
-void vmm_on_session_end()
-{
-    if (!vmm_session_initialized) return;
-
-    USemaphoreDown(vmm_sm_sem, __sys_call_error);
-    try {
-        msg.cmd = msg_unregister_session; // bm_unregister_session
-        msg.trid = tr_globals::trid;
-        msg.sid = tr_globals::sid;
-
-        shutdown_vmm_thread = true;
-
-        /*  USemaphoreUp(sm_to_vmm_callback_sem1, __sys_call_error);
-        SM will do it instead, see comments in bm_unregister_session function. */
-
-        if (ssmmsg->send_msg(&msg) != 0)
-            throw USER_EXCEPTION(SE1034);
-
-        if (msg.cmd != msg_ok) _vmm_process_sm_error(msg.cmd);
-
-        if (uThreadJoin(vmm_thread_handle, __sys_call_error) != 0)
-            throw USER_EXCEPTION(SE1039);
-
-        if (uCloseThreadHandle(vmm_thread_handle, __sys_call_error) != 0)
-            throw USER_EXCEPTION2(SE4063, "VMM thread");
-
-        if (uCloseShMem(&file_mapping, __sys_call_error) != 0)
-            throw USER_EXCEPTION(SE1038);
-
-        if (uDettachShMem(&p_sm_callback_file_mapping, p_sm_callback_data, __sys_call_error) != 0)
-            throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
-
-        if (uCloseShMem(&p_sm_callback_file_mapping, __sys_call_error) != 0)
-            throw USER_EXCEPTION2(SE4022, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
-
-        USemaphoreClose(sm_to_vmm_callback_sem1, __sys_call_error);
-        USemaphoreClose(sm_to_vmm_callback_sem2, __sys_call_error);
-
-    } catch (ANY_SE_EXCEPTION) {
-        USemaphoreUp(vmm_sm_sem, __sys_call_error);
-        throw;
-    }
-    USemaphoreUp(vmm_sm_sem, __sys_call_error);
-    USemaphoreClose(vmm_sm_sem, __sys_call_error);
-
-    CHECK_ENV(uCloseShMem(&smMemoryMapping, __sys_call_error),
-              SE4077, smShmMappingName.name);
-
-    delete mapped_pages; mapped_pages = NULL;
-    delete mtrBlocks; mtrBlocks = NULL;
-
-    vmm_session_initialized = false;
-    vmm_trace_stop();
-}
-
-static void unmapAllBlocks(sedna::Bitset * map)
-{
-    int p = -1;
-
-    while ((p = map->getNextSetBitIdx(p + 1)) != -1)
-        vmm_unmap((char *)LAYER_ADDRESS_SPACE_START_ADDR + PAGE_SIZE * p);
-
-    map->clear();
-}
-
-void VMMMicrotransaction::begin() {
-    if (activeMT != NULL || mStarted)
-    {
-        /* Nested microtransactions are not allowed */
-        throw SYSTEM_EXCEPTION("Nested microtransactions detected");
-    }
-    mStarted = true;
-    activeMT = this;
-
-    mtrBlocks->clear();
-}
-
-void VMMMicrotransaction::end() {
-    SafeSemaphore sem(vmm_sm_sem);
-
-    mStarted = false;
-    activeMT = NULL;
-
-    sem.Aquire();
-    unmapAllBlocks(mtrBlocks);
-    __vmm_init_current_xptr();
-    sem.Release();
-}
-
-VMMMicrotransaction::~VMMMicrotransaction() {
-    if (mStarted) { end(); };
-}
-
-void vmm_unmap_all_blocks()
-{
-    SafeSemaphore sem(vmm_sm_sem);
-
-    sem.Aquire();
-    unmapAllBlocks(mapped_pages);
-    sem.Release();
-}
-
-void vmm_on_transaction_end()
-{
-    if (!vmm_transaction_initialized) return;
+void VirtualMemoryManager::onTransactionEnd() {
+    if (!transactionInitialized) return;
 
     __vmm_init_current_xptr();
 
@@ -846,5 +762,75 @@ void vmm_on_transaction_end()
     }
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
-    vmm_transaction_initialized = false;
+    transactionInitialized = false;
+}
+
+void VirtualMemoryManager::onSessionEnd()
+{
+    if (!sessionInitialized) return;
+
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
+    try {
+        msg.cmd = msg_unregister_session; // bm_unregister_session
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
+
+        shutdown_vmm_thread = true;
+
+        /*  USemaphoreUp(sm_to_vmm_callback_sem1, __sys_call_error);
+        SM will do it instead, see comments in bm_unregister_session function. */
+
+        if (ssmmsg->send_msg(&msg) != 0)
+            throw USER_EXCEPTION(SE1034);
+
+        if (msg.cmd != msg_ok) _vmm_process_sm_error(msg.cmd);
+
+        if (uThreadJoin(vmm_thread_handle, __sys_call_error) != 0)
+            throw USER_EXCEPTION(SE1039);
+
+        if (uCloseThreadHandle(vmm_thread_handle, __sys_call_error) != 0)
+            throw USER_EXCEPTION2(SE4063, "VMM thread");
+
+        if (uCloseShMem(&file_mapping, __sys_call_error) != 0)
+            throw USER_EXCEPTION(SE1038);
+
+        if (uDettachShMem(&p_sm_callback_file_mapping, p_sm_callback_data, __sys_call_error) != 0)
+            throw USER_EXCEPTION2(SE4024, "SEDNA_SM_CALLBACK_SHARED_MEMORY_NAME");
+
+        if (uCloseShMem(&p_sm_callback_file_mapping, __sys_call_error) != 0)
+            throw USER_EXCEPTION2(SE4022, "SEDNA_SM_CALLBACK_SHARED_MEMORY_NAME");
+
+        USemaphoreClose(sm_to_vmm_callback_sem1, __sys_call_error);
+        USemaphoreClose(sm_to_vmm_callback_sem2, __sys_call_error);
+
+    } catch (ANY_SE_EXCEPTION) {
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
+        throw;
+    }
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
+    USemaphoreClose(vmm_sm_sem, __sys_call_error);
+
+    CHECK_ENV(uCloseShMem(&smMemoryMapping, __sys_call_error),
+              SE4077, smShmMappingName.name);
+
+    delete mapped_pages; mapped_pages = NULL;
+    delete mtrBlocks; mtrBlocks = NULL;
+
+    sessionInitialized = false;
+    vmm_trace_stop();
+}
+
+
+
+VMMMicrotransaction::~VMMMicrotransaction() {
+    if (mStarted) { end(); };
+}
+
+void vmm_unmap_all_blocks()
+{
+    SafeSemaphore sem(vmm_sm_sem);
+
+    sem.Aquire();
+    unmapAllBlocks(mapped_pages);
+    sem.Release();
 }

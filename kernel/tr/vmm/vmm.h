@@ -73,6 +73,26 @@ namespace tr_globals {
 extern xptr vmm_cur_xptr;
 extern volatile lsize_t vmm_cur_offs;
 
+class VirtualMemoryManager {
+    bool sessionInitialized;
+    bool transactionInitialized;
+
+    void preliminaryCall(lsize_t layer_size);
+    void readWriteLayerSizeOnCreateDatabase(lsize_t *data, bool write);
+public:
+    VirtualMemoryManager(): sessionInitialized(false) {};
+    
+    void determineRegion();
+    void onSessionBegin(SSMMsg *_ssmmsg_, bool is_rcv_mode);
+    void onSessionEnd();
+
+    void onTransactionBegin(bool is_query, TIMESTAMP &ts);
+    void onTransactionEnd();
+    
+
+    
+};
+
 void vmm_init_block_counter();
 uint64_t vmm_get_block_counter();
 

@@ -3,15 +3,24 @@
 * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 */
 
-#include <string>
-
-#include "common/sedna.h"
 #include "common/base.h"
-#include "auxiliary/utils.h"
 #include "common/ssmmsg/SSMMsg.h"
-#include "common/errdbg/d_printf.h"
-#include "common/errdbg/exceptions.h"
-#include "tr/vmm/os_exceptions.h"
+#include "common/errdbg/errors.h"
+#include "u/uprocess.h"
+#include "common/globalobjects/globalnames.h"
+
+#include "tr/vmm/vmm.h"
+
+
+// #include <string>
+// 
+// #include "common/sedna.h"
+// #include "common/base.h"
+// #include "auxiliary/utils.h"
+// #include "common/ssmmsg/SSMMsg.h"
+// #include "common/errdbg/d_printf.h"
+// #include "common/errdbg/exceptions.h"
+// #include "tr/vmm/os_exceptions.h"
 
 using namespace std;
 
@@ -181,22 +190,61 @@ int TRmain(int argc, char *argv[])
 {
     /* volatile to prevent clobbing by setjmp/longjmp */
     volatile int ret_code = 0;
-    volatile bool sedna_server_is_running = false;
-    
-    init_base_path(argv[0]); 
-    
-    char buf[1024]; /* buffer enough to get environment variables */
+    init_base_path(argv[0]);
+
     SSMMsg *sm_server = NULL; /* shared memory messenger to communicate with SM */
     int determine_vmm_region = -1;
-    int os_primitives_id_min_bound;
-    SednaUserException e = USER_EXCEPTION(SE4400);
-
+    
     try
     {
-        OS_EXCEPTIONS_INSTALL_HANDLER
+        char sednaDataDirectory[SEDNA_DATA_VAR_SIZE] = {};
+        CHECK_ENV(uGetEnvironmentVariable(SEDNA_DATA_ENVIRONMENT, sednaDataDirectory, 
+                                          SEDNA_DATA_VAR_SIZE, __sys_call_error),
+                                          SE4074, SEDNA_DATA_ENVIRONMENT);
+        SEDNA_DATA = sednaDataDirectory;
+        
+        /* Set global settings */
+        GlobalObjectsCollector globalObjectsCollector;
+        uSetGlobalNameGeneratorBase(SEDNA_DATA);
+
+        /* Init event log */
+        CHECK_ENV(event_logger_init(EL_TRN, "", eventLogShmName, eventLogSemName),
+            SE0001, "Failed to start event log");
+
+        /* This should release event log on exception */
+        struct EventLogWarden {
+            ~EventLogWarden() { event_logger_release(); };
+        };
+
+        char envVariableDbId[64] = {};
+        CHECK_ENV(uGetEnvironmentVariable(SEDNA_DB_ID_ENVIRONMENT, envVariableDbId, 
+                                          64, __sys_call_error),
+                                          SE4074, SEDNA_DB_ID_ENVIRONMENT);
+        
+        uSetGlobalNameInstanceId(GN_DATABASE, envVariableDbId);
+
+        
+        if (argc == 2 && 0 == strcmp(argv[1], "--vmm-region")) {
+            VirtualMemoryManager vmm;
+            vmm.determineRegion();
+            elog(EL_INFO, ("Vmm region completed successfully"));
+            return 0;
+        } else if (argc == 2 && 0 == strcmp(argv[1], "--load-metadata")) {
+            elog(EL_INFO, ("Load-metadata call succeded"));
+        } else {
+            /*temporary; to detect failures*/
+            elog(EL_FATAL, ("Command line for trn was incorrect"));
+            return -1;
+        }
+    }
+    
+
+//     try
+//     {
+//         OS_EXCEPTIONS_INSTALL_HANDLER
 
         /* Determine if we run via GOV or via command line */
-        bool server_mode = false;
+//         bool server_mode = false;
 
 //         event_logger_set_sid(sid);
 
@@ -237,7 +285,7 @@ int TRmain(int argc, char *argv[])
 // 
 //         d_printf1("Transaction has been closed\n\n");
 // 
-    }
+//     }
 //     }
 //     catch(SednaUserException & e)
 //     {

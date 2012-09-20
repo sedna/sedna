@@ -90,7 +90,7 @@ public:
     virtual void next();
 };
 
-class OptimizingExecutor : SednaModule
+class OptimizingExecutor : public SednaModule
 {
 private:
     opt::GraphCompiler * _gcmpler;
