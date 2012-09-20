@@ -41,6 +41,8 @@ static bool vmm_transaction_initialized = false;
 
 static UShMem file_mapping;
 
+UShMem smMemoryMapping;
+
 /* Active block complete address */
 xptr vmm_cur_xptr;
 

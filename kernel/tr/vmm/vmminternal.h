@@ -13,7 +13,7 @@
 
 #include "tr/vmm/vmm.h"
 
-UShMem smMemoryMapping;
+// UShMem smMemoryMapping;
 
 /* Is any block mapped on position */
 inline static bool _vmm_is_address_busy(void * p) {
