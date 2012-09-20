@@ -11,6 +11,7 @@
 #define _VMM_H
 
 #include "common/sedna.h"
+#include "tr/models/SednaModule.h"
 
 #include "common/xptr/xptr.h"
 #include "common/xptr/wutypes.h"
@@ -73,37 +74,37 @@ namespace tr_globals {
 extern xptr vmm_cur_xptr;
 extern volatile lsize_t vmm_cur_offs;
 
-class VirtualMemoryManager {
-    bool sessionInitialized;
-    bool transactionInitialized;
-
+class VirtualMemoryManager : public SednaModule{
+    bool isSessionInitialized;
+    bool isTransactionInitialized;
+    bool isReadOnlyQuery;
+    bool isRunRecovery;
+    TIMESTAMP timeStamp;
+    SSMMsg * ssmmsgClient;
+    
+    transaction_id obtainTransactionId();
+    void releaseTransactionId();
     void preliminaryCall(lsize_t layer_size);
     void readWriteLayerSizeOnCreateDatabase(lsize_t *data, bool write);
 public:
-    VirtualMemoryManager(): sessionInitialized(false) {};
+    VirtualMemoryManager(bool _isRunRecovery): 
+                                isSessionInitialized(false), 
+                                isTransactionInitialized(false),
+                                isRunRecovery(false) {};
     
     void determineRegion();
-    void onSessionBegin(SSMMsg *_ssmmsg_, bool is_rcv_mode);
-    void onSessionEnd();
+    virtual void onSessionBegin();
+    virtual void onSessionEnd();
 
-    void onTransactionBegin(bool is_query, TIMESTAMP &ts);
-    void onTransactionEnd();
+    virtual void onTransactionBegin();
+    virtual void onTransactionEnd();
     
-
-    
+    void setQueryMode (bool mode) { isReadOnlyQuery = mode; };
+    TIMESTAMP getTimestamp () { return timeStamp; };
 };
 
 void vmm_init_block_counter();
 uint64_t vmm_get_block_counter();
-
-void vmm_determine_region(bool log = false);
-
-void vmm_preliminary_call(lsize_t layer_size);
-
-void vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode);
-void vmm_on_session_end();
-void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts);
-void vmm_on_transaction_end();
 
 void vmm_alloc_data_block(xptr /*out*/ *p);
 void vmm_alloc_tmp_block(xptr /*out*/ *p);

@@ -222,10 +222,9 @@ int TRmain(int argc, char *argv[])
                                           SE4074, SEDNA_DB_ID_ENVIRONMENT);
         
         uSetGlobalNameInstanceId(GN_DATABASE, envVariableDbId);
-
         
         if (argc == 2 && 0 == strcmp(argv[1], "--vmm-region")) {
-            VirtualMemoryManager vmm;
+            VirtualMemoryManager vmm(false /* not recovery mode */);
             vmm.determineRegion();
             elog(EL_INFO, ("Vmm region completed successfully"));
             return 0;

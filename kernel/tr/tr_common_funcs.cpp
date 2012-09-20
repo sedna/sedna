@@ -47,88 +47,6 @@ static bool is_trid_obtained    = false;
 static bool need_sem            = true; // need to use semaphore for updater
 
 
-void wait_for_sm_to_unblock()
-{
-    int res;
-
-    for (;;)
-    {
-        res = USemaphoreDownTimeout(tr_globals::wait_sem, 1000, __sys_call_error);
-
-        if (res == 0) //unblocked
-        {
-            break;
-        }
-        else if (res == 2) // timeout
-        {
-            if (is_stop_session())
-                throw USER_EXCEPTION(SE4608);
-        }
-        else // error
-        {
-            throw USER_EXCEPTION2(SE4015, "SEDNA_TRANSACTION_LOCK");
-        }
-    }
-}
-
-static transaction_id
-get_transaction_id(SSMMsg* sm_server)
-{
-    sm_msg_struct msg;
-
-    msg.trid = -1;
-
-    for (;;)
-    {
-        msg.cmd = 1; // give me a trid
-        msg.sid = tr_globals::sid;
-        msg.data.data[0] = tr_globals::is_ro_mode;
-        msg.data.data[1] = tr_globals::is_log_less_mode;
-
-        if (sm_server->send_msg(&msg) != 0)
-            throw USER_EXCEPTION(SE3034);
-
-        U_ASSERT(msg.cmd == 0 || msg.cmd == 1);
-
-        if (tr_globals::is_log_less_mode || msg.cmd == 1)
-        {
-            // wait for sm to unblock
-            wait_for_sm_to_unblock();
-        }
-
-        // we've obtained a trid
-        if (msg.cmd == 0) break;
-    }
-
-    if (msg.trid == -1)
-        throw USER_EXCEPTION(SE4607);
-
-    is_trid_obtained = true;
-    d_printf2("get trid=%d\n", msg.trid);
-    return msg.trid;
-}
-
-static void
-release_transaction_id(SSMMsg* sm_server)
-{
-    if ( is_trid_obtained == true )
-    {
-        if (trid < 0 || trid >= SEDNA_MAX_TRNS_NUMBER) return;
-
-        d_printf2("return trid=%d\n", trid);
-        sm_msg_struct msg;
-        msg.cmd = 2;
-        msg.trid = trid;
-        msg.sid = tr_globals::sid;
-        msg.data.data[0] = tr_globals::is_ro_mode;
-
-        if (sm_server->send_msg(&msg) !=0 )
-            throw USER_EXCEPTION(SE3034);
-    }
-
-    is_trid_obtained = false;
-}
-
 void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active)
 {
     if (!first_transaction) {
@@ -145,15 +63,6 @@ void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active)
     wait_sem_inited = true;
     d_printf1("OK\n");
 
-    sm_server = se_new SSMMsg(SSMMsg::Client,
-                              sizeof (sm_msg_struct),
-                              SEDNA_SSMMSG_SM_ID(db_id, buf, 1024),
-                              SM_NUMBER_OF_SERVER_THREADS,
-                              U_INFINITE);
-
-    d_printf1("Connecting to SM...");
-    if (sm_server->init() != 0)
-        throw USER_EXCEPTION2(SE4200, db_name);
     is_sm_server_inited = true;
     d_printf1("OK\n");
 
@@ -230,16 +139,6 @@ void on_session_end(SSMMsg* &sm_server)
         delete tr_globals::serializer;
         tr_globals::serializer = NULL;
     }
-
-    d_printf1("Deleting SSMMsg...");
-    if (is_sm_server_inited)
-    {
-        sm_server->shutdown();
-        delete sm_server;
-        sm_server = NULL;
-        is_sm_server_inited = false;
-    }
-    d_printf1("OK\n");
 
     d_printf1("Releasing waiting semaphore...");
     if (wait_sem_inited)
@@ -445,15 +344,6 @@ void on_kernel_recovery_statement_end()
     vmm_delete_tmp_blocks();
 }
 
-
-bool is_stop_session()
-{
-    if (NULL == sedna_gov_shm_ptr) return true;
-
-    if (sid < 0 || sid >= MAX_SESSIONS_NUMBER) return true;
-
-    return  (GOV_CONFIG_GLOBAL_PTR -> sess_vars[sid].stop == 1) ? true : false;
-}
 
 // switches transactions (from the next one) to ro-mode
 // true -- ro-mode

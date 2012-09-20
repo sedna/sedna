@@ -638,7 +638,72 @@ void VMMMicrotransaction::end() {
     sem.Release();
 }
 
-void VirtualMemoryManager::onSessionBegin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
+transaction_id VirtualMemoryManager::obtainTransactionId()
+{
+    sm_msg_struct msg;
+
+    msg.trid = -1;
+
+    for (;;)
+    {
+        msg.cmd = msg_request_transaction_id; // give me a trid
+        msg.sid = tr_globals::sid;
+        msg.data.trinfo.rdonly = tr_globals::is_ro_mode;
+        
+        /* TODO: CHECK IT */
+        msg.data.trinfo.excl = tr_globals::is_log_less_mode;
+
+        if (ssmmsgClient->send_msg(&msg) != 0)
+            throw USER_EXCEPTION(SE3034);
+
+        U_ASSERT(msg.cmd == msg_ok || msg.cmd == msg_request_transaction_id);
+
+        if (tr_globals::is_log_less_mode || msg.cmd == msg_request_transaction_id)
+        {
+            // wait for sm to unblock
+            int res;
+            for (;;)
+            {
+                res = USemaphoreDownTimeout(tr_globals::wait_sem, 1000, __sys_call_error);
+                if (res == 0) //unblocked
+                {
+                    break;
+                } else {// error
+                    throw USER_EXCEPTION2(SE4015, "SEDNA_TRANSACTION_LOCK");
+                }
+            }
+                    
+        }
+
+        // we've obtained a trid
+        if (msg.cmd == 0) break;
+    }
+
+    if (msg.trid == -1)
+        throw USER_EXCEPTION(SE4607);
+
+    d_printf2("get trid=%d\n", msg.trid);
+    return msg.trid;
+}
+
+static void
+release_transaction_id(SSMMsg* sm_server)
+{
+        if (tr_globals::trid < 0 || tr_globals::trid >= SEDNA_MAX_TRNS_NUMBER) return;
+
+        d_printf2("return trid=%d\n", trid);
+        sm_msg_struct msg;
+        msg.cmd = msg_release_transaction_id;
+        msg.trid = tr_globals::trid;
+        msg.sid = tr_globals::sid;
+        msg.data.trinfo.rdonly = tr_globals::is_ro_mode;
+
+        if (sm_server->send_msg(&msg) !=0 )
+            throw USER_EXCEPTION(SE3034);
+}
+
+
+void VirtualMemoryManager::onSessionBegin()
 {
     if (USemaphoreOpen(&vmm_sm_sem, vmmLockName, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "vmmLockName");
@@ -648,15 +713,21 @@ void VirtualMemoryManager::onSessionBegin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
 
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
-        ssmmsg = _ssmmsg_;
+        ssmmsgClient =  new SSMMsg(SSMMsg::Client,
+                                   sizeof (sm_msg_struct),
+                                   smMessageServerName,
+                                   SM_NUMBER_OF_SERVER_THREADS,
+                                   U_INFINITE);
+        CHECK_ENV(ssmmsgClient->init(), SE4200, "Failed to connect to SSMMsg server");
+        ssmmsg = ssmmsgClient;
         shutdown_vmm_thread = false;
 
         msg.cmd = msg_register_session; // bm_register_session
         msg.trid = 0; // trid is not defined in this point
         msg.sid = tr_globals::sid;
-        msg.data.reg.num = is_rcv_mode ? 1 : 0;
+        msg.data.reg.num = isRunRecovery ? 1 : 0;
 
-        if (ssmmsg->send_msg(&msg) != 0)
+        if (ssmmsgClient->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
 
         if (msg.cmd != msg_ok) _vmm_process_sm_error(msg.cmd);
@@ -665,7 +736,7 @@ void VirtualMemoryManager::onSessionBegin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
         tr_globals::authentication = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHENTICATION_FLAG);
         tr_globals::authorization  = GET_FLAG(msg.data.reg.transaction_flags, TR_AUTHORIZATION_FLAG);
 
-        vmm_preliminary_call(msg.data.reg.layer_size);
+        preliminaryCall(msg.data.reg.layer_size);
 
         /* Open buffer memory */
         if (uOpenShMem(&file_mapping, bufferSharedMemoryName, __sys_call_error) != 0)
@@ -698,10 +769,10 @@ void VirtualMemoryManager::onSessionBegin(SSMMsg *_ssmmsg_, bool is_rcv_mode)
     }
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
-    sessionInitialized = true;
+    isSessionInitialized = true;
 }
 
-void VirtualMemoryManager::onTransactionBegin(bool is_query, TIMESTAMP &ts)
+void VirtualMemoryManager::onTransactionBegin()
 {
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
@@ -711,14 +782,14 @@ void VirtualMemoryManager::onTransactionBegin(bool is_query, TIMESTAMP &ts)
         msg.cmd = msg_register_transaction; // bm_register_transaction
         msg.trid = tr_globals::trid;
         msg.sid = tr_globals::sid;
-        msg.data.trinfo.rdonly = is_query;
+        msg.data.trinfo.rdonly = isReadOnlyQuery;
 
-        if (ssmmsg->send_msg(&msg) != 0)
+        if (ssmmsgClient->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
 
         if (msg.cmd != msg_ok) _vmm_process_sm_error(msg.cmd);
 
-        ts = msg.data.snp_ts;
+        timeStamp = msg.data.snp_ts;
 
     } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -726,11 +797,11 @@ void VirtualMemoryManager::onTransactionBegin(bool is_query, TIMESTAMP &ts)
     }
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
-    transactionInitialized = true;
+    isTransactionInitialized = true;
 }
 
 void VirtualMemoryManager::onTransactionEnd() {
-    if (!transactionInitialized) return;
+    if (!isTransactionInitialized) return;
 
     __vmm_init_current_xptr();
 
@@ -742,7 +813,7 @@ void VirtualMemoryManager::onTransactionEnd() {
         msg.sid = tr_globals::sid;
         msg.data.ptr = catalog_masterblock;
 
-        if (ssmmsg->send_msg(&msg) != 0)
+        if (ssmmsgClient->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
 
         if (msg.cmd != msg_ok) _vmm_process_sm_error(msg.cmd);
@@ -762,12 +833,12 @@ void VirtualMemoryManager::onTransactionEnd() {
     }
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
-    transactionInitialized = false;
+    isTransactionInitialized = false;
 }
 
 void VirtualMemoryManager::onSessionEnd()
 {
-    if (!sessionInitialized) return;
+    if (!isSessionInitialized) return;
 
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
@@ -780,7 +851,7 @@ void VirtualMemoryManager::onSessionEnd()
         /*  USemaphoreUp(sm_to_vmm_callback_sem1, __sys_call_error);
         SM will do it instead, see comments in bm_unregister_session function. */
 
-        if (ssmmsg->send_msg(&msg) != 0)
+        if (ssmmsgClient->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
 
         if (msg.cmd != msg_ok) _vmm_process_sm_error(msg.cmd);
@@ -816,7 +887,14 @@ void VirtualMemoryManager::onSessionEnd()
     delete mapped_pages; mapped_pages = NULL;
     delete mtrBlocks; mtrBlocks = NULL;
 
-    sessionInitialized = false;
+    d_printf1("Deleting SSMMsg...");
+    ssmmsgClient->shutdown();
+    delete ssmmsgClient;
+    ssmmsgClient = NULL;
+    ssmmsg = NULL;
+    d_printf1("SSMMsg client shut down ok\n");
+    
+    isSessionInitialized = false;
     vmm_trace_stop();
 }
 

@@ -191,7 +191,17 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind,
         case '0':
         {
             d_printf1("Transaction is blocked\n");
-            wait_for_sm_to_unblock();
+            int res;
+            for (;;)
+            {
+                res = USemaphoreDownTimeout(tr_globals::wait_sem, 1000, __sys_call_error);
+                if (res == 0) //unblocked
+                {
+                    break;
+                } else {// error
+                    throw USER_EXCEPTION2(SE4015, "SEDNA_TRANSACTION_LOCK");
+                }
+            }            
             d_printf1("Transaction is unblocked\n");
             break;
         }
