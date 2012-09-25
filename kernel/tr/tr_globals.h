@@ -10,6 +10,7 @@
 
 #include "common/sedna.h"
 #include "common/base.h"
+#include "u/usem.h"
 
 namespace tr_globals
 {
@@ -62,7 +63,7 @@ namespace tr_globals
      * the waiting. SM will up it when it's possible for  transaction to
      * continue.
      */
-//     extern USemaphore wait_sem;
+    extern USemaphore wait_sem;
 
     /*
      * Signals that there is timeout. Pointer to this flag is passed to the

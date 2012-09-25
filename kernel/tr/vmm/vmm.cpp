@@ -689,7 +689,7 @@ transaction_id VirtualMemoryManager::obtainTransactionId()
 static void
 release_transaction_id(SSMMsg* sm_server)
 {
-        if (tr_globals::trid < 0 || tr_globals::trid >= SEDNA_MAX_TRNS_NUMBER) return;
+        if (tr_globals::trid < 0 || tr_globals::trid >= SEDNA_MAX_TRN_NUMBER) return;
 
         d_printf2("return trid=%d\n", trid);
         sm_msg_struct msg;
