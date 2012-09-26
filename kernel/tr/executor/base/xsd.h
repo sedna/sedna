@@ -11,7 +11,7 @@
 #include <string>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 #include "tr/structures/xmlns.h"
 #include "tr/executor/por2qep/scheme_tree.h"

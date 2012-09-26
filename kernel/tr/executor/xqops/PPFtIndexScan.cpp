@@ -212,7 +212,7 @@ void PPFtIndexScan::do_next(tuple &t)
 			if (tr_globals::is_ro_mode)
 				throw USER_EXCEPTION2(SE1002, "dtSearch index search support is disabled in RO-mode");
 
-			sj=se_new SednaSearchJob();
+			sj=new SednaSearchJob();
 			sj->set_dtsSearchAnyWords(opt_dtsSearchAnyWords);
 			sj->set_dtsSearchAllWords(opt_dtsSearchAllWords);
 			sj->set_index(&(*ft_idx));
@@ -293,9 +293,9 @@ PPIterator*  PPFtIndexScan::do_copy(dynamic_context *_cxt_)
 {
 	PPFtIndexScan *res;
 	if (options.op)
-		res = se_new PPFtIndexScan(_cxt_, info, idx_name, query, options);
+		res = new PPFtIndexScan(_cxt_, info, idx_name, query, options);
 	else
-		res = se_new PPFtIndexScan(_cxt_, info, idx_name, query);
+		res = new PPFtIndexScan(_cxt_, info, idx_name, query);
     res->idx_name.op = idx_name.op->copy(_cxt_);
     res->query.op = query.op->copy(_cxt_);
 	if (options.op)
@@ -482,7 +482,7 @@ void PPFtIndexScan2::do_next(tuple &t)
 		{
 #ifdef SE_ENABLE_DTSEARCH
 		case ft_ind_dtsearch:
-			sj=se_new SednaSearchJob2();
+			sj=new SednaSearchJob2();
 			sj->set_index(&(*ft_idx));
 			sj->set_request(tc);
 
@@ -555,7 +555,7 @@ void PPFtIndexScan2::do_next(tuple &t)
 PPIterator*  PPFtIndexScan2::do_copy(dynamic_context *_cxt_)
 {
 	//FIXME: mb using different constructors is better?
-    PPFtIndexScan2 *res = se_new PPFtIndexScan2(_cxt_, info, idx_name, query, max_results, field_weights);
+    PPFtIndexScan2 *res = new PPFtIndexScan2(_cxt_, info, idx_name, query, max_results, field_weights);
     res->idx_name.op = idx_name.op->copy(_cxt_);
     res->query.op = query.op->copy(_cxt_);
 	if (max_results.op)

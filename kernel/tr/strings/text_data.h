@@ -7,7 +7,7 @@
 #define _TEXT_DATA_H
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 #include "strings_base.h"
 

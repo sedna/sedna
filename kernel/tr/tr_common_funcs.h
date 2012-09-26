@@ -8,9 +8,9 @@
 
 #include "common/sedna.h"
 // #include "common/pping.h"
-#include "common/SSMMsg.h"
+#include "common/ssmmsg/SSMMsg.h"
 
-void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active= false);
+void on_session_begin(SSMMsg* &sm_server, bool rcv_active= false);
 void on_session_end(SSMMsg* &sm_server);
 void on_transaction_begin(SSMMsg* &sm_server, /*pping_client* ppc,*/ bool rcv_active = false);
 void on_transaction_end(SSMMsg* &sm_server, bool is_commit, /*pping_client* ppc,*/ bool rcv_active = false);

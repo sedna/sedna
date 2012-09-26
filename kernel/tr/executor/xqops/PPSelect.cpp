@@ -80,7 +80,7 @@ void PPSelect::do_open ()
         producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         p.type = pt_lazy_simple;
         p.op = this;
-        p.svc = se_new simple_var_consumption;
+        p.svc = new simple_var_consumption;
         p.tuple_pos = i;
     }
 
@@ -129,7 +129,7 @@ void PPSelect::do_next(tuple &t)
 
 PPIterator* PPSelect::do_copy(dynamic_context *_cxt_)
 {
-    PPSelect *res = se_new PPSelect(_cxt_, info, var_dscs, source_child, data_child);
+    PPSelect *res = new PPSelect(_cxt_, info, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op   = data_child.op->copy(_cxt_);
 

@@ -263,7 +263,7 @@ void PPIndexScan::next_between(tuple &t)
 PPIterator* PPIndexScan::do_copy(dynamic_context *_cxt_)
 {
     PPIndexScan *res = NULL;
-    res = se_new PPIndexScan(_cxt_, info, index_name, child, child2, isc);
+    res = new PPIndexScan(_cxt_, info, index_name, child, child2, isc);
     if(index_name.op) res->index_name.op = index_name.op->copy(_cxt_);
     if(child.op) res->child.op = child.op->copy(_cxt_);
     if(child2.op) res->child2.op = child2.op->copy(_cxt_);

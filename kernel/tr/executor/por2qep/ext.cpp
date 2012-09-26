@@ -33,10 +33,10 @@ ExtFunction::ExtFunction(const std::string &fname, ULibrary lib, ExtFunction **_
 		global_result_item = (SEDNA_SEQUENCE_ITEM *)malloc(sizeof(SEDNA_SEQUENCE_ITEM));
 
 	if (error_msg_buf == NULL)
-		error_msg_buf = se_new char[SEDNA_ERROR_MSG_BUF_SIZE]; //FIXME - use malloc?
+		error_msg_buf = new char[SEDNA_ERROR_MSG_BUF_SIZE]; //FIXME - use malloc?
 	instance_count++;
 
-	fcxt = se_new func_cxt();
+	fcxt = new func_cxt();
 
 	fcxt->func = (sedna_ext_func_t) uGetProcAddress(lib, fname.c_str());
 	if (fcxt->func == NULL)
@@ -116,7 +116,7 @@ void ExtFunction::free_item(SEDNA_SEQUENCE_ITEM *item)
 
 ExtFunction *ExtFunction::copy()
 {
-	return se_new ExtFunction(fcxt, this->fn_ptr);
+	return new ExtFunction(fcxt, this->fn_ptr);
 }
 
 SEDNA_SEQUENCE_ITEM *ExtFunction::make_item(const tuple &t)
@@ -290,11 +290,11 @@ ExtFunctionManager ext_function_manager = ExtFunctionManager();
 
 void ExtFunctionManager::add_func_to_list(const char *fname, const ULibrary lib)
 {
-	std::string *func_name = se_new std::string(fname);
+	std::string *func_name = new std::string(fname);
 	func_list_t::const_iterator it = func_list.find(*func_name);
 	if (it != func_list.end())
 		return; //it's ok, assume that same function was found in another dll-file, FIXME: warning if files are in the same dir?
-	ext_function_desc *desc = se_new ext_function_desc(lib);
+	ext_function_desc *desc = new ext_function_desc(lib);
 	func_list[*func_name] = desc;
 }
 
@@ -385,11 +385,11 @@ PPIterator *ExtFunctionManager::make_pp_ext_func(const char *name, dynamic_conte
 
 	ExtFunction *fn;
 	if (fdesc->fn == NULL)
-		fn = se_new ExtFunction(name_str, func_list[name_str]->lib, &fdesc->fn);
+		fn = new ExtFunction(name_str, func_list[name_str]->lib, &fdesc->fn);
 	else
 		fn = fdesc->fn->copy();
 
-	return se_new PPExtFunCall(cxt, info, arr, fn, name_str);
+	return new PPExtFunCall(cxt, info, arr, fn, name_str);
 }
 
 ExtFunctionManager::~ExtFunctionManager()

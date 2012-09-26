@@ -139,7 +139,7 @@ void PPExcept::do_next (tuple &t)
 
 PPIterator* PPExcept::do_copy(dynamic_context *_cxt_)
 {
-    PPExcept *res = se_new PPExcept(_cxt_, info, child1, child2, doc_order);
+    PPExcept *res = new PPExcept(_cxt_, info, child1, child2, doc_order);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
     return res;

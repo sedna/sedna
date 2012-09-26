@@ -12,7 +12,7 @@ int			nid_size=1;
 /* allocate new register of size PAGE_SIZE */
 void*	nid_alloc() {
 	if (nid_head==NULL) {
-		nid_head = se_new nid_slot();
+		nid_head = new nid_slot();
 		nid_head->used=true;
 		return (void*)nid_head->buf;
 	} else {
@@ -24,7 +24,7 @@ void*	nid_alloc() {
 			}
 			if (!tmp->next) {
 				nid_size++;
-				nid_slot* tmp2 = se_new nid_slot();
+				nid_slot* tmp2 = new nid_slot();
 				tmp->next=tmp2;
 				tmp2->used=true;
 				return (void*)tmp2->buf;

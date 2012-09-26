@@ -691,7 +691,7 @@ release_transaction_id(SSMMsg* sm_server)
 {
         if (tr_globals::trid < 0 || tr_globals::trid >= SEDNA_MAX_TRN_NUMBER) return;
 
-        d_printf2("return trid=%d\n", trid);
+        d_printf2("return trid=%d\n", tr_globals::trid);
         sm_msg_struct msg;
         msg.cmd = msg_release_transaction_id;
         msg.trid = tr_globals::trid;

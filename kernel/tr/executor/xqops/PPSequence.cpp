@@ -75,7 +75,7 @@ void PPSequence::do_next(tuple &t)
 
 PPIterator* PPSequence::do_copy(dynamic_context *_cxt_)
 {
-    PPSequence *res = se_new PPSequence(_cxt_, info, ch_arr);
+    PPSequence *res = new PPSequence(_cxt_, info, ch_arr);
 
     for (it = 0; it < ch_arr.size(); it++)
         res->ch_arr[it].op = ch_arr[it].op->copy(_cxt_);

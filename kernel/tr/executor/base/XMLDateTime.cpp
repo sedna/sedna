@@ -840,7 +840,7 @@ XMLDateTime adjustToTimezone(const XMLDateTime& dt, const XMLDateTime& tz)
     fNewDate.setValue(XMLDateTime::tz_mm, neg*tz.getValue(XMLDateTime::Minute));
 
     //If the dateTime has an unknown timezone, simply set the timezone. Otherwise adjust
-    // the dateTime to the se_new timezone.
+    // the dateTime to the new timezone.
     if (dt.getValue(XMLDateTime::utc) != XMLDateTime::UTC_UNKNOWN)
         fNewDate = addDurationToDateTime(fNewDate, diff);
 

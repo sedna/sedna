@@ -6,7 +6,7 @@
 #ifndef _CATXPTR
 #define _CATXPTR
 
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/cat/catalog.h"
 
 /** For information on catalog pointers, please refer to catalog.h */

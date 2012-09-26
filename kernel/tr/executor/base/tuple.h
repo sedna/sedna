@@ -11,7 +11,7 @@
 
 #include "common/sedna.h"
 
-#include "common/counted_ptr.h"
+#include "auxiliary/counted_ptr.h"
 #include "tr/executor/base/xs_decimal_t.h"
 #include "tr/executor/base/XMLDateTime.h"
 #include "tr/pstr/pstr.h"
@@ -419,7 +419,7 @@ public:
     // for variable size light atomics (with deep copy)
     explicit tuple_cell(xmlscm_type _xtype_, const char *_str_, bool)
     {
-        char *tmp = se_new char[strlen(_str_) + 1];
+        char *tmp = new char[strlen(_str_) + 1];
         strcpy(tmp, _str_);
         t = tc_light_atomic_var_size | _xtype_;
         data.x = data.y = (int64_t)0;
@@ -500,7 +500,7 @@ public:
 
     static tuple_cell atomic_deep(xmlscm_type _xtype_, const char *_str_, size_t size)
     {
-        char *tmp = se_new char[size + 1];
+        char *tmp = new char[size + 1];
         strncpy(tmp, _str_, size);
         tmp[size] = '\0';
 

@@ -7,8 +7,8 @@
 #define _STRINGS_BASE_H
 
 #include "common/sedna.h"
-#include "common/u/u.h"
-#include "common/xptr.h"
+#include "u/u.h"
+#include "common/xptr/xptr.h"
 
 typedef int64_t str_off_t;
 typedef int64_t strsize_t;

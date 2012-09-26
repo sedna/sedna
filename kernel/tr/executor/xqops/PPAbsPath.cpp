@@ -197,12 +197,12 @@ PPIterator* PPAbsPath::do_copy(dynamic_context *_cxt_)
 
     if (name.op)
     {
-        res = se_new PPAbsPath(_cxt_, info, path_expr, db_ent, name);
+        res = new PPAbsPath(_cxt_, info, path_expr, db_ent, name);
         res->name.op = name.op->copy(_cxt_);
     }
     else
     {
-        res = se_new PPAbsPath(_cxt_, info, path_expr, db_ent, name, root);
+        res = new PPAbsPath(_cxt_, info, path_expr, db_ent, name, root);
     }
 
     return res;
@@ -218,7 +218,7 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num,
     scmnodes_num = nodes.size();
 
     // create and fill merged_seq_arr
-    merged_seq_arr = se_new xptr[scmnodes_num];
+    merged_seq_arr = new xptr[scmnodes_num];
     for (int i = 0; i < scmnodes_num; i++)
     {
         xptr first_blk = getNonemptyBlockLookFore(nodes[i]->bblk);

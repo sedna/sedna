@@ -156,7 +156,7 @@ void	nid_assign(xptr node, t_prefix p) {
 		tmp = pstr_do_allocate(blk, (char*) p.prefix, p.size);
 /*--------------------------------------------------------
 >>> this is the debug case of keeping prefix just in memory
-		tmp.addr = se_new char[prefix_size];
+		tmp.addr = new char[prefix_size];
 		strcpy((char*)tmp.addr, prefix);
 --------------------------------------------------------*/
 		CHECKP(node);

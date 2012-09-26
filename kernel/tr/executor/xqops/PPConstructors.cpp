@@ -357,7 +357,7 @@ PPElementConstructor::PPElementConstructor(
         sknMarker(_sknMarker),
         virtualElement(_virtualElement)
 {
-    el_name = strcpy(se_new char[strlen(name)+1], name);
+    el_name = strcpy(new char[strlen(name)+1], name);
 }
 
 PPElementConstructor::~PPElementConstructor()
@@ -474,10 +474,10 @@ PPIterator* PPElementConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPElementConstructor *res ;
     if (el_name!=NULL)
-        res = se_new PPElementConstructor(_cxt_, info, el_name,content, deep_copy, sknMarker, virtualElement);
+        res = new PPElementConstructor(_cxt_, info, el_name,content, deep_copy, sknMarker, virtualElement);
     else
     {
-        res = se_new PPElementConstructor(_cxt_, info, qname,content, deep_copy, sknMarker, virtualElement);
+        res = new PPElementConstructor(_cxt_, info, qname,content, deep_copy, sknMarker, virtualElement);
         res->qname.op = qname.op->copy(_cxt_);
     }
     res->content.op = content.op->copy(_cxt_);
@@ -511,7 +511,7 @@ PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
                                                bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy),
                                                                  content(_content_)
 {
-    at_name=se_new char[strlen(name)+1];
+    at_name=new char[strlen(name)+1];
     strcpy(at_name,name);
     at_value=NULL;
 
@@ -525,7 +525,7 @@ PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
                                                                  qname(_qname_)
 {
     at_name=NULL;
-    at_value=se_new char[strlen(value)+1];
+    at_value=new char[strlen(value)+1];
     strcpy(at_value,value);
 }
 
@@ -535,9 +535,9 @@ PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_,
                                                const char* value,
                                                bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy)
 {
-    at_name=se_new char[strlen(name)+1];
+    at_name=new char[strlen(name)+1];
     strcpy(at_name,name);
-    at_value=se_new char[strlen(value)+1];
+    at_value=new char[strlen(value)+1];
     strcpy(at_value,value);
 }
 
@@ -673,13 +673,13 @@ PPIterator* PPAttributeConstructor::do_copy(dynamic_context *_cxt_)
     PPAttributeConstructor *res;
     if (at_name!=NULL)
     {
-        if (at_value!=NULL) res = se_new PPAttributeConstructor(_cxt_, info, at_name,at_value, deep_copy);
-        else res = se_new PPAttributeConstructor(_cxt_, info, at_name,content, deep_copy);
+        if (at_value!=NULL) res = new PPAttributeConstructor(_cxt_, info, at_name,at_value, deep_copy);
+        else res = new PPAttributeConstructor(_cxt_, info, at_name,content, deep_copy);
     }
     else
     {
-        if (at_value!=NULL) res = se_new PPAttributeConstructor(_cxt_, info, qname,at_value, deep_copy);
-        else res = se_new PPAttributeConstructor(_cxt_, info, qname,content, deep_copy);
+        if (at_value!=NULL) res = new PPAttributeConstructor(_cxt_, info, qname,at_value, deep_copy);
+        else res = new PPAttributeConstructor(_cxt_, info, qname,content, deep_copy);
     }
     if (at_name==NULL)res->qname.op = qname.op->copy(_cxt_);
     if (at_value==NULL)res->content.op = content.op->copy(_cxt_);
@@ -702,7 +702,7 @@ PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
 {
     if (name!=NULL)
     {
-        at_name=se_new char[strlen(name)+1];
+        at_name=new char[strlen(name)+1];
         strcpy(at_name,name);
     }
     else
@@ -717,12 +717,12 @@ PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_,
 {
     if (name!=NULL)
     {
-        at_name=se_new char[strlen(name)+1];
+        at_name=new char[strlen(name)+1];
         strcpy(at_name,name);
     }
     else
         at_name=NULL;
-    at_value=se_new char[strlen(value)+1];
+    at_value=new char[strlen(value)+1];
     strcpy(at_value,value);
 }
 
@@ -777,8 +777,8 @@ void PPNamespaceConstructor::do_next (tuple &t)
 PPIterator* PPNamespaceConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPNamespaceConstructor *res ;
-    if (at_value!=NULL) res = se_new PPNamespaceConstructor(_cxt_, info, at_name,at_value);
-    else res = se_new PPNamespaceConstructor(_cxt_, info, at_name,content);
+    if (at_value!=NULL) res = new PPNamespaceConstructor(_cxt_, info, at_name,at_value);
+    else res = new PPNamespaceConstructor(_cxt_, info, at_name,content);
     if (at_value==NULL)res->content.op = content.op->copy(_cxt_);
     return res;
 }
@@ -807,7 +807,7 @@ PPCommentConstructor::PPCommentConstructor(dynamic_context *_cxt_,
                                            const char* value,
                                            bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy)
 {
-    at_value=se_new char[strlen(value)+1];
+    at_value=new char[strlen(value)+1];
     strcpy(at_value,value);
     strm.add_str("--","-");
 }
@@ -869,10 +869,10 @@ void PPCommentConstructor::do_next (tuple &t)
 PPIterator* PPCommentConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPCommentConstructor *res ;
-    if (at_value!=NULL) res = se_new PPCommentConstructor(_cxt_, info, at_value, deep_copy);
+    if (at_value!=NULL) res = new PPCommentConstructor(_cxt_, info, at_value, deep_copy);
     else
     {
-        res = se_new PPCommentConstructor(_cxt_, info, content, deep_copy);
+        res = new PPCommentConstructor(_cxt_, info, content, deep_copy);
         res->content.op = content.op->copy(_cxt_);
     }
     return res;
@@ -905,7 +905,7 @@ PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
                                  bool _deep_copy) : PPConstructor(_cxt_, _info_, _deep_copy),
                                                     content(_content_)
 {
-    at_name=se_new char[strlen(name)+1];
+    at_name=new char[strlen(name)+1];
     strcpy(at_name,name);
     at_value=NULL;
     strm.add_str("?>","--");
@@ -919,7 +919,7 @@ PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
                                                     qname(_qname_)
 {
     at_name=NULL;
-    at_value=se_new char[strlen(value)+1];
+    at_value=new char[strlen(value)+1];
     strcpy(at_value,value);
     strm.add_str("?>","--");
 }
@@ -930,9 +930,9 @@ PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_,
                                  const char* value,
                                  bool _deep_copy): PPConstructor(_cxt_, _info_, _deep_copy)
 {
-    at_name=se_new char[strlen(name)+1];
+    at_name=new char[strlen(name)+1];
     strcpy(at_name,name);
-    at_value=se_new char[strlen(value)+1];
+    at_value=new char[strlen(value)+1];
     strcpy(at_value,value);
     strm.add_str("?>","--");
 }
@@ -1032,13 +1032,13 @@ PPIterator* PPPIConstructor::do_copy(dynamic_context *_cxt_)
     PPPIConstructor *res ;
     if (at_name!=NULL)
     {
-        if (at_value!=NULL) res = se_new PPPIConstructor(_cxt_, info, at_name,at_value, deep_copy);
-        else res = se_new PPPIConstructor(_cxt_, info, at_name,content, deep_copy);
+        if (at_value!=NULL) res = new PPPIConstructor(_cxt_, info, at_name,at_value, deep_copy);
+        else res = new PPPIConstructor(_cxt_, info, at_name,content, deep_copy);
     }
     else
     {
-        if (at_value!=NULL) res = se_new PPPIConstructor(_cxt_, info, qname,at_value, deep_copy);
-        else res = se_new PPPIConstructor(_cxt_, info, qname, content, deep_copy);
+        if (at_value!=NULL) res = new PPPIConstructor(_cxt_, info, qname,at_value, deep_copy);
+        else res = new PPPIConstructor(_cxt_, info, qname, content, deep_copy);
     }
     if (at_name==NULL)res->qname.op = qname.op->copy(_cxt_);
     if (at_value==NULL)res->content.op = content.op->copy(_cxt_);
@@ -1070,7 +1070,7 @@ PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_,
                                      bool _cdataflag) : PPConstructor(_cxt_, _info_, _deep_copy),
                                                         cdataflag(_cdataflag)
 {
-    at_value=se_new char[strlen(value)+1];
+    at_value=new char[strlen(value)+1];
     strcpy(at_value,value);
 }
 
@@ -1146,9 +1146,9 @@ PPIterator* PPTextConstructor::do_copy(dynamic_context *_cxt_)
     PPTextConstructor *res;
 
     if (at_value!=NULL) {
-        res = se_new PPTextConstructor(_cxt_, info, at_value, deep_copy, cdataflag);
+        res = new PPTextConstructor(_cxt_, info, at_value, deep_copy, cdataflag);
     } else {
-        res = se_new PPTextConstructor(_cxt_, info, content, deep_copy, cdataflag);
+        res = new PPTextConstructor(_cxt_, info, content, deep_copy, cdataflag);
         res->content.op = content.op->copy(_cxt_);
     }
 
@@ -1239,7 +1239,7 @@ void PPDocumentConstructor::do_next (tuple &t)
 PPIterator* PPDocumentConstructor::do_copy(dynamic_context *_cxt_)
 {
     PPDocumentConstructor *res ;
-    res = se_new PPDocumentConstructor(_cxt_, info, content);
+    res = new PPDocumentConstructor(_cxt_, info, content);
     res->content.op = content.op->copy(_cxt_);
     return res;
 }

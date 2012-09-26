@@ -7,11 +7,11 @@
 #define CATALOG_H
 
 #include "common/sedna.h"
-#include "common/xptr.h"
-#include "common/u/uatomic.h"
-#include "common/commutil.h"
+#include "common/xptr/xptr.h"
+#include "u/uatomic.h"
+#include "auxiliary/commutil.h"
 #include "common/errdbg/d_printf.h"
-#include "common/counted_ptr.h"
+#include "auxiliary/counted_ptr.h"
 
 #include "tr/cat/simplestream.h"
 #include "tr/cat/catmem.h"

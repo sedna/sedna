@@ -45,7 +45,7 @@ class scoped_ptr {
     bool isnull() const { return 0 == p; };
 
     /* This implementation of scoped pointer does DELETE old object on assignment  */
-    scoped_ptr<T>& operator= (T* ptr) throw() {
+    scoped_ptr<T, Deallocator>& operator= (T* ptr) throw() {
         U_ASSERT(p != ptr);
         Deallocator::deallocate(p);
         p = ptr;

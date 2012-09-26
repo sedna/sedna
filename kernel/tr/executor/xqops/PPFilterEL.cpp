@@ -35,7 +35,7 @@ void PPFilterEL::do_open ()
 
     child.op->open();
     pos = 0;
-	s = se_new sorted_sequence(PPDDO::compare_less,
+	s = new sorted_sequence(PPDDO::compare_less,
                                PPDDO::get_size,
                                PPDDO::serialize,
                                PPDDO::serialize_2_blks,
@@ -122,7 +122,7 @@ void PPFilterEL::do_next (tuple &t)
 
 PPIterator* PPFilterEL::do_copy(dynamic_context *_cxt_)
 {
-    PPFilterEL *res = se_new PPFilterEL(_cxt_, info, child);
+    PPFilterEL *res = new PPFilterEL(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

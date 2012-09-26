@@ -8,37 +8,40 @@
 #ifndef _TR_GLOBALS_H
 #define _TR_GLOBALS_H
 
+#include "tr/tr_base.h"
+#include "tr/crmutils/serialization.h"
 #include "common/sedna.h"
 #include "common/base.h"
+#include "common/structures/config_data.h"
 #include "u/usem.h"
+#include "u/u.h"
 
 namespace tr_globals
 {
     /*
      * Buffer for e_strs (used for various intermediate operations with e_strs
-     * instead of allocating dynamic memory by se_new operator)
+     * instead of allocating dynamic memory by new operator)
      */
     extern char e_string_buf[PAGE_SIZE];
 
     extern int run_rewriter;
     extern int show_time;
-    extern char gov_address[];
-    extern int socket_port;
     extern int print_intermed;
     extern int debug_mode;
     extern int authentication;
     extern int authorization;
-    extern int query_timeout;
-    extern int max_stack_depth;
     
-    extern int db_id;
-    extern int os_primitives_min_bound;
-    extern char sedna_data[];
-    extern int ka_timeout;
+    extern SessionOptions sessionOptions;
+    extern SednaOptions sednaOptions;
 
     /* Special transactions */
     extern bool run_recovery;
     extern bool first_transaction;
+    
+    //received from sm
+    extern transaction_id trid;
+    //received from gov
+    extern session_id     sid;
 
     extern char db_name[];
     extern char filename[];
@@ -46,10 +49,7 @@ namespace tr_globals
     extern char login[];
     extern char output_file[];
 
-//     extern QueryType query_type;
-
-    extern transaction_id trid;
-    extern session_id     sid;
+    extern QueryType query_type;
 
     extern bool is_need_checkpoint_on_transaction_commit;
     extern bool is_ro_mode;       // may change during transaction execution!
@@ -72,19 +72,19 @@ namespace tr_globals
      * use this flag through CHECK_TIMER_FLAG macro to ROLLBACK current
      * transaction.
      */
-//     extern TLS_VAR_DECL
-//     volatile bool is_timer_fired;
-// 
-//     extern Serializer * serializer;
-//     void create_serializer(enum se_output_method method);
+     extern TLS_VAR_DECL
+     volatile bool is_timer_fired;
+ 
+     extern Serializer * serializer;
+     void create_serializer(enum se_output_method method);
 }
 
 /* 
  * Check in time is out.
  * See tr_globals::is_timer_fired for the description.
  */
-// #define CHECK_TIMER_FLAG         if (tr_globals::is_timer_fired) \
-//                                      throw USER_EXCEPTION(SE4620);
+ #define CHECK_TIMER_FLAG         if (tr_globals::is_timer_fired) \
+                                      throw USER_EXCEPTION(SE4620);
 
 
 #endif /* _TR_GLOBALS_H */

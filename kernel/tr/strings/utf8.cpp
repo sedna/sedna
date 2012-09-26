@@ -249,7 +249,7 @@ int CharCounter_utf8::count_chars(const char *str, str_off_t len)
 
 CharCounter* CharsetHandler_utf8::new_char_counter()
 {
-	return se_new CharCounter_utf8();
+	return new CharCounter_utf8();
 }
 
 void CharsetHandler_utf8::free_char_counter(CharCounter *char_counter)
@@ -373,7 +373,7 @@ int utf8_unicode_cp_iterator<Iterator>::get_next_char()
 template <class Iterator>
 static inline void utf8_get_unicode_cp_iterator(const Iterator &start, const Iterator &end, unicode_cp_iterator **res)
 {
-	*res = se_new utf8_unicode_cp_iterator<Iterator>(start, end);
+	*res = new utf8_unicode_cp_iterator<Iterator>(start, end);
 }
 
 unicode_cp_iterator *CharsetHandler_utf8::get_unicode_cp_iterator(const tuple_cell *tc)
@@ -565,7 +565,7 @@ void utf8_tokenize_result<Iterator>::get_next_result(tuple& t)
 template <class Iterator>
 static inline void utf8_tokenize(const Iterator &start, const Iterator &end, tuple_cell *t2, tuple_cell *t3, tuple_cell *str_tc, TokenizerResult **res)
 {
-	*res = se_new utf8_tokenize_result<Iterator>(start, end, t2, t3, str_tc);
+	*res = new utf8_tokenize_result<Iterator>(start, end, t2, t3, str_tc);
 }
 
 TokenizerResult* CharsetHandler_utf8::tokenize ( tuple_cell *t1, tuple_cell *t2, tuple_cell *t3)

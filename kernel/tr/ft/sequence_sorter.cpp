@@ -387,7 +387,7 @@ sorted_sequence *sequence_sorter::create_sorted_sequence(int n, tc_sort_type **s
 	data.sort_types = sort_types;
 	data.sort_inds = sort_inds;
 
-	ss = se_new sorted_sequence(ss_compare, ss_get_size, ss_serialize,
+	ss = new sorted_sequence(ss_compare, ss_get_size, ss_serialize,
 		ss_serialize_2_blks, ss_deserialize, ss_deserialize_2_blks, &data);
 
 	return ss;

@@ -303,8 +303,8 @@ void PPFnDeepEqual::do_next (tuple &t)
 PPIterator* PPFnDeepEqual::do_copy(dynamic_context *_cxt_)
 {
     PPFnDeepEqual *res = collation.op ?
-		                 se_new PPFnDeepEqual(_cxt_, info, child1, child2, collation) :
-	                     se_new PPFnDeepEqual(_cxt_, info, child1, child2);
+		                 new PPFnDeepEqual(_cxt_, info, child1, child2, collation) :
+	                     new PPFnDeepEqual(_cxt_, info, child1, child2);
 
 	res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);

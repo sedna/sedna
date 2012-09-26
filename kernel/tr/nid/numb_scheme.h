@@ -9,7 +9,7 @@
 #include <ostream>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/nid/nid.h"
 #include "tr/crmutils/crmbase.h"
 

@@ -154,9 +154,9 @@ PPIterator*  PPFtIndexDict::do_copy(dynamic_context *_cxt_)
 {
 	PPFtIndexDict *res;
 	if (options.op)
-		res = se_new PPFtIndexDict(_cxt_, info, idx_name, options);
+		res = new PPFtIndexDict(_cxt_, info, idx_name, options);
 	else
-		res = se_new PPFtIndexDict(_cxt_, info, idx_name);
+		res = new PPFtIndexDict(_cxt_, info, idx_name);
     res->idx_name.op = idx_name.op->copy(_cxt_);
 	if (options.op)
 		res->options.op = options.op->copy(_cxt_);

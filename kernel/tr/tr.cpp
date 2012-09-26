@@ -250,7 +250,7 @@ int TRmain(int argc, char *argv[])
 //         sm_msg_struct client_msg;
 
         /* transaction initialization */
-//         on_session_begin(sm_server, db_id, run_recovery);
+//         on_session_begin(sm_server, run_recovery);
 //         elog(EL_LOG, ("Session is ready"));
 // 
 //         bool expect_another_transaction = !run_recovery;

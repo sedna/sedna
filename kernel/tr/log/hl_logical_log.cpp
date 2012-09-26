@@ -580,7 +580,7 @@ ft_index_template_t* ft_rebuild_cust_tree(const char *custom_tree_buf, unsigned 
 	if (custom_tree_size == 0)
 		return NULL;
 
-	res = se_new ft_index_template_t();
+	res = new ft_index_template_t();
 	while ((uintptr_t)(p - custom_tree_buf) < custom_tree_size)
 	{
 		ft_index_type ind_type;

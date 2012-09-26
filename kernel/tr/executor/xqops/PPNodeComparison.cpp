@@ -13,28 +13,28 @@ PPNodeComparison* PPNodeComparison::PPGTNodeComparison(dynamic_context *_cxt_,
                                                        PPOpIn _seq1_,
                                                        PPOpIn _seq2_)
 { 
-	return se_new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,1);
+	return new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,1);
 }
 PPNodeComparison* PPNodeComparison::PPLTNodeComparison(dynamic_context *_cxt_,
                                                        operation_info _info_, 
                                                        PPOpIn _seq1_,
                                                        PPOpIn _seq2_)
 { 
-	return se_new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,-1);
+	return new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,-1);
 }
 PPNodeComparison* PPNodeComparison::PPEQNodeComparison(dynamic_context *_cxt_,
                                                        operation_info _info_, 
                                                        PPOpIn _seq1_,
                                                        PPOpIn _seq2_)
 { 
-	return se_new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,0);
+	return new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,0);
 }
 PPNodeComparison* PPNodeComparison::PPANNodeComparison(dynamic_context *_cxt_,
                                                        operation_info _info_, 
                                                        PPOpIn _seq1_,
                                                        PPOpIn _seq2_)
 { 
-	return se_new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,2);
+	return new PPNodeComparison(_cxt_,_info_,_seq1_,_seq2_,2);
 }
 
 PPNodeComparison::PPNodeComparison(dynamic_context *_cxt_,
@@ -51,7 +51,7 @@ PPNodeComparison::PPNodeComparison(dynamic_context *_cxt_,
 PPIterator* PPNodeComparison::do_copy(dynamic_context *_cxt_)
 {
 	PPNodeComparison *res ;
-	res = se_new PPNodeComparison(_cxt_, info, seq1, seq2, type);
+	res = new PPNodeComparison(_cxt_, info, seq1, seq2, type);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;

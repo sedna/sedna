@@ -5,6 +5,7 @@
 #include <string>
 #include <iosfwd>
 #include <map>
+#include "common/base.h"
 
 class XMLBuilder;
 class XmlNodeReader;
@@ -27,6 +28,8 @@ struct CommonClientAuthentication {
 };
 
 struct SessionOptions {
+    int keepAliveTimeout;
+    
     int executionStackDepth;
     int queryTimeout;
 
@@ -82,6 +85,10 @@ struct SednaOptions {
     std::string bindAddress;
 
     int listenPort;
+    
+    /* TODO: Check if these 3 options *really* belong to se_gov. I think they should be only in 
+     * databaseOptions/sessionOptions context
+     */
     int stackDepth;
     int logLevel;
     int keepAlive;

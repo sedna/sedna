@@ -172,7 +172,7 @@ void PPFnMaxMin::do_next(tuple &t)
 
 PPIterator* PPFnMaxMin::do_copy(dynamic_context *_cxt_)
 {
-    PPFnMaxMin *res = se_new PPFnMaxMin(_cxt_, info, i, child, collation);
+    PPFnMaxMin *res = new PPFnMaxMin(_cxt_, info, i, child, collation);
     res->child.op = child.op->copy(_cxt_);
     if (collation.op)
         res->collation.op = collation.op->copy(_cxt_);
@@ -335,7 +335,7 @@ void PPFnSumAvg::do_next(tuple &t)
 
 PPIterator* PPFnSumAvg::do_copy(dynamic_context *_cxt_)
 {
-    PPFnSumAvg *res = se_new PPFnSumAvg(_cxt_, info, i, child, zero);
+    PPFnSumAvg *res = new PPFnSumAvg(_cxt_, info, i, child, zero);
     res->child.op = child.op->copy(_cxt_);
     if (zero.op)
         res->zero.op = zero.op->copy(_cxt_);
@@ -413,7 +413,7 @@ void PPFnCount::do_next(tuple &t)
 
 PPIterator* PPFnCount::do_copy(dynamic_context *_cxt_)
 {
-    PPFnCount *res = se_new PPFnCount(_cxt_, info, child);
+    PPFnCount *res = new PPFnCount(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

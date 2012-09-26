@@ -161,7 +161,7 @@ void PPSubsMatch::do_next (tuple &t)
 PPIterator* PPSubsMatch::do_copy(dynamic_context *_cxt_)
 {
 	PPSubsMatch *res ;
-	res = se_new PPSubsMatch(_cxt_, info, seq1, seq2, smt);
+	res = new PPSubsMatch(_cxt_, info, seq1, seq2, smt);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;

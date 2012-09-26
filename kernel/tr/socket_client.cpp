@@ -524,8 +524,8 @@ void socket_client::get_session_parameters()
     
     tr_globals::query_type = TL_XQuery;
 
-    out_s = se_new se_socketostream(client_sock, p_ver);
-    nul_s = se_new se_nullostream();
+    out_s = new se_socketostream(client_sock, p_ver);
+    nul_s = new se_nullostream();
     stream = out_s;
 }
 

@@ -580,7 +580,7 @@ void PPPred1::do_open ()
         producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         p.type = pt_lazy_simple;
         p.op = this;
-        p.svc = se_new simple_var_consumption;
+        p.svc = new simple_var_consumption;
         p.tuple_pos = i;
     }
 
@@ -589,7 +589,7 @@ void PPPred1::do_open ()
         producer &p = cxt->get_var_producer(pos_dsc, var_cxt);
         p.type = pt_lazy_simple;
         p.op = this;
-        p.svc = se_new simple_var_consumption;
+        p.svc = new simple_var_consumption;
         p.tuple_pos = 0;
     }
 
@@ -736,7 +736,7 @@ void PPPred1::do_next(tuple &t)
 PPIterator* PPPred1::do_copy(dynamic_context *_cxt_)                      
 {
     
-    PPPred1 *res = se_new PPPred1(_cxt_,
+    PPPred1 *res = new PPPred1(_cxt_,
                                info,
                                var_dscs, 
                                source_child, 
@@ -865,7 +865,7 @@ void PPPred2::do_open ()
 {
     source_child.op->open();
 
-    s = se_new sequence(source_child.ts);
+    s = new sequence(source_child.ts);
     first_time = true;
     result_ready = false;
     cur_tuple = NULL;
@@ -879,7 +879,7 @@ void PPPred2::do_open ()
         producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         p.type = pt_lazy_simple;
         p.op = this;
-        p.svc = se_new simple_var_consumption;
+        p.svc = new simple_var_consumption;
         p.tuple_pos = i;
     }
     if(pos_dsc != INVALID_VAR_DSC)
@@ -887,14 +887,14 @@ void PPPred2::do_open ()
         producer &p = cxt->get_var_producer(pos_dsc, var_cxt);
         p.type = pt_lazy_simple;
         p.op = this;
-        p.svc = se_new simple_var_consumption;
+        p.svc = new simple_var_consumption;
         p.tuple_pos = 0;
     }
     {
         producer &p = cxt->get_var_producer(lst_dsc, var_cxt);
         p.type = pt_lazy_simple;
         p.op = this;
-        p.svc = se_new simple_var_consumption;
+        p.svc = new simple_var_consumption;
         p.tuple_pos = 0;
     }
 
@@ -1048,7 +1048,7 @@ void PPPred2::do_next(tuple &t)
 
 PPIterator* PPPred2::do_copy(dynamic_context *_cxt_)
 {
-    PPPred2 *res = se_new PPPred2(_cxt_, 
+    PPPred2 *res = new PPPred2(_cxt_, 
                                info,
                                var_dscs, 
                                source_child, 

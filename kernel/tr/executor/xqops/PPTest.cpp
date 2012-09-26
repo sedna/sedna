@@ -160,7 +160,7 @@ void PPTest::do_next (tuple &t)
 PPIterator* PPTest::do_copy(dynamic_context *_cxt_)
 {
 	PPTest *res ;
-	res = se_new PPTest(_cxt_, info, seq);
+	res = new PPTest(_cxt_, info, seq);
 	res->seq.op = seq.op->copy(_cxt_);
 	return res;
 }
@@ -172,8 +172,8 @@ bool is_same_root(xptr x, xptr y)
 /*
 bool PPTest::checkFT(xptr node)
 {
-	dtsSearchJob *searchJob = se_new dtsSearchJob;
-	dtsSearchResults *results = se_new dtsSearchResults();
+	dtsSearchJob *searchJob = new dtsSearchJob;
+	dtsSearchResults *results = new dtsSearchResults();
     searchJob->resultsHandle = results->getHandle();
 	//searchJob->pReportCallBack = SearchingCallback;
 	SampleDataSource sample(node) ;
@@ -191,8 +191,8 @@ bool PPTest::checkFT(xptr node)
 }
 int PPTest::checkFT(PPOpIn _seq_)
 {
-	dtsSearchJob *searchJob = se_new dtsSearchJob;
-	dtsSearchResults *results = se_new dtsSearchResults();
+	dtsSearchJob *searchJob = new dtsSearchJob;
+	dtsSearchResults *results = new dtsSearchResults();
     searchJob->resultsHandle = results->getHandle();
 	//searchJob->pReportCallBack = SearchingCallback;
 	SampleDataSource2 sample(_seq_) ;

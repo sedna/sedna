@@ -155,14 +155,14 @@ PPIterator*  PPFtHighlight::do_copy(dynamic_context *_cxt_)
 	PPFtHighlight *res;
 	if (options.op)
 	{
-		res = se_new PPFtHighlight(_cxt_, info, seq, query, options, hl_fragment);
+		res = new PPFtHighlight(_cxt_, info, seq, query, options, hl_fragment);
 	    res->seq.op = seq.op->copy(_cxt_);
 	    res->query.op = query.op->copy(_cxt_);
 		res->options.op = options.op->copy(_cxt_);
 	}
 	else
 	{
-		res = se_new PPFtHighlight(_cxt_, info, seq, query, hl_fragment);
+		res = new PPFtHighlight(_cxt_, info, seq, query, hl_fragment);
 	    res->seq.op = seq.op->copy(_cxt_);
 	    res->query.op = query.op->copy(_cxt_);
 	}

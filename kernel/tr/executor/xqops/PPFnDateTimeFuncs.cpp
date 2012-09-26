@@ -83,7 +83,7 @@ PPFnDateTimeFuncNoParam::dateTimeFunc2string(dateTimeFuncs type)
 
 PPIterator* PPFnDateTimeFuncNoParam::do_copy(dynamic_context *_cxt_)
 {
-    PPFnDateTimeFuncNoParam *res = se_new PPFnDateTimeFuncNoParam(_cxt_, info, dateTimeFunc);
+    PPFnDateTimeFuncNoParam *res = new PPFnDateTimeFuncNoParam(_cxt_, info, dateTimeFunc);
     return res;
 }
 
@@ -338,7 +338,7 @@ PPFnDateTimeFunc::dateTimeFunc2string(dateTimeFuncs type)
 
 PPIterator* PPFnDateTimeFunc::do_copy(dynamic_context *_cxt_)
 {
-    PPFnDateTimeFunc *res = se_new PPFnDateTimeFunc(_cxt_, info, child, dateTimeFunc, expected_type);
+    PPFnDateTimeFunc *res = new PPFnDateTimeFunc(_cxt_, info, child, dateTimeFunc, expected_type);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -496,7 +496,7 @@ PPFnDateTimeFunc2Params::dateTimeFunc2string(dateTimeFuncs type)
 
 PPIterator* PPFnDateTimeFunc2Params::do_copy(dynamic_context *_cxt_)
 {
-    PPFnDateTimeFunc2Params *res = se_new PPFnDateTimeFunc2Params(_cxt_, info, child1, child2, dateTimeFunc);
+    PPFnDateTimeFunc2Params *res = new PPFnDateTimeFunc2Params(_cxt_, info, child1, child2, dateTimeFunc);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
     return res;

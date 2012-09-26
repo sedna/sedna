@@ -55,7 +55,7 @@ void update_insert_sequence(xptr node,ft_index_cell_cptr icell)
     std::map<ft_index_cell_xptr,update_history*>::iterator it=ft_updates.find(icell.ptr());
     if (it==ft_updates.end())
     {
-        update_history *h=se_new update_history();
+        update_history *h=new update_history();
 		h->add_insert_node(node);
         ft_updates[icell.ptr()]=h;
     }
@@ -68,7 +68,7 @@ void update_update_sequence(xptr node,ft_index_cell_cptr icell)
     std::map<ft_index_cell_xptr,update_history*>::iterator it=ft_updates.find(icell.ptr());
     if (it==ft_updates.end())
     {
-        update_history *h=se_new update_history();
+        update_history *h=new update_history();
         h->add_update_node(node);
         ft_updates[icell.ptr()]=h;
     }
@@ -80,7 +80,7 @@ void update_delete_sequence(xptr node,ft_index_cell_cptr icell)
     std::map<ft_index_cell_xptr,update_history*>::iterator it=ft_updates.find(icell.ptr());
     if (it==ft_updates.end())
     {
-        update_history* h=se_new update_history();
+        update_history* h=new update_history();
         h->add_delete_node(node);
         ft_updates[icell.ptr()]=h;
     }
@@ -189,7 +189,7 @@ xptr copy_node_content(xptr new_node_i, xptr node, xptr left_node_i, upd_ns_map*
 
 void replaceNamespace(xmlns_ptr & ns, upd_ns_map*& updmap)
 {
-    if (updmap == NULL) updmap = se_new upd_ns_map;
+    if (updmap == NULL) updmap = new upd_ns_map;
     upd_ns_map::const_iterator it = updmap->find(ns);
     if (it == updmap->end()) {
         ns = xmlns_touch(ns->prefix, ns->uri);

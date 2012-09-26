@@ -27,7 +27,7 @@ PPLast::~PPLast()
 void PPLast::do_open ()
 {
     child.op->open();
-    s = se_new sequence(child.ts);
+    s = new sequence(child.ts);
     last = 0;
     pos = 0;
     last_computed = false;
@@ -35,7 +35,7 @@ void PPLast::do_open ()
     producer &p = cxt->get_var_producer(last_dsc, var_cxt);
     p.type = pt_lazy_simple;
     p.op = this;
-    p.svc = se_new simple_var_consumption;
+    p.svc = new simple_var_consumption;
     p.tuple_pos = 0;
 }
 
@@ -131,7 +131,7 @@ void PPLast::do_close(var_dsc dsc, var_c_id id)
 
 PPIterator* PPLast::do_copy(dynamic_context *_cxt_)
 {
-    PPLast *res = se_new PPLast(_cxt_, info, last_dsc, child);
+    PPLast *res = new PPLast(_cxt_, info, last_dsc, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

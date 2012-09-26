@@ -46,7 +46,7 @@ const char* ft_index_type2str(ft_index_type type)
 ft_index_template_t *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt)
 {
     tuple t(1);
-    ft_index_template_t * res = se_new ft_index_template_t();
+    ft_index_template_t * res = new ft_index_template_t();
     while (1)
     {
         tuple_cell tc;

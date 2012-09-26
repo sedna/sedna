@@ -25,7 +25,7 @@ void bt_key::init(const bt_key& k)
         case xs_integer	: v.i_v = k.v.i_v; break;
         case xs_float	: v.f_v = k.v.f_v; break;
         case xs_double	: v.d_v = k.v.d_v; break;
-        case xs_string	: v.s_v = se_new char[strlen(k.v.s_v) + 1];
+        case xs_string	: v.s_v = new char[strlen(k.v.s_v) + 1];
                           strcpy(v.s_v, k.v.s_v);
 			  break;
 	case xs_date:
@@ -52,7 +52,7 @@ void bt_key::init(char* pg, shft key_idx)
         case xs_double	: v.d_v = *(double*)key_tab_slot; break;
         case xs_string	: {
                               shft size = *(key_tab_slot + 1);
-                              v.s_v = se_new char[size + 1];
+                              v.s_v = new char[size + 1];
                               v.s_v[size] = '\0';
                               memcpy(v.s_v, pg + *key_tab_slot, size);
                               break;
@@ -111,7 +111,7 @@ void bt_key::setnew(const char* nv)
 {
     free();
     type = xs_string;
-    v.s_v = se_new char[strlen(nv) + 1];
+    v.s_v = new char[strlen(nv) + 1];
     strcpy(v.s_v, nv);
 }
 

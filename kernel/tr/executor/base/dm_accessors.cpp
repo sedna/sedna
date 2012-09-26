@@ -105,7 +105,7 @@ static
 tuple_cell get_pi_name(PINode pi)
 {
     size_t target_size = pi.getPITargetSize();
-    char * t = se_new char[target_size + 1];
+    char * t = new char[target_size + 1];
     tuple_cell qname = tuple_cell::atomic(xs_string, t);
 
     t[target_size] = '\0';
@@ -484,7 +484,7 @@ tuple_cell dm_document_uri(Node node)
             if (size == 0) {
                 return tuple_cell::eos();
             } else {
-                char *t = se_new char[size + 1];
+                char *t = new char[size + 1];
                 t[size] = '\0';
                 doc.copyToBuffer(t, 0, size);
                 return tuple_cell::atomic(xs_anyURI, t);
@@ -617,7 +617,7 @@ tuple_cell se_node_local_name(xptr node)
         case pr_ins         : {
                                   const PINode pin(node);
                                   const size_t target = pin.getPITargetSize();
-                                  char * t = se_new char[target + 1];
+                                  char * t = new char[target + 1];
                                   t[target] = '\0';
                                   pin.copyToBuffer(t, 0, target);
                                   return tuple_cell::atomic(xs_NCName, t);

@@ -280,7 +280,7 @@ void PPOrderBy::do_next (tuple &t)
 
 PPIterator* PPOrderBy::do_copy(dynamic_context *_cxt_)
 {
-    PPOrderBy *res = se_new PPOrderBy(_cxt_,
+    PPOrderBy *res = new PPOrderBy(_cxt_,
                                       info,
                                       stable,
                                       child,
@@ -372,7 +372,7 @@ void PPSTuple::do_next(tuple &t)
                 ch_arr[i].op->next(lt);
                 if (!lt.is_eos())
                 {
-                    sequence* st = se_new sequence(1);
+                    sequence* st = new sequence(1);
                     seq_ptrs.push_back(st); /// Save pointer. Memory will be freed in PPStuple.close().
                     tuple prev_lt(1);
                     prev_lt.copy(t.cells[i]);
@@ -396,7 +396,7 @@ void PPSTuple::do_next(tuple &t)
 
 PPIterator* PPSTuple::do_copy(dynamic_context *_cxt_)
 {
-    PPSTuple *res = se_new PPSTuple(_cxt_, info, ch_arr);
+    PPSTuple *res = new PPSTuple(_cxt_, info, ch_arr);
 
     for (i = 0; i < ch_arr.size(); i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
@@ -453,7 +453,7 @@ void PPSLet::do_open ()
         producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         p.type = pt_lazy_complex;
         p.op = this;
-        p.cvc = se_new complex_var_consumption;
+        p.cvc = new complex_var_consumption;
         p.tuple_pos = i;
     }
 
@@ -494,7 +494,7 @@ void PPSLet::do_next(tuple &t)
 
 PPIterator* PPSLet::do_copy(dynamic_context *_cxt_)
 {
-    PPSLet *res = se_new PPSLet(_cxt_, info, var_dscs, source_child, data_child);
+    PPSLet *res = new PPSLet(_cxt_, info, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
     return res;

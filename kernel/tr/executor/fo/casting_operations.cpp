@@ -160,14 +160,14 @@ inline tuple_cell cast_xs_QName_to_string_type(const tuple_cell &c, xmlscm_type 
 
     if (prefix && strcmp(prefix, "") != 0)
     {
-        res = se_new char[strlen(prefix) + strlen(local) + 2];
+        res = new char[strlen(prefix) + strlen(local) + 2];
         strcpy(res, prefix);
         strcat(res, ":");
         strcat(res, local);
     }
     else
     {
-        res = se_new char[strlen(local) + 1];
+        res = new char[strlen(local) + 1];
         strcpy(res, local);
     }
     return tuple_cell::atomic(res_type, res);

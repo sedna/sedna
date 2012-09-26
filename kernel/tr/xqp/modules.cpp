@@ -17,8 +17,8 @@ char *get_module(const char *module_uri)
     bool tree_opened = false;
     bool mem_alloced = false;
 
-    db_entity *me = se_new db_entity;
-    me->name = se_new char[strlen(module_uri) + 1];
+    db_entity *me = new db_entity;
+    me->name = new char[strlen(module_uri) + 1];
     strcpy(me->name, module_uri);
     me->type = dbe_module;
 

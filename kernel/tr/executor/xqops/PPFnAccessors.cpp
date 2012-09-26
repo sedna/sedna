@@ -77,7 +77,7 @@ void PPFnNodeName::do_next (tuple &t)
 
 PPIterator* PPFnNodeName::do_copy(dynamic_context *_cxt_)
 {
-    PPFnNodeName *res = se_new PPFnNodeName(_cxt_, info, child);
+    PPFnNodeName *res = new PPFnNodeName(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -156,7 +156,7 @@ void PPFnNilled::do_next (tuple &t)
 
 PPIterator* PPFnNilled::do_copy(dynamic_context *_cxt_)
 {
-    PPFnNilled *res = se_new PPFnNilled(_cxt_, info, child);
+    PPFnNilled *res = new PPFnNilled(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -240,7 +240,7 @@ void PPFnString::do_next (tuple &t)
 
 PPIterator* PPFnString::do_copy(dynamic_context *_cxt_)
 {
-    PPFnString *res = se_new PPFnString(_cxt_, info, child);
+    PPFnString *res = new PPFnString(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -301,7 +301,7 @@ void PPFnData::do_next (tuple &t)
 
 PPIterator* PPFnData::do_copy(dynamic_context *_cxt_)
 {
-    PPFnData *res = se_new PPFnData(_cxt_, info, child);
+    PPFnData *res = new PPFnData(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -379,7 +379,7 @@ void PPFnBaseURI::do_next (tuple &t)
 
 PPIterator* PPFnBaseURI::do_copy(dynamic_context *_cxt_)
 {
-    PPFnBaseURI *res = se_new PPFnBaseURI(_cxt_, info, child);
+    PPFnBaseURI *res = new PPFnBaseURI(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -468,7 +468,7 @@ void PPFnDocumentURI::do_next (tuple &t)
 
 PPIterator* PPFnDocumentURI::do_copy(dynamic_context *_cxt_)
 {
-    PPFnDocumentURI *res = se_new PPFnDocumentURI(_cxt_, info, child);
+    PPFnDocumentURI *res = new PPFnDocumentURI(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -530,7 +530,7 @@ void PPFnStaticBaseUri::do_next (tuple &t)
 
 PPIterator* PPFnStaticBaseUri::do_copy(dynamic_context *_cxt_)
 {
-    PPFnStaticBaseUri *res = se_new PPFnStaticBaseUri(_cxt_, info);
+    PPFnStaticBaseUri *res = new PPFnStaticBaseUri(_cxt_, info);
     return res;
 }
 
@@ -580,7 +580,7 @@ void PPFnDefaultCollation::do_next (tuple &t)
 
 PPIterator* PPFnDefaultCollation::do_copy(dynamic_context *_cxt_)
 {
-    PPFnDefaultCollation *res = se_new PPFnDefaultCollation(_cxt_, info);
+    PPFnDefaultCollation *res = new PPFnDefaultCollation(_cxt_, info);
     return res;
 }
 

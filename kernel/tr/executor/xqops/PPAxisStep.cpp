@@ -623,7 +623,7 @@ void PPAxisStep::do_next(tuple& t)
 
 PPIterator* PPAxisStep::do_copy(dynamic_context *_cxt_)
 {
-    PPAxisStep *res = se_new PPAxisStep(_cxt_, info, child, nt);
+    PPAxisStep *res = new PPAxisStep(_cxt_, info, child, nt);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

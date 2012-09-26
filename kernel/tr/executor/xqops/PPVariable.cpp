@@ -49,7 +49,7 @@ void PPVariable::do_next (tuple &t)
 
 PPIterator* PPVariable::do_copy(dynamic_context *_cxt_)
 {
-    PPVariable *res = se_new PPVariable(_cxt_, info, dsc);
+    PPVariable *res = new PPVariable(_cxt_, info, dsc);
 
     return res;
 }
@@ -97,7 +97,7 @@ void PPGlobalVariable::do_next (tuple &t)
 
 PPIterator* PPGlobalVariable::do_copy(dynamic_context *_cxt_)
 {
-    PPGlobalVariable *res = se_new PPGlobalVariable(_cxt_, info, dsc);
+    PPGlobalVariable *res = new PPGlobalVariable(_cxt_, info, dsc);
     return res;
 }
 

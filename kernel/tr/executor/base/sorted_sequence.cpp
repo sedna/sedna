@@ -24,7 +24,7 @@ sorted_sequence::sorted_sequence(compare_fn _compareFN_, get_size_fn _getSizeFN_
 	val_place=XNULL;
 	bblk_in_chain=XNULL;
 	blk_cnt=0;
-	temp_buffer=se_new char[sizeof(xptr)];
+	temp_buffer=new char[sizeof(xptr)];
 	buf_length=sizeof(xptr);
 	merge_tree=NULL;
 	top=NULL;
@@ -448,7 +448,7 @@ void sorted_sequence::copy_data_to_new_place(xptr ptr,xptr& place)
 	if (buf_length<sz)
 	{
 		delete[] temp_buffer;
-		temp_buffer=se_new char[sz];
+		temp_buffer=new char[sz];
 		buf_length=sz;
 	}
 	CHECKP(val_ptr);

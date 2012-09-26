@@ -528,7 +528,7 @@ schema_node_xptr get_system_doc(document_type type, const char* title)
     doc_schema_node_cptr scm(doc_schema_node_object::create(false));
     nodex = insert_doc_node(scm, title, NULL);
     (*(sysdoc->fillproc))(nodex, param);
-    if (sys_schema==NULL) sys_schema = se_new std::vector<schema_node_xptr>;
+    if (sys_schema==NULL) sys_schema = new std::vector<schema_node_xptr>;
     sys_schema->push_back(scm.ptr());
     return scm.ptr();
 }

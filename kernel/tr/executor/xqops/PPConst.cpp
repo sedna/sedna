@@ -60,6 +60,6 @@ void PPConst::do_next(tuple &t)
 
 PPIterator* PPConst::do_copy(dynamic_context *_cxt_)
 {
-    PPConst *res = se_new PPConst(_cxt_, info, c);
+    PPConst *res = new PPConst(_cxt_, info, c);
     return res;
 }

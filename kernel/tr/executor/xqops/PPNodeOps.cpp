@@ -87,7 +87,7 @@ void PPFnName::do_next (tuple &t)
 
 PPIterator* PPFnName::do_copy(dynamic_context *_cxt_)
 {
-    PPFnName *res = se_new PPFnName(_cxt_, info, child);
+    PPFnName *res = new PPFnName(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -177,7 +177,7 @@ void PPFnLocalName::do_next (tuple &t)
 
 PPIterator* PPFnLocalName::do_copy(dynamic_context *_cxt_)
 {
-    PPFnLocalName *res = se_new PPFnLocalName(_cxt_, info, child);
+    PPFnLocalName *res = new PPFnLocalName(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -266,7 +266,7 @@ void PPFnNamespaceUri::do_next (tuple &t)
 
 PPIterator* PPFnNamespaceUri::do_copy(dynamic_context *_cxt_)
 {
-    PPFnNamespaceUri *res = se_new PPFnNamespaceUri(_cxt_, info, child);
+    PPFnNamespaceUri *res = new PPFnNamespaceUri(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -360,7 +360,7 @@ void PPFnNumber::do_next(tuple &t)
 
 PPIterator* PPFnNumber::do_copy(dynamic_context *_cxt_)
 {
-    PPFnNumber *res = se_new PPFnNumber(_cxt_, info, child);
+    PPFnNumber *res = new PPFnNumber(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -437,7 +437,7 @@ void PPFnRoot::do_next (tuple &t)
 
 PPIterator* PPFnRoot::do_copy(dynamic_context *_cxt_)
 {
-    PPFnRoot *res = se_new PPFnRoot(_cxt_, info, child);
+    PPFnRoot *res = new PPFnRoot(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

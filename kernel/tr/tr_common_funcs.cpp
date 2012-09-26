@@ -47,7 +47,7 @@ static bool is_trid_obtained    = false;
 static bool need_sem            = true; // need to use semaphore for updater
 
 
-void on_session_begin(SSMMsg* &sm_server, int db_id, bool rcv_active)
+void on_session_begin(SSMMsg*& sm_server, bool rcv_active)
 {
     if (!first_transaction) {
 //        start_debug_stream(45002);

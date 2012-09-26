@@ -160,7 +160,7 @@ token Tokenizer::get_symbol(char ch)
 
 scheme_list *make_node(Tokenizer &toks)
 {
-    scheme_list *root = se_new scheme_list();
+    scheme_list *root = new scheme_list();
     token tok = toks.get_token();
     while (tok.type != LEX_RBR)
     {
@@ -173,7 +173,7 @@ scheme_list *make_node(Tokenizer &toks)
         else if (tok.type == LEX_SYMBOL)
         {
             elem.type = SCM_SYMBOL;
-            char *str = se_new char[tok.text.size() + 1];
+            char *str = new char[tok.text.size() + 1];
             memset(str, 0, tok.text.size() + 1);
             strcpy(str, tok.text.c_str());
             elem.internal.symb = str;
@@ -181,7 +181,7 @@ scheme_list *make_node(Tokenizer &toks)
         else if (tok.type == LEX_STRING)
         {
             elem.type = SCM_STRING;
-            char *str = se_new char[tok.text.size() + 1];
+            char *str = new char[tok.text.size() + 1];
             memset(str, 0, tok.text.size() + 1);
             strcpy(str, tok.text.c_str());
             elem.internal.str = str;
@@ -194,7 +194,7 @@ scheme_list *make_node(Tokenizer &toks)
         else if (tok.type == LEX_NUMBER)
         {
             elem.type = SCM_NUMBER;
-            char *str = se_new char[tok.text.size() + 1];
+            char *str = new char[tok.text.size() + 1];
             memset(str, 0, tok.text.size() + 1);
             strcpy(str, tok.text.c_str());
             elem.internal.num = str;

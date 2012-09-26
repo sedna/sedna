@@ -36,7 +36,7 @@ void PPNil::do_next(tuple &t)
 
 PPIterator* PPNil::do_copy(dynamic_context *_cxt_)
 {
-    PPNil *res = se_new PPNil(_cxt_, info);
+    PPNil *res = new PPNil(_cxt_, info);
     return res;
 }
 

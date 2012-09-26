@@ -29,7 +29,7 @@ PPSXptr::~PPSXptr()
 
 void PPSXptr::do_open ()
 {
-    s = se_new sorted_sequence(compare_less, get_size, serialize, serialize_2_blks, deserialize, deserialize_2_blks, NULL);
+    s = new sorted_sequence(compare_less, get_size, serialize, serialize_2_blks, deserialize, deserialize_2_blks, NULL);
     child.op->open();
     pos = 0;
     atomic_mode = false;
@@ -118,7 +118,7 @@ void PPSXptr::do_next (tuple &t)
 
 PPIterator* PPSXptr::do_copy(dynamic_context *_cxt_)
 {
-    PPSXptr *res = se_new PPSXptr(_cxt_, info, child);
+    PPSXptr *res = new PPSXptr(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

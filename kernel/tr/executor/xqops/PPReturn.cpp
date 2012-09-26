@@ -61,7 +61,7 @@ void PPReturn::do_open ()
         producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         p.type = pt_lazy_simple;
         p.op = this;
-        p.svc = se_new simple_var_consumption;
+        p.svc = new simple_var_consumption;
         p.tuple_pos = i;
     }
 
@@ -70,7 +70,7 @@ void PPReturn::do_open ()
         producer &p = cxt->get_var_producer(pos_dsc, var_cxt);
         p.type = pt_lazy_simple;
         p.op = this;
-        p.svc = se_new simple_var_consumption;
+        p.svc = new simple_var_consumption;
         p.tuple_pos = 0;
     }
 
@@ -132,8 +132,8 @@ void PPReturn::do_next(tuple &t)
 
 PPIterator* PPReturn::do_copy(dynamic_context *_cxt_)
 {
-    PPReturn *res = need_to_check_type ? se_new PPReturn(_cxt_, info, var_dscs, source_child, data_child, pos_dsc, st) 
-                                       : se_new PPReturn(_cxt_, info, var_dscs, source_child, data_child, pos_dsc); 
+    PPReturn *res = need_to_check_type ? new PPReturn(_cxt_, info, var_dscs, source_child, data_child, pos_dsc, st) 
+                                       : new PPReturn(_cxt_, info, var_dscs, source_child, data_child, pos_dsc); 
     
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);

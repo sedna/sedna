@@ -118,8 +118,8 @@ void command_line_client::init()
 
     os_primitives_id_min_bound = cfg.os_primitives_id_min_bound;
 
-    out_s = se_new se_stdlib_ostream(std::cout);
-    nul_s = se_new se_nullostream();
+    out_s = new se_stdlib_ostream(std::cout);
+    nul_s = new se_nullostream();
     cur_s = out_s;
 
     /* Initialize commands stack */

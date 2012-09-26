@@ -68,7 +68,7 @@ public:
                                      operation_info _info_,
                                      PPOpIn _seq1_, 
                                      PPOpIn _seq2_)	{
-        return se_new PPSubsMatch(_cxt_,_info_,_seq1_,_seq2_,SM_CONTAINS);
+        return new PPSubsMatch(_cxt_,_info_,_seq1_,_seq2_,SM_CONTAINS);
 	}
     
     inline subsmatch_type get_function_type() const { return smt; }

@@ -77,11 +77,11 @@ void PPCalculate::do_next(tuple &t)
 PPIterator* PPCalculate::do_copy(dynamic_context *_cxt_)
 {
 	unsigned int i = 0;
-    arr_of_PPOpIn *new_ch_arr = se_new arr_of_PPOpIn(ch_arr->size());
+    arr_of_PPOpIn *new_ch_arr = new arr_of_PPOpIn(ch_arr->size());
 	for (i = 0; i < ch_arr->size(); i++)
         new_ch_arr->at(i).ts = ch_arr->at(i).ts;
 
-    PPCalculate *res = se_new PPCalculate(_cxt_,
+    PPCalculate *res = new PPCalculate(_cxt_,
                                           info,
                                           new_ch_arr,
                                           tree);

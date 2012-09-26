@@ -85,7 +85,7 @@ void PPIf::do_next(tuple &t)
 
 PPIterator* PPIf::do_copy(dynamic_context *_cxt_)
 {
-    PPIf *res = se_new PPIf(_cxt_, info, if_child, then_child, else_child);
+    PPIf *res = new PPIf(_cxt_, info, if_child, then_child, else_child);
     res->if_child.op   = if_child.op->copy(_cxt_);
     res->then_child.op = then_child.op->copy(_cxt_);
     res->else_child.op = else_child.op->copy(_cxt_);

@@ -8,7 +8,7 @@
 
 #include "common/sedna.h"
 #include <sstream>
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 #include "tr/strings/strings_base.h"
 #include "tr/strings/text_data.h"
 

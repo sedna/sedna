@@ -96,7 +96,7 @@ void PPSeqChecker::do_next (tuple &t)
 
 PPIterator* PPSeqChecker::do_copy(dynamic_context *_cxt_)
 {
-    PPSeqChecker *res = se_new PPSeqChecker(_cxt_, info, child, mode);
+    PPSeqChecker *res = new PPSeqChecker(_cxt_, info, child, mode);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

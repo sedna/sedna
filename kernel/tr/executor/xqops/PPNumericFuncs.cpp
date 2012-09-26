@@ -178,7 +178,7 @@ void PPNumericFuncs::do_next (tuple &t)
 
 PPIterator* PPNumericFuncs::do_copy(dynamic_context *_cxt_)
 {
-    PPNumericFuncs *res = se_new PPNumericFuncs(_cxt_, info, child, func);
+    PPNumericFuncs *res = new PPNumericFuncs(_cxt_, info, child, func);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -311,12 +311,12 @@ PPIterator* PPFnRoundHalfToEven::do_copy(dynamic_context *_cxt_)
     PPFnRoundHalfToEven *res = NULL;
     if (child_p.op)
     {
-        res = se_new PPFnRoundHalfToEven(_cxt_, info, child_arg, child_p);
+        res = new PPFnRoundHalfToEven(_cxt_, info, child_arg, child_p);
         res->child_p.op = child_p.op->copy(_cxt_);
     }
     else
     {
-        res = se_new PPFnRoundHalfToEven(_cxt_, info, child_arg, precision);
+        res = new PPFnRoundHalfToEven(_cxt_, info, child_arg, precision);
     }
 
     res->child_arg.op = child_arg.op->copy(_cxt_);

@@ -29,7 +29,7 @@ void str_buf_base::move_to_mem_buf()
 		m_buf_size = (size_t)m_len + 1;
 		if (m_buf_size < T_STR_MEMBUF_SIZE)
 			m_buf_size = T_STR_MEMBUF_SIZE;
-		m_buf = se_new char[m_buf_size]; //FIXME: check return value?
+		m_buf = new char[m_buf_size]; //FIXME: check return value?
 	}
 	if (m_len == 0)
 	{
@@ -162,7 +162,7 @@ void str_buf_base::append(const tuple_cell &tc)
 					m_buf_size = T_STR_MEMBUF_SIZE;
 					while (m_buf_size <= new_len)
 						m_buf_size *= 2;
-					m_buf = se_new char[m_buf_size];
+					m_buf = new char[m_buf_size];
 				}
 				else if (m_buf_size <= new_len)
 				{
@@ -171,7 +171,7 @@ void str_buf_base::append(const tuple_cell &tc)
 						m_buf_size *= 2;
 					
 					old_buf = m_buf;
-					m_buf = se_new char[m_buf_size];
+					m_buf = new char[m_buf_size];
 					memcpy(m_buf, old_buf, (size_t)(m_len+1));
 					delete[] old_buf;
 				}
@@ -208,7 +208,7 @@ void str_buf_base::append(const char *str, int add_len)
 			while (m_buf_size <= new_len)
 				m_buf_size *= 2;
 			U_ASSERT(m_buf == NULL);
-			m_buf = se_new char[m_buf_size];
+			m_buf = new char[m_buf_size];
 		}
 		else if (m_buf_size <= new_len)
 		{
@@ -217,7 +217,7 @@ void str_buf_base::append(const char *str, int add_len)
 				m_buf_size *= 2;
 			
 			old_buf = m_buf;
-			m_buf = se_new char[m_buf_size];
+			m_buf = new char[m_buf_size];
 			memcpy(m_buf, old_buf, (size_t)m_len+1); //FIXME: check m_len?
 			delete[] old_buf;
 		}

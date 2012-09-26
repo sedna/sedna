@@ -53,6 +53,6 @@ void PPCheckpoint::do_accept(PPVisitor &v)
 
 PPIterator* PPCheckpoint::do_copy(dynamic_context *_cxt_)
 {
-    PPCheckpoint *res = se_new PPCheckpoint(_cxt_, info);
+    PPCheckpoint *res = new PPCheckpoint(_cxt_, info);
     return res;
 }

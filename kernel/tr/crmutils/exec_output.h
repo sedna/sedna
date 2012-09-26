@@ -52,7 +52,7 @@ public:
     virtual se_ostream& flush(bool force = false)                                { o_str.flush(); return *this; }
     virtual void endline()                                                       { o_str << std::endl; }
     virtual void error(const char* str)                                          { o_str << str << std::endl; }
-    virtual se_ostream* get_debug_ostream()                                      { return se_new se_stdlib_ostream(std::cerr); }
+    virtual se_ostream* get_debug_ostream()                                      { return new se_stdlib_ostream(std::cerr); }
     virtual void set_debug_info_type(se_debug_info_type /*type*/)                {};
 };
 
@@ -87,7 +87,7 @@ public:
     virtual se_ostream& flush(bool force = false)                               { return *this; }
     virtual void endline()                                                      { ; }
     virtual void error(const char* /*str*/)                                     { ; }
-    virtual se_ostream* get_debug_ostream()                                     { return se_new se_nullostream(); }
+    virtual se_ostream* get_debug_ostream()                                     { return new se_nullostream(); }
     virtual void set_debug_info_type(se_debug_info_type /*type*/)               {};      
 };
 

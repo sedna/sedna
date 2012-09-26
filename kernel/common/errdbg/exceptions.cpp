@@ -32,9 +32,9 @@ const char* SednaException::createMessage(char* buffer) const
 #if (EL_DEBUG == 1)
         "Position: [%s, %s, %d]\n"
 #endif
-        , global_description, err_msg,
+        , global_description, err_msg
 #if (EL_DEBUG == 1)
-        file, function, line
+        , file, function, line
 #endif
     );
 

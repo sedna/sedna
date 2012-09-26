@@ -46,7 +46,7 @@ sequence::sequence(const tuple_cell &tc,
 {
     if (tuples_in_memory < 1)
         throw USER_EXCEPTION2(SE1003, "Wrong combination of arguments in call to sequence constructor");
-    tuple_cell *mem = se_new tuple_cell[1];
+    tuple_cell *mem = new tuple_cell[1];
     mem[0] = tc;
     mem_tuples.push_back(mem);
 }
@@ -65,7 +65,7 @@ int sequence::add(const tuple &t)
 {
     if (seq_size++ < tuples_in_memory)
     {
-        tuple_cell *mem = se_new tuple_cell[tuple_size];
+        tuple_cell *mem = new tuple_cell[tuple_size];
         for (int i = 0; i < tuple_size; i++) mem[i] = t.cells[i];
         mem_tuples.push_back(mem);
         return 0;
@@ -186,7 +186,7 @@ void sequence::get(tuple &t, int pos)
         {
             tuple_cell &c = t.cells[i];
             int strlen = c.get_strlen_vmm();
-            char* str = se_new char[strlen + 1];
+            char* str = new char[strlen + 1];
             str[strlen] = '\0';
             estr_copy_to_buffer(str, c.get_str_vmm(), strlen);
 
@@ -332,7 +332,7 @@ void descript_sequence::sort1(int off, int len)
 void descript_sequence::swap(int a, int b)
 {
     if ( a == b ) return;
-    char* p1= se_new char[tuple_sizeof];
+    char* p1= new char[tuple_sizeof];
 
     if (a < tuples_in_memory)
     {
@@ -376,7 +376,7 @@ void descript_sequence::swap(int a, int b)
             xptr p = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
             CHECKP(p);
             memcpy(p1,XADDR(p),tuple_sizeof);
-            char* p2= se_new char[tuple_sizeof];
+            char* p2= new char[tuple_sizeof];
             b_ind = (b - tuples_in_memory) / tuples_in_block;
             o_ind = (b - tuples_in_memory) % tuples_in_block;
             xptr p_b = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;

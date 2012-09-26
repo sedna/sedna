@@ -33,7 +33,7 @@ PPDDO::~PPDDO()
 
 void PPDDO::do_open ()
 {
-    s = se_new sorted_sequence(compare_less, get_size, serialize,
+    s = new sorted_sequence(compare_less, get_size, serialize,
                                serialize_2_blks, deserialize,
                                deserialize_2_blks, NULL);
     child.op->open();
@@ -123,7 +123,7 @@ void PPDDO::do_next (tuple &t)
 
 PPIterator* PPDDO::do_copy(dynamic_context *_cxt_)
 {
-    PPDDO *res = se_new PPDDO(_cxt_, info, child);
+    PPDDO *res = new PPDDO(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -370,7 +370,7 @@ void PPDDO::copy_to_buffer(const void* addr, shft size)
         {
             delete [] temp_buffer;
         }
-        temp_buffer = se_new char[size];
+        temp_buffer = new char[size];
         buf_lgth = size;
     }
     memcpy(temp_buffer, addr, size);
@@ -389,13 +389,13 @@ void PPDDO::copy_to_buffer(const void* addr, shft shift,shft size)
     {
         if (buf_lgth)
         {
-            char* buf=se_new char[size+shift];
+            char* buf=new char[size+shift];
             memcpy(buf,temp_buffer,shift);
             delete [] temp_buffer;
             temp_buffer=buf;
         }
         else
-            temp_buffer=se_new char[size+shift];
+            temp_buffer=new char[size+shift];
         buf_lgth=size+shift;
     }
     memcpy(temp_buffer+shift,addr,size);

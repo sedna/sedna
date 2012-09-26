@@ -466,9 +466,9 @@ se_socketostream::flush(bool force)
 se_ostream*
 se_socketostream::get_debug_ostream() {
     if (_p_ver.major_version < 2)
-        return se_new se_nullostream();
+        return new se_nullostream();
     else
-        return se_new se_debug_socketostream(*this);
+        return new se_debug_socketostream(*this);
 }
 
 

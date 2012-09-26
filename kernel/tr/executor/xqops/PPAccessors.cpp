@@ -72,7 +72,7 @@ void PPDmStringValue::do_next (tuple &t)
 
 PPIterator* PPDmStringValue::do_copy(dynamic_context *_cxt_)
 {
-    PPDmStringValue *res = se_new PPDmStringValue(_cxt_, info, child);
+    PPDmStringValue *res = new PPDmStringValue(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -149,7 +149,7 @@ void PPDmTypedValue::do_next (tuple &t)
 
 PPIterator* PPDmTypedValue::do_copy(dynamic_context *_cxt_)
 {
-    PPDmTypedValue *res = se_new PPDmTypedValue(_cxt_, info, child);
+    PPDmTypedValue *res = new PPDmTypedValue(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

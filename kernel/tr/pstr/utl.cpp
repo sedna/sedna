@@ -15,7 +15,7 @@ using namespace std;
 sort_item* utl_sort_sit(xptr blk) {
 	int			sit_size=0;	/* number of pstr strings actually registered in SIT */
 	int			sit_array_size=(PAGE_SIZE - SITB(blk) -1)/sizeof(shft); /* the whole size of SIT array */
-	sort_item*	sit_array = se_new sort_item[sit_array_size];
+	sort_item*	sit_array = new sort_item[sit_array_size];
 	sort_item*	it;
 	sort_item*	result=NULL;
 	/* fill items of sit_array with non-empty PSTR slots. No links between items are set */
@@ -63,7 +63,7 @@ sort_item* utl_sort_sit(xptr blk) {
 /* sort HH array by shifts of holes returning a sorted double-linked list */
 sort_item* utl_sort_hh(xptr blk){
 	int			hh_size=HHSIZE(blk);	/* number of holes in HH */
-	sort_item*	hh_array = se_new sort_item[hh_size];
+	sort_item*	hh_array = new sort_item[hh_size];
 	sort_item*	it;
 	sort_item*	result=NULL;
 	/* fil items of hh_array. No links between items are set */

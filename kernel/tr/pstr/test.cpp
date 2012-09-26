@@ -62,7 +62,7 @@ void test2() {
 	int		size1;
 	char*	str2="Smallsmallsmallsmall";
 	int		size2;
-	xptr*	pstrs= se_new xptr[100];
+	xptr*	pstrs= new xptr[100];
 	//vmm_alloc_data_block(&blk);
 	XADDR(blk) = malloc(PAGE_SIZE);
 	pstr_blk_markup(blk);
@@ -117,10 +117,10 @@ void test3() {
 
 
 	/* descriptors */
-	xptr*	blks=se_new xptr[str_num];
-	t_dsc*	dscs= se_new t_dsc[str_num];
-	xptr*	xptrs=se_new xptr[str_num];
-	shft*	sizes=se_new shft[str_num];
+	xptr*	blks=new xptr[str_num];
+	t_dsc*	dscs= new t_dsc[str_num];
+	xptr*	xptrs=new xptr[str_num];
+	shft*	sizes=new shft[str_num];
 	/* initialize xptrs as pointers to the descriptors */
 	for (int i=0; i<str_num; i++) {
 		xptrs[i].addr = dscs+i;
@@ -231,7 +231,7 @@ void init() {
 
         d_printf1("Initializing metadata...");
 #ifdef NO_PERSISTENCY
-		//metainfo_ptr= se_new metadata_cell*;
+		//metainfo_ptr= new metadata_cell*;
 		//*metainfo_ptr=NULL;
 #endif 
         init_metadata(&(entry_point->metadata), db_name);

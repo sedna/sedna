@@ -48,7 +48,7 @@ PPLet::~PPLet()
 
 void PPLet::do_open ()
 {
-    s = se_new sequence(source_child.ts);
+    s = new sequence(source_child.ts);
 
     source_child.op->open();
     seq_filled = false;
@@ -60,7 +60,7 @@ void PPLet::do_open ()
         producer &p = cxt->get_var_producer(var_dscs[i], var_cxt);
         p.type = pt_lazy_complex;
         p.op = this;
-        p.cvc = se_new complex_var_consumption;
+        p.cvc = new complex_var_consumption;
         p.tuple_pos = i;
     }
 
@@ -114,8 +114,8 @@ void PPLet::do_next(tuple &t)
 
 PPIterator* PPLet::do_copy(dynamic_context *_cxt_)
 {
-    PPLet *res = need_to_check_type ? se_new PPLet(_cxt_, info, var_dscs, source_child, data_child, st)
-                                    : se_new PPLet(_cxt_, info, var_dscs, source_child, data_child);
+    PPLet *res = need_to_check_type ? new PPLet(_cxt_, info, var_dscs, source_child, data_child, st)
+                                    : new PPLet(_cxt_, info, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
 

@@ -35,8 +35,6 @@ namespace tr_globals
     int query_timeout     = 0;
     int max_stack_depth   = 0;
     
-    int db_id             = -1;
-    int os_primitives_min_bound = -1;
     char sedna_data[U_MAX_PATH+1]  = "???";
     int ka_timeout        = 0;
     /* Special transactions */
@@ -162,12 +160,7 @@ parse_trn_command_line(int argc, char** argv)
 
     if (0 == res)
         throw USER_EXCEPTION2(SE4601, errmsg);
-    
-    if (-1 == tr_globals::db_id)
-        throw USER_EXCEPTION2(SE4601, errmsg);
-    
-    if (-1 == tr_globals::os_primitives_min_bound)
-        throw USER_EXCEPTION2(SE4601, errmsg);
+
     if (strcmp(tr_globals::sedna_data, "???") == 0)
         throw USER_EXCEPTION2(SE4601, errmsg);
     

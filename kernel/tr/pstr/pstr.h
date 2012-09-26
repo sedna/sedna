@@ -7,7 +7,7 @@
 #define _PSTR_H
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 extern const shft	PSTRMAXSIZE;
 

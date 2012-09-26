@@ -149,7 +149,7 @@ void PPIntersect::do_next (tuple &t)
 
 PPIterator* PPIntersect::do_copy(dynamic_context *_cxt_)
 {
-    PPIntersect *res = se_new PPIntersect(_cxt_, info, child1, child2, doc_order);
+    PPIntersect *res = new PPIntersect(_cxt_, info, child1, child2, doc_order);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
     return res;

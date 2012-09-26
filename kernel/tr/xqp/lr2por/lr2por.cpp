@@ -1952,7 +1952,7 @@ namespace sedna
 
         if (n.params)
         {
-            fd.args = se_new sequence_type[arity];
+            fd.args = new sequence_type[arity];
 
             setParamMode();
             for (unsigned int i = 0; i < arity; i++)

@@ -7,7 +7,7 @@
 #ifndef NODEBLOCKS_H_
 #define NODEBLOCKS_H_
 
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/vmm/vmm.h"
 #include "tr/structures/nodetypes.h"
 

@@ -77,7 +77,7 @@ void PPFnGetProperty::do_next(tuple &t)
 
 PPIterator* PPFnGetProperty::do_copy(dynamic_context *_cxt_)
 {
-    PPFnGetProperty *res = se_new PPFnGetProperty(_cxt_, info, child);
+    PPFnGetProperty *res = new PPFnGetProperty(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

@@ -530,7 +530,7 @@ tuple_cell idx_serializer::get_tc(void* buf, xmlscm_type type, shft size)
         case xs_integer              : {int64_t value = *((int64_t*)buf); return tuple_cell(value); }
         case xs_string               :
         {
-            char* str = se_new char[size+1];
+            char* str = new char[size+1];
             memcpy(str, (char*)buf, size);
             str[size]='\0';
             return tuple_cell(xs_string, str);

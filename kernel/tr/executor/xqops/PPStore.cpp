@@ -31,7 +31,7 @@ void PPStore::do_open ()
 {
     child.op->open();
 
-    s = se_new sequence(child.ts);
+    s = new sequence(child.ts);
 
     pos = 0;
     eos_pos = 0;
@@ -82,7 +82,7 @@ void PPStore::do_next (tuple &t)
 
 PPIterator* PPStore::do_copy(dynamic_context *_cxt_)
 {
-    PPStore *res = se_new PPStore(_cxt_, info, child);
+    PPStore *res = new PPStore(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

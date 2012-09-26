@@ -150,7 +150,7 @@ void PPFtScan::do_next(tuple &t)
             }
             delete_cust_rules_vector(templ);
         }
-        sj=se_new SednaSearchJob(&seq, itype, ptr);
+        sj=new SednaSearchJob(&seq, itype, ptr);
 
         query.op->next(t);
         if (t.is_eos())
@@ -180,9 +180,9 @@ PPIterator*  PPFtScan::do_copy(dynamic_context *_cxt_)
 {
     PPFtScan *res;
     if (cust_rules.op)
-        res = se_new PPFtScan(_cxt_, info, seq, query, index_type, cust_rules);
+        res = new PPFtScan(_cxt_, info, seq, query, index_type, cust_rules);
     else
-        res = se_new PPFtScan(_cxt_, info, seq, query, index_type);
+        res = new PPFtScan(_cxt_, info, seq, query, index_type);
     res->seq.op = seq.op->copy(_cxt_);
     res->query.op = query.op->copy(_cxt_);
     res->index_type.op = index_type.op->copy(_cxt_);

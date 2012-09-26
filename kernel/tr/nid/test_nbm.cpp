@@ -177,7 +177,7 @@ void main(void) {
 
         d_printf1("Initializing metadata...");
 #ifdef NO_PERSISTENCY
-		metainfo_ptr= se_new metadata_cell*;
+		metainfo_ptr= new metadata_cell*;
 		*metainfo_ptr=NULL;
 #endif 
         init_metadata(&(entry_point->metadata), db_name);

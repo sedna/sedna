@@ -55,7 +55,7 @@ void PPFnTrue::do_next (tuple &t)
 
 PPIterator* PPFnTrue::do_copy(dynamic_context *_cxt_)
 {
-    PPFnTrue* res = se_new PPFnTrue(_cxt_, info);
+    PPFnTrue* res = new PPFnTrue(_cxt_, info);
     return res;
 }
 
@@ -110,7 +110,7 @@ void PPFnFalse::do_next (tuple &t)
 
 PPIterator* PPFnFalse::do_copy(dynamic_context *_cxt_)
 {
-    PPFnFalse* res = se_new PPFnFalse(_cxt_, info);
+    PPFnFalse* res = new PPFnFalse(_cxt_, info);
     return res;
 }
 
@@ -180,7 +180,7 @@ void PPFnNot::do_next (tuple &t)
 
 PPIterator* PPFnNot::do_copy(dynamic_context *_cxt_)
 {
-    PPFnNot *res = se_new PPFnNot(_cxt_, info, child);
+    PPFnNot *res = new PPFnNot(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -251,7 +251,7 @@ void PPFnBoolean::do_next (tuple &t)
 
 PPIterator* PPFnBoolean::do_copy(dynamic_context *_cxt_)
 {
-    PPFnBoolean *res = se_new PPFnBoolean(_cxt_, info, child);
+    PPFnBoolean *res = new PPFnBoolean(_cxt_, info, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

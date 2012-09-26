@@ -81,7 +81,7 @@ void PPTuple::do_next(tuple &t)
 
 PPIterator* PPTuple::do_copy(dynamic_context *_cxt_)
 {
-    PPTuple *res = se_new PPTuple(_cxt_, info, ch_arr);
+    PPTuple *res = new PPTuple(_cxt_, info, ch_arr);
 
     for (i = 0; i < ch_arr.size(); i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);

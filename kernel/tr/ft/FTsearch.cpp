@@ -229,7 +229,7 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
 	{
 		if (estr_it != NULL)
 			delete estr_it;
-		estr_it = se_new estr_iterator(dest.size, ts.u.data);
+		estr_it = new estr_iterator(dest.size, ts.u.data);
 	    dest.read = SednaTextInputStream::readCBestr;
 		dest.seek = SednaTextInputStream::seekCBestr;
 	}
@@ -241,7 +241,7 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
 SednaDataSource::SednaDataSource(ft_index_type _cm_,ft_custom_tree_t* _custom_tree_):
 cm(_cm_),custom_tree(_custom_tree_)
 {
-	tis = se_new SednaTextInputStream(&fileInfo, cm ,custom_tree);
+	tis = new SednaTextInputStream(&fileInfo, cm ,custom_tree);
 
 }
 void SednaDataSource::recordToFilename(char *dest,xptr _node_)
@@ -288,7 +288,7 @@ int SednaDataSource::getNextDoc(dtsInputStream& dest)
     fileInfo.modified.year = 1996;
     fileInfo.modified.month = 1;
     fileInfo.modified.day = 1;
-	TextInputStream *s = se_new TextInputStream(fileInfo, f);
+	TextInputStream *s = new TextInputStream(fileInfo, f);
     s->makeInterface(dest);
      */
 	xptr node=get_next_doc();
@@ -436,7 +436,7 @@ void SednaSearchJobBase::set_index(ft_index_cell_object* ft_idx)
 
 	//FIXME: choose where it's better to do this - here or in constructor
 	//if (hilight)
-	//	hl=se_new SednaConvertJob(ft_idx->ftype,ft_idx->custom_tree, hl_fragment);
+	//	hl=new SednaConvertJob(ft_idx->ftype,ft_idx->custom_tree, hl_fragment);
 }
 
 void SednaSearchJobBase::set_request(tuple_cell& request)
@@ -472,7 +472,7 @@ void SednaSearchJobBase::set_file_cond_for_node(tuple_cell& node)
 SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,ft_custom_tree_t* _custom_tree_,bool _hilight_, bool _hl_fragment_):seq(_seq_), hilight(_hilight_), hl_fragment(_hl_fragment_),
 thread_exception(NULL), thread_up_semaphore_on_exception(true), data_source(NULL), res(XNULL), SednaSearchJobBase()
 {
-	this->data_source = se_new OperationSednaDataSource(_cm_,_custom_tree_,_seq_);
+	this->data_source = new OperationSednaDataSource(_cm_,_custom_tree_,_seq_);
 	dts_job.dataSourceToSearch = this->data_source->getInterface();
 	dts_job.action.searchFiles = true;
 
@@ -480,9 +480,9 @@ thread_exception(NULL), thread_up_semaphore_on_exception(true), data_source(NULL
 	if (hilight)
 	{
 		if (_cm_ == ft_xml_hl)
-			hl=se_new SednaConvertJob(ft_xml, _custom_tree_, hl_fragment);
+			hl=new SednaConvertJob(ft_xml, _custom_tree_, hl_fragment);
 		else
-			hl=se_new SednaConvertJob(_cm_,_custom_tree_, hl_fragment);
+			hl=new SednaConvertJob(_cm_,_custom_tree_, hl_fragment);
 	}
 }
 
@@ -494,7 +494,7 @@ SednaSearchJob::SednaSearchJob(bool _hilight_, bool _hl_fragment_):seq(NULL),hil
 	if (hilight)
 	{
 		//FIMXE: check cm?
-		hl=se_new SednaConvertJob(ft_xml, NULL, hl_fragment);
+		hl=new SednaConvertJob(ft_xml, NULL, hl_fragment);
 	}
 }
 
@@ -634,7 +634,7 @@ void *SednaSearchJob::ThreadFunc( void* lpParam )
 		((SednaSearchJob*)lpParam)->res = XNULL;
 		if (((SednaSearchJob*)lpParam)->thread_up_semaphore_on_exception)
 			UUnnamedSemaphoreUp(&(((SednaSearchJob*)lpParam)->sem1), __sys_call_error);
-		((SednaSearchJob*)lpParam)->thread_exception = se_new SednaUserException(e);
+		((SednaSearchJob*)lpParam)->thread_exception = new SednaUserException(e);
 	}
 	return 0;
 }

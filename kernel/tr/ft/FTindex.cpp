@@ -136,7 +136,7 @@ void SednaIndexJob::create_index(std::vector<xptr> *first_nodes)
 
 	if (ds)
 		delete ds;
-	ds = se_new CreationSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, first_nodes);
+	ds = new CreationSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, first_nodes);
 	if (log_file != NULL)
 	{
 		log_file->start_new_record(FTLOG_CREATE_BEGIN);
@@ -183,7 +183,7 @@ void SednaIndexJob::update_index(xptr_sequence* upserted)
 	dtind_job.indexingFlags = dtsAlwaysAdd;
 	if (ds)
 		delete ds;
-	ds = se_new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted);
+	ds = new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted);
 	if (log_file != NULL)
 	{
 		log_file->start_new_record(FTLOG_UPDATE_START);
@@ -203,7 +203,7 @@ void SednaIndexJob::insert_into_index(xptr_sequence* upserted)
 	dtind_job.indexingFlags = dtsAlwaysAdd;
 	if (ds)
 		delete ds;
-	ds = se_new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted);
+	ds = new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted);
 	if (log_file != NULL)
 	{
 		log_file->start_new_record(FTLOG_INSERT_START);
@@ -288,7 +288,7 @@ ftlog_file *SednaIndexJob::get_log_file(const char *index_name)
 	std::map<std::string, ftlog_file*>::const_iterator it = log_files_map.find(index_name_str);
 	if (it == log_files_map.end())
 	{
-		ftlog_file *lf = se_new ftlog_file();
+		ftlog_file *lf = new ftlog_file();
 		lf->file = create_log(index_name);
 		lf->last_lsn = 0;
 		log_files_map[index_name_str] = lf;
@@ -458,7 +458,7 @@ void SednaIndexJob::rollback()
 }
 void SednaIndexJob::recover_db_file(const char *fname, trn_cell_analysis_redo *redo_list)
 {
-	char *index_name = se_new char[strlen(fname)];
+	char *index_name = new char[strlen(fname)];
 	transaction_id trid;
 	if (sscanf(fname, "trn%d_%s", &trid, index_name) != 2)
 		throw SYSTEM_EXCEPTION("strange file in data/dtsearch folder");

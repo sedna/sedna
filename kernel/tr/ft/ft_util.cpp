@@ -146,7 +146,7 @@ void FtHighlighter::set_request(tuple_cell &tc)
 			if (tr_globals::is_ro_mode)
 				throw USER_EXCEPTION2(SE1002, "dtSearch index search support is disabled in RO-mode");
 
-			sj=se_new SednaSearchJob(true, hl_fragment);
+			sj=new SednaSearchJob(true, hl_fragment);
 			ft_index_cell_cptr ft_idx = find_ft_index(use_index, NULL);
 			if (!ft_idx.found())
 				throw USER_EXCEPTION(SE1061);
@@ -154,7 +154,7 @@ void FtHighlighter::set_request(tuple_cell &tc)
 		}
 		else
 		{
-			sj=se_new SednaSearchJob(seq, ft_xml_hl, NULL, true, hl_fragment);
+			sj=new SednaSearchJob(seq, ft_xml_hl, NULL, true, hl_fragment);
 		}
 
 		sj->set_request(tc);
