@@ -6,7 +6,7 @@
 #include <string>
 
 #include "common/sedna.h"
-#include "common/u/uprocess.h"
+#include "u/uprocess.h"
 #include "common/errdbg/d_printf.h"
 
 #include "tr/auth/auc.h"

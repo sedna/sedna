@@ -16,7 +16,7 @@
 #endif
 
 #include "common/base.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/mo/mo.h"
 #include "tr/structures/metadata.h"
 #include "tr/mo/indirection.h"

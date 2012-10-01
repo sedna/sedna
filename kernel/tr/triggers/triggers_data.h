@@ -10,8 +10,8 @@
 #include <string>
 
 #include "common/sedna.h"
-#include "common/u/usem.h"
-#include "common/xptr.h"
+#include "u/usem.h"
+#include "common/xptr/xptr.h"
 
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/executor/xqops/PPXptr.h"

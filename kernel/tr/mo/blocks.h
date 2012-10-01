@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 #include "tr/vmm/vmm.h"
 #include "tr/tr_base.h"

@@ -25,7 +25,7 @@ type_error(const char* message,
 {
     std::string res;
     if(arg_num != 0)
-        res = "Error in function call. Argument [" + int2string(arg_num) + "] does not match the required type. Expected type is [" +  st->to_str() +  "]" + message;
+        res = "Error in function call. Argument [" + cast_to_string<int>(arg_num) + "] does not match the required type. Expected type is [" +  st->to_str() +  "]" + message;
     else
         res = "Error in function call. Return value does not match the required type. Expected type is [" +  st->to_str() +  "]" + message;
     throw XQUERY_EXCEPTION2(XPTY0004, res.c_str());

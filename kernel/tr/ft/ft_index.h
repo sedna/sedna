@@ -7,7 +7,7 @@
 #define _FT_INDEX_H
 
 #include <vector>
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/ft/ft_index_data.h"
 #include "tr/strings/strings.h"
 #include "tr/ft/ft_cache.h"

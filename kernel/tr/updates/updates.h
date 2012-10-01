@@ -9,7 +9,7 @@
 #include <map>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 #include "tr/crmutils/crmbase.h"
 #include "tr/vmm/vmm.h"

@@ -8,8 +8,9 @@
 
 #include "common/sedna.h"
 #include "common/xptr/xptr.h"
+#include "tr/vmm/vmm.h"
 
-extern const shft	PSTRMAXSIZE;
+extern const shft       PSTRMAXSIZE;
 
 /* functions for persistent string management */
 xptr    pstr_create_blk(bool persistent);
@@ -21,7 +22,7 @@ void	pstr_read(xptr ps, int ps_size, char* the_s);
 bool	pstr_fit_into_blk(xptr blk, shft s_size);
 /* dereference indirect xptr pointer to persistent string; returns direct xptr */
 //#define	PSTRDEREF(p)	ADDR2XPTR((char*)XADDR(BLOCKXPTR(p)) + *(shft*)XADDR(p))
-#define	PSTRDEREF(p)	(BLOCKXPTR(p) + *(shft*)XADDR(p))
+#define	PSTRDEREF(p)    (BLOCKXPTR(p) + *(shft*)XADDR(p))
 
 inline
 xptr pstrderef(const xptr p) {

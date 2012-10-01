@@ -10,7 +10,7 @@
 #define _LL_LOGICAL_LOG_
 
 #include "common/base.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "common/lfsGlobals.h"
 #include "common/llcommon/llMain.h"
 #include "tr/tr_base.h"

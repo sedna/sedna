@@ -16,8 +16,9 @@
 #include <algorithm>
 
 #include "common/sedna.h"
-#include "common/counted_ptr.h"
-#include "common/utils.h"
+#include "auxiliary/counted_ptr.h"
+#include "auxiliary/utils.h"
+#include "auxiliary/cppcast.h"
 
 #include "tr/structures/xmlns.h"
 
@@ -45,7 +46,7 @@ typedef unsigned var_c_id;   // var consumption id
 
 inline std::string var_dsc2string(var_dsc id)
 {
-    return uint2string(id);
+    return cast_to_string<var_dsc>(id);
 }
 
 // global-var descriptor

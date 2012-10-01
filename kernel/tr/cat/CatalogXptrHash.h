@@ -8,7 +8,7 @@
 #define _FAST_XPTR_HASH_H
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 extern uint64_t total_alloc;
 extern uint64_t miss_count;

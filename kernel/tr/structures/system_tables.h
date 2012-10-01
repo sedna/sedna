@@ -9,7 +9,7 @@
 #include <string>
 
 #include "common/sedna.h"
-#include "common/counted_ptr.h"
+#include "auxiliary/counted_ptr.h"
 #include "tr/tr_base.h"
 #include "tr/cat/catptr.h"
 

@@ -11,10 +11,10 @@
 #include "tr/cat/catvars.h"
 #include "tr/cat/catmem.h"
 
-#include "common/u/ushm.h"
-#include "common/sm_vmm_data.h"
-#include "common/u/uthread.h"
-#include "common/u/usafesync.h"
+#include "u/ushm.h"
+#include "common/xptr/sm_vmm_data.h"
+#include "u/uthread.h"
+#include "u/usafesync.h"
 
 #include "tr/vmm/vmm.h"
 #include "tr/tr_globals.h"

@@ -9,8 +9,8 @@
 #include "common/sedna.h"
 
 #include "tr/executor/base/PPBase.h"
-#include "common/sedna_ef.h"
-#include "common/u/udl.h"
+#include "common/protocol/sedna_ef.h"
+#include "u/udl.h"
 
 //supported atomic types are defined in sedna_ef.h
 //adding new types requires modification of:

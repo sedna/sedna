@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "common/sedna.h"
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 #include "common/errdbg/d_printf.h"
 
 #include "tr/pstr/pstrblk.h"

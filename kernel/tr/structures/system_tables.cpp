@@ -6,7 +6,7 @@
 #include <string>
 
 #include "common/sedna.h"
-#include "common/u/uutils.h"
+#include "u/uutils.h"
 
 #include "tr/structures/system_tables.h"
 #include "tr/structures/metadata.h"

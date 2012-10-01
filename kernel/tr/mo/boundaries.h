@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 void storage_on_transaction_begin();
 void storage_on_transaction_end();

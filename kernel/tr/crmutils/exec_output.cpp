@@ -4,7 +4,7 @@
 */
 
 #include "common/sedna.h"
-#include "common/u/uutils.h"
+#include "u/uutils.h"
 #include "common/commutil.h"
 #include "tr/crmutils/exec_output.h"
 #include "tr/executor/base/PPBase.h"

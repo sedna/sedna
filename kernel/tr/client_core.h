@@ -10,8 +10,8 @@
 #include <vector>
 
 #include "common/sedna.h"
-#include "common/u/uhdd.h"
-#include "common/u/usocket.h"
+#include "u/uhdd.h"
+#include "u/usocket.h"
 #include "common/socketutils/socketutils.h"
 #include "tr/crmutils/crmbase.h"
 #include "tr/crmutils/global_options.h"

@@ -10,7 +10,7 @@
 #include <string>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 #include "tr/mo/mo.h"
 #include "tr/log/logiclog.h"

@@ -11,9 +11,9 @@
 
 #include "common/sedna.h"
 
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/structures/schema.h"
-#include "common/u/usem.h"
+#include "u/usem.h"
 #include "tr/cat/catalog.h"
 #include "tr/cat/catmem.h"
 

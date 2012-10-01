@@ -6,7 +6,7 @@
 #ifndef UPDATE_HISTORY_H
 #define UPDATE_HISTORY_H
 
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/ft/sequence_sorter.h"
 

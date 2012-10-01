@@ -8,9 +8,10 @@
 #include <sstream>
 #include <string>
 
+#include "auxiliary/cppcast.h"
 #include "common/sedna.h"
 #include "common/base.h"
-#include "common/u/uutils.h"
+#include "u/uutils.h"
 
 #include "tr/executor/base/visitor/PPExplainVisitor.h"
 #include "tr/executor/base/tuple.h"
@@ -30,7 +31,7 @@ arr_of_var_dsc2string(const arr_of_var_dsc& var_dscs)
     string variables;
     for (size_t i = 0; i < var_dscs.size(); i++)
     {
-        variables += int2string(var_dscs.at(i));
+        variables += cast_to_string<var_dsc>(var_dscs.at(i));
         if(i != var_dscs.size() - 1) variables += ", ";
     }
     return variables;
@@ -151,7 +152,7 @@ void PPExplainVisitor::insertOperationElement(const char* name,
         if(profiler_mode)
         {
              attr_left = insertAttributeHelper("time", attr_left, left, to_string(oi.profile->time));
-             attr_left = insertAttributeHelper("calls", attr_left, left, int2string(oi.profile->calls));
+             attr_left = insertAttributeHelper("calls", attr_left, left, cast_to_string<int64_t>(oi.profile->calls));
         }
     }
     if(NULL != qep)
@@ -160,7 +161,7 @@ void PPExplainVisitor::insertOperationElement(const char* name,
         {
             const operation_info& oi = qep->get_operation_info();
             attr_left = insertAttributeHelper("time", attr_left, left, to_string(oi.profile->time));
-            attr_left = insertAttributeHelper("calls", attr_left, left, int2string(oi.profile->calls));
+            attr_left = insertAttributeHelper("calls", attr_left, left, cast_to_string<int64_t>(oi.profile->calls));
         }
     }
 }
@@ -684,7 +685,7 @@ void PPExplainVisitor::visit(PPIndexScan* op)
 void PPExplainVisitor::visit(PPLast* op)
 {
     insertOperationElement("PPLast", left, parent, op);
-    insertAttributeHelper("last-variable", XNULL, left, int2string(op->get_last_var_dsc()));
+    insertAttributeHelper("last-variable", XNULL, left, cast_to_string<var_dsc>(op->get_last_var_dsc()));
 }
 
 void PPExplainVisitor::visit(PPNil* op)
@@ -732,14 +733,14 @@ void PPExplainVisitor::visit(PPVarDecl* op)
     {
         attr_left = insertAttributeHelper("type", XNULL, left, (op->get_type()).to_str());
     }
-    insertAttributeHelper("descriptor", attr_left, left, int2string(op->get_variable_descriptor()));
+    insertAttributeHelper("descriptor", attr_left, left, cast_to_string<var_dsc>(op->get_variable_descriptor()));
 }
 
 void PPExplainVisitor::visit(PPVariable* op)
 {
     insertOperationElement("PPVariable", left, parent, op);
     var_dsc vid = op->get_variable_descriptor();
-    xptr attr_left = insertAttributeHelper("descriptor", XNULL, left, int2string(vid));
+    xptr attr_left = insertAttributeHelper("descriptor", XNULL, left, cast_to_string<var_dsc>(vid));
     var_map_id_name::iterator it = var_names.find(vid);
     if(it != var_names.end() && it->second.first.length() != 0)
     {
@@ -751,7 +752,7 @@ void PPExplainVisitor::visit(PPGlobalVariable* op)
 {
     insertOperationElement("PPGlobalVariable", left, parent, op);
     global_var_dsc gpid = op->get_variable_descriptor();
-    xptr attr_left = insertAttributeHelper("descriptor", XNULL, left, int2string(gpid.second));
+    xptr attr_left = insertAttributeHelper("descriptor", XNULL, left, cast_to_string<var_dsc>(gpid.second));
     const global_producer& gp = gpid.first->get_global_var_producer(gpid.second);
     insertAttributeHelper("variable-name", attr_left, left, gp.var_name);
 }
@@ -799,7 +800,7 @@ void PPExplainVisitor::visit(PPFunCall* op)
 {
     insertOperationElement("PPFunCall", left, parent, op);
     function_id fid = op->get_function_id();
-    xptr attr_left = insertAttributeHelper("id", XNULL, left, int2string(fid.second));
+    xptr attr_left = insertAttributeHelper("id", XNULL, left, cast_to_string<unsigned int>(fid.second));
     const function_declaration& fd = fid.first->get_func_decl(fid.second);
     insertAttributeHelper("function-name", attr_left, left, fd.func_name);
 }
@@ -858,7 +859,7 @@ void PPExplainVisitor::visit(PPOrderBy* op)
 {
     insertOperationElement("PPOrderBy", left, parent, op);
     xptr attr_left = insertAttributeHelper("stable", XNULL, left, bool2string(op->is_stable()));
-    insertAttributeHelper("tuple-size", attr_left, left, int2string(op->get_tuple_size()));
+    insertAttributeHelper("tuple-size", attr_left, left, cast_to_string<int>(op->get_tuple_size()));
     left_inside = insertElementHelper("modifiers", left_inside, left);
     const arr_of_orb_modifier& modifiers = op->get_modifiers();
     xptr var_left = XNULL;

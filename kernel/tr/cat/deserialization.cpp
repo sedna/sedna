@@ -4,7 +4,7 @@
  */
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 #include "tr/cat/catalog.h"
 #include "tr/cat/catstore.h"

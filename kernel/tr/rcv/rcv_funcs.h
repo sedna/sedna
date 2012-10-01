@@ -11,7 +11,7 @@
 #include "common/sedna.h"
 
 #include "common/base.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 void rollback_tr_by_logical_log(transaction_id _trid);
 void recover_db_by_logical_log();

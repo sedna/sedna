@@ -6,7 +6,7 @@
 #ifndef _FT_PARTITION_H
 #define _FT_PARTITION_H
 
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/ft/ft_types.h"
 #include "tr/ft/sblob.h"
 

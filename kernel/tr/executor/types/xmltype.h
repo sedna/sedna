@@ -1,8 +1,8 @@
 #ifndef _XML_TYPE_H_
 #define _XML_TYPE_H_
 
-//#include "common/u/u.h"
-//#include "common/xptr.h"
+//#include "u/u.h"
+//#include "common/xptr/xptr.h"
 
 // Total size should be equal to 4+4+16 = 24
 

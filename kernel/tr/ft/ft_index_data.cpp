@@ -7,7 +7,7 @@
 #include "common/sedna.h"
 
 #include "tr/ft/ft_index_data.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/tuple.h"
 #ifdef SE_ENABLE_DTSEARCH
@@ -21,7 +21,7 @@
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/btree/btree.h"
 #include "tr/cat/catstore.h"
-#include "common/u/uutils.h"
+#include "u/uutils.h"
 #include "tr/strings/opt_parser.h"
 #include "tr/structures/nodeutils.h"
 #include "tr/crmutils/ftserializer.h"

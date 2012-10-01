@@ -9,7 +9,7 @@
 
 #include "common/sedna.h"
 
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 #include "tr/strings/strings_base.h"
 #include "tr/vmm/vmm.h"
 #include "tr/pstr/pstr.h"

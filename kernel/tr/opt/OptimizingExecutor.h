@@ -1,8 +1,8 @@
 #ifndef _OPTIMIZING_EXECUTOR_H_
 #define _OPTIMIZING_EXECUTOR_H_
 
-#include "common/u/uthread.h"
-#include "common/u/utime.h"
+#include "u/uthread.h"
+#include "u/utime.h"
 
 #include "tr/models/SednaModule.h"
 #include "tr/models/MemoryPool.h"

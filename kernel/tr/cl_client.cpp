@@ -10,7 +10,7 @@
 
 #include "common/sedna.h"
 
-#include "common/u/uhdd.h"
+#include "u/uhdd.h"
 #include "common/base.h"
 #include "common/ipc_ops.h"
 #include "common/errdbg/d_printf.h"

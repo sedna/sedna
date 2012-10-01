@@ -11,9 +11,9 @@
 
 #include "common/sedna.h"
 #include "common/base.h"
-#include "common/u/uhdd.h"
-#include "common/u/uutils.h"
-#include "common/u/uprocess.h"
+#include "u/uhdd.h"
+#include "u/uutils.h"
+#include "u/uprocess.h"
 #include "common/utils.h"
 #include "common/errdbg/d_printf.h"
 

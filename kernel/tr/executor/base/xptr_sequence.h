@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 
 class xptr_sequence

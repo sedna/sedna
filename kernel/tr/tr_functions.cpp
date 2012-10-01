@@ -7,7 +7,7 @@
 
 #include "common/sedna.h"
 #include "common/base.h"
-#include "common/u/uutils.h"
+#include "u/uutils.h"
 #include "common/ipc_ops.h"
 #include "common/sp.h"
 

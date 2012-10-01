@@ -6,7 +6,7 @@
 #include "common/sedna.h"
 
 #include "tr/structures/metadata.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/mo/mo.h"
 #include "tr/log/log.h"
 #include "tr/locks/locks.h"

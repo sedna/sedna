@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 //#define DEBUG_MO_CHECK
 //#define DEBUG_MO_LOG

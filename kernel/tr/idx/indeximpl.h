@@ -6,7 +6,7 @@
 #ifndef _INDEX_IMPLEMENTATION_H
 #define _INDEX_IMPLEMENTATION_H
 
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/executor/base/tuple.h"
 
 /* Key-Value index implementation */

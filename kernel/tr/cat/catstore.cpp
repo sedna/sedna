@@ -3,7 +3,7 @@
  * Copyright (C) 2009 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 
 #include "tr/cat/catstore.h"
 #include "tr/vmm/vmm.h"

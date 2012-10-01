@@ -13,7 +13,7 @@
 #include "tr/ft/FTsearch.h"
 #include "tr/executor/base/xptr_sequence.h"
 #include "tr/rcv/logican.h"
-#include "common/u/uhdd.h"
+#include "u/uhdd.h"
 
 #define FTLOG_HEADER		0x010
 #define FTLOG_CREATE_BEGIN	0x0001

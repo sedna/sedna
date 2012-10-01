@@ -1,5 +1,5 @@
 #include "tr/rcv/rcv_test_tr.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/structures/schema.h"
 #include "tr/mo/indirection.h"
 #include "tr/vmm/vmm.h"

@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
-#include "common/commutil.h"
+#include "common/xptr/xptr.h"
+#include "auxiliary/commutil.h"
 
 #include "tr/structures/rbtree.h"
 #include "tr/structures/schema.h"

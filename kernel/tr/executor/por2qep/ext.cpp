@@ -4,7 +4,7 @@
  */
 
 #include "common/sedna.h"
-#include "common/sedna_ef.h"
+#include "common/protocol/sedna_ef.h"
 
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"

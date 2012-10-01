@@ -4,7 +4,7 @@
  */
 
 #include "common/sedna.h"
-#include "common/internstr.h"
+#include "auxiliary/internstr.h"
 
 #include "tr/executor/base/xsd.h"
 #include "tr/structures/schema.h"

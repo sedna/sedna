@@ -1,6 +1,6 @@
 # additional sub-libraries
 # set(lib_SUBDIRS xqp auth cat executor crmutils idx locks log mo nid pstr rcv strings structures updates vmm bstrie btree)
-set(lib_SUBDIRS vmm)
+set(lib_SUBDIRS vmm executor)
 
 # add ftsearch
 # if (ENABLE_FTSEARCH)
@@ -36,7 +36,7 @@ set(lib_SUBDIRS vmm)
 
 # recursively set se_trn sources
 #set(trn_SRC tr.cpp socket_client.cpp cl_client.cpp tr_functions.cpp tr_common_funcs.cpp tr_globals.cpp)
-set(trn_SRC tr.cpp)
+set(trn_SRC tr.cpp tr_globals.cpp)
 foreach (SUB ${lib_SUBDIRS})
     ADD_SUBFOLDER_SRC(trn_SRC ${SUB})
 endforeach (SUB ${lib_SUBDIRS})

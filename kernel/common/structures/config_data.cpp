@@ -66,6 +66,7 @@ void TopLevelAuthentication::recvServiceAuth(MessageExchanger* comm)
 
 struct SessionOptionsXmlReader : public XmlNodeReader {
     SessionOptionsXmlReader(SessionOptions* options) {
+        this->readIntValue(EXPANDR(keepAliveTimeout));
         this->readIntValue(EXPANDR(executionStackDepth));
         this->readIntValue(EXPANDR(queryTimeout));
     }
@@ -78,6 +79,7 @@ XmlNodeReader* SessionOptions::createReader()
 
 void SessionOptions::saveToXml(XMLBuilder* xmlBuilder) const
 {
+    xmlBuilder->addElement(EXPANDWC(keepAliveTimeout));
     xmlBuilder->addElement(EXPANDWC(executionStackDepth));
     xmlBuilder->addElement(EXPANDWC(queryTimeout));
 }

@@ -10,7 +10,7 @@
 #include <set>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 #include "tr/triggers/triggers_data.h"
 #include "tr/triggers/triggers_utils.h"

@@ -6,7 +6,7 @@
 #ifndef _FT_CACHE_H
 #define _FT_CACHE_H
 
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/executor/base/sorted_sequence.h"
 #include "tr/ft/ft_storage.h"

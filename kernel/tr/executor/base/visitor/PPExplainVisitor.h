@@ -10,7 +10,7 @@
 #include <stack>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 #include "tr/executor/base/visitor/PPVisitor.h"
 

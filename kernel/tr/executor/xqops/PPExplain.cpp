@@ -7,7 +7,7 @@
 
 #include "common/sedna.h"
 
-#include "common/u/uutils.h"
+#include "u/uutils.h"
 #include "tr/executor/xqops/PPExplain.h"
 #include "tr/executor/base/visitor/PPExplainVisitor.h"
 #include "tr/mo/mo.h"

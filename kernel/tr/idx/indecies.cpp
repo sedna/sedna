@@ -9,7 +9,7 @@
 #include "tr/idx/indecies.h"
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/tuple.h"

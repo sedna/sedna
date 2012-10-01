@@ -1,7 +1,7 @@
 #ifndef _BLOCKING_QUEUE_H_
 #define _BLOCKING_QUEUE_H_
 
-#include "common/u/umutex.h"
+#include "u/umutex.h"
 
 #include <deque>
 

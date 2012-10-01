@@ -70,7 +70,7 @@ void PPSeqChecker::do_next (tuple &t)
     {
         if (!tc.is_node())
         {
-            std::string err = "at (" + int2string(this->info.query_line) + ":" +  int2string(this->info.query_col) +
+            std::string err = "at (" + cast_to_string<int>(this->info.query_line) + ":" +  cast_to_string<int>(this->info.query_col) +
                 "), filter step contains atomic in position " + int2string(pos);
             throw XQUERY_EXCEPTION2(XPTY0019, err.c_str());
         }
@@ -79,15 +79,15 @@ void PPSeqChecker::do_next (tuple &t)
     {
         if (expect_nodes && !tc.is_node())
         {
-            std::string err = "at (" + int2string(this->info.query_line) + ":" +  int2string(this->info.query_col) + "), "
-                    "last step contains atomic in position " + int2string(pos) + ", but has started with nodes";
+            std::string err = "at (" + cast_to_string<int>(this->info.query_line) + ":" +  cast_to_string<int>(this->info.query_col) + "), "
+                    "last step contains atomic in position " + cast_to_string<unsigned int>(pos) + ", but has started with nodes";
 
             throw XQUERY_EXCEPTION2(XPTY0018, err.c_str());
         }
         else if (!expect_nodes && tc.is_node())
         {
-            std::string err = "at (" + int2string(this->info.query_line) + ":" +  int2string(this->info.query_col)+
-                "), last step contains node in position " + int2string(pos) + ", but has started with atomics";
+            std::string err = "at (" + cast_to_string<int>(this->info.query_line) + ":" +  cast_to_string<int>(this->info.query_col)+
+                "), last step contains node in position " + cast_to_string<unsigned int>(pos) + ", but has started with atomics";
 
             throw XQUERY_EXCEPTION2(XPTY0018, err.c_str());
         }

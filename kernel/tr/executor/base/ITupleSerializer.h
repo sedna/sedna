@@ -2,7 +2,7 @@
 #define __ITupleSerializer_h__
 
 #include "common/sedna.h"
-#include "common/commutil.h"
+#include "auxiliary/commutil.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/tr_globals.h"
 

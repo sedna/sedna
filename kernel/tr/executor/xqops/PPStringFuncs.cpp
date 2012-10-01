@@ -14,7 +14,7 @@
 #include "tr/strings/strings.h"
 #include "tr/strings/utf8.h"
 #include "tr/executor/base/xs_helper.h"
-#include "common/u/uutils.h"
+#include "u/uutils.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 

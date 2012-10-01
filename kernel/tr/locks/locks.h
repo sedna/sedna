@@ -10,7 +10,7 @@
 #include <list>
 
 #include "common/lm_base.h"
-#include "common/u/usem.h"
+#include "u/usem.h"
 #include "common/SSMMsg.h"
 
 

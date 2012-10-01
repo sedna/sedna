@@ -8,7 +8,7 @@
 #include "tr/ft/FTindex.h"
 #include "tr/tr_globals.h"
 #include "dtsearch/include/dtsearch.h"
-#include "common/u/uhdd.h"
+#include "u/uhdd.h"
 #include "tr/log/log.h"
 #include "tr/cat/catenum.h"
 #include "tr/structures/nodeutils.h"

@@ -86,7 +86,7 @@ namespace executor_globals
 
 #define DECREASE_STACK_DEPTH     executor_globals::current_stack_depth--;
 
-#define CHECK_STACK_DEPTH        if(executor_globals::current_stack_depth > tr_globals::max_stack_depth) \
+#define CHECK_STACK_DEPTH        if(executor_globals::current_stack_depth > tr_globals::databaseOptions.sessionOptions.executionStackDepth) \
                                      throw USER_EXCEPTION2(SE1001,\
 "Infinite recursion or too complex query. Consider increasing\
  session_stack_depth configuration parameter in sednaconf.xml.");

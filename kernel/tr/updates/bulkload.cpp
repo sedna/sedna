@@ -13,7 +13,7 @@
 
 #include "tr/structures/metadata.h"
 #include "expat.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 #include "tr/mo/mo.h"
 
 #ifdef SE_ENABLE_FTSEARCH

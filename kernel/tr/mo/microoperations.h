@@ -18,7 +18,7 @@
 #include <stdint.h>
 
 #include "common/sedna.h"
-#include "common/xptr.h"
+#include "common/xptr/xptr.h"
 
 #include "tr/tr_base.h"
 #include "tr/structures/schema.h"

@@ -7,7 +7,7 @@
 #define _PSTRBLK_H
 
 #include "common/sedna.h"
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 
 #define	HHMAXSIZE	124
 struct hh_slot {

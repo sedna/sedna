@@ -7,7 +7,7 @@
 #include <map>
 
 #include "common/sedna.h"
-#include "common/u/uutils.h"
+#include "u/uutils.h"
 
 #include "tr/structures/schema.h"
 #include "tr/vmm/vmm.h"

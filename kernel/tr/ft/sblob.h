@@ -6,7 +6,7 @@
 #ifndef _FT_SBLOB_H
 #define _FT_SBLOB_H
 
-#include "common/sm_vmm_data.h"
+#include "common/xptr/sm_vmm_data.h"
 
 // static BLOB structure, very similar to e_strings, but has a different interface and doesn't use static buffers
 

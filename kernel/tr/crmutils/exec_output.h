@@ -12,7 +12,7 @@
 
 #include "common/sedna.h"
 
-#include "common/u/usocket.h"
+#include "u/usocket.h"
 #include "common/sp.h"
 #include "tr/tr_base.h"
 #include "tr/crmutils/crmbase.h"

@@ -5,7 +5,7 @@
 
 #ifdef _WIN32
 
-#include "common/u/uthread.h"
+#include "u/uthread.h"
 #include "common/errdbg/d_printf.h"
 
 #include "tr/vmm/vmminternal.h"

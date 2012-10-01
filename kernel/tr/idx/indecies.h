@@ -7,7 +7,7 @@
 #define _INDECIES_H
 
 #include "common/sedna.h"
-#include "common/u/usem.h"
+#include "u/usem.h"
 
 #include "tr/idx/index_types.h"
 #include "tr/idx/indeximpl.h"

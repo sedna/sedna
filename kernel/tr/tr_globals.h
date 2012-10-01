@@ -31,7 +31,7 @@ namespace tr_globals
     extern int authentication;
     extern int authorization;
     
-    extern SessionOptions sessionOptions;
+    extern DatabaseOptions databaseOptions; //SessionOptions are inside.
     extern SednaOptions sednaOptions;
 
     /* Special transactions */
@@ -43,7 +43,6 @@ namespace tr_globals
     //received from gov
     extern session_id     sid;
 
-    extern char db_name[];
     extern char filename[];
     extern char password[];
     extern char login[];
