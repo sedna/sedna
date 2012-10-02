@@ -5,7 +5,7 @@
 
 
 #include "common/sedna.h"
-#include "common/utils.h"
+#include "auxiliary/utils.h"
 
 #include "tr/executor/xqops/PPAbsPath.h"
 #include "tr/executor/base/PPUtils.h"

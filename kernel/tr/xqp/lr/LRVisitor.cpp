@@ -212,7 +212,7 @@ void LRVisitor::visit(ASTAxisStep &n)
             n.cont->accept(*this);
             if (need_checker)
             {
-                lr_str.append(int2string(PPSeqChecker::CHECK_NODE));
+                lr_str.append(cast_to_string<int>(PPSeqChecker::CHECK_NODE));
                 lr_str.append(")");
             }
         }
@@ -256,7 +256,7 @@ void LRVisitor::visit(ASTAxisStep &n)
             n.cont->accept(*this);
             if (need_checker)
             {
-                lr_str.append(int2string(PPSeqChecker::CHECK_NODE));
+                lr_str.append(cast_to_string<int>(PPSeqChecker::CHECK_NODE));
                 lr_str.append(")");
             }
         }
@@ -476,7 +476,7 @@ void LRVisitor::visit(ASTCreateTrg &n)
     lr_str.append(" ");
 
     if (n.leaf_type >= 0)
-        lr_str.append(int2string(n.leaf_type));
+        lr_str.append(cast_to_string<int>(n.leaf_type));
 
     if (n.trimmed_path)
         n.trimmed_path->accept(*this);
@@ -747,7 +747,7 @@ void LRVisitor::visit(ASTFilterStep &n)
                 n.cont->accept(*this);
                 if (need_checker)
                 {
-                    lr_str.append(int2string(PPSeqChecker::CHECK_NODE));
+                    lr_str.append(cast_to_string<int>(PPSeqChecker::CHECK_NODE));
                     lr_str.append(")");
                 }
             }
@@ -779,7 +779,7 @@ void LRVisitor::visit(ASTFilterStep &n)
                 n.cont->accept(*this);
                 if (need_checker)
                 {
-                    lr_str.append(int2string(PPSeqChecker::CHECK_NODE));
+                    lr_str.append(cast_to_string<int>(PPSeqChecker::CHECK_NODE));
                     lr_str.append(")");
                 }
             }
@@ -809,7 +809,7 @@ void LRVisitor::visit(ASTFilterStep &n)
             n.cont->accept(*this);
             if (need_checker)
             {
-                lr_str.append(int2string(PPSeqChecker::CHECK_NODE));
+                lr_str.append(cast_to_string<int>(PPSeqChecker::CHECK_NODE));
                 lr_str.append(")");
             }
 
@@ -842,7 +842,7 @@ void LRVisitor::visit(ASTFilterStep &n)
 
     if (n.isLast && !n.isFirstStep())
     {
-        lr_str.append(int2string(PPSeqChecker::CHECK_MIX));
+        lr_str.append(cast_to_string<int>(PPSeqChecker::CHECK_MIX));
         lr_str.append(")");
     }
 }
@@ -907,7 +907,7 @@ void LRVisitor::visit(ASTFunCall &n)
     VisitNodesVector(n.params, *this);
 
     lr_str.append(" ");
-    lr_str.append(int2string(n.getFirstLine()));
+    lr_str.append(cast_to_string<int>(n.getFirstLine()));
 
     lr_str.append(") ");
 }

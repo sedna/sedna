@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "auxiliary/utils.h"
 #include "common/sedna.h"
 #include "u/uhdd.h"
 #include "u/usocket.h"

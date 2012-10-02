@@ -1,6 +1,7 @@
 #include "tr/opt/functions/Functions.h"
 #include "tr/opt/algorithms/SequenceModel.h"
 #include "tr/executor/base/namespaces.h"
+#include "auxiliary/cppcast.h"
 
 using namespace phop;
 
@@ -33,7 +34,7 @@ FunctionLibrary::~FunctionLibrary()
 static
 std::string getSearchName(const char* uri, const char* localname, int argc)
 {
-    return int2string(argc) + "/" + localname + ((uri == NULL) ? "@{}" : ("@{" + std::string(uri) + "}"));
+    return cast_to_string<int>(argc) + "/" + localname + ((uri == NULL) ? "@{}" : ("@{" + std::string(uri) + "}"));
 };
 
 FunctionInfo* FunctionLibrary::registerFunction(FunctionInfo * finfo)

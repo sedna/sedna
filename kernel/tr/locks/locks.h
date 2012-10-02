@@ -9,9 +9,9 @@
 #include "common/sedna.h"
 #include <list>
 
-#include "common/lm_base.h"
+#include "common/lockmantypes.h"
 #include "u/usem.h"
-#include "common/SSMMsg.h"
+#include "common/ssmmsg/SSMMsg.h"
 
 
 void init_local_lock_mgr(SSMMsg* _sm_server_);

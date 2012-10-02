@@ -74,5 +74,5 @@ namespace tr_globals
         }
     }
     
-//     client_core*  client  = NULL;
+    client_core*  client  = NULL;
 }

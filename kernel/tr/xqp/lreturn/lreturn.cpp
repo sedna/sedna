@@ -1391,7 +1391,7 @@ namespace sedna
         bool standFunc = (*n.int_name != "");
         ASTNode *ddo = NULL;
 
-        int_name += "/" + int2string(arity);
+        int_name += "/" + cast_to_string<size_t>(arity);
 
         if (standFunc) // standard function
         {
@@ -1546,7 +1546,7 @@ namespace sedna
         childOffer off_this, boff;
         std::string name = CREATE_INTNAME(*n.func_uri, *n.local);
 
-        name += "/" + int2string(arity);
+        name += "/" + cast_to_string<size_t>(arity);
 
         // first, we should bind params
         if (n.params)

@@ -8,7 +8,7 @@
 #include "tr/executor/xqops/PPConst.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-#include "common/utils.h"
+#include "auxiliary/utils.h"
 
 
 

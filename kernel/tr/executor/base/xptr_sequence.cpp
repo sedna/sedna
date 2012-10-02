@@ -28,6 +28,64 @@ struct nid_comparator
 			(on_less(s,c,b)<0 ? b : on_less(s,c,a)<0 ? c : a));
 	}
 };
+
+template<class Comparator>
+void sort_template(xptr_sequence *xs, int off, int len)
+{
+        Comparator comp;
+    // Insertion sort on smallest arrays
+    if (len < 7) {
+        for (int i=off; i<len+off; i++)
+            for (int j=i; j>off && comp.on_less(xs, j,j-1)<0; j--)
+                xs->swap(j, j-1);
+        return;
+    }
+
+    // Choose a partition element, v
+    int m = off + (len >> 1);  // Small arrays, middle element
+    if (len > 7) {
+        int l = off;
+        int n = off + len - 1;
+        if (len > 40) {        // Big arrays, pseudomedian of 9
+            int s = len/8;
+            l = comp.med3(xs, l,     l+s, l+2*s);
+            m = comp.med3(xs, m-s,   m,   m+s);
+            n = comp.med3(xs, n-2*s, n-s, n);
+        }
+        m = comp.med3(xs, l, m, n);   // Mid-size, med of 3
+    }
+    xptr v = xs->get(m);
+
+    // Establish Invariant: v* (<v)* (>v)* v*
+    int a = off, b = a, c = off + len - 1, d = c;
+    while(true) {
+        while (b <= c && comp.on_less_lt(xs, b, v)<=0) {
+            if (xs->get(b) == v)
+                xs->swap(a++, b);
+            b++;
+        }
+        while (c >= b && comp.on_less_rt(xs,v,c)<=0) {
+            if (xs->get(c) == v)
+                xs->swap(c, d--);
+            c--;
+        }
+        if (b > c)
+            break;
+        xs->swap(b++, c--);
+    }
+
+    // Swap partition elements back to middle
+    int s, n = off + len;
+    s = s_min(a-off, b-a  );  xs->vecswap( off, b-s, s);
+    s = s_min(d-c,   n-d-1);  xs->vecswap( b,   n-s, s);
+
+    // Recursively sort non-partition-elements
+    if ((s = b-a) > 1)
+        sort_template<Comparator>(xs, off, s);
+    if ((s = d-c) > 1)
+        sort_template<Comparator>(xs, n-s, s);
+}
+
 struct xptr_comparator
 {
 	xptr_comparator() {}
@@ -172,69 +230,12 @@ void xptr_sequence::sort()
 }
 void xptr_sequence::sort_by_xptr()
 {
-	sort_template<xptr_comparator>(this, 0, seq_size);
-}
-
-template<class Comparator>
-void sort_template(xptr_sequence *xs, int off, int len)
-{
-	Comparator comp;
-    // Insertion sort on smallest arrays
-    if (len < 7) {
-        for (int i=off; i<len+off; i++)
-            for (int j=i; j>off && comp.on_less(xs, j,j-1)<0; j--)
-                xs->swap(j, j-1);
-        return;
-    }
-
-    // Choose a partition element, v
-    int m = off + (len >> 1);  // Small arrays, middle element
-    if (len > 7) {
-        int l = off;
-        int n = off + len - 1;
-        if (len > 40) {        // Big arrays, pseudomedian of 9
-            int s = len/8;
-            l = comp.med3(xs, l,     l+s, l+2*s);
-            m = comp.med3(xs, m-s,   m,   m+s);
-            n = comp.med3(xs, n-2*s, n-s, n);
-        }
-        m = comp.med3(xs, l, m, n);   // Mid-size, med of 3
-    }
-    xptr v = xs->get(m);
-
-    // Establish Invariant: v* (<v)* (>v)* v*
-    int a = off, b = a, c = off + len - 1, d = c;
-    while(true) {
-        while (b <= c && comp.on_less_lt(xs, b, v)<=0) {
-            if (xs->get(b) == v)
-                xs->swap(a++, b);
-            b++;
-        }
-        while (c >= b && comp.on_less_rt(xs,v,c)<=0) {
-            if (xs->get(c) == v)
-                xs->swap(c, d--);
-            c--;
-        }
-        if (b > c)
-            break;
-        xs->swap(b++, c--);
-    }
-
-    // Swap partition elements back to middle
-    int s, n = off + len;
-    s = s_min(a-off, b-a  );  xs->vecswap( off, b-s, s);
-    s = s_min(d-c,   n-d-1);  xs->vecswap( b,   n-s, s);
-
-    // Recursively sort non-partition-elements
-    if ((s = b-a) > 1)
-        sort_template<Comparator>(xs, off, s);
-    if ((s = d-c) > 1)
-        sort_template<Comparator>(xs, n-s, s);
+    sort_template<xptr_comparator>(this, 0, seq_size);
 }
 
 void xptr_sequence::sort1(int off, int len)
 {
-	sort_template<nid_comparator>(this, off, len);
+    sort_template<nid_comparator>(this, off, len);
 }
 
 void xptr_sequence::swap(int a, int b)

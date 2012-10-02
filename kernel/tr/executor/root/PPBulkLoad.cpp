@@ -13,6 +13,7 @@
 #include "tr/log/log.h"
 #include "tr/auth/auc.h"
 #include "tr/updates/bulkload.h"
+#include "tr/client_core.h"
 
 PPBulkLoad::PPBulkLoad(PPOpIn _filename_,
                        PPOpIn _document_,

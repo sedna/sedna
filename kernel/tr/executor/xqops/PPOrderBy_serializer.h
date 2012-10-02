@@ -8,7 +8,7 @@
 
 #include "tr/executor/base/PPBase.h"
 #include "common/sedna.h"
-#include "common/commutil.h"
+#include "auxiliary/commutil.h"
 #include "tr/executor/base/tuple.h"
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/seq_common.h"

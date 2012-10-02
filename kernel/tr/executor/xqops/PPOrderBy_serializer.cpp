@@ -4,7 +4,7 @@
  */
 
 #include "PPOrderBy_serializer.h"
-#include "common/bit_set.h"
+#include "auxiliary/bit_set.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/fo/string_operations.h"
 
@@ -32,7 +32,7 @@ static inline void serialize_string(const tuple_cell& tc, void* dest)
 
 size_t TupleSerializer::serialize(const tuple& t, void* buf)
 {
-    bit_set bs(header -> size());
+    sedna::Bitset bs(header -> size());
     memcpy((char *)buf, init_pos, sizeof(int64_t));
     size_t offset = sizeof(int64_t); //Offset to write to buffer
     for (int i = 0; i < t.size(); i++)
@@ -147,8 +147,8 @@ int TupleSerializer::compare(void* buf1, size_t size1, void* buf2, size_t size2)
 
     int length = header -> size();
 
-    bit_set bs1((char *)buf1 + bit_set_offset, length);
-    bit_set bs2((char *)buf2 + bit_set_offset, length);
+    sedna::Bitset bs1((char *)buf1 + bit_set_offset, length);
+    sedna::Bitset bs2((char *)buf2 + bit_set_offset, length);
 
     int offset = sizeof(int64_t);
     int result = 0;

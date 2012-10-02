@@ -71,7 +71,7 @@ void PPSeqChecker::do_next (tuple &t)
         if (!tc.is_node())
         {
             std::string err = "at (" + cast_to_string<int>(this->info.query_line) + ":" +  cast_to_string<int>(this->info.query_col) +
-                "), filter step contains atomic in position " + int2string(pos);
+                "), filter step contains atomic in position " + cast_to_string<unsigned int>(pos);
             throw XQUERY_EXCEPTION2(XPTY0019, err.c_str());
         }
     }

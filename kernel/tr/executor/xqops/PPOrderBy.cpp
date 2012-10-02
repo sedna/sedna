@@ -4,7 +4,7 @@
  */
 
 #include "common/sedna.h"
-#include "common/bit_set.h"
+#include "auxiliary/bit_set.h"
 
 #include "tr/executor/xqops/PPOrderBy.h"
 #include "tr/executor/base/PPUtils.h"

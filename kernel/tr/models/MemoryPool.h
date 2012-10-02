@@ -85,7 +85,10 @@ public:
     inline
     void * alloc(size_t n)
     {
-        U_ASSERT(blockSize > (n + sizeof(MemoryBlock::freePtr) + sizeof(MemoryBlock::size)));
+//      NOTE: commented out due it's breaks the C++ standard. It works in some compilers, but it's wrong.
+//            More details there: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2253.html
+//      U_ASSERT(blockSize > (n + sizeof(MemoryBlock::freePtr) + sizeof(MemoryBlock::size)));
+        U_ASSERT(blockSize > (n + sizeof(freeRegion->freePtr) + sizeof(freeRegion->size)));
 
         if (freeRegion->size - freeRegion->freePtr < n) {
             createNewRegion();

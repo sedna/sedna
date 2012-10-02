@@ -128,7 +128,7 @@ namespace sedna
             XQFunction *xqf = Sema::findFunction(name, itf->second->min_arg, this, drv);
             if (!xqf)
             {
-                drv->error(*itf->second->loc, XPST0017, std::string("unknown function ") + name + "/" + int2string(itf->second->min_arg));
+                drv->error(*itf->second->loc, XPST0017, std::string("unknown function ") + name + "/" + cast_to_string<unsigned int>(itf->second->min_arg));
             }
 
             delete itf->second;

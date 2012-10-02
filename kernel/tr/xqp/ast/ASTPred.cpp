@@ -204,7 +204,7 @@ void ASTPred::seriliazeConjuncts(std::string &str, ASTVisitor &v) const
         str += "(";
         it->expr->accept(v);
 
-        str += int2string(it->op);
+        str += cast_to_string<operation_compare_condition>(it->op);
 
         if (it->use_cxt)
             str += " #t";
@@ -228,7 +228,7 @@ void ASTPred::seriliazeConjuncts(std::string &str, ASTVisitor &v) const
         str += "(";
         it->expr->accept(v);
 
-        str += int2string(it->op);
+        str += cast_to_string<operation_compare_condition>(it->op);
 
         if (it->use_cxt)
             str += " #t";

@@ -17,7 +17,7 @@
 #include "common/errdbg/d_printf.h"
 #include "tr/structures/schema.h"
 #include "tr/executor/base/PPBase.h"
-#include "common/commutil.h"
+#include "auxiliary/commutil.h"
 
 using namespace std;
 using namespace xpath;

@@ -10,7 +10,7 @@
 #include "common/sedna.h"
 
 #include "tr/triggers/triggers_data.h"
-#include "common/lm_base.h"
+#include "common/lockmantypes.h"
 #include "tr/xqp/XQuerytoLR.h"
 
 struct built_trigger_action{

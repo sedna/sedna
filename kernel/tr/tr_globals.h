@@ -10,6 +10,8 @@
 
 #include "tr/tr_base.h"
 #include "tr/crmutils/serialization.h"
+#include "tr/client_core.h"
+
 #include "common/sedna.h"
 #include "common/base.h"
 #include "common/structures/config_data.h"
@@ -76,6 +78,8 @@ namespace tr_globals
  
      extern Serializer * serializer;
      void create_serializer(enum se_output_method method);
+     
+     extern client_core*  client;
 }
 
 /* 
