@@ -114,8 +114,14 @@ struct xptr
      * Smart inc and dec functions, which can go between layers. Should be
      * used instead of overloaded operators.
      */
-//     void inc_offset(unsigned n);
-//     void dec_offset(unsigned n);
+     inline void inc_offset(unsigned n) {
+         U_ASSERT((this->offs / PAGE_SIZE) == ((this->offs + n) / PAGE_SIZE));
+         this->offs += n;
+     };
+     inline void dec_offset(unsigned n) {
+         U_ASSERT((this->offs / PAGE_SIZE) == ((this->offs - n) / PAGE_SIZE));
+         this->offs -= n;
+     }
 
     /*
      * CAVEAT: since we're using -n here INT_MIN shouldn't work,
@@ -125,11 +131,14 @@ struct xptr
      */
     xptr &operator +=(int n)
     {
-        if (n >= 0)
+        if (n >= 0) {
+            U_ASSERT(n < PAGE_SIZE);
             this->inc_offset((unsigned)n);
-        else
+        } else {
+            U_ASSERT(((unsigned) -n) < PAGE_SIZE);
             this->dec_offset((unsigned)-n);
-
+        }
+        
         return *this;
     }
 
@@ -138,10 +147,13 @@ struct xptr
      */
     xptr &operator -=(int n)
     {
-        if (n >= 0)
+        if (n >= 0) {
+            U_ASSERT(n < PAGE_SIZE);
             this->dec_offset((unsigned)n);
-        else
+        } else {
+            U_ASSERT(((unsigned) -n) < PAGE_SIZE);
             this->inc_offset((unsigned)-n);
+        }
 
         return *this;
     }
@@ -157,9 +169,9 @@ inline xptr uint64_to_xptr(const uint64_t x) {
 };
 
 inline xptr logical_int_to_xptr(const uint64_t x) {
-	xptr p;
-	p.from_logical_int(x);
-	return p;
+    xptr p;
+    p.from_logical_int(x);
+    return p;
 };
 
 
@@ -195,8 +207,9 @@ inline xptr operator-(const xptr &p, int n)
 
 inline lsize_t operator-(const xptr &p1, const xptr &p2)
 {
-    if (p1.layer != p2.layer)
+    if (p1.layer != p2.layer) {
         throw USER_EXCEPTION2(SE1003, "Bad parameters in xptr operator-(const xptr &p1, const xptr &p2)");
+    }
 
     U_ASSERT(p1.getOffs() >= p2.getOffs());
 

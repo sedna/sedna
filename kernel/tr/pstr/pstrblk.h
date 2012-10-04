@@ -8,7 +8,7 @@
 
 #include "common/sedna.h"
 #include "common/xptr/sm_vmm_data.h"
-
+#include "tr/vmm/vmm.h"
 #define	HHMAXSIZE	124
 struct hh_slot {
 	shft	hole_shft;	/* shift from the begining of block */

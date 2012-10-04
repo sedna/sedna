@@ -8,7 +8,7 @@
 #include "tr/mo/blocks.h"
 #include "tr/mo/nodemoutils.h"
 
-#include "common/bit_set.h"
+#include "auxiliary/bit_set.h"
 
 inline int canAcceptNodes(xptr block_xptr, int desc_size)
 {
@@ -28,7 +28,7 @@ inline bool tryWidenSingleBlock(xptr block_ptr, node_blk_hdr * block, int requir
     xptr * endpoint = (xptr *) ((char *) XADDR(block_ptr) + PAGE_SIZE) - 1;
     int total_cells = getPageDescriptorCapacitySP(block_ptr);
     int new_total_cells;
-    bit_set free_cells(total_cells);
+    sedna::Bitset free_cells(total_cells);
     void * indir;
     int save_indir_count;
     int i;

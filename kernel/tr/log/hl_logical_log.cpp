@@ -88,7 +88,7 @@ void hl_logical_log_on_session_begin(std::string logical_log_path, bool rcv_acti
 	if ( 0 != USemaphoreOpen(&concurrent_trns_sem, activeTrnCounterSem, __sys_call_error))
 		throw USER_EXCEPTION2(SE4012, activeTrnCounterSem.name);
 
-	llOpen(logical_log_path.c_str(), tr_globals::db_name, rcv_active);
+	llOpen(logical_log_path.c_str(), tr_globals::databaseOptions.databaseName.c_str(), rcv_active);
 
 	is_ll_on_session_initialized = true;
 }
