@@ -1,6 +1,6 @@
 # additional sub-libraries
 # set(lib_SUBDIRS xqp auth cat executor crmutils idx locks log mo nid pstr rcv strings structures updates vmm bstrie btree)
-set(lib_SUBDIRS vmm executor)
+set(lib_SUBDIRS vmm cat executor crmutils btree bstrie)
 
 # add ftsearch
 # if (ENABLE_FTSEARCH)

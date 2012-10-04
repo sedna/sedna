@@ -114,8 +114,8 @@ struct xptr
      * Smart inc and dec functions, which can go between layers. Should be
      * used instead of overloaded operators.
      */
-    void inc_offset(unsigned n);
-    void dec_offset(unsigned n);
+//     void inc_offset(unsigned n);
+//     void dec_offset(unsigned n);
 
     /*
      * CAVEAT: since we're using -n here INT_MIN shouldn't work,

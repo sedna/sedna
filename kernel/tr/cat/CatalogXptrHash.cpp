@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <new>
 
+#include "tr/vmm/vmm.h"
 #include "catstore.h"
 
 #define MAGIC_NUMBER 2654435761UL

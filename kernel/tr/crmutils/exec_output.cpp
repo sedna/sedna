@@ -5,7 +5,7 @@
 
 #include "common/sedna.h"
 #include "u/uutils.h"
-#include "common/commutil.h"
+#include "auxiliary/commutil.h"
 #include "tr/crmutils/exec_output.h"
 #include "tr/executor/base/PPBase.h"
 

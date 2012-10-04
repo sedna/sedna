@@ -90,7 +90,7 @@ void catalog_unlock_metadata()
 
 void catalog_on_session_begin()
 {
-    if (USemaphoreOpen(&_cat_master_semaphore, CATALOG_MASTER_SEMAPHORE_STR, __sys_call_error) != 0)
+    if (USemaphoreOpen(&_cat_master_semaphore, catMasterLockName, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "CATALOG_MASTER_SEMAPHORE_STR");
 
     _cat_master_semaphore_locked = 0;
@@ -110,7 +110,7 @@ void catalog_on_session_end()
     }
 
     if (USemaphoreClose(_cat_master_semaphore, __sys_call_error) != 0)
-        throw USER_EXCEPTION2(SE4013, "CATALOG_MASTER_SEMAPHORE_STR");
+        throw USER_EXCEPTION2(SE4013, "catMasterLockName");
 
     delete CATALOG_COMMON_CONTEXT;
     CATALOG_COMMON_CONTEXT = NULL;

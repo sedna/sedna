@@ -4,7 +4,7 @@
  */
 
 #include "common/sedna.h"
-#include "common/counted_ptr.h"
+#include "auxiliary/counted_ptr.h"
 
 #include "tr/btree/btstruct.h"
 #include "tr/executor/base/XMLDateTime.h"
