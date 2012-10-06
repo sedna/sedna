@@ -195,7 +195,7 @@ void sorted_sequence::add(tuple& p)
 			set_next_block_in_chain(val_place);
 		}
 		CHECKP(ptr_place);
-		if( ((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr_place)))->cursor < PTR_BLK_SIZE)
+		if( ((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr_place)))->cursor < (int)PTR_BLK_SIZE)
 		{
 			//1.b.b ptr fits into existing block
 			ptr_place+=sizeof(data_ptr);
@@ -220,7 +220,7 @@ void sorted_sequence::add(tuple& p)
 	((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr_place)))->cursor++;
 
 	int fp=GET_FREE_SPACE(val_place);
-	if (size > DATA_BLK_SIZE)
+	if (size > (int)DATA_BLK_SIZE)
 		throw USER_EXCEPTION2(SE1003, "Failed to add big item to sequence");
 	if (fp<size)
 	{
@@ -493,7 +493,7 @@ void sorted_sequence::copy_ptr_to_new_place(xptr ptr,xptr& place, bool marking)
 	((seq_blk_hdr*)XADDR(BLOCKXPTR(place)))->cursor++;
 	((data_ptr*)XADDR(place))->value=pt.value;
 	((data_ptr*)XADDR(place))->size=pt.size;
-	if( ((seq_blk_hdr*)XADDR(BLOCKXPTR(place)))->cursor < PTR_BLK_SIZE)
+	if( ((seq_blk_hdr*)XADDR(BLOCKXPTR(place)))->cursor < (int)PTR_BLK_SIZE)
 		{
 			//1.b.b ptr fits into existing block
 			place+=sizeof(data_ptr);
@@ -632,7 +632,7 @@ void sorted_sequence::merge_stack(bool final)
 void sorted_sequence::set_next_ptr_with_free(xptr& ptr, bool free)
 {
 	int pos = (XADDR_INT(ptr) -(XADDR_INT(ptr) & PAGE_BIT_MASK) - sizeof(seq_blk_hdr))/sizeof(data_ptr);
-	if (pos+1 < PTR_BLK_SIZE)
+	if (pos+1 < (int)PTR_BLK_SIZE)
 	{
 		CHECKP(ptr);
 		if (pos+1<((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr)))->cursor)

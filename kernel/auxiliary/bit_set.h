@@ -14,6 +14,10 @@ namespace sedna {
 
 class Bitset {
 
+#undef OFFSET_PTR
+#undef ROUND_SIZE_UP
+#undef PTR_DISTANCE
+
 #define OFFSET_PTR(P,OFS)               (void *)((char*)(P)+(OFS))
 #define ROUND_SIZE_UP(SZ,K)             (((SZ)+(K)-1)&~((K)-1))
 #define PTR_DISTANCE(B,A)               ((char*)(A)-(char*)(B))

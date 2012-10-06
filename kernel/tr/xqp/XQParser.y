@@ -17,7 +17,7 @@ namespace sedna
     class XQueryDriver;
 }
 
-#include "ast/AST.h"
+#include "tr/xqp/ast/AST.h"
 
 %}
 
@@ -39,7 +39,10 @@ namespace sedna
 
 
 %{
-#include "XQueryDriver.h"
+#include "tr/xqp/XQueryDriver.h"
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic ignored "-Wsequence-point"
+#endif /* GNUC */
 %}
 
 

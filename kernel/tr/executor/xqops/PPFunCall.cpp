@@ -95,7 +95,7 @@ void fun_arg::reopen()
 
 void fun_arg::next(tuple /*out*/ &t, var_c_id /*out*/ &id)
 {
-    if (id < s->size())
+    if (id < (unsigned)s->size())
     {
         s->get(t, id);
         id++;

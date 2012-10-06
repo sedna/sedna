@@ -9,7 +9,7 @@
 #include "tr/executor/base/xs_names.h"
 #include "tr/executor/base/xs_helper.h"
 
-#define DIAG_DUP_PROLOG(bl1, bc1, bl2, bc2) (std::string("first declaration at (") + int2string(bl1) + ":" + int2string(bc1) + ")")
+#define DIAG_DUP_PROLOG(bl1, bc1, bl2, bc2) (std::string("first declaration at (") + cast_to_string(bl1) + ":" + cast_to_string(bc1) + ")")
 #define DIAG_QNAME(pref, loc) (std::string("cannot resolve QName: ") + pref + ":" + loc)
 
 namespace sedna
@@ -525,8 +525,8 @@ namespace sedna
         {
             if (mod->defElemNsp.second != NULL)
             {
-                err = "default element namespace is already defined at (" + int2string(mod->defElemNsp.second->begin.line) +
-                    ":" + int2string(mod->defElemNsp.second->begin.column) + ")";
+                err = "default element namespace is already defined at (" + cast_to_string(mod->defElemNsp.second->begin.line) +
+                    ":" + cast_to_string(mod->defElemNsp.second->begin.column) + ")";
 
                 drv->error(n.getLocation(), XQST0066, err.c_str());
                 return;
@@ -538,8 +538,8 @@ namespace sedna
         {
             if (mod->defFuncNsp.second != NULL)
             {
-                err = "default function namespace is already defined at (" + int2string(mod->defFuncNsp.second->begin.line) +
-                    ":" + int2string(mod->defFuncNsp.second->begin.column) + ")";
+                err = "default function namespace is already defined at (" + cast_to_string(mod->defFuncNsp.second->begin.line) +
+                    ":" + cast_to_string(mod->defFuncNsp.second->begin.column) + ")";
 
                 drv->error(n.getLocation(), XQST0066, err.c_str());
                 return;
@@ -882,7 +882,7 @@ namespace sedna
                 if (mod->module_uri && !is_postload && *n.uri != *mod->module_uri && mod->imported.find(*n.uri) != mod->imported.end())
                     return;
 
-                std::string name_wa = name + "/" + int2string(arity);
+                std::string name_wa = name + "/" + cast_to_string(arity);
                 if (mod->unres_funcs.find(name_wa) == mod->unres_funcs.end())
                 {
                     XQFunction *fun = new XQFunction();
@@ -976,18 +976,18 @@ namespace sedna
         {
             drv->error(n.getLocation(), XQST0034,
                 std::string("function '") + *n.func_uri + ((n.func_uri->size() == 0) ? "" : ":") +
-                        *n.local + "(" + int2string(func->min_arg) + ")' has been already declared");
+                        *n.local + "(" + cast_to_string(func->min_arg) + ")' has been already declared");
 
             delete func;
 
             return;
         }
 
-        mod->funcs[name + "/" + int2string(func->min_arg)] = func;
+        mod->funcs[name + "/" + cast_to_string(func->min_arg)] = func;
 
         if (mod->module_uri) // we're parsing library module
         {
-            std::string name_wa = name + "/" + int2string(func->min_arg);
+            std::string name_wa = name + "/" + cast_to_string(func->min_arg);
 
             if (drv->libFuncs.find(name_wa) != drv->libFuncs.end()) // function is being exported by another sub-module
             {
@@ -996,7 +996,7 @@ namespace sedna
             }
             else
             {
-                drv->libFuncs[name + "/" + int2string(func->min_arg)] = func;
+                drv->libFuncs[name + "/" + cast_to_string(func->min_arg)] = func;
             }
         }
 
@@ -1188,7 +1188,7 @@ namespace sedna
             ASTLocation loc = mod->imported.find(*n.uri)->second->getLocation();
 
             drv->error(n.getLocation(), XQST0047, *n.uri + ", the first definition is at (" +
-                    int2string(loc.begin.line) + ":" + int2string(loc.begin.column) + ")");
+                    cast_to_string(loc.begin.line) + ":" + cast_to_string(loc.begin.column) + ")");
             return;
         }
 
@@ -1201,8 +1201,8 @@ namespace sedna
 
             if (it != mod->nsBinds.end() && it->second.second != NULL)
             {
-                err = std::string("'") + *n.name + "' is already defined at (" + int2string(it->second.second->begin.line) +
-                        ":" + int2string(it->second.second->begin.column) + ")";
+                err = std::string("'") + *n.name + "' is already defined at (" + cast_to_string(it->second.second->begin.line) +
+                        ":" + cast_to_string(it->second.second->begin.column) + ")";
 
                 drv->error(n.getLocation(), XQST0033, err.c_str());
                 return;
@@ -1305,8 +1305,8 @@ namespace sedna
 
         if (it != mod->nsBinds.end() && it->second.second != NULL)
         {
-            err = std::string("'") + *n.name + "' is already defined at (" + int2string(it->second.second->begin.line) +
-                    ":" + int2string(it->second.second->begin.column) + ")";
+            err = std::string("'") + *n.name + "' is already defined at (" + cast_to_string(it->second.second->begin.line) +
+                    ":" + cast_to_string(it->second.second->begin.column) + ")";
 
             drv->error(n.getLocation(), XQST0033, err.c_str());
             return;
@@ -1359,7 +1359,7 @@ namespace sedna
             if (loc != NULL)
             {
                 drv->error(n.getLocation(), XQST0071,
-                           std::string("default namespace has been declared at (") + int2string(loc->begin.line) + ":" + int2string(loc->begin.column) + ")");
+                           std::string("default namespace has been declared at (") + cast_to_string(loc->begin.line) + ":" + cast_to_string(loc->begin.column) + ")");
                 return;
             }
             else
@@ -1378,7 +1378,7 @@ namespace sedna
                 ASTLocation *loc = elemNsps.back().first[*n.name].second;
 
                 drv->error(n.getLocation(), XQST0071, std::string("namespace '") + *n.name + "' has been declared at (" +
-                        int2string(loc->begin.line) + ":" + int2string(loc->begin.column) + ")");
+                        cast_to_string(loc->begin.line) + ":" + cast_to_string(loc->begin.column) + ")");
                 return;
             }
         }
@@ -2197,7 +2197,7 @@ namespace sedna
         std::string::size_type fp, lp;
 
         // construct name with arity
-        name_wa = name + "/" + int2string(arity);
+        name_wa = name + "/" + cast_to_string(arity);
 
         // check prolog functions
         if (mod->funcs.find(name_wa) != mod->funcs.end())

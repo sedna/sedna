@@ -110,7 +110,7 @@ void PPVarDecl::do_next(tuple &t, var_dsc dsc, var_c_id id)
     }
 
 
-    if (cvc[id] < s->size())
+    if (cvc[id] < (unsigned)s->size())
     {
         s->get(t, cvc[id]);
         cvc[id]++;

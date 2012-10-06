@@ -1,6 +1,12 @@
 #ifndef _PCRE_MATCHER_BASE_H
 #define _PCRE_MATCHER_BASE_H
 
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic ignored "-Wextra"
+#pragma GCC diagnostic ignored "-Wchar-subscripts"
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#endif /* GNUC */
+
 /* Define DEBUG to get debugging output on stdout. */
 /* #define DEBUG */
 

@@ -530,7 +530,7 @@ void PPTypeswitch::do_next(tuple &t, var_dsc dsc, var_c_id id)
     producer &p = cxt->get_var_producer(dsc, var_cxt);
     complex_var_consumption &cvc = *(p.cvc);
 
-    if (cvc[id] < s->size())
+    if (cvc[id] < (unsigned)s->size())
     {
         s->get(source, cvc[id]);
         t.copy(source.cells[p.tuple_pos]);

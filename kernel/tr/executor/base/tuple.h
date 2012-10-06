@@ -606,6 +606,8 @@ public:
             case text_source_t::text_pstrlong :
                 return atomic_pstr(_xtype_, pstr_long_bytelength2(text.u.data), text.u.data);
         };
+        
+        return EMPTY_STRING_TC; //this will never happen; it's for compiler
     }
 
     static tuple_cell atomic_text(CommonTextNode node)

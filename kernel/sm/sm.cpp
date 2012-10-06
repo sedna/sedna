@@ -303,11 +303,11 @@ int main(int argc, char **argv)
         CheckpointThread checkpointThread;
         
         CHECK_ENV(uCreateShMem(&smMemoryMapping, smShmMappingName, PAGE_SIZE, NULL, __sys_call_error),
-                  SE4074, smShmMappingName);
+                  SE4074, smShmMappingName.name);
 
         globalMemory = uAttachShMem(&smMemoryMapping, NULL, 0, __sys_call_error);
         if (globalMemory == NULL) {
-            throw SYSTEM_ENV_EXCEPTION(SE4078);
+            throw SYSTEM_ENV_EXCEPTION("SE4078");
         }
 
         memset(globalMemory, '\0', PAGE_SIZE);
@@ -360,9 +360,9 @@ int main(int argc, char **argv)
         smvmmServer.stop();
         
         CHECK_ENV(uDettachShMem(&smMemoryMapping, globalMemory, __sys_call_error),
-                  SE4079, smShmMappingName);
+                  SE4079, smShmMappingName.name);
         CHECK_ENV(uReleaseShMem(&smMemoryMapping, smShmMappingName, __sys_call_error),
-                  SE4076, smShmMappingName);
+                  SE4076, smShmMappingName.name);
         
         checkpointThread.stop();
         

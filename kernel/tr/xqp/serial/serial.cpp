@@ -21,7 +21,7 @@
     }\
     while (0)
 
-#define DUMP_INT(i) do { int_str.append(std::string(" ") + int2string(i) + " "); } while (0)
+#define DUMP_INT(i) do { int_str.append(std::string(" ") + cast_to_string(i) + " "); } while (0)
 #define DUMP_NULL ("(0)")
 #define DUMP_BOOL(b) (int_str.append((b) ? (" #t ") : (" #f ")))
 
@@ -29,8 +29,8 @@ static std::string sc;
 
 inline std::string IntVisitor::dumpCommonData(const ASTNodeCommonData &cd)
 {
-    return "(" + int2string(cd.loc.begin.line) + " " + int2string(cd.loc.begin.column) + " " +
-            int2string(cd.loc.end.line) + " " + int2string(cd.loc.end.column) + (cd.isCached ? " #t" : " #f") + ")";
+    return "(" + cast_to_string(cd.loc.begin.line) + " " + cast_to_string(cd.loc.begin.column) + " " +
+            cast_to_string(cd.loc.end.line) + " " + cast_to_string(cd.loc.end.column) + (cd.isCached ? " #t" : " #f") + ")";
 }
 
 inline void IntVisitor::dumpASTNodesVector(ASTNodesVector *vec)
@@ -79,7 +79,7 @@ inline void IntVisitor::dumpASTNode(ASTNode *node)
 void IntVisitor::visit(ASTAlterUser &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ALTERUSER));
+    int_str.append(cast_to_string(AST_ALTERUSER));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.user);
     DUMP_STR(*n.psw);
@@ -89,7 +89,7 @@ void IntVisitor::visit(ASTAlterUser &n)
 void IntVisitor::visit(ASTAttr &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ATTR));
+    int_str.append(cast_to_string(AST_ATTR));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.pref);
     DUMP_STR(*n.local);
@@ -103,7 +103,7 @@ void IntVisitor::visit(ASTAttr &n)
 void IntVisitor::visit(ASTAttrConst &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ATTRCONST));
+    int_str.append(cast_to_string(AST_ATTRCONST));
     int_str.append(dumpCommonData(n.cd));
 
     if (n.name)
@@ -124,7 +124,7 @@ void IntVisitor::visit(ASTAttrConst &n)
 void IntVisitor::visit(ASTAttribTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ATTRIBTEST));
+    int_str.append(cast_to_string(AST_ATTRIBTEST));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.name);
     dumpASTNode(n.type);
@@ -134,10 +134,10 @@ void IntVisitor::visit(ASTAttribTest &n)
 void IntVisitor::visit(ASTAxisStep &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_AXISSTEP));
+    int_str.append(cast_to_string(AST_AXISSTEP));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.cont);
-    int_str.append(int2string(n.axis));
+    int_str.append(cast_to_string(n.axis));
     dumpASTNode(n.test);
     dumpASTNodesVector(n.preds);
 
@@ -152,7 +152,7 @@ void IntVisitor::visit(ASTAxisStep &n)
 void IntVisitor::visit(ASTBaseURI &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_BASEURI));
+    int_str.append(cast_to_string(AST_BASEURI));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.uri);
     int_str.append(")");
@@ -161,9 +161,9 @@ void IntVisitor::visit(ASTBaseURI &n)
 void IntVisitor::visit(ASTBop &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_BOP));
+    int_str.append(cast_to_string(AST_BOP));
     int_str.append(dumpCommonData(n.cd));
-    int_str.append(int2string(n.op));
+    int_str.append(cast_to_string(n.op));
     dumpASTNode(n.lop);
     dumpASTNode(n.rop);
     DUMP_BOOL(n.doc_order);
@@ -173,16 +173,16 @@ void IntVisitor::visit(ASTBop &n)
 void IntVisitor::visit(ASTBoundSpaceDecl &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_BOUNDSPACEDECL));
+    int_str.append(cast_to_string(AST_BOUNDSPACEDECL));
     int_str.append(dumpCommonData(n.cd));
-    int_str.append(int2string(n.mod));
+    int_str.append(cast_to_string(n.mod));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTCase &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CASE));
+    int_str.append(cast_to_string(AST_CASE));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.var);
     dumpASTNode(n.type);
@@ -193,7 +193,7 @@ void IntVisitor::visit(ASTCase &n)
 void IntVisitor::visit(ASTCast &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CAST));
+    int_str.append(cast_to_string(AST_CAST));
     int_str.append(dumpCommonData(n.cd));
 
     dumpASTNode(n.expr);
@@ -205,7 +205,7 @@ void IntVisitor::visit(ASTCast &n)
 void IntVisitor::visit(ASTCastable &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CASTABLE));
+    int_str.append(cast_to_string(AST_CASTABLE));
     int_str.append(dumpCommonData(n.cd));
 
     dumpASTNode(n.expr);
@@ -217,18 +217,18 @@ void IntVisitor::visit(ASTCastable &n)
 void IntVisitor::visit(ASTCharCont &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CHARCONT));
+    int_str.append(cast_to_string(AST_CHARCONT));
     int_str.append(dumpCommonData(n.cd));
 
     DUMP_STR(*n.cont);
-    int_str.append(int2string(n.orig));
+    int_str.append(cast_to_string(n.orig));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTCommTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_COMMTEST));
+    int_str.append(cast_to_string(AST_COMMTEST));
     int_str.append(dumpCommonData(n.cd));
     int_str.append(")");
 }
@@ -236,7 +236,7 @@ void IntVisitor::visit(ASTCommTest &n)
 void IntVisitor::visit(ASTCommentConst &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_COMMENTCONST));
+    int_str.append(cast_to_string(AST_COMMENTCONST));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
     DUMP_BOOL(n.deep_copy);
@@ -246,16 +246,16 @@ void IntVisitor::visit(ASTCommentConst &n)
 void IntVisitor::visit(ASTConstDecl &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CONSTDECL));
+    int_str.append(cast_to_string(AST_CONSTDECL));
     int_str.append(dumpCommonData(n.cd));
-    int_str.append(int2string(n.mod));
+    int_str.append(cast_to_string(n.mod));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTCreateColl &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CREATECOLL));
+    int_str.append(cast_to_string(AST_CREATECOLL));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.coll);
     int_str.append(")");
@@ -264,7 +264,7 @@ void IntVisitor::visit(ASTCreateColl &n)
 void IntVisitor::visit(ASTCreateDoc &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CREATEDOC));
+    int_str.append(cast_to_string(AST_CREATEDOC));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.doc);
     dumpASTNode(n.coll);
@@ -274,7 +274,7 @@ void IntVisitor::visit(ASTCreateDoc &n)
 void IntVisitor::visit(ASTCreateFtIndex &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CREATEFTINDEX));
+    int_str.append(cast_to_string(AST_CREATEFTINDEX));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.name);
     dumpASTNode(n.path);
@@ -287,7 +287,7 @@ void IntVisitor::visit(ASTCreateFtIndex &n)
 void IntVisitor::visit(ASTCreateIndex &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CREATEINDEX));
+    int_str.append(cast_to_string(AST_CREATEINDEX));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.name);
     dumpASTNode(n.on_path);
@@ -300,7 +300,7 @@ void IntVisitor::visit(ASTCreateIndex &n)
 void IntVisitor::visit(ASTCreateRole &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CREATEROLE));
+    int_str.append(cast_to_string(AST_CREATEROLE));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.role);
     int_str.append(")");
@@ -309,14 +309,14 @@ void IntVisitor::visit(ASTCreateRole &n)
 void IntVisitor::visit(ASTCreateTrg &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CREATETRG));
+    int_str.append(cast_to_string(AST_CREATETRG));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.name);
-    int_str.append(int2string(n.t_mod));
+    int_str.append(cast_to_string(n.t_mod));
     int_str.append(" ");
-    int_str.append(int2string(n.a_mod));
+    int_str.append(cast_to_string(n.a_mod));
     dumpASTNode(n.path);
-    int_str.append(int2string(n.g_mod));
+    int_str.append(cast_to_string(n.g_mod));
     dumpASTNodesVector(n.do_exprs);
 
     if (n.leaf_name)
@@ -325,7 +325,7 @@ void IntVisitor::visit(ASTCreateTrg &n)
 
         DUMP_STR(*n.leaf_name);
         int_str.append(" ");
-        int_str.append(int2string(n.leaf_type));
+        int_str.append(cast_to_string(n.leaf_type));
         dumpASTNode(n.trimmed_path);
     }
 
@@ -335,7 +335,7 @@ void IntVisitor::visit(ASTCreateTrg &n)
 void IntVisitor::visit(ASTCreateUser &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_CREATEUSER));
+    int_str.append(cast_to_string(AST_CREATEUSER));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.user);
     DUMP_STR(*n.psw);
@@ -345,7 +345,7 @@ void IntVisitor::visit(ASTCreateUser &n)
 void IntVisitor::visit(ASTDDO &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DDO));
+    int_str.append(cast_to_string(AST_DDO));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
     if (n.true_ddo)
@@ -358,18 +358,18 @@ void IntVisitor::visit(ASTDDO &n)
 void IntVisitor::visit(ASTDeclareCopyNsp &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DECLARECOPYNSP));
+    int_str.append(cast_to_string(AST_DECLARECOPYNSP));
     int_str.append(dumpCommonData(n.cd));
-    int_str.append(int2string(n.pres_mod));
+    int_str.append(cast_to_string(n.pres_mod));
     int_str.append(" ");
-    int_str.append(int2string(n.inh_mod));
+    int_str.append(cast_to_string(n.inh_mod));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTDefCollation &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DEFCOLLATION));
+    int_str.append(cast_to_string(AST_DEFCOLLATION));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.uri);
     int_str.append(")");
@@ -378,17 +378,17 @@ void IntVisitor::visit(ASTDefCollation &n)
 void IntVisitor::visit(ASTDefNamespaceDecl &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DEFNAMESPACEDECL));
+    int_str.append(cast_to_string(AST_DEFNAMESPACEDECL));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.uri);
-    int_str.append(int2string(n.type));
+    int_str.append(cast_to_string(n.type));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTDocConst &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DOCCONST));
+    int_str.append(cast_to_string(AST_DOCCONST));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
     int_str.append(")");
@@ -397,7 +397,7 @@ void IntVisitor::visit(ASTDocConst &n)
 void IntVisitor::visit(ASTDocTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DOCTEST));
+    int_str.append(cast_to_string(AST_DOCTEST));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.elem_test);
     int_str.append(")");
@@ -406,7 +406,7 @@ void IntVisitor::visit(ASTDocTest &n)
 void IntVisitor::visit(ASTDropColl &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DROPCOLL));
+    int_str.append(cast_to_string(AST_DROPCOLL));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.coll);
     int_str.append(")");
@@ -415,7 +415,7 @@ void IntVisitor::visit(ASTDropColl &n)
 void IntVisitor::visit(ASTDropDoc &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DROPDOC));
+    int_str.append(cast_to_string(AST_DROPDOC));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.doc);
     dumpASTNode(n.coll);
@@ -425,7 +425,7 @@ void IntVisitor::visit(ASTDropDoc &n)
 void IntVisitor::visit(ASTDropFtIndex &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DROPFTINDEX));
+    int_str.append(cast_to_string(AST_DROPFTINDEX));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.index);
     int_str.append(")");
@@ -434,7 +434,7 @@ void IntVisitor::visit(ASTDropFtIndex &n)
 void IntVisitor::visit(ASTDropIndex &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DROPINDEX));
+    int_str.append(cast_to_string(AST_DROPINDEX));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.index);
     int_str.append(")");
@@ -443,7 +443,7 @@ void IntVisitor::visit(ASTDropIndex &n)
 void IntVisitor::visit(ASTDropMod &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DROPMOD));
+    int_str.append(cast_to_string(AST_DROPMOD));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.module);
     int_str.append(")");
@@ -452,7 +452,7 @@ void IntVisitor::visit(ASTDropMod &n)
 void IntVisitor::visit(ASTDropRole &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DROPROLE));
+    int_str.append(cast_to_string(AST_DROPROLE));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.role);
     int_str.append(")");
@@ -461,7 +461,7 @@ void IntVisitor::visit(ASTDropRole &n)
 void IntVisitor::visit(ASTDropTrg &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DROPTRG));
+    int_str.append(cast_to_string(AST_DROPTRG));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.trg);
     int_str.append(")");
@@ -470,7 +470,7 @@ void IntVisitor::visit(ASTDropTrg &n)
 void IntVisitor::visit(ASTDropUser &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_DROPUSER));
+    int_str.append(cast_to_string(AST_DROPUSER));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.user);
     int_str.append(")");
@@ -479,7 +479,7 @@ void IntVisitor::visit(ASTDropUser &n)
 void IntVisitor::visit(ASTElem &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ELEM));
+    int_str.append(cast_to_string(AST_ELEM));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.pref);
     DUMP_STR(*n.local);
@@ -492,7 +492,7 @@ void IntVisitor::visit(ASTElem &n)
 void IntVisitor::visit(ASTElemConst &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ELEMCONST));
+    int_str.append(cast_to_string(AST_ELEMCONST));
     int_str.append(dumpCommonData(n.cd));
 
     if (n.name)
@@ -513,18 +513,18 @@ void IntVisitor::visit(ASTElemConst &n)
 void IntVisitor::visit(ASTElementTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ELEMENTTEST));
+    int_str.append(cast_to_string(AST_ELEMENTTEST));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.name);
     dumpASTNode(n.type);
-    int_str.append(int2string(n.mod));
+    int_str.append(cast_to_string(n.mod));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTEmptyTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_EMPTYTEST));
+    int_str.append(cast_to_string(AST_EMPTYTEST));
     int_str.append(dumpCommonData(n.cd));
     int_str.append(")");
 }
@@ -537,7 +537,7 @@ void IntVisitor::visit(ASTError &n)
 void IntVisitor::visit(ASTExtExpr &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_EXTEXPR));
+    int_str.append(cast_to_string(AST_EXTEXPR));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNodesVector(n.pragmas);
     dumpASTNode(n.expr);
@@ -547,7 +547,7 @@ void IntVisitor::visit(ASTExtExpr &n)
 void IntVisitor::visit(ASTFilterStep &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_FILTERSTEP));
+    int_str.append(cast_to_string(AST_FILTERSTEP));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.cont);
     dumpASTNode(n.expr);
@@ -563,7 +563,7 @@ void IntVisitor::visit(ASTFilterStep &n)
 void IntVisitor::visit(ASTFLWOR &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_FLWOR));
+    int_str.append(cast_to_string(AST_FLWOR));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNodesVector(n.fls);
     dumpASTNode(n.where);
@@ -575,7 +575,7 @@ void IntVisitor::visit(ASTFLWOR &n)
 void IntVisitor::visit(ASTFor &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_FOR));
+    int_str.append(cast_to_string(AST_FOR));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.tv);
     dumpASTNode(n.pv);
@@ -586,7 +586,7 @@ void IntVisitor::visit(ASTFor &n)
 void IntVisitor::visit(ASTFunCall &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_FUNCALL));
+    int_str.append(cast_to_string(AST_FUNCALL));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.pref);
     DUMP_STR(*n.local);
@@ -608,7 +608,7 @@ void IntVisitor::visit(ASTFunCall &n)
 void IntVisitor::visit(ASTFuncDecl &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_FUNCDECL));
+    int_str.append(cast_to_string(AST_FUNCDECL));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.pref);
     DUMP_STR(*n.local);
@@ -625,9 +625,9 @@ void IntVisitor::visit(ASTFuncDecl &n)
 void IntVisitor::visit(ASTGrantPriv &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_GRANTPRIV));
+    int_str.append(cast_to_string(AST_GRANTPRIV));
     int_str.append(dumpCommonData(n.cd));
-    int_str.append(int2string(n.mod));
+    int_str.append(cast_to_string(n.mod));
     DUMP_STR(*n.user);
     DUMP_STR(*n.priv);
 
@@ -640,7 +640,7 @@ void IntVisitor::visit(ASTGrantPriv &n)
 void IntVisitor::visit(ASTGrantRole &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_GRANTROLE));
+    int_str.append(cast_to_string(AST_GRANTROLE));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.role);
     DUMP_STR(*n.role_to);
@@ -650,7 +650,7 @@ void IntVisitor::visit(ASTGrantRole &n)
 void IntVisitor::visit(ASTIf &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_IF));
+    int_str.append(cast_to_string(AST_IF));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.i_expr);
     dumpASTNode(n.t_expr);
@@ -661,7 +661,7 @@ void IntVisitor::visit(ASTIf &n)
 void IntVisitor::visit(ASTInstOf &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_INSTOF));
+    int_str.append(cast_to_string(AST_INSTOF));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
     dumpASTNode(n.type);
@@ -671,7 +671,7 @@ void IntVisitor::visit(ASTInstOf &n)
 void IntVisitor::visit(ASTItemTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ITEMTEST));
+    int_str.append(cast_to_string(AST_ITEMTEST));
     int_str.append(dumpCommonData(n.cd));
     int_str.append(")");
 }
@@ -679,7 +679,7 @@ void IntVisitor::visit(ASTItemTest &n)
 void IntVisitor::visit(ASTLet &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_LET));
+    int_str.append(cast_to_string(AST_LET));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.tv);
     dumpASTNode(n.expr);
@@ -689,7 +689,7 @@ void IntVisitor::visit(ASTLet &n)
 void IntVisitor::visit(ASTLibModule &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_LIBMODULE));
+    int_str.append(cast_to_string(AST_LIBMODULE));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.moduleDecl);
     dumpASTNode(n.prolog);
@@ -699,17 +699,17 @@ void IntVisitor::visit(ASTLibModule &n)
 void IntVisitor::visit(ASTLit &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_LIT));
+    int_str.append(cast_to_string(AST_LIT));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.lit);
-    int_str.append(int2string(n.type));
+    int_str.append(cast_to_string(n.type));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTLoadFile &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_LOADFILE));
+    int_str.append(cast_to_string(AST_LOADFILE));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.file);
     DUMP_STR(*n.doc);
@@ -723,17 +723,17 @@ void IntVisitor::visit(ASTLoadFile &n)
 void IntVisitor::visit(ASTLoadModule &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_LOADMODULE));
+    int_str.append(cast_to_string(AST_LOADMODULE));
     int_str.append(dumpCommonData(n.cd));
     dumpASTStrings(n.modules);
-    int_str.append(int2string(n.mod));
+    int_str.append(cast_to_string(n.mod));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTMainModule &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_MAINMODULE));
+    int_str.append(cast_to_string(AST_MAINMODULE));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.prolog);
     dumpASTNode(n.query);
@@ -743,7 +743,7 @@ void IntVisitor::visit(ASTMainModule &n)
 void IntVisitor::visit(ASTMetaCols &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_METACOLS));
+    int_str.append(cast_to_string(AST_METACOLS));
     int_str.append(dumpCommonData(n.cd));
 
     if (n.need_stats)
@@ -757,7 +757,7 @@ void IntVisitor::visit(ASTMetaCols &n)
 void IntVisitor::visit(ASTMetaDocs &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_METADOCS));
+    int_str.append(cast_to_string(AST_METADOCS));
     int_str.append(dumpCommonData(n.cd));
 
     if (n.need_stats)
@@ -773,7 +773,7 @@ void IntVisitor::visit(ASTMetaDocs &n)
 void IntVisitor::visit(ASTMetaSchemaCol &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_METASCHEMACOL));
+    int_str.append(cast_to_string(AST_METASCHEMACOL));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.coll);
     int_str.append(")");
@@ -782,7 +782,7 @@ void IntVisitor::visit(ASTMetaSchemaCol &n)
 void IntVisitor::visit(ASTMetaSchemaDoc &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_METASCHEMADOC));
+    int_str.append(cast_to_string(AST_METASCHEMADOC));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.doc);
     dumpASTNode(n.coll);
@@ -792,7 +792,7 @@ void IntVisitor::visit(ASTMetaSchemaDoc &n)
 void IntVisitor::visit(ASTModImport &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_MODIMPORT));
+    int_str.append(cast_to_string(AST_MODIMPORT));
     int_str.append(dumpCommonData(n.cd));
 
     if (n.name)
@@ -809,7 +809,7 @@ void IntVisitor::visit(ASTModImport &n)
 void IntVisitor::visit(ASTModuleDecl &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_MODULEDECL));
+    int_str.append(cast_to_string(AST_MODULEDECL));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.name);
     DUMP_STR(*n.uri);
@@ -820,7 +820,7 @@ void IntVisitor::visit(ASTModuleDecl &n)
 void IntVisitor::visit(ASTNameTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_NAMETEST));
+    int_str.append(cast_to_string(AST_NAMETEST));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.pref);
     DUMP_STR(*n.local);
@@ -834,7 +834,7 @@ void IntVisitor::visit(ASTNameTest &n)
 void IntVisitor::visit(ASTNamespaceDecl &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_NAMESPACEDECL));
+    int_str.append(cast_to_string(AST_NAMESPACEDECL));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.name);
     DUMP_STR(*n.uri);
@@ -844,7 +844,7 @@ void IntVisitor::visit(ASTNamespaceDecl &n)
 void IntVisitor::visit(ASTNodeTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_NODETEST));
+    int_str.append(cast_to_string(AST_NODETEST));
     int_str.append(dumpCommonData(n.cd));
     int_str.append(")");
 }
@@ -852,7 +852,7 @@ void IntVisitor::visit(ASTNodeTest &n)
 void IntVisitor::visit(ASTNsp &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_NSP));
+    int_str.append(cast_to_string(AST_NSP));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.name);
 
@@ -865,7 +865,7 @@ void IntVisitor::visit(ASTNsp &n)
 void IntVisitor::visit(ASTOption &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_OPTION));
+    int_str.append(cast_to_string(AST_OPTION));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.pref);
     DUMP_STR(*n.local);
@@ -893,45 +893,45 @@ void IntVisitor::visit(ASTOption &n)
 void IntVisitor::visit(ASTOrdExpr &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ORDEXPR));
+    int_str.append(cast_to_string(AST_ORDEXPR));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
-    int_str.append(int2string(n.type));
+    int_str.append(cast_to_string(n.type));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTOrder &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ORDER));
+    int_str.append(cast_to_string(AST_ORDER));
     int_str.append(dumpCommonData(n.cd));
-    int_str.append(int2string(n.mod));
+    int_str.append(cast_to_string(n.mod));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTOrderBy &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ORDERBY));
+    int_str.append(cast_to_string(AST_ORDERBY));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNodesVector(n.specs);
-    int_str.append(int2string(n.type));
+    int_str.append(cast_to_string(n.type));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTOrderEmpty &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ORDEREMPTY));
+    int_str.append(cast_to_string(AST_ORDEREMPTY));
     int_str.append(dumpCommonData(n.cd));
-    int_str.append(int2string(n.mod));
+    int_str.append(cast_to_string(n.mod));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTOrderMod &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ORDERMOD));
+    int_str.append(cast_to_string(AST_ORDERMOD));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.ad_mod);
     dumpASTNode(n.em_mod);
@@ -942,9 +942,9 @@ void IntVisitor::visit(ASTOrderMod &n)
 void IntVisitor::visit(ASTOrderModInt &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ORDERMODINT));
+    int_str.append(cast_to_string(AST_ORDERMODINT));
     int_str.append(dumpCommonData(n.cd));
-    int_str.append(int2string(n.mod));
+    int_str.append(cast_to_string(n.mod));
 
     if (n.uri)
         DUMP_STR(*n.uri);
@@ -955,7 +955,7 @@ void IntVisitor::visit(ASTOrderModInt &n)
 void IntVisitor::visit(ASTOrderSpec &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_ORDERSPEC));
+    int_str.append(cast_to_string(AST_ORDERSPEC));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
     dumpASTNode(n.mod);
@@ -965,7 +965,7 @@ void IntVisitor::visit(ASTOrderSpec &n)
 void IntVisitor::visit(ASTPIConst &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_PICONST));
+    int_str.append(cast_to_string(AST_PICONST));
     int_str.append(dumpCommonData(n.cd));
 
     if (n.name)
@@ -981,7 +981,7 @@ void IntVisitor::visit(ASTPIConst &n)
 void IntVisitor::visit(ASTPi &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_PI));
+    int_str.append(cast_to_string(AST_PI));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.name);
     DUMP_STR(*n.cont);
@@ -992,9 +992,9 @@ void IntVisitor::visit(ASTPi &n)
 void IntVisitor::visit(ASTPiTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_PITEST));
+    int_str.append(cast_to_string(AST_PITEST));
     int_str.append(dumpCommonData(n.cd));
-    int_str.append(int2string(n.type));
+    int_str.append(cast_to_string(n.type));
 
     if (n.test)
         DUMP_STR(*n.test);
@@ -1005,7 +1005,7 @@ void IntVisitor::visit(ASTPiTest &n)
 void IntVisitor::visit(ASTPosVar &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_POSVAR));
+    int_str.append(cast_to_string(AST_POSVAR));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.var);
     int_str.append(")");
@@ -1014,7 +1014,7 @@ void IntVisitor::visit(ASTPosVar &n)
 void IntVisitor::visit(ASTPragma &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_PRAGMA));
+    int_str.append(cast_to_string(AST_PRAGMA));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.pref);
     DUMP_STR(*n.local);
@@ -1025,7 +1025,7 @@ void IntVisitor::visit(ASTPragma &n)
 void IntVisitor::visit(ASTPred &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_PRED));
+    int_str.append(cast_to_string(AST_PRED));
     int_str.append(dumpCommonData(n.cd));
     n.seriliazeConjuncts(int_str, *this);
     int_str.append(")");
@@ -1034,7 +1034,7 @@ void IntVisitor::visit(ASTPred &n)
 void IntVisitor::visit(ASTProlog &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_PROLOG));
+    int_str.append(cast_to_string(AST_PROLOG));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNodesVector(n.decls);
     int_str.append(")");
@@ -1043,7 +1043,7 @@ void IntVisitor::visit(ASTProlog &n)
 void IntVisitor::visit(ASTQName &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_QNAME));
+    int_str.append(cast_to_string(AST_QNAME));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.uri);
     DUMP_STR(*n.pref);
@@ -1054,22 +1054,22 @@ void IntVisitor::visit(ASTQName &n)
 void IntVisitor::visit(ASTQuantExpr &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_QUANTEXPR));
+    int_str.append(cast_to_string(AST_QUANTEXPR));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.var);
     dumpASTNode(n.expr);
     dumpASTNode(n.sat);
-    int_str.append(int2string(n.type));
+    int_str.append(cast_to_string(n.type));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTQuery &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_QUERY));
+    int_str.append(cast_to_string(AST_QUERY));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.query);
-    int_str.append(int2string(n.type));
+    int_str.append(cast_to_string(n.type));
     DUMP_BOOL(n.is_trigger);
     int_str.append(")");
 }
@@ -1077,7 +1077,7 @@ void IntVisitor::visit(ASTQuery &n)
 void IntVisitor::visit(ASTRenameColl &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_RENAMECOLL));
+    int_str.append(cast_to_string(AST_RENAMECOLL));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.name_old);
     dumpASTNode(n.name_new);
@@ -1087,9 +1087,9 @@ void IntVisitor::visit(ASTRenameColl &n)
 void IntVisitor::visit(ASTRevokePriv &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_REVOKEPRIV));
+    int_str.append(cast_to_string(AST_REVOKEPRIV));
     int_str.append(dumpCommonData(n.cd));
-    int_str.append(int2string(n.mod));
+    int_str.append(cast_to_string(n.mod));
     DUMP_STR(*n.user);
     DUMP_STR(*n.priv);
 
@@ -1102,7 +1102,7 @@ void IntVisitor::visit(ASTRevokePriv &n)
 void IntVisitor::visit(ASTRevokeRole &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_REVOKEROLE));
+    int_str.append(cast_to_string(AST_REVOKEROLE));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.role);
     DUMP_STR(*n.role_from);
@@ -1112,7 +1112,7 @@ void IntVisitor::visit(ASTRevokeRole &n)
 void IntVisitor::visit(ASTSchemaAttrTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_SCHEMAATTRTEST));
+    int_str.append(cast_to_string(AST_SCHEMAATTRTEST));
     int_str.append(dumpCommonData(n.cd));
     n.name->accept(*this);
     int_str.append(")");
@@ -1121,7 +1121,7 @@ void IntVisitor::visit(ASTSchemaAttrTest &n)
 void IntVisitor::visit(ASTSchemaElemTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_SCHEMAELEMTEST));
+    int_str.append(cast_to_string(AST_SCHEMAELEMTEST));
     int_str.append(dumpCommonData(n.cd));
     n.name->accept(*this);
     int_str.append(")");
@@ -1130,7 +1130,7 @@ void IntVisitor::visit(ASTSchemaElemTest &n)
 void IntVisitor::visit(ASTSeq &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_SEQ));
+    int_str.append(cast_to_string(AST_SEQ));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNodesVector(n.exprs);
     int_str.append(")");
@@ -1139,7 +1139,7 @@ void IntVisitor::visit(ASTSeq &n)
 void IntVisitor::visit(ASTSpaceSeq &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_SPACESEQ));
+    int_str.append(cast_to_string(AST_SPACESEQ));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
     DUMP_BOOL(n.atomize);
@@ -1149,7 +1149,7 @@ void IntVisitor::visit(ASTSpaceSeq &n)
 void IntVisitor::visit(ASTTextConst &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_TEXTCONST));
+    int_str.append(cast_to_string(AST_TEXTCONST));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
     DUMP_BOOL(n.deep_copy);
@@ -1159,7 +1159,7 @@ void IntVisitor::visit(ASTTextConst &n)
 void IntVisitor::visit(ASTTextTest &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_TEXTTEST));
+    int_str.append(cast_to_string(AST_TEXTTEST));
     int_str.append(dumpCommonData(n.cd));
     int_str.append(")");
 }
@@ -1167,7 +1167,7 @@ void IntVisitor::visit(ASTTextTest &n)
 void IntVisitor::visit(ASTTreat &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_TREAT));
+    int_str.append(cast_to_string(AST_TREAT));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
     dumpASTNode(n.type);
@@ -1177,9 +1177,9 @@ void IntVisitor::visit(ASTTreat &n)
 void IntVisitor::visit(ASTType &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_TYPE));
+    int_str.append(cast_to_string(AST_TYPE));
     int_str.append(dumpCommonData(n.cd));
-    int_str.append(int2string(n.type));
+    int_str.append(cast_to_string(n.type));
     DUMP_STR(*n.name);
     int_str.append(")");
 }
@@ -1187,27 +1187,27 @@ void IntVisitor::visit(ASTType &n)
 void IntVisitor::visit(ASTTypeSeq &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_TYPESEQ));
+    int_str.append(cast_to_string(AST_TYPESEQ));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.type_test);
-    int_str.append(int2string(n.mod));
+    int_str.append(cast_to_string(n.mod));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTTypeSingle &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_TYPESINGLE));
+    int_str.append(cast_to_string(AST_TYPESINGLE));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.type);
-    int_str.append(int2string(n.mod));
+    int_str.append(cast_to_string(n.mod));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTTypeSwitch &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_TYPESWITCH));
+    int_str.append(cast_to_string(AST_TYPESWITCH));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
     dumpASTNodesVector(n.cases);
@@ -1218,7 +1218,7 @@ void IntVisitor::visit(ASTTypeSwitch &n)
 void IntVisitor::visit(ASTTypeVar &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_TYPEVAR));
+    int_str.append(cast_to_string(AST_TYPEVAR));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.type);
     dumpASTNode(n.var);
@@ -1228,50 +1228,50 @@ void IntVisitor::visit(ASTTypeVar &n)
 void IntVisitor::visit(ASTUop &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_UOP));
+    int_str.append(cast_to_string(AST_UOP));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.expr);
-    int_str.append(int2string(n.op));
+    int_str.append(cast_to_string(n.op));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTUpdDel &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_UPDDEL));
+    int_str.append(cast_to_string(AST_UPDDEL));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.what);
-    int_str.append(int2string(n.type));
+    int_str.append(cast_to_string(n.type));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTUpdInsert &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_UPDINSERT));
+    int_str.append(cast_to_string(AST_UPDINSERT));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.what);
     dumpASTNode(n.where);
-    int_str.append(int2string(n.type));
+    int_str.append(cast_to_string(n.type));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTUpdMove &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_UPDMOVE));
+    int_str.append(cast_to_string(AST_UPDMOVE));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.var);
     dumpASTNode(n.what);
     dumpASTNode(n.where);
-    int_str.append(int2string(n.type));
+    int_str.append(cast_to_string(n.type));
     int_str.append(")");
 }
 
 void IntVisitor::visit(ASTUpdRename &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_UPDRENAME));
+    int_str.append(cast_to_string(AST_UPDRENAME));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.what);
     DUMP_STR(*n.pref);
@@ -1282,7 +1282,7 @@ void IntVisitor::visit(ASTUpdRename &n)
 void IntVisitor::visit(ASTUpdReplace &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_UPDREPLACE));
+    int_str.append(cast_to_string(AST_UPDREPLACE));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.var);
     dumpASTNode(n.what);
@@ -1293,7 +1293,7 @@ void IntVisitor::visit(ASTUpdReplace &n)
 void IntVisitor::visit(ASTVar &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_VAR));
+    int_str.append(cast_to_string(AST_VAR));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.pref);
     DUMP_STR(*n.local);
@@ -1307,7 +1307,7 @@ void IntVisitor::visit(ASTVar &n)
 void IntVisitor::visit(ASTVarDecl &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_VARDECL));
+    int_str.append(cast_to_string(AST_VARDECL));
     int_str.append(dumpCommonData(n.cd));
     dumpASTNode(n.var);
     dumpASTNode(n.type);
@@ -1318,7 +1318,7 @@ void IntVisitor::visit(ASTVarDecl &n)
 void IntVisitor::visit(ASTVersionDecl &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_VERSIONDECL));
+    int_str.append(cast_to_string(AST_VERSIONDECL));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.xq_version);
 
@@ -1331,7 +1331,7 @@ void IntVisitor::visit(ASTVersionDecl &n)
 void IntVisitor::visit(ASTXMLComm &n)
 {
     int_str.append("(");
-    int_str.append(int2string(AST_XMLCOMM));
+    int_str.append(cast_to_string(AST_XMLCOMM));
     int_str.append(dumpCommonData(n.cd));
     DUMP_STR(*n.cont);
     DUMP_BOOL(n.deep_copy);

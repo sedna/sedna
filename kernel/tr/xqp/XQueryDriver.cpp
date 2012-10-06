@@ -17,6 +17,10 @@
 #include "tr/opt/algebra/IndependentPlan.h"
 #include "tr/models/XmlConstructor.h"
 
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 2)
+#pragma GCC diagnostic ignored "-Wsequence-point"
+#endif /* GNUC */
+
 namespace sedna
 {
     XQStdFunctionInfo XQueryDriver::stdFuncs;

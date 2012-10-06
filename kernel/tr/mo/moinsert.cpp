@@ -181,7 +181,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
     schema_node_cptr parent_snode;
     enum text_insert_t insert_type = ti_new_node;
 
-    if (get_text_size(source) > STRMAXSIZE) throw USER_EXCEPTION(SE2037);
+    if ((uint64_t)get_text_size(source) > STRMAXSIZE) throw USER_EXCEPTION(SE2037);
 
     check_common_constraints(left_sib, right_sib, parent);
     find_relatives(node_info);
@@ -230,7 +230,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
     if (insert_type == ti_new_node) {
         insertTextValue(node_info.node_xptr, source);
 
-        if (cdataflag_hint & cdata_section > 0) {
+        if ((cdataflag_hint & cdata_section) > 0) {
             ((internal::text_node *) xaddr(checkp(node_info.node_xptr)))->flags |= cdata_section;
         }
     } else {

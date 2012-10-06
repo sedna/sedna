@@ -22,9 +22,9 @@
 }
 
 %{
-#include "XQueryDriver.h"
-#include "XQueryLexer.h"
-#include "XQueryParser.hpp"
+#include "tr/xqp/XQueryDriver.h"
+#include "tr/xqp/XQueryLexer.h"
+#include "tr/xqp/XQueryParser.hpp"
 
 #include "common/errdbg/exceptions.h"
 #include "tr/executor/base/xs_helper.h"

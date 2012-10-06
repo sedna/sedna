@@ -7,7 +7,7 @@
 #define _TR_UTILS_H_
 
 #include "common/sedna.h"
-#include "common/utils.h"
+#include "auxiliary/utils.h"
 
 
 //#define TIME_DEBUG_INFO_ON

@@ -494,7 +494,7 @@ inline pstr_long_block_list_entry * intl_last_blk_last_ble(const int mapsize, co
 
 static xptr pstr_long_append_tail_mem2(const xptr str_ptr,const char *data, str_off_t size0)
 {
-	U_ASSERT(size0 < SIZE_MAX);
+	U_ASSERT((size_t)size0 < SIZE_MAX);
 	//TODO: move string first
 	pstr_long_off_t size = size0;
 	intl_last_blk = str_ptr;
@@ -1022,8 +1022,8 @@ void intl_seek_byteofs(xptr &res, pstr_long_block_list_map_entry *&mapent, int &
 			int ble_ofs = PAGE_SIZE - ((int)ind + 1 + gap)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE;
 			pstr_long_block_list_entry *ble = (pstr_long_block_list_entry *)((char*)XADDR(mapent->list_blk) + ble_ofs);
 
-			U_ASSERT(ofs-cur >= 0);
-			U_ASSERT(ofs-cur < PAGE_SIZE-PSTR_LONG_BLK_HDR_SIZE);
+			U_ASSERT(ofs - cur >= 0);
+			U_ASSERT( (size_t)(ofs - cur) < PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
 			const int ofs_in_blk = (int)(ofs-cur) + PSTR_LONG_BLK_HDR_SIZE;
 
 			res = ble->str_blk + ofs_in_blk;
@@ -1044,8 +1044,8 @@ void intl_seek_byteofs(xptr &res, pstr_long_block_list_map_entry *&mapent, int &
 		cur += skip_fb * (pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
 
 		pstr_long_block_list_entry *ble = (pstr_long_block_list_entry *)(intl_block_list_end_addr() - (((int)skip_fb + 1)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE));
-		U_ASSERT(ofs-cur >= 0);
-		U_ASSERT(ofs-cur < PAGE_SIZE-PSTR_LONG_BLK_HDR_SIZE);
+		U_ASSERT(ofs - cur >= 0);
+		U_ASSERT( (size_t)(ofs - cur) < PAGE_SIZE-PSTR_LONG_BLK_HDR_SIZE);
 		const int ofs_in_blk = (int)(ofs-cur) + PSTR_LONG_BLK_HDR_SIZE;
 
 		res = ble->str_blk + ofs_in_blk;
@@ -1057,8 +1057,8 @@ void intl_seek_byteofs(xptr &res, pstr_long_block_list_map_entry *&mapent, int &
 	cur += sz;
 	U_ASSERT((int)skip_fb == intl_ftr.block_list_size);
 	U_ASSERT(intl_ftr.cursor > 0);
-	U_ASSERT(ofs-cur >= 0);
-	U_ASSERT(ofs-cur < PAGE_SIZE-PSTR_LONG_BLK_HDR_SIZE);
+	U_ASSERT(ofs - cur >= 0);
+	U_ASSERT( (size_t)(ofs - cur) < PAGE_SIZE-PSTR_LONG_BLK_HDR_SIZE);
 	const int ofs_in_blk = (int)(ofs-cur) + PSTR_LONG_BLK_HDR_SIZE;
 
 	res = intl_last_blk + ofs_in_blk;
@@ -1092,7 +1092,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 		int cursor = -intl_ftr.cursor;
 		//TODO: check & remove this line - U_ASSERT(intl_ftr.block_list_size > 0);
 		U_ASSERT((PSTR_LONG_BLK_HDR(intl_last_blk))->prev_blk != XNULL);
-		if (cursor - PSTR_LONG_BLK_HDR_SIZE >= size)
+		if ((int64_t)(cursor - PSTR_LONG_BLK_HDR_SIZE) >= size)
 		{
 			intl_ftr.cursor += (int)size;
 			xptr pred_blk = (PSTR_LONG_BLK_HDR(intl_last_blk))->prev_blk;
@@ -1101,7 +1101,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 			int bs0 = intl_ftr.block_list_size;
 			if (bs > 0)
 				bs--;
-			if (PAGE_SIZE + size >= cursor + (intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE) + ((bs)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE) + PSTR_LONG_LAST_BLK_FTR_SIZE)
+			if (PAGE_SIZE + size >= (int64_t) (cursor + (intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE) + ((bs)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE) + PSTR_LONG_LAST_BLK_FTR_SIZE))
 			{
 				intl_copy_map_to_buf();
 
@@ -1199,7 +1199,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 		} //if (cursor - PSTR_LONG_BLK_HDR_SIZE >= size)
 	}
 	else
-		if (intl_ftr.cursor - PSTR_LONG_BLK_HDR_SIZE >= size)
+		if ((int64_t)(intl_ftr.cursor - PSTR_LONG_BLK_HDR_SIZE) >= size)
 		{
 			CHECKP(intl_last_blk);
 			VMM_SIGNAL_MODIFICATION(intl_last_blk);
@@ -1975,7 +1975,7 @@ pstr_long_off_t pstr_long_bytelength2(const xptr data)
 
 	if (intl_ftr.cursor >= 0)
 	{
-		U_ASSERT(intl_ftr.cursor >= PSTR_LONG_BLK_HDR_SIZE);
+		U_ASSERT((size_t)(intl_ftr.cursor) >= PSTR_LONG_BLK_HDR_SIZE);
 		cur += intl_ftr.cursor-PSTR_LONG_BLK_HDR_SIZE;
 	}
 	else

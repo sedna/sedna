@@ -439,12 +439,12 @@ post_operations:
 
 
 void pstr_defragment(xptr blk) {
-    char		buf[PAGE_SIZE];
-    sort_item*	last=NULL;
+    char    buf[PAGE_SIZE];
+    sort_item * last=NULL;
 
-    shft		frag_shft=0;	/* how far to move to the left next fragment of data */
-    shft		frag_src=NULL;	/* fragment begining */
-    shft		frag_size=0;	/* fragment size */
+    shft frag_shft=0;	/* how far to move to the left next fragment of data */
+    shft frag_src=0;	/* fragment begining */
+    shft frag_size=0;	/* fragment size */
 
 #ifndef PSTR_NO_CHECKP
     CHECKP(blk);
@@ -498,7 +498,7 @@ void pstr_defragment(xptr blk) {
                     *(shft*)(buf + goback_it->item_shft)-=frag_shft;
                 }
             }
-            frag_src=NULL;
+            frag_src = 0;
             frag_shft+=((hh_slot*)((char*)XADDR(blk) + it->item_shft))->hole_size;
         } else if (it->item_type == ITEM_PSTR) {
             //cout << "this is a fragment:" <<it->sort_value<< endl;

@@ -147,7 +147,7 @@ tuple_cell tuple_cell::make_sure_light_atomic(const tuple_cell& tc)
     if (tc.is_heavy_atomic())
     {
          /* Check that we will no be out of size_t bounds */ 
-         if (tc.get_strlen_vmm() > SIZE_MAX-1)
+         if ((uint64_t)tc.get_strlen_vmm() > SIZE_MAX-1)
             throw USER_EXCEPTION2(SE1003, "Too large atomic string");
 		 
 		 /* Convsersion is valid since we've checked length */
@@ -182,7 +182,7 @@ char* tuple_cell::copy_string(char *buf, size_t n) const
         case tc_light_atomic_var_size:  return strncpy(buf, get_str_mem(), n);
 
         case tc_heavy_atomic_estr:
-        case tc_heavy_atomic_pstr_short:if (get_strlen_vmm() < n)
+        case tc_heavy_atomic_pstr_short:if ((uint64_t)get_strlen_vmm() < n)
                                         {
                                             estr_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
                                             buf[get_strlen_vmm()] = '\0';
@@ -193,7 +193,7 @@ char* tuple_cell::copy_string(char *buf, size_t n) const
                                         }
                                         return buf;
 
-        case tc_heavy_atomic_pstr_long: if (get_strlen_vmm() < n)
+        case tc_heavy_atomic_pstr_long: if ((uint64_t)get_strlen_vmm() < n)
                                         {
                                             pstr_long_copy_to_buffer2(buf, *(xptr*)(&data), get_strlen_vmm());
                                             buf[get_strlen_vmm()] = '\0';
