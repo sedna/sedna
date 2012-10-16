@@ -1,6 +1,6 @@
 /*
  * File:  SednaConnectionImpl.java
- * Copyright (C) 2004-2011 ISP RAS
+ * Copyright (C) 2004-2012 ISP RAS
  * The Institute for System Programming of the Russian Academy of Sciences
  */
 
@@ -22,25 +22,32 @@ class SednaConnectionImpl implements SednaConnection {
     OutputStream          outputStream;
 
     /* Note, don't use enum to save compatibility with old Java */
-    private static final class SessionOption {
-        static public SessionOption SEDNA_DEBUG_MODE    = new SessionOption(NetOps.se_Session_Debug_On, NetOps.se_Session_Debug_Off);
-        static public SessionOption SEDNA_READONLY_MODE = new SessionOption(NetOps.se_Session_Readonly_On, NetOps.se_Session_Readonly_Off);
+    private static class SessionOption {
+        static public SessionOption SEDNA_QUERY_EXEC_TIMEOUT = new SessionOption(NetOps.se_Query_Exec_Timeout);
 
-        private final int onCode;
-        private final int offCode;
+        private final int code;
 
-        private SessionOption(int on, int off) {
-            this.onCode = on;
-            this.offCode = off;
+        private SessionOption(int code) {
+            this.code = code;
         }
 
-        public int getOnCode() {
-            return onCode;
-        }
-        public int getOffCode() {
-            return offCode;
+        public int getCode() {
+            return code;
         }
     }
+
+    /* Note, don't use enum to save compatibility with old Java */
+    private static final class BooleanSessionOption extends SessionOption {
+        static public BooleanSessionOption SEDNA_DEBUG_MODE_ON     = new BooleanSessionOption(NetOps.se_Session_Debug_On);
+        static public BooleanSessionOption SEDNA_DEBUG_MODE_OFF    = new BooleanSessionOption(NetOps.se_Session_Debug_Off);
+        static public BooleanSessionOption SEDNA_READONLY_MODE_ON  = new BooleanSessionOption(NetOps.se_Session_Readonly_On);
+        static public BooleanSessionOption SEDNA_READONLY_MODE_OFF = new BooleanSessionOption(NetOps.se_Session_Readonly_Off);
+
+        private BooleanSessionOption(int code) {
+            super(code);
+        }
+    }
+
 
     public void begin() throws DriverException {
         if (this.isClose) {
@@ -160,53 +167,91 @@ class SednaConnectionImpl implements SednaConnection {
     }
 
     /**
-     * Internal helper to set all session options within one place
+     * Internal helper to set value session options within one place
      * @param option session option to set, must be one of the statically defined in
      * {@link ru.ispras.sedna.driver.SednaConnectionImpl.SessionOption} class
-     * @param mode either <code>true</code> to turn option on or <code>false</code>
-     * to turn it off
-     * @throws DriverException in case of unknown option or some other error
+     * @param value value to be set for the option.
+     * @throws DriverException in case of the protocol error
      */
-    private void setSessionOption(SessionOption option, boolean mode) throws DriverException {
-        if(option == SessionOption.SEDNA_DEBUG_MODE || option == SessionOption.SEDNA_READONLY_MODE) {
-            if (this.isClose)
-                throw new DriverException(ErrorCodes.SE3028, "");
+    private void setSessionOption(SessionOption option, int value) throws DriverException {
+        if (this.isClose) {
+            throw new DriverException(ErrorCodes.SE3028, "");
+        }
 
-            NetOps.Message msg = new NetOps.Message();
+        NetOps.Message msg = new NetOps.Message();
 
-            msg.instruction = NetOps.se_SetSessionOptions;
-            /* total set-option message length */
-            msg.length      = 9;
+        msg.instruction = NetOps.se_SetSessionOptions;
+        /* total set-option message length */
+        msg.length = 13;
 
-            if(mode) NetOps.writeInt(option.getOnCode(),  msg.body, 0);
-            else     NetOps.writeInt(option.getOffCode(), msg.body, 0);
+        NetOps.writeInt(option.getCode(),  msg.body, 0);
 
-            /* option value string type */
-            msg.body[4] = 0;
-            /* option value length */
-            NetOps.writeInt(0, msg.body, 5);
+        /* option value string type */
+        msg.body[4] = 0;
+        /* option value length (int)*/
+        NetOps.writeInt(4, msg.body, 5);
+        /* option value */
+        NetOps.writeInt(value, msg.body, 9);
 
-            NetOps.writeMsg(msg, outputStream);
-            NetOps.readMsg(msg, bufInputStream);
+        NetOps.writeMsg(msg, outputStream);
+        NetOps.readMsg(msg, bufInputStream);
 
-            if (msg.instruction == NetOps.se_ErrorResponse) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
-            } else if (msg.instruction != NetOps.se_SetSessionOptionsOk) {
-                throw new DriverException(ErrorCodes.SE3008, "code returned: " + msg.instruction);
-            }
-        } else {
-            throw new DriverException(ErrorCodes.SE4619, "");
+        if (msg.instruction == NetOps.se_ErrorResponse) {
+            throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
+        } else if (msg.instruction != NetOps.se_SetSessionOptionsOk) {
+            throw new DriverException(ErrorCodes.SE3008, "code returned: " + msg.instruction);
+        }
+    }
+
+    /**
+     * Internal helper to set boolean session options (with ON/OFF state) within one place
+     * @param option session option to set, must be one of the statically defined in
+     * {@link ru.ispras.sedna.driver.SednaConnectionImpl.SessionOption} class
+     * @throws DriverException in case of the protocol error
+     */
+    private void setSessionOption(BooleanSessionOption option) throws DriverException {
+        if (this.isClose) {
+            throw new DriverException(ErrorCodes.SE3028, "");
+        }
+
+        NetOps.Message msg = new NetOps.Message();
+
+        msg.instruction = NetOps.se_SetSessionOptions;
+        /* total set-option message length */
+        msg.length = 9;
+
+        NetOps.writeInt(option.getCode(),  msg.body, 0);
+
+        /* option value string type */
+        msg.body[4] = 0;
+        /* option value length */
+        NetOps.writeInt(0, msg.body, 5);
+
+        NetOps.writeMsg(msg, outputStream);
+        NetOps.readMsg(msg, bufInputStream);
+
+        if (msg.instruction == NetOps.se_ErrorResponse) {
+            throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
+        } else if (msg.instruction != NetOps.se_SetSessionOptionsOk) {
+            throw new DriverException(ErrorCodes.SE3008, "code returned: " + msg.instruction);
         }
     }
 
 
 
     public void setDebugMode(boolean debug) throws DriverException {
-        setSessionOption(SessionOption.SEDNA_DEBUG_MODE, debug);
+        setSessionOption(debug ? BooleanSessionOption.SEDNA_DEBUG_MODE_ON : BooleanSessionOption.SEDNA_DEBUG_MODE_OFF);
     }
 
     public void setReadonlyMode(boolean debug) throws DriverException {
-        setSessionOption(SessionOption.SEDNA_READONLY_MODE, debug);
+        setSessionOption(debug ? BooleanSessionOption.SEDNA_READONLY_MODE_ON : BooleanSessionOption.SEDNA_READONLY_MODE_OFF);
+    }
+
+    public void setQueryTimeout(int seconds) throws DriverException {
+        if (seconds < 0) {
+            throw new IllegalArgumentException("must be 0 (infinite) or positive integer");
+        }
+        setSessionOption(SessionOption.SEDNA_QUERY_EXEC_TIMEOUT, seconds);
     }
 
     public boolean isClose() {
