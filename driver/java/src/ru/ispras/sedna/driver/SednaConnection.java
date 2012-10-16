@@ -80,8 +80,9 @@ public interface SednaConnection {
 
     /**
      * Setting connection into debug mode allows getting debug information when XQuery query
-     * fails due to some reason (see Sedna Programmer's Guide for details for details).
-     * When the query fails debug information is accessible through {@link ru.ispras.sedna.driver.DriverException#getDebugInfo()}.
+     * fails due to some reason (see Sedna Programmer's Guide for details).
+     * When the query fails debug information is accessible through
+     * {@link ru.ispras.sedna.driver.DriverException#getDebugInfo()}.
      * To set the connection into debug mode use this method. For example:
      *
      * <pre>
@@ -119,6 +120,36 @@ public interface SednaConnection {
      */
     public void setReadonlyMode(boolean mode) throws DriverException;
 
+    /**
+     * If set, for each <i>next</i> transaction in this session, statement execution will be stopped if transaction
+     * lasts longer than the timeout set. In this case transaction in bounds of which the query run is roll-backed.
+     * By default (value 0) there is no any timeout for query execution, that is a query can be executed as
+     * long as it runs.
+     * <p>
+     * <b>Note</b>, set this option <i>before</i> the first {@link #begin()} call which starts first
+     * transaction if you want the first transaction within section to be bounded in time.
+     * </p>
+     *
+     * <pre>
+     * try {
+     *     SednaConnection con = DatabaseManager.getConnection("localhost", "x", "SYSTEM", "MANAGER");
+     *     con.setDebugMode(true);
+     *     con.setQueryTimeout(2); //2 seconds
+     *     con.begin();
+     *     SednaStatement st1 = con.createStatement();
+     *     boolean call_res = st1.execute("for $i in (1 to 1000000) where $i > 1000000 return $i");
+     *     con.commit();
+     *     con.close();
+     *  } catch (DriverException e) {
+     *          System.out.println(e.toString());
+     *          System.out.println(e.getDebugInfo());
+     *  }
+     * </pre>
+     * @param seconds execution timeout in seconds, pass 0 to reset timeout
+     * @throws IllegalArgumentException if seconds value is negative integer
+     * @throws DriverException in case of protocol or communication error
+     */
+    public void setQueryTimeout(int seconds) throws DriverException;
 
     /**
      * Retrieves whether this connection is already closed or not.

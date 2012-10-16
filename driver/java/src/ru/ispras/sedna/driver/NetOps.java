@@ -1,6 +1,6 @@
 /*
  * File:  NetOps.java
- * Copyright (C) 2004-2011 ISP RAS
+ * Copyright (C) 2004-2012 ISP RAS
  * The Institute for System Programming of the Russian Academy of Sciences
  */
 
@@ -75,6 +75,9 @@ class NetOps {
     final static int se_Session_Debug_On               = 1;
     final static int se_Session_Readonly_On            = 2;
     final static int se_Session_Readonly_Off           = 3;
+
+    /* Value session option switches  */
+    final static int se_Query_Exec_Timeout             = 4;
 
     /**
      * Bulk loads data to the server from the given input stream.
