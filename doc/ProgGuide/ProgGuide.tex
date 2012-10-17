@@ -121,6 +121,7 @@ if certain fatal errors have occurred.
  public boolean isClosed()
 \end{verbatim}
 
+
 Setting connection into debug mode allows getting debug information when XQuery
 query fails due to some reason (see \ref{debug-mode} for details). To set the
 connection into debug mode use \verb!setDebugMode! method of
@@ -133,9 +134,11 @@ connection into debug mode use \verb!setDebugMode! method of
 Parameters:
 
 \verb!debug! - set to \verb!true! to turn debug mode on; set to \verb!false! to
-turn debug mode off. Debug mode is off by default.
+turn debug mode off. Debug mode is off by default. To get debug information
+use \verb!getDebugInfo! method of the \verb!DriverException! class. See
+\ref{java-example} for example of usage.
 
-Sedna supports \verb!fn:trace! function for debugging purpose also (see
+Sedna supports \verb!fn:trace! function for debugging purpose (see
 \ref{trace} for details). By default trace output is included into XQuery query
 result. You can turn trace output on/off using \verb!setTraceOutput! method of
 the \verb!SednaConnection! interface:
@@ -149,6 +152,16 @@ Parameters:
 \verb!doTrace! - set to \verb!true! to turn trace output on; set to \verb!false!
 to turn trace output off. Trace output is on by default.
 
+To limit transaction execution time use:
+
+\begin{verbatim}
+ public void setQueryTimeout(int seconds)
+\end{verbatim}
+
+If set, for each next query in the session, transaction will be roll-backed if
+it runs more than the timeout set. By default (value 0) there is no any timeout
+for transaction execution, that is a tranaction can be executed as long as
+needed.
 
 %===============================================================================
 %                      Java API: Transactions Management
@@ -350,6 +363,7 @@ the server.
 %                          Java API: Code Example
 %===============================================================================
 \subsubsection{Code Example}
+\label{java-example}
 
 In this section we provide an example program that uses the Java API to work
 with Sedna DBMS. This application connects to the Sedna DBMS, opens a session.
@@ -370,6 +384,10 @@ class Client {
                                           "testdb",
                                           "SYSTEM",
                                           "MANAGER");
+
+      /* Set session options before the begin() call. To make
+       * sure that options affect first transaction as well. */
+      con.setDebugMode(true);
 
       /* Begin a new transaction */
       con.begin();
@@ -402,6 +420,7 @@ class Client {
     }
     catch(DriverException e) {
         e.printStackTrace();
+        System.out.println("Got debug info: " + e.getDebugInfo());
     }
     finally {
       /* Properly close connection */
@@ -787,11 +806,12 @@ committed.
 \end{tabular}
 
 \item\verb!SEDNA_ATTR_QUERY_EXEC_TIMEOUT! connection attribute allows to set the
-limit on query execution time. If set, for each next query in this session,
+limit on query execution time (transaction execution time if autocommit is
+turned off ). If set, for each next query (transaction) in this session,
 query execution will be stopped if it lasts longer than timeout set. In this
-case transaction in bounds of which the query run is rollback. By default (value
-0) there is no any timeout for query execution, that is a query can be executed
-as long as needed.
+case transaction in bounds of which the query run is roll-backed. By default
+(value 0) there is no any timeout for query (transaction) execution, that is a
+query (transaction) can be executed as long as needed.
 
 \begin{tabular}{|l|l|}
 \hline
