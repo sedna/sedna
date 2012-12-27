@@ -101,7 +101,7 @@ void insertTextValue(xptr node_xptr, const text_source_t source)
     node_text_t * text_node = getTextFromAnyNode(node_xptr);
     const strsize_t size = get_text_size(source);
 
-    if ((uint64_t)size > STRMAXSIZE) {
+    if (size > STRMAXSIZE) {
             throw USER_EXCEPTION2(SE2037, "Too long text value to insert");
     } else if (size == 0) {
         WRITEP(node_xptr);
@@ -139,7 +139,7 @@ void insertTextValue(enum insert_position_t position, xptr node_xptr, const text
     const strsize_t add_size = get_text_size(source);
     const strsize_t new_size = curr_size + add_size;
 
-    if ((uint64_t)new_size > STRMAXSIZE) {
+    if (new_size > STRMAXSIZE) {
         throw USER_EXCEPTION2(SE2037, "Too long text value to insert");
     } else if (new_size == 0) {
         return ;

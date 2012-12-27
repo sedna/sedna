@@ -50,7 +50,7 @@ char *get_module(const char *module_uri)
         if (!t.cells[0].is_atomic() || t.cells[0].get_atomic_type() != xs_string)
             throw USER_EXCEPTION2(SE1003, "Error in get_module function");
 
-        U_ASSERT((uint64_t)t.cells[0].get_strlen() < SIZE_MAX);
+        U_ASSERT(t.cells[0].get_strlen() < SIZE_MAX);
 
         size = (size_t)(t.cells[0].get_strlen());
         res = (char*)malloc(size + 1);

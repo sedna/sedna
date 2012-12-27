@@ -25,7 +25,7 @@ void str_buf_base::move_to_mem_buf()
 	{
 		if (m_buf_size > 0)
 			delete[] m_buf;
-		U_ASSERT((uint64_t)m_len < MAX_ALLOC_FOR_STR_BUF);
+		U_ASSERT(m_len < MAX_ALLOC_FOR_STR_BUF);
 		m_buf_size = (size_t)m_len + 1;
 		if (m_buf_size < T_STR_MEMBUF_SIZE)
 			m_buf_size = T_STR_MEMBUF_SIZE;
@@ -156,7 +156,7 @@ void str_buf_base::append(const tuple_cell &tc)
 
 			if (new_len < T_STR_MEMBUF_SIZE || mem_only())
 			{
-				U_ASSERT((uint64_t)new_len < SIZE_MAX);
+				U_ASSERT(new_len < SIZE_MAX);
 				if (m_buf_size == 0)
 				{
 					m_buf_size = T_STR_MEMBUF_SIZE;

@@ -217,7 +217,7 @@ size_t estr_cursor::copy_blk(char *buf)
 
     CHECKP(m_str);
     size_t len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (uintptr_t)XADDR(m_str);
-    if (len >= (uint64_t) m_count)
+    if (len >= m_count)
     {
         len = (size_t)m_count;
         memcpy(buf, XADDR(m_str), len);
@@ -238,7 +238,7 @@ size_t estr_cursor::get_blk(char **ptr)
 
     CHECKP(m_str);
     size_t len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (uintptr_t)XADDR(m_str);
-    if (len >= (uint64_t) m_count)
+    if (len >= m_count)
     {
         len = (size_t)m_count;
         *ptr = (char*)(XADDR(m_str));
