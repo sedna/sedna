@@ -60,12 +60,14 @@ void PPUnion::do_next (tuple &t)
         if (t.is_eos())
         {
             xptr1 = XNULL;
+            tc1.set_eos();
         }
         else
         {
-            if (!child1.get(t).is_node()) 
+            tc1 = child1.get(t);
+            if (!tc1.is_node())
                 throw XQUERY_EXCEPTION2(XPTY0004, "First argument of union operation contains item which is not a node");
-            xptr1 = child1.get(t).get_node();
+            xptr1 = get_sorted_by_value(doc_order, tc1);
         }
 
         tug_first = false;
@@ -77,24 +79,26 @@ void PPUnion::do_next (tuple &t)
         if (t.is_eos())
         {
             xptr2 = XNULL;
+            tc2.set_eos();
         }
         else
         {
-            if (!child2.get(t).is_node()) 
+            tc2 = child2.get(t);
+            if (!tc2.is_node())
                 throw XQUERY_EXCEPTION2(XPTY0004, "Second argument of union operation contains item which is not a node");
-            xptr2 = child2.get(t).get_node();
+            xptr2 = get_sorted_by_value(doc_order, tc2);
         }
 
         tug_second = false;
     }
 
     /* XNULL by definition is > of any xptr (except itself); */
-    switch (doc_order ? doc_order_merge_cmp(&xptr1, &xptr2) : xptr_compare(xptr1, xptr2))
+    switch ( xptr_compare(doc_order, xptr1, xptr2) )
     {
         case -1: /// 1 < 2
         {
             tug_first = true;
-            t.copy(tuple_cell::node(xptr1));
+            t.copy(tc1);
             return;
         }
         case  0: /// 1 == 2
@@ -102,7 +106,7 @@ void PPUnion::do_next (tuple &t)
             if (xptr1 == XNULL)
                 t.set_eos();
             else
-                t.copy(tuple_cell::node(xptr1));
+                t.copy(tc1);
 
             tug_first = true;
             tug_second = true;
@@ -112,7 +116,7 @@ void PPUnion::do_next (tuple &t)
         case  1: /// 1 > 2
         {
             tug_second = true;
-            t.copy(tuple_cell::node(xptr2));
+            t.copy(tc2);
             return;
         }
         default: throw USER_EXCEPTION2(SE1003, "Impossible case in PPUnion::next");
