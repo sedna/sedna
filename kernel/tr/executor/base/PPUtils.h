@@ -13,12 +13,20 @@
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/structures/system_tables.h"
 
-tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype);
-
-double get_numeric_value(const tuple_cell &tc);
 
 /*******************************************************************************
- * IS ZERO ROUTINES: BEGIN
+ * Sequence operations utils (Except, Intersect, Union)
+ ******************************************************************************/
+
+int doc_order_merge_cmp(const void *e1, const void *e2);
+
+//Compares nodes by nids (if they are in doc order)
+//or by raw xptr values comparison (doc_order is false)
+int xptr_compare(bool doc_order, const xptr &xptr1, const xptr &xptr2);
+xptr get_sorted_by_value(bool doc_order, const tuple_cell& tc);
+
+/*******************************************************************************
+ * IS ZERO ROUTINES
  ******************************************************************************/
 
 #define DOUBLE_ZERO				0.0000000000001
@@ -27,12 +35,7 @@ inline bool is_zero(double x) { return (x >= 0 ? x : -x) < DOUBLE_ZERO; }
 inline bool is_zero(float x) { return (x >= 0 ? x : -x) < DOUBLE_ZERO; }
 
 /*******************************************************************************
- * IS ZERO ROUTINES: END
- ******************************************************************************/
-
-
-/*******************************************************************************
- * Effective Boolean Value Evaluation: BEGIN
+ * Effective Boolean Value Evaluation
  ******************************************************************************/
 
 inline tuple_cell atomize(const tuple_cell& t)
@@ -42,8 +45,6 @@ inline tuple_cell atomize(const tuple_cell& t)
 
 tuple_cell effective_boolean_value(const tuple_cell &t);
 tuple_cell effective_boolean_value(const sequence *s);
-
-int doc_order_merge_cmp(const void *e1, const void *e2);
 
 tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value);
 tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos);
@@ -61,11 +62,13 @@ inline tuple_cell effective_boolean_value(const PPOpIn &child, tuple &t, bool &e
 	return predicate_and_effective_boolean_value(child, t, eos_reached, 0);
 }
 
-
 /*******************************************************************************
- * Effective Boolean Value Evaluation: END
+ * Common utils
  ******************************************************************************/
 
+tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype);
+
+double get_numeric_value(const tuple_cell &tc);
 
 xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details);
 

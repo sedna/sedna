@@ -23,37 +23,9 @@
 #endif
 
 
-tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype)
-{
-	if (xtype == se_separator) return tuple_cell::atomic_se_separator();
-
-    tuple_cell c = tuple_cell::atomic_deep(xs_untypedAtomic, value.c_str());
-    return cast(c, xtype);
-}
-
-double get_numeric_value(const tuple_cell &tc)
-{
-	xmlscm_type xtype = tc.get_atomic_type();
-	
-	U_ASSERT(is_numeric_type(xtype));
-
-	if(xtype == xs_integer || is_derived_from_xs_integer(xtype)) 
-        return tc.get_xs_integer();
-    else
-    {
-        switch(tc.get_atomic_type())
-        {
-    	    case xs_decimal:
-			    return tc.get_xs_decimal().get_double(); break;
-			case xs_double:
-			    return tc.get_xs_double(); break;
-    		case xs_float:
-    	        return tc.get_xs_float(); break;
-			default: 
-			    throw USER_EXCEPTION2(SE1003, "Invalid numeric type in get_numeric_type");
-	    }
-    }
-}
+/*******************************************************************************
+ * Sequence operations utils (Except, Intersect, Union)
+ ******************************************************************************/
 
 int doc_order_merge_cmp(const void *e1, const void *e2)
 {
@@ -67,10 +39,24 @@ int doc_order_merge_cmp(const void *e1, const void *e2)
     return nid_cmp(*el1, *el2);
 }
 
+int xptr_compare(bool doc_order, const xptr &xptr1, const xptr &xptr2) {
+    if ( doc_order ) {
+        return doc_order_merge_cmp(&xptr1, &xptr2);
+    } else {
+        return xptr_compare(xptr1, xptr2);
+    }
+}
 
+xptr get_sorted_by_value(bool doc_order, const tuple_cell& tc) {
+    if ( doc_order ) {
+        return tc.get_node();
+    } else {
+        return tc.get_xptr();
+    }
+}
 
 /*******************************************************************************
- * Effective Boolean Value Evaluation: BEGIN
+ * Effective Boolean Value Evaluation
  ******************************************************************************/
 
 
@@ -238,10 +224,40 @@ tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, 
 
 
 /*******************************************************************************
- * Effective Boolean Value Evaluation: END
+ * Common utils
  ******************************************************************************/
 
+tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype)
+{
+	if (xtype == se_separator) return tuple_cell::atomic_se_separator();
 
+    tuple_cell c = tuple_cell::atomic_deep(xs_untypedAtomic, value.c_str());
+    return cast(c, xtype);
+}
+
+double get_numeric_value(const tuple_cell &tc)
+{
+	xmlscm_type xtype = tc.get_atomic_type();
+
+	U_ASSERT(is_numeric_type(xtype));
+
+	if(xtype == xs_integer || is_derived_from_xs_integer(xtype))
+        return tc.get_xs_integer();
+    else
+    {
+        switch(tc.get_atomic_type())
+        {
+	    case xs_decimal:
+			    return tc.get_xs_decimal().get_double(); break;
+			case xs_double:
+			    return tc.get_xs_double(); break;
+		case xs_float:
+	        return tc.get_xs_float(); break;
+			default:
+			    throw USER_EXCEPTION2(SE1003, "Invalid numeric type in get_numeric_type");
+	    }
+    }
+}
 
 xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
 {

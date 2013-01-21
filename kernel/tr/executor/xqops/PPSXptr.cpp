@@ -91,8 +91,8 @@ void PPSXptr::do_next (tuple &t)
             }
         }
 
-		s->lazy_sort();
-		pos = 1;
+        s->lazy_sort();
+        pos = 1;
         ret_val = XNULL;
     }
 
@@ -107,12 +107,12 @@ void PPSXptr::do_next (tuple &t)
         }
         else
         {
-           if (t.cells[0].get_node() != ret_val)
+           if (t.cells[0].get_xptr() != ret_val)
            {
-               ret_val = t.cells[0].get_node();
+               ret_val = t.cells[0].get_xptr();
                break;
            }
-		}
+        }
     }
 }
 
@@ -170,12 +170,12 @@ int PPSXptr::get_size (tuple& t, const void * Udata)
 inline static
 xptr get_xptr(const tuple_cell & c) {
     return isTmpBlock(c.get_xptr()) ? c.get_node_inderection() : c.get_node();
-};
+}
 
 inline static
 void get_tuple(tuple & c, xptr x) {
     c.copy(isTmpBlock(x) ? tuple_cell::node_indir(x) : tuple_cell::node(x));
-};
+}
 
 void PPSXptr::serialize (tuple& t, xptr v1, const void *Udata)
 {
