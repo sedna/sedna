@@ -230,7 +230,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const text_source_t
     if (insert_type == ti_new_node) {
         insertTextValue(node_info.node_xptr, source);
 
-        if (cdataflag_hint & cdata_section > 0) {
+        if ((cdataflag_hint & cdata_section) > 0) {
             ((internal::text_node *) xaddr(checkp(node_info.node_xptr)))->flags |= cdata_section;
         }
     } else {

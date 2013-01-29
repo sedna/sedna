@@ -8,7 +8,6 @@
 #define _EXEC_OUTPUT_H
 
 #include <iostream>
-#include <strstream>
 
 #include "common/sedna.h"
 

@@ -198,8 +198,8 @@ void ft_index_update(ft_index_op_t op, xptr acc, op_str_buf *text_buf, ftc_index
 		{
 			char tmp[256];
 			//FIXME!!!!: buf, message, cleanup
-			sprintf(tmp, "in ftsearch\nline %d:\n%s\n",
-				XML_GetCurrentLineNumber(p),
+			sprintf(tmp, "in ftsearch\nline %lld:\n%s\n",
+				(unsigned long long) XML_GetCurrentLineNumber(p),
 				XML_ErrorString(XML_GetErrorCode(p)));
 			text_buf->free_cursor(cur);
 			free(parse_data);
@@ -503,8 +503,8 @@ void ft_highlight(op_str_buf *in_buf, stmt_str_buf *out_buf, ft_word_ind_t *inds
 		{
 			char tmp[256];
 			//FIXME!!!!: buf, message, cleanup
-			sprintf(tmp, "in ft_highlight\nline %d:\n%s\n",
-				XML_GetCurrentLineNumber(p),
+			sprintf(tmp, "in ft_highlight\nline %lld:\n%s\n",
+				(unsigned long long) XML_GetCurrentLineNumber(p),
 				XML_ErrorString(XML_GetErrorCode(p)));
 			in_buf->free_cursor(cur);
 			free(parse_data);

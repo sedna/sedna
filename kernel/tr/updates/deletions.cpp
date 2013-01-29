@@ -89,7 +89,10 @@ void delete_undeep(PPOpIn arg)
                     copy_node_content(nodeGetParentIndirection(node), node, getIndirectionSafeCP(node), NULL, true);
                     //2.DELETE
                     delete_node(indirectionDereferenceCP(*it), &delete_node_context);
+                    break;
                 }
+            default:
+                throw SYSTEM_EXCEPTION("Unexpected node type in delete undeep");
             }
         }
 

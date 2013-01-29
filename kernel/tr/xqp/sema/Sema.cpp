@@ -2110,7 +2110,7 @@ namespace sedna
         beg = 0;
         while (beg < pos && IS_WHITESPACE(opt[beg])) beg++;
 
-        if(beg == pos) key == "";
+        if(beg == pos) key = "";
         else {
             // beg < pos; pos > 0 there and there is at least one non-whitespace
             // symbol at position 'beg'

@@ -1167,10 +1167,14 @@ void DbgDumpGcNodes(SnSnapshotsList *snapshots,
 				char buf[32] = "";
 				if (hscan[i]) 
 				{
-					sprintf(buf, 
-						(hscan[i]->garbageCount ? "[%lu--%ub]" : "[%ld]"),
+				    if (hscan[i]->garbageCount) {
+                                        sprintf(buf, "[%lu--%ub]",
 						(unsigned long)(hscan[i]->entries.size() - hscan[i]->garbageCount),
 						(unsigned)hscan[i]->garbageCount);
+                                    } else {
+                                        sprintf(buf, "[%ld]",
+						(unsigned long)(hscan[i]->entries.size() - hscan[i]->garbageCount));
+                                    }
 				}
 				wulog(("  %18s", buf));
 			}

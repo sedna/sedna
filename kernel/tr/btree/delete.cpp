@@ -365,7 +365,7 @@ bool bt_recoursive_delete_tmpl(const bt_key& key, bt_path &path_fore, shft obj_i
 		return true;
 	}
 
-	if (merged = (mergable && (right_node != XNULL) && bt_try_merge_pages(right_node))) {
+	if ((merged = (mergable && (right_node != XNULL) && bt_try_merge_pages(right_node)))) {
 		CHECKP(ptr);
 		bt_nleaf_delete_key(pg, key_idx + 1);
 	}

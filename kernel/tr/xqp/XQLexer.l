@@ -1066,7 +1066,7 @@ std::string *XQueryLexer::xqMakeStrLiteral(XQueryParser::location_type *loc, con
         if (!isXML10Valid(*cont_it))
         {
             driver.error(*loc, XPST0003, "invalid character in string literal");
-            return false;
+            return NULL;
         }
 
         cont_it++;
