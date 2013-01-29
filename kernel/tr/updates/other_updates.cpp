@@ -103,6 +103,9 @@ void rename(PPOpIn arg, xsd::NCName name)
                 delete_node(indirectionDereferenceCP(indir), &delete_node_context);
                 break;
             }
+        default:
+            throw SYSTEM_EXCEPTION("Unexpected node type in rename operation");
+
         }
 #ifdef SE_ENABLE_TRIGGERS
         apply_per_node_triggers(res, XNULL, parent, XNULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);

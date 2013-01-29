@@ -229,7 +229,7 @@ private:
 		int group_num;                /* Number of group that was called */
 		const uschar *after_call;     /* "Return value": points after the call in the expr */
 		CharIterator save_start;     /* Old value of md->start_match */
-		int *offset_save;             /* Pointer to start of saved offsets */
+		CharIterator *offset_save;   /* Pointer to start of saved offsets */
 		int saved_max;                /* Number of saved offsets */
 	} recursion_info;
 
@@ -923,7 +923,7 @@ int offset;
 int op;
 int save_capture_last;
 CharIterator save_offset1, save_offset2, save_offset3;
-int stacksave[REC_STACK_SAVE_MAX];
+CharIterator stacksave[REC_STACK_SAVE_MAX];
 
 eptrblock newptrb;
 #endif
@@ -1115,8 +1115,8 @@ for (;;)
       recursion_info *rec = md->recursive;
       DPRINTF(("Hit the end in a (?0) recursion\n"));
       md->recursive = rec->prevrec;
-      memmove(md->offset_vector, rec->offset_save,
-        rec->saved_max * sizeof(int));
+      memmove((void*)(md->offset_vector), (void*)(rec->offset_save),
+        rec->saved_max * sizeof(CharIterator));
       md->start_match = rec->save_start;
       ims = original_ims;
       ecode = rec->after_call;
@@ -1296,12 +1296,12 @@ for (;;)
       else
         {
         new_recursive.offset_save =
-          (int *)(pcre_malloc)(new_recursive.saved_max * sizeof(int));
+          (CharIterator *)(pcre_malloc)(new_recursive.saved_max * sizeof(CharIterator));
         if (new_recursive.offset_save == NULL) RRETURN(PCRE_ERROR_NOMEMORY);
         }
 
-      memcpy(new_recursive.offset_save, md->offset_vector,
-            new_recursive.saved_max * sizeof(int));
+      memcpy((void*)(new_recursive.offset_save), (void*)(md->offset_vector),
+            new_recursive.saved_max * sizeof(CharIterator));
       new_recursive.save_start = md->start_match;
       md->start_match = eptr;
 
@@ -1323,8 +1323,8 @@ for (;;)
         else if (rrc != MATCH_NOMATCH) RRETURN(rrc);
 
         md->recursive = &new_recursive;
-        memcpy(md->offset_vector, new_recursive.offset_save,
-            new_recursive.saved_max * sizeof(int));
+        memcpy((void*)(md->offset_vector), (void*)(new_recursive.offset_save),
+            new_recursive.saved_max * sizeof(CharIterator));
         callpat += GET(callpat, 1);
         }
       while (*callpat == OP_ALT);
@@ -1514,8 +1514,8 @@ for (;;)
             DPRINTF(("Recursion (%d) succeeded - continuing\n", number));
             md->recursive = rec->prevrec;
             md->start_match = rec->save_start;
-            memcpy(md->offset_vector, rec->offset_save,
-              rec->saved_max * sizeof(int));
+            memcpy((void*)(md->offset_vector), (void*)(rec->offset_save),
+              rec->saved_max * sizeof(CharIterator));
             ecode = rec->after_call;
             ims = original_ims;
             break;
@@ -4080,8 +4080,8 @@ do
     {
     if (offsetcount >= 4)
       {
-      memcpy(offsets + 2, match_block.offset_vector + 2,
-        (offsetcount - 2) * sizeof(int));
+      memcpy((void*)(offsets + 2), (void*)(match_block.offset_vector + 2),
+        (offsetcount - 2) * sizeof(CharIterator));
       DPRINTF(("Copied offsets from temporary memory\n"));
       }
     if (match_block.end_offset_top > offsetcount)

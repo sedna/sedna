@@ -839,7 +839,7 @@ int (arg_scanargv)(int argc,          /**< number of entries in 'argv'. */
   if (*p!='\0')
      {
      if (ErrMsg)
-         sprintf(ErrMsg,"unexpected argument: %.*s", strcspn(p, " \n\t"), p);
+         sprintf(ErrMsg,"unexpected argument: %.*s", (int) strcspn(p, " \n\t"), p);
      if (ErrMark)
         {
         size_t n = strcspn(p,whitespace);

@@ -144,7 +144,7 @@ void FTSerializer::initialize()
     indentElements = false;
     indentNext = false;
     separatorNeeded = false;
-    indentSequence = false;
+    indentSequence = NULL;
     useCharmapFlag = 0;
 
     stringFilter.add_str("'","&apos;", pat_attribute);

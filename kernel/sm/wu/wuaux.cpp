@@ -177,8 +177,8 @@ void DbgDumpMemory(DbgDumpMemoryParams *dumpMemoryParams)
 	DbgDumpMemoryParams params;
 	void *defaultSections[1] = {NULL};
 	size_t defaultSectionsSize[1] = {0};
-	char dumpBuf[1][1024]={""};
-	char markBuf[1][128]={""};
+	char dumpBuf[1024]={""};
+	char markBuf[128]={""};
 	uint32_t valid=0;
 	char *p=NULL, *e=NULL, *o=NULL;
 	int i=0, n=0, j=0, k=0, w=0;
@@ -217,23 +217,23 @@ void DbgDumpMemory(DbgDumpMemoryParams *dumpMemoryParams)
 			while(valid && (j=ResetLowestBitSet(&valid))+i<n)
 			{
 				/* fill mark buf with current row marks */ 
-				o=markBuf[0];
-				for (m=params.marks;m && o+1<markBuf[1];m=m->next)
+				o=markBuf;
+				for (m=params.marks;m && o<markBuf+sizeof(markBuf)-1;m=m->next)
 				{
 					if ((m->markBits[i/32]^m->xorMask)&(UINT32_C(1)<<j)) *o++=m->mark;
 				}
 				*o=0;
 				/* fill dump buf with current row sections */ 
-				o=dumpBuf[0];
+				o=dumpBuf;
 				for(k=0; k<params.sectionsCount; ++k)
 				{
 					p=(char*)OffsetPtr(params.base,(i+j)*params.stride+CalcPtrDistance(params.sectionsBase,params.sections[k]));
 					e=p+params.sectionsSize[k];
 					/*	put sections separator, to skip redundant separator before
-						1st section we later pass dumpBuf[0]+3 to printf */ 
+						1st section we later pass dumpBuf+3 to printf */
 					memcpy(o," | ",3); 
 					o+=(AlignPtr(p,4)==p?2:3);
-					for(;p<e && o+3<dumpBuf[1];++p,o+=2)
+					for(;p<e && o+3<dumpBuf+sizeof(dumpBuf)-1;++p,o+=2)
 					{
 						/*	put space after each group of 4 bytes */ 
 						if (AlignPtr(p,4)==p) *o++=' ';
@@ -242,7 +242,7 @@ void DbgDumpMemory(DbgDumpMemoryParams *dumpMemoryParams)
 					if (p<e) break; /* no space left in buffer */ 
 				}
 				*o=0;
-				fprintf(stderr,"%4d%*s   %s\n",i+j,w,markBuf[0],dumpBuf[0]+3);
+				fprintf(stderr,"%4d%*s   %s\n",i+j,w,markBuf,dumpBuf+3);
 			}
 		}
 		fputs("\n",stderr);

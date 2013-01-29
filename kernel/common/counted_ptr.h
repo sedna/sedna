@@ -42,7 +42,7 @@ class scoped_ptr {
     // Scoped pointer MUST NOT be neither copied nor assigned to any other scoped pointer!
     // scoped_ptr (const scoped_ptr<T> &ptr) throw() { U_ASSERT(false); }
 
-    void clear() { Deallocator::deallocate(p); p; p = NULL; };
+    void clear() { Deallocator::deallocate(p); p = NULL; };
     bool isnull() const { return NULL == p; };
 
     /* This implementation of scoped pointer does DELETE old object on assignment  */
