@@ -722,9 +722,10 @@ void	nid_delete(xptr node) {
 	}
 }
 
-void    	nid_on_kernel_statement_end()
+void nid_on_kernel_statement_end()
 {
     TMPNIDBLK = XNULL;
+    sizehnt = NULL;
 }
 
 /*
