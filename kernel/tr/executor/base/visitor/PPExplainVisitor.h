@@ -123,6 +123,7 @@ public:
     virtual void visit(PPDocInCol* op);
     virtual void visit(PPExtFunCall* op);
     virtual void visit(PPFnGetProperty* op);
+    virtual void visit(PPFnIndexKeys* op);
     virtual void visit(PPIndexScan* op);
     virtual void visit(PPLast* op);
     virtual void visit(PPNil* op);

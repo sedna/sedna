@@ -96,7 +96,7 @@ public:
     virtual void visit(PPFnOneOrMore* op)                = 0;
     virtual void visit(PPFnExactlyOne* op)               = 0;
 
-	/* Date time functions */
+    /* Date time functions */
     virtual void visit(PPFnDateTimeFuncNoParam* op)      = 0;
     virtual void visit(PPFnDateTimeFunc* op)             = 0;
     virtual void visit(PPFnDateTimeFunc2Params* op)      = 0;
@@ -111,6 +111,7 @@ public:
     virtual void visit(PPDocInCol* op)                   = 0;
     virtual void visit(PPExtFunCall* op)                 = 0;
     virtual void visit(PPFnGetProperty* op)              = 0;
+    virtual void visit(PPFnIndexKeys* op)                = 0;
     virtual void visit(PPIndexScan* op)                  = 0;
     virtual void visit(PPLast* op)                       = 0;
     virtual void visit(PPNil* op)                        = 0;

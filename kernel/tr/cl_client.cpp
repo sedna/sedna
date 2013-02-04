@@ -1,7 +1,8 @@
 /*
-* File:  cl_client.cpp
-* Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
-*/
+ * File: cl_client.cpp
+ * The Institute for System Programming of the Russian Academy of Sciences
+ * Copyright (C) 2013 ISP RAS
+ */
 
 #include <string>
 #include <list>

@@ -1796,6 +1796,15 @@ namespace sedna
 
                 off_this.opin = PPOpIn(new PPIndexScan(dyn_cxt, createOperationInfo(n), off1.opin, off2.opin, off3.opin, isc), 1);
             }
+            else if (*n.int_name == "!fn!index-keys")
+            {
+                childOffer off;
+
+                (*n.params)[0]->accept(*this);
+                off = getOffer();
+
+                off_this.opin = PPOpIn(new PPFnIndexKeys(dyn_cxt, createOperationInfo(n), off.opin), 1);
+            }
             else if (*n.int_name == "!fn!position")
             {
                 var_dsc pv = INVALID_VAR_DSC;

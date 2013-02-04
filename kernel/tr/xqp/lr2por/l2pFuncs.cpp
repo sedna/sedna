@@ -696,6 +696,11 @@ PPOpIn l2pFnIndexScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_o
     throw USER_EXCEPTION2(SE4001, "using index-scan from general functions generator!");
 }
 
+PPOpIn l2pFnIndexKeys(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
+{
+    throw USER_EXCEPTION2(SE4001, "using index-keys from general functions generator!");
+}
+
 PPOpIn l2pFnIndexScanBetween(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
     throw USER_EXCEPTION2(SE4001, "using index-scan-between from general functions generator!");

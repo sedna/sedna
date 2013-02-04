@@ -62,6 +62,7 @@
 #include "tr/executor/xqops/PPGeneralComparison.h"
 #include "tr/executor/xqops/PPIf.h"
 #include "tr/executor/xqops/PPIndexScan.h"
+#include "tr/executor/xqops/PPFnIndexKeys.h"
 #include "tr/executor/xqops/PPIntersect.h"
 #include "tr/executor/xqops/PPLast.h"
 #include "tr/executor/xqops/PPLet.h"
