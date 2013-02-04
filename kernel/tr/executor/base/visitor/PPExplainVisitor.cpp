@@ -681,6 +681,11 @@ void PPExplainVisitor::visit(PPIndexScan* op)
                              string(index_scan_condition2string(op->get_index_scan_condition())));
 }
 
+void PPExplainVisitor::visit(PPFnIndexKeys* op)
+{
+    insertOperationElement("PPFnIndexKeys", left, parent, op);
+}
+
 void PPExplainVisitor::visit(PPLast* op)
 {
     insertOperationElement("PPLast", left, parent, op);

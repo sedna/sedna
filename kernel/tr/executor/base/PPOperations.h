@@ -91,6 +91,7 @@ class PPPIConstructor;
 class PPDDO;
 class PPDocInCol;
 class PPFnError;
+class PPFnIndexKeys;
 class PPFnTrace;
 class PPExcept;
 class PPExplain;

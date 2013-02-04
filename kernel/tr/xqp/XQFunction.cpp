@@ -1,3 +1,9 @@
+/*
+ * File: XQFunction.cpp
+ * The Institute for System Programming of the Russian Academy of Sciences
+ * Copyright (C) 2013 ISP RAS
+ */
+
 #include "tr/xqp/XQFunction.h"
 #include "tr/xqp/lr2por/l2pFuncs.h"
 
@@ -98,6 +104,7 @@ namespace sedna
         {"", "implicit-timezone",  0,  0, 0xFF, "!fn!implicit-timezone", false, &resultOne, &l2pFnImplicitTimezone},
         {"", "index-of",  2,  3, 0xFE, "!fn!index-of", false, &atomicResultMany, &l2pFnIndexOf},
         {"", "index-scan",  3,  3, 0xFF, "!fn!index-scan", false, &resultUndefinedWoConst, &l2pFnIndexScan},
+        {"", "index-keys",  1,  1, 0xFF, "!fn!index-keys", false, &atomicResultMany, &l2pFnIndexKeys},
         {"", "index-scan-between",  4,  4, 0xFF, "!fn!index-scan-between", false, &resultUndefinedWoConst, &l2pFnIndexScanBetween},
         {"", "in-scope-prefixes",  1,  1, 0xFF, "!fn!in-scope-prefixes", false, &atomicResultMany, &l2pFnInscopePrefixes},
         {"", "insert-before",  3,  3, 0xFA, "!fn!insert-before", false, &resultUndefined, &l2pFnInsertBefore},

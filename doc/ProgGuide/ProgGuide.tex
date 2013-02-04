@@ -2069,9 +2069,9 @@ This query is evaluated as follows:
 
 
 %===============================================================================
-%                  XQuery Options and Extensions: Index Scan
+%           XQuery Options and Extensions: Values Indices Functions
 %===============================================================================
-\subsubsection{Value index-scan Functions}
+\subsubsection{Value Indices Functions}
 \label{sec:value-index-scan-fun}
 
 In the current version of Sedna, query executor does not use indices
@@ -2116,6 +2116,13 @@ following expression:
 
 \begin{verbatim}
 index-scan("people", "London", "EQ")/name
+\end{verbatim}
+
+To get all different keys sorted in natural order use \verb!index-keys!
+function:
+
+\begin{verbatim}
+index-keys ($title as xs:string) as xs:anyAtomic*,
 \end{verbatim}
 
 
@@ -3191,6 +3198,12 @@ Index could be based on two different structure types: B+ tree and BST
 (experimental) (\emph{B}lock \emph{S}tring \emph{T}rie). Below is the
 description of statements to manage indices.
 
+\begin{note} In the current version of Sedna, query executor does not use
+indices automatically. You can enforce the executor to employ indices by using
+the XQuery index-scan functions specified in section
+\ref{sec:value-index-scan-fun}.
+\end{note}
+
 \begin{verbatim}
 CREATE INDEX title-expr
 ON Path1 BY Path2
@@ -3274,12 +3287,6 @@ DROP INDEX title-expr
 The \verb!DROP INDEX! statement removes the index named \verb!title-expr! from
 the database.
 
-\begin{note} In the current version of Sedna, query executor does not use
-indices automatically. You can enforce the executor to employ indices by using
-the XQuery index-scan functions specified in section
-\ref{sec:value-index-scan-fun}.
-\end{note}
-
 
 %===============================================================================
 %            Data Definition Language: Managing Full-Text Indices
@@ -3296,6 +3303,12 @@ text retrieval engine, which provides full-text indices. As dtSearch is a third
 party commercial product, Sedna does not include dtSearch. If you are interested
 in using Sedna with dtSearch, please contact us. Below is the description of
 statements to manage full-text indices in Sedna.
+
+\begin{note}
+In the current version of Sedna, query executor does not use full-text indices
+automatically. You can enforce the executor to employ indices by using the
+XQuery full-text search functions specified in section \ref{sec:ft-fun}.
+\end{note}
 
 \begin{verbatim}
 CREATE FULL-TEXT INDEX title-expr
@@ -3383,12 +3396,6 @@ DROP FULL-TEXT INDEX title-expr
 
 The \verb!DROP! \verb!FULL-TEXT! \verb!INDEX! statement removes the full-text
 index named \verb!title-expr! from the database.
-
-\begin{note}
-In the current version of Sedna, query executor does not use full-text indices
-automatically. You can enforce the executor to employ indices by using the
-XQuery full-text search functions specified in section \ref{sec:ft-fun}.
-\end{note}
 
 
 %===============================================================================

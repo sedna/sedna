@@ -57,6 +57,7 @@ PPOpIn l2pFnImplicitTimezone(dynamic_context *dyn_cxt, const operation_info &opi
 PPOpIn l2pFnIndexOf(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnIndexScan(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnIndexScanBetween(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
+PPOpIn l2pFnIndexKeys(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnInscopePrefixes(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnInsertBefore(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnIriToUri(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);

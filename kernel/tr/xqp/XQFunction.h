@@ -1,3 +1,9 @@
+/*
+ * File: XQFunction.h
+ * The Institute for System Programming of the Russian Academy of Sciences
+ * Copyright (C) 2013 ISP RAS
+ */
+
 #ifndef __XQFUNCTION_H__
 #define __XQFUNCTION_H__
 
