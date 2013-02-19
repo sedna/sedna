@@ -53,7 +53,10 @@ namespace executor_globals
      */
     extern TLS_VAR_DECL
     volatile bool profiler_mode;
-    
+
+    extern
+    std::vector < xptr > ss_block_pool;
+
     /*
      * Signed integer is better here, since in some situations
      * we can get negative value.

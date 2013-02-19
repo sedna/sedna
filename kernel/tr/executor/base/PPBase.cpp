@@ -6,6 +6,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/SortedSequence.h"
 #include "tr/executor/xqops/PPFunCall.h"
 
 
@@ -21,7 +22,9 @@ namespace executor_globals
     /* If turned on each operation collects various profile statistics */
     TLS_VAR_DECL
     volatile bool profiler_mode = false;
- 
+
+    std::vector < xptr > ss_block_pool;
+
     /* Counts depth of the physical plan in runtime */
     TLS_VAR_DECL
     volatile int current_stack_depth = 0;
@@ -41,5 +44,6 @@ namespace executor_globals
         current_stack_depth = 0;
         profiler_mode = false;
         pp_stack.clear();
+        SortedSequence::freeBlockPool();
     }
 }

@@ -4,6 +4,7 @@
  */
 
 #include "tr/executor/base/SortedSequence.h"
+#include "tr/executor/base/PPBase.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,16 @@
 #define SS_BLK_HEADER(p) ((ss_blk_hdr *)(XADDR(BLOCKXPTR(p))))
 
 //Initialization and deinitialization
+
+void SortedSequence::freeBlockPool()
+{
+    for (unsigned int i = 0; i < executor_globals::ss_block_pool.size(); i++)
+    {
+        vmm_delete_block(executor_globals::ss_block_pool[i]);
+    }
+    executor_globals::ss_block_pool.clear();
+}
+
 
 void SortedSequence::init()
 {
@@ -51,11 +62,7 @@ void SortedSequence::free()
         delete chains[i];
     }
     chains.clear();
-    for (unsigned int i = 0; i < emptyBlocks.size(); i++)
-    {
-        vmm_delete_block(emptyBlocks[i]);
-    }
-    emptyBlocks.clear();
+
     //Deinitializating buffers;
     delete[] buf1;
     delete[] buf2;
@@ -180,7 +187,7 @@ void SortedSequence::freeAccumulator()
     {
         tmp = it;
         it = nextBlock(it);
-        emptyBlocks.push_back(tmp);
+        executor_globals::ss_block_pool.push_back(tmp);
     }
     while (it != XNULL);
     firstPtrBlock = XNULL;
@@ -190,7 +197,7 @@ void SortedSequence::freeAccumulator()
     {
         tmp = it;
         it = nextBlock(it);
-        emptyBlocks.push_back(tmp);
+        executor_globals::ss_block_pool.push_back(tmp);
     }
     while (it != XNULL);
     firstValBlock = XNULL;
@@ -315,7 +322,7 @@ xptr SortedSequence::mergeBlocks(xptr p1, int size1, xptr p2, int size2)
                 //If we red a whole block or wrote all elements we should free block
                 xptr tmp_block = p1;
                 p1 = nextBlock(tmp_block);
-                emptyBlocks.push_back(tmp_block);
+                executor_globals::ss_block_pool.push_back(tmp_block);
             }
             if (written1 < size1)
             {
@@ -334,7 +341,7 @@ xptr SortedSequence::mergeBlocks(xptr p1, int size1, xptr p2, int size2)
                 //If we red a whole block or wrote all elements we should free block
                 xptr tmp_block = p2;
                 p2 = nextBlock(tmp_block);
-                emptyBlocks.push_back(tmp_block);
+                executor_globals::ss_block_pool.push_back(tmp_block);
             }
             if (written2 < size2)
             {
@@ -438,7 +445,7 @@ SortedSequence::SSChain::~SSChain()
     {
         tmp = it;
         it = parent -> nextBlock(it);
-        parent -> emptyBlocks.push_back(tmp);
+        executor_globals::ss_block_pool.push_back(tmp);
     }
     while (it != XNULL);
 }
@@ -538,10 +545,10 @@ void SortedSequence::siftDown(int x)
 xptr SortedSequence::getFreeBlock()
 {
     xptr block = XNULL;
-    if (!emptyBlocks.empty())
+    if (!executor_globals::ss_block_pool.empty())
     {
-        block = BLOCKXPTR(emptyBlocks.back());
-        emptyBlocks.pop_back();
+        block = BLOCKXPTR(executor_globals::ss_block_pool.back());
+        executor_globals::ss_block_pool.pop_back();
     }
     else
     {
