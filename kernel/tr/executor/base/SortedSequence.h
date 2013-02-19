@@ -83,7 +83,6 @@ class SortedSequence
     };
 
 private:
-
     void init();
     void free();
 
@@ -133,7 +132,6 @@ private:
     char *buf1, *buf2;
 
     //Block memory data and methods
-    std::vector < xptr > emptyBlocks; //Array of empty blocks
     xptr getFreeBlock(); //Allocates new block. New block always has XNULL value of nblk pointer
     xptr addBlockToChain(xptr p);    //Adds free block after xptr p and returns pointer b to it
 
@@ -150,6 +148,8 @@ private:
 public:
     SortedSequence(ITupleSerializer *serializer);
     ~SortedSequence();
+
+    static void freeBlockPool();
 
     void add(const tuple &t);
     void sort();
