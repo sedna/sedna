@@ -334,7 +334,7 @@ bool bt_cursor_tmpl<object>:: bt_next_key()
 
     /* construct result key - the key cursor is currently positioned at;
        note, the target page is already in memory */
-	if (key_idx == BT_KEY_NUM(cpage) - 1)
+	if (key_idx >= BT_KEY_NUM(cpage) - 1)
     {
         cur_page = BT_NEXT(cpage);
 
