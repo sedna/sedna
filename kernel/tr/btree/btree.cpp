@@ -282,19 +282,21 @@ void bt_delete_tmpl(xptr &root, const bt_key& key, const object &obj)
 template<typename object>
 void bt_delete_tmpl(xptr &root, const bt_key &key)
 {
-    bool    rc;
     shft    key_idx;
     xptr    delete_xpg = root; /* xptr passed to search functions, that can change, pointing to page where data resides */
     char*   delete_pg = (char*)XADDR(delete_xpg);
+    bt_path merge_path;
+    bt_path_item pi;
 
     CHECKP(delete_xpg);
-
-    rc = bt_find_key(delete_xpg, (bt_key*)&key, key_idx);
-    if (rc)
-    { /* page could change */
-        CHECKP(delete_xpg);
+    if (bt_find_key(delete_xpg, (bt_key*)&key, key_idx, &merge_path))
+    {
         delete_pg = (char*)XADDR(delete_xpg);
-        bt_leaf_delete_key_tmpl<object>(delete_pg, key_idx);
+        pi.pg = delete_xpg;
+        pi.idx = key_idx;
+        merge_path.push_back(pi);
+
+        bt_internal_delete_tmpl<object>(root, key, 0, merge_path);
     }
 }
 /* drop empty page*/
