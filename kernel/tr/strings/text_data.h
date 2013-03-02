@@ -80,13 +80,14 @@ inline static
 text_source_t _mem_trimLeft(text_source_t ts) {
     U_ASSERT(ts.type == text_source_t::text_mem);
 
-    int wp_k = 0;
-    int wp_s = ts._text_size;
+    strsize_t wp_k = 0;
+    strsize_t wp_s = ts._text_size;
 
     while (wp_k < wp_s) {
         char s = *ts.u.cstr;
         if (s != 32 && s != 9 && s != 10 && s != 13) break;
         ++ts.u.cstr; --ts._text_size;
+        ++wp_k;
     }
 
     return ts;
