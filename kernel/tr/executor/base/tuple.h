@@ -479,7 +479,7 @@ public:
 
     static tuple_cell atomic_deep(xmlscm_type _xtype_, const char *_str_, size_t size)
     {
-        char *tmp = se_new char[size + 1];
+        char *tmp = new char[size + 1];
         strncpy(tmp, _str_, size);
         tmp[size] = '\0';
 
@@ -577,7 +577,7 @@ public:
 
         switch (text.type) {
             case text_source_t::text_mem :
-                return atomic_deep(_xtype_, text.u.cstr, text._text_size);
+                return atomic_deep(_xtype_, text.u.cstr, (size_t)text._text_size);
             case text_source_t::text_estr :
                 return atomic_estr(_xtype_, text._text_size, text.u.data);
             case text_source_t::text_pstr :
