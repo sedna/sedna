@@ -1174,8 +1174,8 @@ void PPExplainVisitor::visit(PPCreateIndex* op)
 {
     insertOperationElement("PPCreateIndex", left, parent, NULL, op);
     xptr attr_left = insertAttributeHelper("type", XNULL, left, string(xmlscm_type2c_str(op->get_index_type())));
-    string obj_path = op->get_object_path()->toString();
-    string key_path = op->get_key_path()->toString();
+    string obj_path = op->get_object_path()->toXPathString();
+    string key_path = op->get_key_path()->toXPathString();
     attr_left = insertAttributeHelper("root", XNULL, left, op->get_path_root().get_entity()->to_string());
     if(obj_path.length() != 0) {
         attr_left = insertAttributeHelper("object-path", attr_left, left, obj_path);
@@ -1210,7 +1210,7 @@ void PPExplainVisitor::visit(PPCreateTrigger* op)
     type += trigger_granularity2string(op->get_trigger_granularity());
     xptr attr_left = insertAttributeHelper("type", XNULL, left, type);
     attr_left = insertAttributeHelper("root", attr_left, left, op->get_path_expression_root().get_entity()->to_string());
-    string trg_path = op->get_trigger_path()->toString();
+    string trg_path = op->get_trigger_path()->toXPathString();
     if(trg_path.length() != 0) {
         attr_left = insertAttributeHelper("trigger-path", attr_left, left, trg_path);
     }
@@ -1238,7 +1238,7 @@ void PPExplainVisitor::visit(PPCreateFtIndex* op)
 {
     insertOperationElement("PPCreateFtIndex", left, parent, NULL, op);
     xptr attr_left = insertAttributeHelper("type", XNULL, left, string(ft_index_type2str(op->get_index_type())));
-    string path_expr = op->get_path_expression()->toString();
+    string path_expr = op->get_path_expression()->toXPathString();
     attr_left = insertAttributeHelper("root", attr_left, left, op->get_path_root().get_entity()->to_string());
     if(path_expr.length() != 0)
     {
