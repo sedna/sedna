@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <map>
 
 #include "common/sedna.h"
 
@@ -21,6 +22,8 @@
 class dynamic_context;
 
 namespace xpath {
+
+typedef std::map<std::string, xmlns_ptr> namespaces_map;
 
 enum Axis
 {
@@ -93,6 +96,7 @@ struct NodeTest {
     std::string toString() const;
     std::string toXPathString() const;
     std::ostream& toStream(std::ostream& str) const;
+    void getDefinedNamespaces(namespaces_map& res) const;
 };
 
 struct NodeTestUnion {
@@ -102,6 +106,7 @@ struct NodeTestUnion {
     std::string toString() const;
     std::string toXPathString() const;
     std::ostream& toStream(std::ostream& str) const;
+    void getDefinedNamespaces(namespaces_map& res) const;
 };
 
 struct PathExpression {
@@ -126,6 +131,7 @@ struct PathExpression {
     std::string toXPathString() const;
     std::string toLRString() const { return toString(); };
     std::ostream& toStream(std::ostream& str) const;
+    namespaces_map getDefinedNamespaces() const;
 };
 
 

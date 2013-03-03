@@ -2232,7 +2232,7 @@ namespace sedna
         }
         else if (*n.local == "*")
         {
-            off_this.serialized_form = "(wildcard_ncname_star \"" + *n.uri + "\")";
+            off_this.serialized_form = "(wildcard_ncname_star (\"" + *n.pref + "\" \"" + *n.uri + "\"))";
             off_this.st.type.info.ea.nne = st_nne_other;
         }
         else
