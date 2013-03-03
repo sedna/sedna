@@ -2517,6 +2517,26 @@ namespace sedna
                         return NULL;
                     }
 
+                    if (a->test && dynamic_cast<ASTPiTest *>(a->test)) {
+                        ASTPiTest * tst = dynamic_cast<ASTPiTest *>(a->test);
+                        if (tst->type != ASTPiTest::NONE)
+                        {
+                            drv->error(a->getLocation(), SE5049, std::string("named processing-instruction tests are not permitted in ") +
+                                (relative ? "by-" : "on-") + "XPath in this statement");
+                            return NULL;
+                        }
+                    }
+
+                    if (a->test && dynamic_cast<ASTDocTest *>(a->test)) {
+                        ASTDocTest * tst = dynamic_cast<ASTDocTest *>(a->test);
+                        if (tst->elem_test != NULL)
+                        {
+                            drv->error(a->getLocation(), SE5049, std::string("named document-node tests are not permitted in ") +
+                                (relative ? "by-" : "on-") + "XPath in this statement");
+                            return NULL;
+                        }
+                    }
+
                     if (!a->cont && !relative)
                     {
                         drv->error(a->getLocation(), SE5049, "on-XPath must start with fn:doc or fn:collection");

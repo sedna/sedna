@@ -136,8 +136,12 @@ public:
     bool isSuitableForAbsPath() const
     {
         ASTPiTest *pit = dynamic_cast<ASTPiTest *>(test);
+        ASTDocTest *dit = dynamic_cast<ASTDocTest *>(test);
 
-        return (axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE && !preds && (!pit || pit->type == ASTPiTest::NONE));
+        return (axis <= ASTAxisStep::DESCENDANT_ATTRIBUTE
+            && !preds
+            && (!pit || pit->type == ASTPiTest::NONE)
+            && (!dit || dit->elem_test == NULL));
     }
 
     void accept(ASTVisitor &v);
