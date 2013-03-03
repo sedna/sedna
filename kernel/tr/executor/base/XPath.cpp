@@ -61,7 +61,6 @@ string PathExpression::toString() const
     return oss.str();
 }
 
-
 PathExpression::PathExpression(const char* str, dynamic_context* cxt)
 {
     set(AutoSchemeList(str).get(), cxt);
@@ -282,8 +281,8 @@ string NodeTest::toXPathString() const
       case node_test_attribute :
         result += string(typeName) + "(" + (isAnyQName() ? "" : getQName().getColonizedName()) + ")"; break;
       case node_test_document :
-        if (xsd::NCName(local).valid()) {
-            result += string("document-node(element(") + getLocal().getValue() + "))";
+        if (qname != NULL) {
+            result += string("document-node(element(") + getQName().getColonizedName() + "))";
         } else {
             result += string("document-node()");
         }; break;
@@ -292,7 +291,7 @@ string NodeTest::toXPathString() const
       case node_test_wildcard_star :
         result += string("*"); break;
       case node_test_wildcard_ncname_star :
-        result += string("declare-ns(") + getUri().getValue() + "):*"; break;
+        result += string(getLocal().getValue()) + ":*"; break;
       case node_test_wildcard_star_ncname :
         result += string("*:") + getLocal().getValue(); break;
       default :
@@ -301,6 +300,11 @@ string NodeTest::toXPathString() const
 
     return result;
 }
+
+void NodeTest::getDefinedNamespaces(namespaces_map& res) const
+{
+}
+
 
 string NodeTestUnion::toXPathString() const
 {
@@ -323,6 +327,15 @@ string NodeTestUnion::toXPathString() const
     return result;
 }
 
+void NodeTestUnion::getDefinedNamespaces(namespaces_map& res) const
+{
+    U_ASSERT((size > 0));
+
+    for (size_t i = 0; i < size; i++) {
+        nodes[i].getDefinedNamespaces(res);
+    }
+}
+
 string PathExpression::toXPathString() const
 {
     if (size() > 0) {
@@ -337,6 +350,18 @@ string PathExpression::toXPathString() const
 
     return string();
 }
+
+namespaces_map PathExpression::getDefinedNamespaces() const
+{
+    namespaces_map result;
+
+    for (size_t i = 0; i < size(); i++) {
+        nodes[i].getDefinedNamespaces(result);
+    }
+
+    return result;
+}
+
 
 
 #define CL_CHECK_SYMBOL(X, Pos, Symb) (((X)->at(Pos).type == SCM_SYMBOL) && strcmpex((X)->at(Pos).internal.symb, (Symb)) == 0)
@@ -411,10 +436,17 @@ void NodeTest::set(const scheme_list* lst)
 
     switch(type) {
         case node_test_wildcard_ncname_star: {
-            if (test_expr->size() < 2 || test_expr->at(1).type != SCM_STRING) {
-                throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression : URI expected");
+            if (test_expr->size() < 2 || test_expr->at(1).type != SCM_LIST) {
+                throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression : URI/prefix pair expected");
             }
 
+            test_expr = test_expr->at(1).internal.list;
+
+            if (test_expr->size() < 2 || test_expr->at(0).type != SCM_STRING || test_expr->at(1).type != SCM_STRING) {
+                throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression : URI/prefix pair expected");
+            }
+
+            local = xsd::NCName::check(test_expr->at(0).internal.str, true).serialize(default_context_space);
             uri = xsd::AnyURI::check(test_expr->at(1).internal.str).serialize(default_context_space);
         } break;
 
@@ -427,40 +459,45 @@ void NodeTest::set(const scheme_list* lst)
         } break;
 
         case node_test_qname:
-        case node_test_wildcard_star:
         case node_test_document:
         case node_test_attribute:
-        case node_test_element: {
-            if (test_expr->size() != 2) {
-                throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression: argument expected");
-            }
+        case node_test_element:
+            {
+                if (test_expr->size() != 2) {
+                    throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression: argument expected");
+                }
 
-            if (type != node_test_qname &&
-                  type != node_test_wildcard_star &&
-                  CL_CHECK_SYMBOL(test_expr, 1, "any")) {
-                qname = NULL;
-            } else if (test_expr->at(1).type == SCM_LIST && test_expr->at(1).internal.list->size() > 1 &&
-                  CL_CHECK_SYMBOL(test_expr->at(1).internal.list, 0, "qname")) {
-                qname = xsd::QName::fromLR(test_expr->at(1).internal.list).serialize(default_context_space);
-            } else {
-                throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression: any or QName expected");
+                if (type != node_test_qname && CL_CHECK_SYMBOL(test_expr, 1, "any")) {
+                        qname = NULL;
+                } else if (test_expr->at(1).type == SCM_LIST && test_expr->at(1).internal.list->size() > 1 &&
+                    CL_CHECK_SYMBOL(test_expr->at(1).internal.list, 0, "qname")) {
+                        qname = xsd::QName::fromLR(test_expr->at(1).internal.list).serialize(default_context_space);
+                } else {
+                    throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression: any or QName expected");
+                }
+                break;
             }
-        } break;
         case node_test_pi:
-        {
-            if (test_expr->size() != 2) {
-                throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression: argument expected");
-            }
+            {
+                if (test_expr->size() != 2) {
+                    throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression: argument expected");
+                }
 
-            if (CL_CHECK_SYMBOL(test_expr, 1, "any")) {
-                local = NULL;
-            } else if (test_expr->at(1).type == SCM_STRING) {
-                local = xsd::NCName::check(test_expr->at(1).internal.str, true).serialize(default_context_space);
-            } else {
-                throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression: any or NCName expected");
+                if (CL_CHECK_SYMBOL(test_expr, 1, "any")) {
+                    local = NULL;
+                } else if (test_expr->at(1).type == SCM_STRING) {
+                    local = xsd::NCName::check(test_expr->at(1).internal.str, true).serialize(default_context_space);
+                } else {
+                    throw USER_EXCEPTION2(SE1004, "Invalid serialized node test expression: any or NCName expected");
+                }
+                break;
             }
-        } break;
-        default: break;
+        case node_test_comment :
+        case node_test_text :
+        case node_test_node :
+        case node_test_wildcard_star :
+        default:
+            break;
     }
 }
 
@@ -472,30 +509,35 @@ ostream& NodeTest::toStream(ostream& str) const
 
     switch (type) {
       case node_test_pi:
-        if (local == NULL || *local == '\0') {
-            str << "any";
-        } else {
-            xsd::NCName(local).toLR(str);
-        } break;
+          if (local == NULL || *local == '\0') {
+              str << "any";
+          } else {
+              xsd::NCName(local).toLR(str);
+          } break;
       case node_test_element :
       case node_test_attribute :
       case node_test_document :
       case node_test_qname :
-        if (qname == NULL) {
-            str << "any";
-        } else {
-            xsd::QName::deserialize(qname).toLR(str);
-        } break;
+          if (qname == NULL) {
+              str << "any";
+          } else {
+              xsd::QName::deserialize(qname).toLR(str);
+          } break;
       case node_test_wildcard_ncname_star :
-        xsd::AnyURI(uri).toLR(str); break;
+          str << "(";
+          xsd::NCName(local).toLR(str);
+          str << " ";
+          xsd::AnyURI(uri).toLR(str);
+          str << ")";
+          break;
       case node_test_wildcard_star_ncname :
-        xsd::NCName(local).toLR(str); break;
+          xsd::NCName(local).toLR(str); break;
       case node_test_comment :
       case node_test_text :
       case node_test_node :
       case node_test_wildcard_star :
       default :
-        break;
+          break;
     }
 
     str << "))";
