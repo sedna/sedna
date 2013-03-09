@@ -262,16 +262,15 @@ get_indexes (xptr node,const char* /* title */)
         index_descriptor_t dsc;
         ic->get_index_descriptor(&dsc);
 
-        if (left==XNULL)
-        {
-            left=insert_element_i(XNULL,XNULL,parent,"index",xs_untyped,NULL_XMLNS);
+        if (left == XNULL) {
+            left = insert_element_i(XNULL,XNULL,parent,"index",xs_untyped,NULL_XMLNS);
+        } else {
+            left = insert_element_i(left,XNULL,XNULL,"index",xs_untyped,NULL_XMLNS);
         }
-        else
-            left=insert_element_i(left,XNULL,XNULL,"index",xs_untyped,NULL_XMLNS);
 
         metadata_cell_cptr owner = dsc.owner;
         xptr node = insert_attribute_value(XNULL, left, "name", dsc.index_title);
-        node = insert_attribute_value(XNULL, left, "object_type", (owner->is_document()) ? "document":"collection");
+        node = insert_attribute_value(XNULL, left, "object_type", (owner->is_document()) ? "document" : "collection");
         node = insert_attribute_value(XNULL, left, "object_name", owner->get_name());
         node = insert_attribute_value(XNULL, left, "backend", dsc.backend_name);
 
@@ -279,9 +278,33 @@ get_indexes (xptr node,const char* /* title */)
         node = insert_attribute_i(node,XNULL,XNULL,"as_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
 
         std::string str = dsc.object->toXPathString();
+        xpath::namespaces_map namespaces = dsc.object->getDefinedNamespaces();
         node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(), str.length(),NULL_XMLNS);
+
         str = dsc.key->toXPathString();
+        dsc.key->getDefinedNamespaces(namespaces);
         node = insert_attribute_i(node,XNULL,XNULL,"by_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
+
+        xptr namespaces_left = XNULL;
+        const xptr namespaces_parent = left;
+
+        for (xpath::namespaces_map_iter iter = namespaces.begin(); iter != namespaces.end(); ++iter) {
+            const char* element_name = "namespace";
+            if (iter->first.empty()){
+                element_name = "default-element-namespace";
+            }
+
+            if (namespaces_left == XNULL) {
+                namespaces_left = insert_element_i(XNULL,XNULL,namespaces_parent,element_name,xs_untyped,NULL_XMLNS);
+            } else {
+                namespaces_left = insert_element_i(namespaces_left,XNULL,XNULL,element_name,xs_untyped,NULL_XMLNS);
+            }
+
+            if (!iter->first.empty()){
+                insert_attribute_value(XNULL, namespaces_left, "prefix", iter->first.c_str());
+            }
+            insert_attribute_value(XNULL, namespaces_left, "uri", iter->second.c_str());
+        }
     }
 }
 
