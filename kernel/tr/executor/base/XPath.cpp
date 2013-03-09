@@ -303,6 +303,44 @@ string NodeTest::toXPathString() const
 
 void NodeTest::getDefinedNamespaces(namespaces_map& res) const
 {
+    const char* nsPrefix = NULL;
+    const char* nsUri = NULL;
+
+    switch (type) {
+
+      case node_test_pi:
+      case node_test_comment :
+      case node_test_text :
+      case node_test_node :
+      case node_test_wildcard_star_ncname :
+      case node_test_wildcard_star :
+        break;
+
+      case node_test_element :
+      case node_test_attribute :
+      case node_test_document :
+      case node_test_qname :
+          if (qname != NULL) {
+              xsd::QName deserializedQname = getQName();
+              if (!deserializedQname.emptyUri()) {
+                  nsPrefix = deserializedQname.getPrefix();
+                  nsUri = deserializedQname.getUri();
+              }
+          }
+          break;
+
+      case node_test_wildcard_ncname_star :
+          nsUri = uri;
+          nsPrefix = local;
+
+      default :
+        break;
+    }
+
+    if (nsPrefix != NULL && nsUri != NULL) {
+        res.insert(namespaces_map_item(std::string(nsPrefix), std::string(nsUri)));
+
+    }
 }
 
 
@@ -362,6 +400,12 @@ namespaces_map PathExpression::getDefinedNamespaces() const
     return result;
 }
 
+void PathExpression::getDefinedNamespaces(namespaces_map& res) const
+{
+    for (size_t i = 0; i < size(); i++) {
+        nodes[i].getDefinedNamespaces(res);
+    }
+}
 
 
 #define CL_CHECK_SYMBOL(X, Pos, Symb) (((X)->at(Pos).type == SCM_SYMBOL) && strcmpex((X)->at(Pos).internal.symb, (Symb)) == 0)
