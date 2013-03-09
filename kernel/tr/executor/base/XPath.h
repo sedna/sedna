@@ -23,7 +23,9 @@ class dynamic_context;
 
 namespace xpath {
 
-typedef std::map<std::string, xmlns_ptr> namespaces_map;
+typedef std::map<std::string, std::string> namespaces_map;
+typedef std::pair<std::string, std::string> namespaces_map_item;
+typedef std::map<std::string, std::string>::iterator namespaces_map_iter;
 
 enum Axis
 {
@@ -76,8 +78,8 @@ struct NodeTest {
     xpath::NodeTestType type;
 
   private:
-    const char * uri; /* for wildcard prefix */
-    const char * local; /* for wildcard localname or PI name */
+    const char * uri; /* for wildcard uri */
+    const char * local; /* for wildcard localname (either prefix or ncname) or PI name */
     const char * qname; /* for full qname */
 
     void set(const scheme_list * path_lst);
@@ -132,6 +134,7 @@ struct PathExpression {
     std::string toLRString() const { return toString(); };
     std::ostream& toStream(std::ostream& str) const;
     namespaces_map getDefinedNamespaces() const;
+    void getDefinedNamespaces(namespaces_map& res) const;
 };
 
 
