@@ -304,11 +304,3 @@ const char check_db_empty_query[] = "let $docs := doc(\"$documents\")/documents/
                                      let $all := ($docs, $cols, $ind) \
                                      return if (empty($all)) then 1 else 0 ";
 
-/*const char check_db_empty_query[] = "let $docs := doc(\"$documents\")/documents/document[ @name != \"$db_security_data\"] \
-                                     let $cols := doc(\"$collections\")/collections/collection[ @name != \"$modules\"] \
-                                     let $ind  := doc(\"$indexes\")/indexes/index \
-                                     let $sec-users  := doc(\"$db_security_data\")/db_security_data/users/user[@user_name != \"SYSTEM\"] \
-                                     let $sec-roles  := doc(\"$db_security_data\")/db_security_data/roles/role[@role_name != \"DBA\" and @role_name != \"PUBLIC\"] \
-                                     let $all := ($docs, $cols, $ind, $sec-users, $sec-roles) \
-                                     return if (empty($all)) then 1 else 0 ";
-*/

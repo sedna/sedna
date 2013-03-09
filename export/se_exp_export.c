@@ -186,8 +186,8 @@ exp_error_no_conn:
 }
 
 
-const char check_ft_enabled_query[] = "doc(\"$ftindexes\")";
-const char check_sec_enabled_query[] = "doc(\"$db_security_data\")";
+const char check_ft_enabled_query[] = "doc('$ftindexes')";
+const char check_sec_enabled_query[] = "doc('$db_security_data')";
 
 
 
@@ -216,14 +216,19 @@ const char create_colls_query[] = "declare namespace se='http://www.modis.ispras
 
 const char create_sec_query[] = "()";
 
-const char create_indexes_query[] = "for $i in doc(\"$indexes\")/indexes/index \
-                                     return \
-                                        fn:concat(\"CREATE INDEX \"\"\", $i/@name, \"\"\" ON \", \
-                                        fn:concat($i/@object_type,\"(\"\"\",$i/@object_name,\"\"\")\", \"/\", $i/@on_path), \
-                                        \" BY \", \
-									    $i/@by_path, \
-									    \" AS \",  $i/@as_type, \
-										\" USING \"\"\", $i/@backend, \"\"\"\")";
+const char create_indexes_query[] = "for $i in doc('$indexes')/indexes/index \
+                                     let $nl := '&#10;' \
+                                     let $den_uri := $i/default-element-namespace/@uri \
+                                     let $den_decl := if ($den_uri) then fn:concat(\"declare default element namespace '\", $den_uri, \"';\", $nl) else () \
+                                     let $ns_decls := fn:string-join(for $ns in $i/namespace \
+                                                                     return fn:concat(\"declare namespace \", $ns/@prefix, \"='\", $ns/@uri, \"';\"), $nl) \
+                                     return fn:concat($den_decl, \
+                                                      $ns_decls, $nl, \
+                                                      \"CREATE INDEX '\", $i/@name, \
+                                                      \"' ON \", $i/@object_type, \"('\",$i/@object_name,\"')\", \"/\", $i/@on_path, \
+                                                      \" BY \", $i/@by_path, \
+                                                      \" AS \",  $i/@as_type, \
+                                                      \" USING '\", $i/@backend, \"'\")";
 
 
 const char create_ftindexes_query[] = " for $i in doc(\"$ftindexes\")/ftindexes/ftindex \
