@@ -454,7 +454,11 @@ void XMLSerializer::printText(t_item type, const text_source_t value)
     } else {
         U_ASSERT(type == comment || type == pr_ins);
 
-        if (indentNext) { (*crmout) << "\n"; }
+        if (indentNext) {
+            (*crmout) << "\n";
+            printIndent(crmout, indentLevel, indentCache, indentSequenceLength);
+        }
+
         if (type == comment) { (*crmout) << openTagSeq << "!--"; } else { (*crmout) << openTagSeq << "?"; };
         filterText(stringFilter, crmout, useCharmapFlag, reader);
         if (type == comment) { (*crmout) << "--" << closeTagSeq; } else { (*crmout) << "?" << closeTagSeq; }
