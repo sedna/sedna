@@ -71,11 +71,13 @@ tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype);
 double get_numeric_value(const tuple_cell &tc);
 
 xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details);
+xptr access_collection(const char* name);
 
 tuple_cell get_name_from_PPOpIn(const PPOpIn& name,
                                 const char* obj_name,
                                 const char* op_name,
-                                bool eos_allowed = false,
+                                bool eos_allowed,
+                                bool check_constraints,
                                 int error_code = XPTY0004);
 
 #endif /* _PPUTILS_H */

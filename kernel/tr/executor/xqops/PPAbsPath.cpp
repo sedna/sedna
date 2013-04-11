@@ -172,7 +172,7 @@ bool PPAbsPath::determine_root()
     tuple_cell tc;
     if (name.op)
     {
-        tc = get_name_from_PPOpIn(name, "fn:doc() or fn:collection()", "XPath expression", true);
+        tc = get_name_from_PPOpIn(name, "fn:doc() or fn:collection()", "XPath expression", true, false);
         if (tc.is_eos()) return true;
 
         tc = tuple_cell::make_sure_light_atomic(tc);

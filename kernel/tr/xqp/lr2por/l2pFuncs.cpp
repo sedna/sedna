@@ -363,7 +363,11 @@ PPOpIn l2pFnDocAvailable(dynamic_context *dyn_cxt, const operation_info &opi, ar
 {
     PPOpIn res;
 
-    res = PPOpIn(new PPFnDocAvailable(dyn_cxt, opi, params[0]), 1);
+    if (params.size() == 1) {
+        res = PPOpIn(new PPFnDocAvailable(dyn_cxt, opi, params[0]), 1);
+    } else {
+        res = PPOpIn(new PPFnDocAvailable(dyn_cxt, opi, params[0], params[1]), 1);
+    }
 
     return res;
 }

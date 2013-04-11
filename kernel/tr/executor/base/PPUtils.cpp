@@ -229,7 +229,7 @@ tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, 
 
 tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype)
 {
-	if (xtype == se_separator) return tuple_cell::atomic_se_separator();
+    if (xtype == se_separator) return tuple_cell::atomic_se_separator();
 
     tuple_cell c = tuple_cell::atomic_deep(xs_untypedAtomic, value.c_str());
     return cast(c, xtype);
@@ -237,26 +237,34 @@ tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype)
 
 double get_numeric_value(const tuple_cell &tc)
 {
-	xmlscm_type xtype = tc.get_atomic_type();
+    xmlscm_type xtype = tc.get_atomic_type();
 
-	U_ASSERT(is_numeric_type(xtype));
+    U_ASSERT(is_numeric_type(xtype));
 
-	if(xtype == xs_integer || is_derived_from_xs_integer(xtype))
+    if(xtype == xs_integer || is_derived_from_xs_integer(xtype))
         return tc.get_xs_integer();
     else
     {
         switch(tc.get_atomic_type())
         {
 	    case xs_decimal:
-			    return tc.get_xs_decimal().get_double(); break;
-			case xs_double:
-			    return tc.get_xs_double(); break;
-		case xs_float:
-	        return tc.get_xs_float(); break;
-			default:
-			    throw USER_EXCEPTION2(SE1003, "Invalid numeric type in get_numeric_type");
-	    }
+                return tc.get_xs_decimal().get_double(); break;
+            case xs_double:
+                return tc.get_xs_double(); break;
+            case xs_float:
+                return tc.get_xs_float(); break;
+            default:
+                throw USER_EXCEPTION2(SE1003, "Invalid numeric type in get_numeric_type");
+        }
     }
+}
+
+xptr access_collection(const char* name) {
+    counted_ptr<db_entity> db_ent(new db_entity);
+    db_ent->name = new char[strlen(name) + 1];
+    strcpy(db_ent->name, name);
+    db_ent->type = dbe_collection;
+    return get_schema_node(db_ent, "unexpected entity (must be collection)");
 }
 
 xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
@@ -266,7 +274,7 @@ xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
     bool valid;
     Uri::check_constraints(db_ent->name, &valid, NULL);
     
-    if(!valid) 
+    if (!valid)
     {
         if (db_ent->type == dbe_document)
             throw XQUERY_EXCEPTION2(FODC0005, (std::string("Invalid document URI '") + db_ent->name + "'").c_str());
@@ -284,18 +292,18 @@ xptr get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
 
     switch (db_ent->type)
     {
-        case dbe_document	: local_lock_mrg->put_lock_on_document  (db_ent->name); break;
-        case dbe_collection	: local_lock_mrg->put_lock_on_collection(db_ent->name); break;
-        default				: throw USER_EXCEPTION2(SE1003, err_details);
+        case dbe_document   : local_lock_mrg->put_lock_on_document  (db_ent->name); break;
+        case dbe_collection : local_lock_mrg->put_lock_on_collection(db_ent->name); break;
+        default             : throw USER_EXCEPTION2(SE1003, err_details);
     }
 
     // at this point doc/coll could have become deleted or replaced due to recovery
     // so we must check its existence again and obtain proper root pointer
     switch (db_ent->type)
     {
-        case dbe_document	: root = find_document  (db_ent->name); break;
-        case dbe_collection	: root = find_collection(db_ent->name); break;
-        default				: throw USER_EXCEPTION2(SE1003, err_details);
+        case dbe_document   : root = find_document  (db_ent->name); break;
+        case dbe_collection : root = find_collection(db_ent->name); break;
+        default             : throw USER_EXCEPTION2(SE1003, err_details);
     }
 
 #ifdef SE_ENABLE_TRIGGERS
@@ -325,27 +333,44 @@ tuple_cell get_name_from_PPOpIn(const PPOpIn& name,
                                 const char* obj_name,
                                 const char* op_name,
                                 bool eos_allowed,
+                                bool check_uri_constraints,
                                 int error_code)
 {
     tuple t(1);
     
-    std::string message = std::string("Invalid type of the ") + obj_name +
-                          std::string(" name in ") + op_name;
-    
     name.op->next(t);
+
     if (t.is_eos()) 
     {
-        if(eos_allowed)
+        if(eos_allowed) {
             return name.get(t);
-        else
+        } else {
+            std::string message = std::string("Invalid type of the ") + obj_name + std::string(" name in ") + op_name;
             throw XQUERY_EXCEPTION2(error_code, (message + ". Name cannot be empty.").c_str());
+        }
     }
     tuple_cell tc = atomize(name.get(t));
-    if(!is_string_type(tc.get_atomic_type()))
+
+    if(!is_string_type(tc.get_atomic_type())) {
+        std::string message = std::string("Invalid type of the ") + obj_name + std::string(" name in ") + op_name;
         throw XQUERY_EXCEPTION2(error_code, (message + " (xs_string, derived or promotable type is expected).").c_str());
+    }
+
     name.op->next(t);
-    if (!t.is_eos())
+
+    if (!t.is_eos()) {
+        std::string message = std::string("Invalid type of the ") + obj_name + std::string(" name in ") + op_name;
         throw XQUERY_EXCEPTION2(error_code, (message + ". Name argument contains more than one item.").c_str());
+    }
+
+    if (check_uri_constraints) {
+        bool valid;
+        Uri::check_constraints(&tc, &valid, NULL);
+        if(!valid) {
+            std::string message = std::string("Invalid URI of the ") + obj_name + std::string(" name in ") + op_name;
+            throw XQUERY_EXCEPTION2(FODC0005, message.c_str());
+        }
+    }
 
     return tuple_cell::make_sure_light_atomic(tc);
 }

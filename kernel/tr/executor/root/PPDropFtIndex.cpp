@@ -50,7 +50,7 @@ void PPDropFtIndex::do_accept(PPVisitor &v)
 void PPDropFtIndex::do_execute()
 {
 
-    tuple_cell tc = get_name_from_PPOpIn(index_name, "full-text index", "drop full-text index");
+    tuple_cell tc = get_name_from_PPOpIn(index_name, "full-text index", "drop full-text index", false, false);
     get_schema_node(find_db_entity_for_object(catobj_ft_indicies, tc.get_str_mem()),
                     "Unknown database entity passed to drop index");
     auth_for_drop_object(tc.get_str_mem(), "ft-index", false);

@@ -105,7 +105,7 @@ void PPCreateTrigger::do_accept(PPVisitor &v)
 void PPCreateTrigger::do_execute()
 {
     /* Determine trigger name */
-    tuple_cell tc = get_name_from_PPOpIn(trigger_name, "trigger", "create trigger");
+    tuple_cell tc = get_name_from_PPOpIn(trigger_name, "trigger", "create trigger", false, false);
     
      /* Determine document or collection name to create trigger on */
     counted_ptr<db_entity> db_ent = root.get_entity("trigger", "create trigger");

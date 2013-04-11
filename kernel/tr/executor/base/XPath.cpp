@@ -120,7 +120,7 @@ const counted_ptr<db_entity>& PathExprRoot::get_entity(const char* obj_name, con
 
     if(name.op != NULL)
     {
-       tuple_cell root_tc = get_name_from_PPOpIn(name, obj_name, op_name);
+       tuple_cell root_tc = get_name_from_PPOpIn(name, obj_name, op_name, false, false);
        if (db_ent->name) delete [] db_ent->name;
        db_ent->name = se_new char[root_tc.get_strlen_mem() + 1];
        strcpy(db_ent->name, root_tc.get_str_mem());
