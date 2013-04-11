@@ -158,13 +158,13 @@ void PPCreateFtIndex::do_accept(PPVisitor &v)
 void PPCreateFtIndex::do_execute()
 {
     /* Determine index name */
-    tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "create full-text index");
+    tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "create full-text index", false, false);
 	tuple_cell options_tc;
 	const char *options_str = NULL;
 	if (options.op != NULL)
 	{
 		//FIXME: options is not a name, but besides wrong error messages get_name_from_PPOpIn is fine
-		options_tc = get_name_from_PPOpIn(options, "options", "create full-text index");
+		options_tc = get_name_from_PPOpIn(options, "options", "create full-text index", false, false);
 		options_str = options_tc.get_str_mem();
 	}
 

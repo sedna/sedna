@@ -23,45 +23,52 @@ PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
                                                 child2(_child2_)
 {
 }
+
 PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
                              operation_info _info_,
                              PPOpIn _child1_,
                              PPOpIn _child2_,
-							 PPOpIn _collation_) : PPIterator(_cxt_, _info_, "PPFnDeepEqual"),
+                             PPOpIn _collation_) : PPIterator(_cxt_, _info_, "PPFnDeepEqual"),
                                                    child1(_child1_),
                                                    child2(_child2_),
-									               collation(_collation_)
+                                                   collation(_collation_)
 {
 }
+
 bool PPFnDeepEqual::are_nodes_deep_equal(xptr& node1,xptr& node2)
 {
 	CHECKP(node1);
-	schema_node_cptr scm1=getSchemaNode(node1);
+	schema_node_cptr scm1 = getSchemaNode(node1);
 	CHECKP(node2);
-	schema_node_cptr scm2=getSchemaNode(node2);
-	if (scm1->type!=scm2->type)
-		return false;
-	switch(scm1->type)
+	schema_node_cptr scm2 = getSchemaNode(node2);
+
+        if (scm1->type!=scm2->type) {
+            return false;
+        }
+
+        switch(scm1->type)
 	{
-        case element: return are_elements_deep_equal(node1,node2,scm1,scm2);
-        case document: return are_documents_deep_equal(node1,node2);
-        case attribute: return are_attributes_equal(node1,node2,scm1,scm2);
-        case comment:case text: return are_text_nodes_equal(node1,node2);
-        case pr_ins: return are_pi_equal(node1,node2);
-        default: return false;
+            case element:    return are_elements_deep_equal(node1,node2,scm1,scm2);
+            case document:   return are_documents_deep_equal(node1,node2);
+            case attribute:  return are_attributes_equal(node1,node2,scm1,scm2);
+            case comment:
+            case text:       return are_text_nodes_equal(node1,node2);
+            case pr_ins:     return are_pi_equal(node1,node2);
+            default:         return false;
 	}
 }
 
 static inline bool compare_full_schema_names(schema_node_cptr scm1, schema_node_cptr scm2)
 {
     if ( strcmpex(scm2->name,scm1->name) == 0 &&
-		((scm1->get_xmlns()) == (scm2->get_xmlns()) ||
-		(scm1->get_xmlns() != NULL &&
-         scm2->get_xmlns() != NULL &&
-         strcmpex(scm2->get_xmlns()->uri, scm1->get_xmlns()->uri)==0)))
+            ((scm1->get_xmlns()) == (scm2->get_xmlns()) ||
+             (scm1->get_xmlns() != NULL &&
+              scm2->get_xmlns() != NULL &&
+              strcmpex(scm2->get_xmlns()->uri, scm1->get_xmlns()->uri)==0))) {
         return true;
-	else
-		return false;
+    } else {
+        return false;
+    }
 }
 
 bool PPFnDeepEqual::are_elements_deep_equal(xptr& node1,xptr& node2,schema_node_cptr scm1,schema_node_cptr scm2)
@@ -74,16 +81,16 @@ bool PPFnDeepEqual::are_elements_deep_equal(xptr& node1,xptr& node2,schema_node_
 	int at_cnt=0;
 	while (at1!=XNULL)
 	{
-		schema_node_cptr ats=getSchemaNode(at1);
-		CHECKP(node2);
-		xptr nd = findAttribute(node2, ats->name, ats->get_xmlns());
-		if (nd==XNULL)return false;
-		CHECKP(nd);
-		if (!are_attributes_equal(at1,nd,ats,getSchemaNode(nd))) return false;
-		at_cnt++;
-		at1=getNextAttribute(at1);
-	}
-	at1=getFirstAttributeChild(node2);
+            schema_node_cptr ats=getSchemaNode(at1);
+            CHECKP(node2);
+            xptr nd = findAttribute(node2, ats->name, ats->get_xmlns());
+            if (nd==XNULL)return false;
+            CHECKP(nd);
+            if (!are_attributes_equal(at1,nd,ats,getSchemaNode(nd))) return false;
+            at_cnt++;
+            at1=getNextAttribute(at1);
+        }
+        at1=getFirstAttributeChild(node2);
 	int at_cnt2=0;
 	while (at1!=XNULL)
 	{
@@ -163,7 +170,7 @@ PPFnDeepEqual::~PPFnDeepEqual()
     child1.op = NULL;
     delete child2.op;
     child2.op = NULL;
-	if (collation.op)
+    if (collation.op)
     {
         delete collation.op;
         collation.op = NULL;
@@ -174,10 +181,10 @@ void PPFnDeepEqual::do_open ()
 {
     child1.op->open();
     child2.op->open();
-	if (collation.op)
+    if (collation.op)
         collation.op->reopen();
     eos_reached1 = true;
-	eos_reached2 = true;
+    eos_reached2 = true;
 	handler = NULL;
 }
 
@@ -185,20 +192,20 @@ void PPFnDeepEqual::do_reopen()
 {
     child1.op->reopen();
     child2.op->reopen();
-	if (collation.op)
+    if (collation.op)
         collation.op->reopen();
     eos_reached1 = true;
-	eos_reached2 = true;
-	handler = NULL;
+    eos_reached2 = true;
+    handler = NULL;
 }
 
 void PPFnDeepEqual::do_close()
 {
     child1.op->close();
     child2.op->close();
-	if (collation.op)
+    if (collation.op)
         collation.op->close();
-	handler = NULL;
+    handler = NULL;
 }
 
 void PPFnDeepEqual::do_next (tuple &t)
@@ -303,14 +310,14 @@ void PPFnDeepEqual::do_next (tuple &t)
 PPIterator* PPFnDeepEqual::do_copy(dynamic_context *_cxt_)
 {
     PPFnDeepEqual *res = collation.op ?
-		                 se_new PPFnDeepEqual(_cxt_, info, child1, child2, collation) :
-	                     se_new PPFnDeepEqual(_cxt_, info, child1, child2);
+        se_new PPFnDeepEqual(_cxt_, info, child1, child2, collation) :
+        se_new PPFnDeepEqual(_cxt_, info, child1, child2);
 
-	res->child1.op = child1.op->copy(_cxt_);
+    res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
 
-	if(collation.op)
-		res->collation.op = collation.op->copy(_cxt_);
+    if(collation.op)
+        res->collation.op = collation.op->copy(_cxt_);
 
     return res;
 }

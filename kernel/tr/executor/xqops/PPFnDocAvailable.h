@@ -13,6 +13,7 @@
 class PPFnDocAvailable : public PPIterator
 {
 protected:
+    PPOpIn col_name_op;
     PPOpIn doc_name_op;
     bool first_time;
 
@@ -28,6 +29,10 @@ private:
 public:    
     PPFnDocAvailable(dynamic_context *_cxt_, 
                      operation_info _info_,
+                     PPOpIn _doc_name_op_);
+    PPFnDocAvailable(dynamic_context *_cxt_,
+                     operation_info _info_,
+                     PPOpIn _col_name_op_,
                      PPOpIn _doc_name_op_);
     virtual ~PPFnDocAvailable();
 };

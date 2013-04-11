@@ -58,14 +58,14 @@ void PPDocInCol::do_next(tuple &t)
 {
     if (first_time)
     {
-        tuple_cell tc_col = get_name_from_PPOpIn(col_name_op, "collection", "fn:doc(, )", true);
+        tuple_cell tc_col = get_name_from_PPOpIn(col_name_op, "collection", "fn:doc(, )", true, false);
         if (tc_col.is_eos()) 
         {
             t.set_eos();
             return;
         }
 
-        tuple_cell tc_doc = get_name_from_PPOpIn(doc_name_op, "document", "fn:doc(, )", true);
+        tuple_cell tc_doc = get_name_from_PPOpIn(doc_name_op, "document", "fn:doc(, )", true, false);
         if (tc_doc.is_eos())
         {
             t.set_eos();
@@ -74,10 +74,10 @@ void PPDocInCol::do_next(tuple &t)
 
         first_time = false;
 
-		counted_ptr<db_entity> db_ent(se_new db_entity);
+        counted_ptr<db_entity> db_ent(se_new db_entity);
         db_ent->name = se_new char[tc_col.get_strlen_mem() + 1];
         strcpy(db_ent->name, tc_col.get_str_mem());
-		db_ent->type = dbe_collection;
+        db_ent->type = dbe_collection;
         schema_node_cptr root = get_schema_node(db_ent, (std::string("Unknown entity passed to fn:doc( , ): ") + db_ent->name).c_str());
 
         bool valid;

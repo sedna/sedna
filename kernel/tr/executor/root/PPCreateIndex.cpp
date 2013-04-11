@@ -76,7 +76,7 @@ void PPCreateIndex::do_accept(PPVisitor &v)
 void PPCreateIndex::do_execute()
 {
     /* Determine index name */
-    tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "create index");
+    tuple_cell tc = get_name_from_PPOpIn(index_name, "index", "create index", false, false);
 
     /* Determine document or collection name to create index on */
     counted_ptr<db_entity> db_ent = root.get_entity("index", "create index"); 

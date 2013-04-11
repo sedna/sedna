@@ -53,7 +53,7 @@ void PPFnIndexKeys::initialize()
 {
     U_ASSERT(first_time);
 
-    tuple_cell tc_name = get_name_from_PPOpIn(index_name, "index", "index scan");
+    tuple_cell tc_name = get_name_from_PPOpIn(index_name, "index", "index scan", false, false);
 
     // Put lock on documents under index scan and check security for document
     get_schema_node(find_db_entity_for_object(catobj_indicies, tc_name.get_str_mem()), "Unknown entity passed to index scan");

@@ -18,15 +18,31 @@ PPFnDocAvailable::PPFnDocAvailable(dynamic_context *_cxt_,
 {
 }
 
+PPFnDocAvailable::PPFnDocAvailable(dynamic_context *_cxt_,
+                                   operation_info _info_,
+                                   PPOpIn _col_name_op_,
+                                   PPOpIn _doc_name_op_) : PPIterator(_cxt_, _info_, "PPFnDocAvailable"),
+                                                           col_name_op(_col_name_op_),
+                                                           doc_name_op(_doc_name_op_)
+{
+}
+
 PPFnDocAvailable::~PPFnDocAvailable()
 {
     delete doc_name_op.op;
     doc_name_op.op = NULL;
+    if (col_name_op.op) {
+        delete col_name_op.op;
+        col_name_op.op = NULL;
+    }
 }
 
 void PPFnDocAvailable::do_open ()
 {
     doc_name_op.op->open();
+    if (col_name_op.op) {
+        col_name_op.op->open();
+    }
     first_time = true;
 }
 
@@ -34,6 +50,9 @@ void PPFnDocAvailable::do_open ()
 void PPFnDocAvailable::do_reopen()
 {
     doc_name_op.op->reopen();
+    if (col_name_op.op) {
+        col_name_op.op->reopen();
+    }
     first_time = true;
 }
 
@@ -41,6 +60,9 @@ void PPFnDocAvailable::do_reopen()
 void PPFnDocAvailable::do_close()
 {
     doc_name_op.op->close();
+    if (col_name_op.op) {
+        col_name_op.op->close();
+    }
 }
 
 void PPFnDocAvailable::do_next(tuple &t)
@@ -48,32 +70,33 @@ void PPFnDocAvailable::do_next(tuple &t)
     if (first_time)
     {
         first_time = false;
-        doc_name_op.op->next(t);
-        if (t.is_eos()) 
-        {
-            t.copy(tuple_cell::atomic(false));
-            return;
+
+        tuple_cell col_name;
+        if (col_name_op.op) {
+            col_name = get_name_from_PPOpIn(col_name_op, "collection", "doc-available", true, true);
         }
-
-        tuple_cell tc_doc= atomize(doc_name_op.get(t));
-        if(!is_string_type(tc_doc.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:doc-available (xs_string/derived/promotable is expected).");
-        doc_name_op.op->next(t);
-        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:doc-available. Argument contains more than one item.");
-
-        bool valid;
-        Uri::check_constraints(&tc_doc, &valid, NULL);
-
-        if(!valid) throw XQUERY_EXCEPTION2(FODC0005, "Invalid uri in fn:doc-available.");
-
-        tc_doc = tuple_cell::make_sure_light_atomic(tc_doc);
         
-        const char* name = (const char*)tc_doc.get_str_mem();
+        tuple_cell doc_name = get_name_from_PPOpIn(doc_name_op, "document", "doc-available", true, true);
         
-        bool res = true;
+        bool res = false;
 
-        /// suppose any system document is available ///
-        if(get_document_type(name, dbe_document) == DT_NON_SYSTEM)
-            res = (find_document(name) != XNULL);
+        if (!doc_name.is_eos() && !(col_name_op.op && col_name.is_eos())) {
+
+            const char* doc_name_str = doc_name.get_str_mem();
+
+            if(!col_name_op.op && get_document_type(doc_name_str, dbe_document) == DT_NON_SYSTEM) {
+                res = (find_document(doc_name_str) != XNULL);
+            } else if (col_name_op.op) {
+                //access_collection checks auth (we still need permission to read it to check if doc is available),
+                //finds collection and locks it; if collection not found it throws exception
+                const char* col_name_str = col_name.get_str_mem();
+                access_collection(col_name_str);
+                res = (find_document_in_collection(col_name_str, doc_name_str) != XNULL);
+            } else {
+                //suppose any of the system documents is available
+                res = true;
+            }
+        }
 
         t.copy(tuple_cell::atomic(res));
     }
@@ -86,8 +109,15 @@ void PPFnDocAvailable::do_next(tuple &t)
 
 PPIterator* PPFnDocAvailable::do_copy(dynamic_context *_cxt_)
 {
-    PPFnDocAvailable *res = se_new PPFnDocAvailable(_cxt_, info, doc_name_op);
+    PPFnDocAvailable *res = col_name_op.op ?
+        new PPFnDocAvailable(_cxt_, info, col_name_op, doc_name_op) :
+        new PPFnDocAvailable(_cxt_, info, doc_name_op);
+
     res->doc_name_op.op = doc_name_op.op->copy(_cxt_);
+    if (col_name_op.op) {
+        res->col_name_op.op = col_name_op.op->copy(_cxt_);
+    }
+
     return res;
 }
 
@@ -96,5 +126,8 @@ void PPFnDocAvailable::do_accept(PPVisitor &v)
     v.visit (this);
     v.push  (this);
     doc_name_op.op->accept(v);
+    if (col_name_op.op) {
+        col_name_op.op->accept(v);
+    }
     v.pop();
 }
