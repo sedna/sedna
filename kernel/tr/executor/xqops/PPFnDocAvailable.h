@@ -32,8 +32,8 @@ public:
                      PPOpIn _doc_name_op_);
     PPFnDocAvailable(dynamic_context *_cxt_,
                      operation_info _info_,
-                     PPOpIn _col_name_op_,
-                     PPOpIn _doc_name_op_);
+                     PPOpIn _doc_name_op_,
+                     PPOpIn _col_name_op_);
     virtual ~PPFnDocAvailable();
 };
 

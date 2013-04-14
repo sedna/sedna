@@ -19,10 +19,10 @@ PPFnDocAvailable::PPFnDocAvailable(dynamic_context *_cxt_,
 
 PPFnDocAvailable::PPFnDocAvailable(dynamic_context *_cxt_,
                                    operation_info _info_,
-                                   PPOpIn _col_name_op_,
-                                   PPOpIn _doc_name_op_) : PPIterator(_cxt_, _info_, "PPFnDocAvailable"),
-                                                           col_name_op(_col_name_op_),
-                                                           doc_name_op(_doc_name_op_)
+                                   PPOpIn _doc_name_op_,
+                                   PPOpIn _col_name_op_) : PPIterator(_cxt_, _info_, "PPFnDocAvailable"),
+                                                           doc_name_op(_doc_name_op_),
+                                                           col_name_op(_col_name_op_)
 {
 }
 
@@ -109,7 +109,7 @@ void PPFnDocAvailable::do_next(tuple &t)
 PPIterator* PPFnDocAvailable::do_copy(dynamic_context *_cxt_)
 {
     PPFnDocAvailable *res = col_name_op.op ?
-        new PPFnDocAvailable(_cxt_, info, col_name_op, doc_name_op) :
+        new PPFnDocAvailable(_cxt_, info, doc_name_op, col_name_op) :
         new PPFnDocAvailable(_cxt_, info, doc_name_op);
 
     res->doc_name_op.op = doc_name_op.op->copy(_cxt_);
