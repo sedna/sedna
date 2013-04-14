@@ -80,6 +80,7 @@ public:
     virtual void visit(PPIntersect* op)                  = 0;
     virtual void visit(PPFnDeepEqual* op)                = 0;
     virtual void visit(PPFnDocAvailable* op)             = 0;
+    virtual void visit(PPFnColAvailable* op)             = 0;
     virtual void visit(PPRange* op)                      = 0;
     virtual void visit(PPSequence* op)                   = 0;
     virtual void visit(PPSpaceSequence* op)              = 0;

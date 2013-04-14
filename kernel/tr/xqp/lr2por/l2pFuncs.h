@@ -31,6 +31,7 @@ PPOpIn l2pFnDefaultCollation(dynamic_context *dyn_cxt, const operation_info &opi
 PPOpIn l2pFnDistinctValues(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnDoc(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnDocAvailable(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
+PPOpIn l2pFnColAvailable(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnDocumentUri(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnEmpty(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnEncodeForUri(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);

@@ -7,7 +7,6 @@
 
 #include "tr/executor/xqops/PPFnDocAvailable.h"
 #include "tr/structures/metadata.h"
-#include "tr/executor/base/xs_uri.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
 

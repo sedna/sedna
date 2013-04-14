@@ -520,6 +520,11 @@ void PPExplainVisitor::visit(PPFnDocAvailable* op)
     insertOperationElement("PPFnDocAvailable", left, parent, op);
 }
 
+void PPExplainVisitor::visit(PPFnColAvailable* op)
+{
+    insertOperationElement("PPFnColAvailable", left, parent, op);
+}
+
 void PPExplainVisitor::visit(PPRange* op)
 {
     insertOperationElement("PPRange", left, parent, op);

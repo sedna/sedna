@@ -96,6 +96,7 @@ public:
     virtual void visit(PPIntersect* op);
     virtual void visit(PPFnDeepEqual* op);
     virtual void visit(PPFnDocAvailable* op);
+    virtual void visit(PPFnColAvailable* op);
     virtual void visit(PPRange* op);
     virtual void visit(PPSequence* op);
     virtual void visit(PPSpaceSequence* op);
