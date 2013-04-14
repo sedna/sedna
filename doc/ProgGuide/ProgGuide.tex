@@ -3102,7 +3102,7 @@ union of individual descriptive schemas for all documents that belong to a
 collection) allows addressing XQuery and XML update queries to all members of a
 collection.
 
-Below is the specification of syntax and semantic of statements that manage
+Below is the specification of syntax and semantics of statements that manage
 collections.
 
 \begin{verbatim}
@@ -3115,21 +3115,39 @@ name that is the result of \verb!coll-name-expr!.
 For example, \verb!CREATE COLLECTION! \verb!"mails"! creates a collection named
 "mails".
 
+To check whether a collection is available the \verb!fn:col-available! function
+can be used. It accepts a collection name as its argument:
+\begin{verbatim}
+fn:col-available($col-name as xs:string) as xs:boolean
+\end{verbatim}
+
 XML documents can be loaded into the collection, as previously described in
 section \ref{bulk-load}.
 
 To access a single document from collection in an XQuery or XML update query,
-the \verb!document! function accepts a collection name as its second optional
+the \verb!fn:doc! function accepts a collection name as its second optional
 argument:
 \begin{verbatim}
-doc($doc as xs:string,
-    $col as xs:string) as document-node()
+fn:doc($doc as xs:string,
+       $col as xs:string) as document-node()
 \end{verbatim}
 The function returns the document with the \verb!$doc! name that belongs to the
 collection named \verb!$col!.
 
+To check whether a document is available in the collection the
+\verb!fn:doc-available! function accepts a collection name as its second
+optional argument:
+\begin{verbatim}
+fn:doc-available($doc as xs:string,
+                 $col as xs:string) as xs:boolean
+\end{verbatim}
+Function call checks if user has rights to query the specified collection and
+puts read lock on it.
+
 For example, \verb!doc('mail-01', 'mails')! query returns documents with name
-\verb!mail-01! from collection \verb!mails!.
+\verb!mail-01! from the collection \verb!mails!,
+\verb!doc-available('mail-01', 'mails')! query returns \verb!true! only if
+\verb!mail-01! is available in the collection \verb!mails!.
 
 \begin{verbatim}
 fn:collection($col as xs:string?) as document-node()*
