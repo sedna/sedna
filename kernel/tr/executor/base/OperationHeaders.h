@@ -57,6 +57,7 @@
 #include "tr/executor/xqops/PPFnDateTimeFuncs.h"
 #include "tr/executor/xqops/PPFnDeepEqual.h"
 #include "tr/executor/xqops/PPFnDocAvailable.h"
+#include "tr/executor/xqops/PPFnColAvailable.h"
 #include "tr/executor/xqops/PPFnGetProperty.h"
 #include "tr/executor/xqops/PPFunCall.h"
 #include "tr/executor/xqops/PPGeneralComparison.h"

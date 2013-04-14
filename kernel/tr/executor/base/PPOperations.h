@@ -110,6 +110,7 @@ class PPFnDateTimeFunc;
 class PPFnDateTimeFunc;
 class PPFnDeepEqual;
 class PPFnDocAvailable;
+class PPFnColAvailable;
 class PPFnGetProperty;
 class PPFtScan;
 class PPFunCall;

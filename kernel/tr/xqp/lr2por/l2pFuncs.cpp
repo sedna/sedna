@@ -36,6 +36,7 @@
 #include "tr/executor/xqops/PPFnGetProperty.h"
 #include "tr/executor/xqops/PPFnDeepEqual.h"
 #include "tr/executor/xqops/PPFnDocAvailable.h"
+#include "tr/executor/xqops/PPFnColAvailable.h"
 #include "tr/executor/xqops/PPNodeOps.h"
 #include "tr/executor/xqops/PPQName.h"
 #include "tr/executor/xqops/PPTest.h"
@@ -371,6 +372,16 @@ PPOpIn l2pFnDocAvailable(dynamic_context *dyn_cxt, const operation_info &opi, ar
 
     return res;
 }
+
+PPOpIn l2pFnColAvailable(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
+{
+    PPOpIn res;
+
+    res = PPOpIn(new PPFnColAvailable(dyn_cxt, opi, params[0]), 1);
+
+    return res;
+}
+
 
 PPOpIn l2pFnDocumentUri(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {

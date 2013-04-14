@@ -2,7 +2,7 @@ set(xqops_SRC PPAbsPath.cpp PPAccessors.cpp PPAggrFuncs.cpp PPAxisStep.cpp
         PPBooleanOps.cpp PPCalculate.cpp PPCheckpoint.cpp
         PPConst.cpp PPConstructors.cpp PPDDO.cpp PPDocInCol.cpp
         PPError.cpp PPExcept.cpp PPExtFunCall.cpp PPFilterEL.cpp PPFnAccessors.cpp
-        PPFnGetProperty.cpp PPFnDateTimeFuncs.cpp PPFnDeepEqual.cpp PPFnDocAvailable.cpp
+        PPFnGetProperty.cpp PPFnDateTimeFuncs.cpp PPFnDeepEqual.cpp PPFnDocAvailable.cpp PPFnColAvailable.cpp
         PPFunCall.cpp PPGeneralComparison.cpp PPIf.cpp PPIndexScan.cpp PPFnIndexKeys.cpp PPIntersect.cpp
         PPLast.cpp PPLet.cpp PPNil.cpp PPNodeComparison.cpp PPNodeOps.cpp PPNumericFuncs.cpp
         PPOrderBy.cpp PPOrderBy_serializer.cpp PPPatMatch.cpp PPPred.cpp PPQName.cpp PPRange.cpp PPReturn.cpp
