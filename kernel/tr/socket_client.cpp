@@ -143,10 +143,10 @@ void socket_client::read_msg(msg_struct *msg)
             res = uselect_read(Sock, &timeout, __sys_call_error);
 
             if(0 != this->ka_timeout)
-           	{
+            {
                 timeout_counter++;
                 if(timeout_counter >= this->ka_timeout) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE4624);}
-           	}
+            }
 
             if(res == 1) //ready to recv data
             {

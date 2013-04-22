@@ -213,6 +213,18 @@ void PPFunCall::do_close()
 
 void PPFunCall::do_next(tuple &t)
 {
+    try {
+        do_next_impl(t);
+    } catch (SednaXQueryException &ex) {
+        const function_declaration& fd = fn_id.first->get_func_decl(fn_id.second);
+        const xquery_stack_frame_info frame(info.query_line, info.query_col, fd.func_name);
+        ex.add_frame(frame);
+        throw ex;
+    }
+}
+
+void PPFunCall::do_next_impl(tuple &t)
+{
     /* here we need to create new body by cloning the old one
      *
      * think recursive functions, for instance, where body is cloned

@@ -96,6 +96,7 @@ private:
     virtual void do_reopen(var_dsc dsc, var_c_id id);
     virtual void do_close (var_dsc dsc, var_c_id id);
 
+    void do_next_impl (tuple &t);
 public:    
     PPFunCall(dynamic_context *_cxt_,
               operation_info _info_,
