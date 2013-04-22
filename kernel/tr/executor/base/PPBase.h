@@ -124,13 +124,13 @@ struct PPOpIn
 };
 
 /* Array of PPOpIn */
-typedef std::vector<PPOpIn>			arr_of_PPOpIn;
+typedef std::vector<PPOpIn>                     arr_of_PPOpIn;
 
 /* Array of tuple pointers */
-typedef std::vector<tuple*>			arr_of_tuple_pointer;
+typedef std::vector<tuple*>                     arr_of_tuple_pointer;
 
 /* Array of var descriptors */
-typedef std::vector<var_dsc>		arr_of_var_dsc;
+typedef std::vector<var_dsc>                    arr_of_var_dsc;
 
 
 /*******************************************************************************
@@ -164,11 +164,11 @@ struct operation_info
     /* Column in the source query this operation corresponds to */
     int query_col;
     /* Profile information: execution time, read/write blocks, etc*/
-	profile_info_ptr profile;
+    profile_info_ptr profile;
     /* Operation name */
     const char* name;
 
-	operation_info(): query_line(0), 
+    operation_info(): query_line(0),
                       query_col(0), 
                       name("PPIterator") {}
 
@@ -463,13 +463,45 @@ public:
  * SednaXQueryException
  ******************************************************************************/
 
-class SednaXQueryException : public SednaUserException
-{
-protected:
+struct xquery_stack_frame_info {
+
     int xquery_line;
     int xquery_col;
+    std::string func_name;
+
+    xquery_stack_frame_info(int line, int col, std::string func_name): xquery_line(line),
+                                                                       xquery_col(col),
+                                                                       func_name(func_name)
+    {}
+};
+
+typedef std::deque<xquery_stack_frame_info> xquery_stack_info;
+
+class SednaXQueryException : public SednaUserException
+{
+private:
+    int xquery_line;
+    int xquery_col;
+    xquery_stack_info stack_info;
+
+    static const size_t MAX_FRAMES_TO_PRINT = 29;
+    static const size_t MAX_TOP_FRAMES = 20;
+    static const size_t MAX_BOTTOM_FRAMES = MAX_FRAMES_TO_PRINT - MAX_TOP_FRAMES;
+    static const size_t MAX_FUNC_NAME_LEN = 50;
+
+    static std::string coordinate2string(int coordinate) {
+        return coordinate <= 0 ? std::string("?") : int2string(coordinate);
+    }
 
 public:
+    void add_frame(const xquery_stack_frame_info& frame)
+    {
+        stack_info.push_back(frame);
+    }
+
+    //Need it because of stack info deque which doesn't have nothrow destr.
+    virtual ~SednaXQueryException() throw() {}
+
     SednaXQueryException(const char* _file_, 
                          const char* _function_,
                          int _line_,
@@ -522,13 +554,36 @@ protected:
             res += "Details: ";
             res += err_msg + "\n";
         }
-        if (xquery_line != 0)
-        {
-            res += "Query line: " + int2string(xquery_line);
-            if(xquery_col != 0)
-                res += ", column:" + int2string(xquery_col);
-            res += "\n";
+
+        res += "Stack trace: \n";
+        int previous_line = xquery_line;
+        int previous_col = xquery_col;
+        if (!stack_info.empty()) {
+            xquery_stack_info::const_iterator itr = stack_info.begin();
+            size_t counter = 1;
+            size_t total_frames = stack_info.size();
+            for (; itr != stack_info.end(); ++itr, ++counter) {
+                if (total_frames > MAX_FRAMES_TO_PRINT && counter > MAX_TOP_FRAMES && counter <= total_frames - MAX_BOTTOM_FRAMES) {
+                    if (counter == MAX_TOP_FRAMES + 1) {
+                        res += "\t... " + int2string((int)(total_frames - MAX_FRAMES_TO_PRINT)) + " frame(s) skipped ...\n";
+                    }
+                } else {
+                    res += "\t";
+                    std::string func_name = itr->func_name;
+                    if (func_name.size() > MAX_FUNC_NAME_LEN) {
+                        res += func_name.substr(0, (size_t)(MAX_FUNC_NAME_LEN / 2) - 3) + "..." +
+                               func_name.substr(func_name.size() - (size_t)(MAX_FUNC_NAME_LEN / 2));
+                    } else {
+                        res += func_name;
+                    }
+                    res += + " at " + coordinate2string(previous_line) + ":" + coordinate2string(previous_col) + "\n";
+                }
+                previous_line = itr->xquery_line;
+                previous_col = itr->xquery_col;
+            }
         }
+        res += "\t(main module) at " + coordinate2string(previous_line) + ":" + coordinate2string(previous_col) + "\n";
+
 #if (EL_DEBUG == 1)
         res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
 #endif
