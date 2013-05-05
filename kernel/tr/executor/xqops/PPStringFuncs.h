@@ -1,6 +1,7 @@
 /*
- * File:  PPStringFuncs.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File: PPStringFuncs.h
+ * Copyright (C) 2004 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #ifndef _PPSTRINGFUNCS_H
@@ -189,8 +190,8 @@ class PPFnString2CodePoints : public PPIterator
 protected:
     PPOpIn child;
     bool first_time;
-	unicode_cp_iterator *ucp_it;
-	tuple_cell in_str;
+    unicode_cp_iterator *ucp_it;
+    tuple_cell in_str;
 
 private:
     virtual void do_open   ();
@@ -244,8 +245,8 @@ public:
 class PPFnTranslate : public PPIterator
 {
 protected:
-	PPOpIn str, map_str, trans_str;
-	bool first_time;
+    PPOpIn str, map_str, trans_str;
+    bool first_time;
 
 private:
     virtual void do_open   ();
@@ -257,12 +258,12 @@ private:
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:
-	PPFnTranslate(dynamic_context *_cxt_,
-                  operation_info _info_,
-                  PPOpIn _str_,
-                  PPOpIn _map_str_,
-                  PPOpIn _trans_str_);
-	virtual ~PPFnTranslate();
+    PPFnTranslate(dynamic_context *_cxt_,
+            operation_info _info_,
+            PPOpIn _str_,
+            PPOpIn _map_str_,
+            PPOpIn _trans_str_);
+    virtual ~PPFnTranslate();
 };
 
 
@@ -272,9 +273,9 @@ public:
 class PPFnChangeCase : public PPIterator
 {
 protected:
-	PPOpIn str;
-	bool to_upper;
-	bool first_time;
+    PPOpIn str;
+    bool to_upper;
+    bool first_time;
 
 private:
     virtual void do_open   ();
@@ -286,11 +287,11 @@ private:
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
 public:
-	PPFnChangeCase(dynamic_context *_cxt_,
+    PPFnChangeCase(dynamic_context *_cxt_,
                    operation_info _info_,
                    PPOpIn _str_,
                    bool _to_upper_);
-	virtual ~PPFnChangeCase();
+    virtual ~PPFnChangeCase();
     inline bool is_to_upper() const { return to_upper; }
 };
 
@@ -364,7 +365,7 @@ protected:
     PPOpIn start_child;
     PPOpIn length_child;
 
-    bool is_length; 		//equal to length_child.op != NULL;
+    bool is_length;             //equal to length_child.op != NULL;
     bool first_time;
 
 private:

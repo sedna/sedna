@@ -47,6 +47,7 @@
 #include "tr/executor/xqops/PPConst.h"
 #include "tr/executor/xqops/PPConstructors.h"
 #include "tr/executor/xqops/PPDDO.h"
+#include "tr/executor/xqops/PPDigest.h"
 #include "tr/executor/xqops/PPDocInCol.h"
 #include "tr/executor/xqops/PPError.h"
 #include "tr/executor/xqops/PPExcept.h"

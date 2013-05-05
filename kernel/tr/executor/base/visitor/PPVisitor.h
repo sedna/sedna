@@ -108,6 +108,7 @@ public:
     virtual void visit(PPTest* op)                       = 0;
     virtual void visit(PPConst* op)                      = 0;
     virtual void visit(PPDDO* op)                        = 0;
+    virtual void visit(PPDigest* op)                     = 0;
     virtual void visit(PPSXptr* op)                      = 0;
     virtual void visit(PPDocInCol* op)                   = 0;
     virtual void visit(PPExtFunCall* op)                 = 0;

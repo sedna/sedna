@@ -79,6 +79,7 @@ namespace sedna
                 {
                     registerStandardFunctions("http://www.w3.org/2005/xpath-functions", xqueryFunctions);
                     registerStandardFunctions("http://modis.ispras.ru/Sedna/SQL", sqlFunctions);
+                    registerStandardFunctions("http://sedna.org/crypto", cryptoFunctions);
                     registerStandardFunctions("http://www.modis.ispras.ru/sedna", seFunctions);
                 }
             }
