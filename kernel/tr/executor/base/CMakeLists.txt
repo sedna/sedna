@@ -13,3 +13,4 @@ set(base_SRC compare.cpp dm_accessors.cpp
 ADD_SUBFOLDER_SRC(base_SRC decNumber)
 ADD_SUBFOLDER_SRC(base_SRC lip)
 ADD_SUBFOLDER_SRC(base_SRC visitor)
+ADD_SUBFOLDER_SRC(base_SRC crypto)

@@ -89,6 +89,7 @@ class PPTextConstructor;
 class PPDocumentConstructor;
 class PPPIConstructor;
 class PPDDO;
+class PPDigest;
 class PPDocInCol;
 class PPFnError;
 class PPFnIndexKeys;

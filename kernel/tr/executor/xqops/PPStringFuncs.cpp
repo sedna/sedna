@@ -1,6 +1,7 @@
 /*
- * File:  PPStringFuncs.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File: PPStringFuncs.cpp
+ * Copyright (C) 2004 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #include <math.h>
@@ -444,11 +445,11 @@ PPFnString2CodePoints::~PPFnString2CodePoints()
     delete child.op;
     child.op = NULL;
 
-	if (ucp_it != NULL)
-	{
-		delete ucp_it;
-		ucp_it = NULL;
-	}
+    if (ucp_it != NULL)
+    {
+        delete ucp_it;
+        ucp_it = NULL;
+    }
 }
 
 void PPFnString2CodePoints::do_open ()
@@ -483,23 +484,24 @@ void PPFnString2CodePoints::do_next (tuple &t)
             child.op->next(t);
             if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the argument. Argument contains more than one item in fn:string-to-codepoints.");
 
-		    ucp_it = charset_handler->get_unicode_cp_iterator(&in_str);
+            ucp_it = charset_handler->get_unicode_cp_iterator(&in_str);
         }
-		else return;
+        else return;
     }
-	int code = ucp_it->get_next_char();
-	if (code != -1)
-	{
-		t.copy(tuple_cell::atomic((int64_t)code));
-	}
-	else
-	{
-		first_time = true;
-		t.set_eos();
-		delete ucp_it;
-		ucp_it = NULL;
-		in_str.set_eos();
-	}
+
+    int code = ucp_it->get_next_char();
+    if (code != -1)
+    {
+        t.copy(tuple_cell::atomic((int64_t)code));
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+        delete ucp_it;
+        ucp_it = NULL;
+        in_str.set_eos();
+    }
 }
 
 PPIterator* PPFnString2CodePoints::do_copy(dynamic_context *_cxt_)
@@ -592,7 +594,7 @@ void PPFnCodePoints2String::do_next (tuple &t)
 
         t.copy(result.get_tuple_cell());
     }
-	else
+        else
     {
         first_time = true;
         need_clear = true;
@@ -622,10 +624,10 @@ void PPFnCodePoints2String::do_accept(PPVisitor &v)
 ///////////////////////////////////////////////////////////////////////////////
 PPFnTranslate::PPFnTranslate(dynamic_context *_cxt_,
                              operation_info _info_,
-							 PPOpIn _str_,
+                                                         PPOpIn _str_,
                              PPOpIn _map_str_,
                              PPOpIn _trans_str_) : PPIterator(_cxt_, _info_, "PPFnTranslate"),
-								                   str(_str_),
+                                                                                   str(_str_),
                                                    map_str(_map_str_),
                                                    trans_str(_trans_str_)
 {
@@ -633,104 +635,104 @@ PPFnTranslate::PPFnTranslate(dynamic_context *_cxt_,
 
 PPFnTranslate::~PPFnTranslate()
 {
-	delete str.op;
-	str.op = NULL;
+        delete str.op;
+        str.op = NULL;
 
-	delete map_str.op;
-	map_str.op = NULL;
+        delete map_str.op;
+        map_str.op = NULL;
 
-	delete trans_str.op;
-	trans_str.op = NULL;
+        delete trans_str.op;
+        trans_str.op = NULL;
 }
 
 void PPFnTranslate::do_open ()
 {
-	str.op->open();
-	map_str.op->open();
-	trans_str.op->open();
-	first_time = true;
+        str.op->open();
+        map_str.op->open();
+        trans_str.op->open();
+        first_time = true;
 }
 
 void PPFnTranslate::do_reopen()
 {
-	str.op->reopen();
-	map_str.op->reopen();
-	trans_str.op->reopen();
-	first_time = true;
+        str.op->reopen();
+        map_str.op->reopen();
+        trans_str.op->reopen();
+        first_time = true;
 }
 
 void PPFnTranslate::do_close()
 {
-	str.op->close();
-	map_str.op->close();
-	trans_str.op->close();
+        str.op->close();
+        map_str.op->close();
+        trans_str.op->close();
 }
 
 void PPFnTranslate::do_next (tuple &t)
 {
-	if (first_time)
-	{
-		first_time = false;
+        if (first_time)
+        {
+                first_time = false;
 
-		map_str.op->next(t);
-		if (t.is_eos())
-			throw XQUERY_EXCEPTION2(XPTY0004, "2nd argument of fn:translate is empty sequence");
-		tuple_cell map_tc = map_str.get(t);
-		map_tc = atomize(map_tc);
-		if (map_tc.get_atomic_type()==xs_untypedAtomic)
-			map_tc.set_xtype(xs_string);
-		else
-			if (!is_string_type(map_tc.get_atomic_type()))
-				throw XQUERY_EXCEPTION2(XPTY0004, "2nd argument of fn:translate is not a string");
-		map_tc = tuple_cell::make_sure_light_atomic(map_tc);
-		map_str.op->next(t);
-		if (!t.is_eos())
-			throw XQUERY_EXCEPTION2(XPTY0004, "2nd argument of fn:translate is not atomic value");
+                map_str.op->next(t);
+                if (t.is_eos())
+                        throw XQUERY_EXCEPTION2(XPTY0004, "2nd argument of fn:translate is empty sequence");
+                tuple_cell map_tc = map_str.get(t);
+                map_tc = atomize(map_tc);
+                if (map_tc.get_atomic_type()==xs_untypedAtomic)
+                        map_tc.set_xtype(xs_string);
+                else
+                        if (!is_string_type(map_tc.get_atomic_type()))
+                                throw XQUERY_EXCEPTION2(XPTY0004, "2nd argument of fn:translate is not a string");
+                map_tc = tuple_cell::make_sure_light_atomic(map_tc);
+                map_str.op->next(t);
+                if (!t.is_eos())
+                        throw XQUERY_EXCEPTION2(XPTY0004, "2nd argument of fn:translate is not atomic value");
 
-		trans_str.op->next(t);
-		if (t.is_eos())
-			throw XQUERY_EXCEPTION2(XPTY0004, "3rd argument of fn:translate is empty sequence");
-		tuple_cell trans_tc = trans_str.get(t);
-		trans_tc = atomize(trans_tc);
-		if (trans_tc.get_atomic_type()==xs_untypedAtomic)
-			trans_tc.set_xtype(xs_string);
-		else
-			if (!is_string_type(trans_tc.get_atomic_type()))
-				throw XQUERY_EXCEPTION2(XPTY0004, "3rd argument of fn:translate is not a string");
-		trans_tc = tuple_cell::make_sure_light_atomic(trans_tc);
-		trans_str.op->next(t);
-		if (!t.is_eos())
-			throw XQUERY_EXCEPTION2(XPTY0004, "3rd argument of fn:translate is not atomic value");
+                trans_str.op->next(t);
+                if (t.is_eos())
+                        throw XQUERY_EXCEPTION2(XPTY0004, "3rd argument of fn:translate is empty sequence");
+                tuple_cell trans_tc = trans_str.get(t);
+                trans_tc = atomize(trans_tc);
+                if (trans_tc.get_atomic_type()==xs_untypedAtomic)
+                        trans_tc.set_xtype(xs_string);
+                else
+                        if (!is_string_type(trans_tc.get_atomic_type()))
+                                throw XQUERY_EXCEPTION2(XPTY0004, "3rd argument of fn:translate is not a string");
+                trans_tc = tuple_cell::make_sure_light_atomic(trans_tc);
+                trans_str.op->next(t);
+                if (!t.is_eos())
+                        throw XQUERY_EXCEPTION2(XPTY0004, "3rd argument of fn:translate is not atomic value");
 
-		str.op->next(t);
-		if (!t.is_eos())
-		{
-			tuple_cell tc = str.get(t);
-			tc = atomize(tc);
-			if (!is_string_type(tc.get_atomic_type()))
-				throw XQUERY_EXCEPTION2(XPTY0004, "1st argument of fn:translate is not a string");
-			str.op->next(t);
-			if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:translate as 1st argument is more than 1");
+                str.op->next(t);
+                if (!t.is_eos())
+                {
+                        tuple_cell tc = str.get(t);
+                        tc = atomize(tc);
+                        if (!is_string_type(tc.get_atomic_type()))
+                                throw XQUERY_EXCEPTION2(XPTY0004, "1st argument of fn:translate is not a string");
+                        str.op->next(t);
+                        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:translate as 1st argument is more than 1");
 
-			charset_handler->transtale(t, &tc, &map_tc, &trans_tc);
-		}
-		else
-			t.copy(EMPTY_STRING_TC);
-	}
-	else
-	{
-		first_time = true;
-		t.set_eos();
-	}
+                        charset_handler->transtale(t, &tc, &map_tc, &trans_tc);
+                }
+                else
+                        t.copy(EMPTY_STRING_TC);
+        }
+        else
+        {
+                first_time = true;
+                t.set_eos();
+        }
 }
 
 PPIterator* PPFnTranslate::do_copy(dynamic_context *_cxt_)
 {
-	PPFnTranslate *res = se_new PPFnTranslate(_cxt_, info, str, map_str, trans_str);
-	res->str.op = str.op->copy(_cxt_);
-	res->map_str.op = map_str.op->copy(_cxt_);
-	res->trans_str.op = trans_str.op->copy(_cxt_);
-	return res;
+        PPFnTranslate *res = se_new PPFnTranslate(_cxt_, info, str, map_str, trans_str);
+        res->str.op = str.op->copy(_cxt_);
+        res->map_str.op = map_str.op->copy(_cxt_);
+        res->trans_str.op = trans_str.op->copy(_cxt_);
+        return res;
 }
 
 void PPFnTranslate::do_accept(PPVisitor &v)
@@ -738,8 +740,8 @@ void PPFnTranslate::do_accept(PPVisitor &v)
     v.visit (this);
     v.push  (this);
     str.op->accept(v);
-	map_str.op->accept(v);
-	trans_str.op->accept(v);
+        map_str.op->accept(v);
+        trans_str.op->accept(v);
     v.pop();
 }
 
@@ -830,9 +832,9 @@ static inline void byte_based_substring_call_stub(Iterator &start, const Iterato
 
 static inline tuple_cell byte_based_substring(const tuple_cell *tc, int64_t start_pos, int64_t length)
 {
-	stmt_str_buf res;
-	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(byte_based_substring_call_stub, tc, res, start_pos, length);
-	return res.get_tuple_cell();
+        stmt_str_buf res;
+        STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(byte_based_substring_call_stub, tc, res, start_pos, length);
+        return res.get_tuple_cell();
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -968,62 +970,62 @@ PPFnChangeCase::PPFnChangeCase(dynamic_context *_cxt_,
 
 PPFnChangeCase::~PPFnChangeCase()
 {
-	delete str.op;
-	str.op = NULL;
+        delete str.op;
+        str.op = NULL;
 }
 
 void PPFnChangeCase::do_open ()
 {
-	str.op->open();
-	first_time = true;
+        str.op->open();
+        first_time = true;
 }
 
 void PPFnChangeCase::do_reopen()
 {
-	str.op->reopen();
-	first_time = true;
+        str.op->reopen();
+        first_time = true;
 }
 
 void PPFnChangeCase::do_close()
 {
-	str.op->close();
+        str.op->close();
 }
 
 void PPFnChangeCase::do_next (tuple &t)
 {
-	if (first_time)
-	{
-		first_time = false;
+        if (first_time)
+        {
+                first_time = false;
 
-		str.op->next(t);
-		if (!t.is_eos())
-		{
-			const tuple_cell tc = atomize(str.get(t));
-			if (!is_string_type(tc.get_atomic_type()))
-				throw XQUERY_EXCEPTION2(XPTY0004, "1st argument of fn:upper-case or fn:lower-case is not a string"); //FIXME: make 2 sep. err. strings
-			str.op->next(t);
-			if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:upper-case or fn:lower-case as 1st argument is more than 1"); //FIXME: make 2 sep. err. strings
+                str.op->next(t);
+                if (!t.is_eos())
+                {
+                        const tuple_cell tc = atomize(str.get(t));
+                        if (!is_string_type(tc.get_atomic_type()))
+                                throw XQUERY_EXCEPTION2(XPTY0004, "1st argument of fn:upper-case or fn:lower-case is not a string"); //FIXME: make 2 sep. err. strings
+                        str.op->next(t);
+                        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:upper-case or fn:lower-case as 1st argument is more than 1"); //FIXME: make 2 sep. err. strings
 
-			if (this->to_upper)
-				t.copy(charset_handler->toupper(&tc));
-			else
-				t.copy(charset_handler->tolower(&tc));
-		}
-		else
-			t.copy(EMPTY_STRING_TC);
-	}
-	else
-	{
-		first_time = true;
-		t.set_eos();
-	}
+                        if (this->to_upper)
+                                t.copy(charset_handler->toupper(&tc));
+                        else
+                                t.copy(charset_handler->tolower(&tc));
+                }
+                else
+                        t.copy(EMPTY_STRING_TC);
+        }
+        else
+        {
+                first_time = true;
+                t.set_eos();
+        }
 }
 
 PPIterator* PPFnChangeCase::do_copy(dynamic_context *_cxt_)
 {
-	PPFnChangeCase *res = se_new PPFnChangeCase(_cxt_, info, str, to_upper);
-	res->str.op = str.op->copy(_cxt_);
-	return res;
+        PPFnChangeCase *res = se_new PPFnChangeCase(_cxt_, info, str, to_upper);
+        res->str.op = str.op->copy(_cxt_);
+        return res;
 }
 
 void PPFnChangeCase::do_accept(PPVisitor &v)
@@ -1082,7 +1084,7 @@ void PPFnStringLength::do_next (tuple &t)
         {
             tuple_cell tc = child.get(t);
             tc = cast(atomize(tc), xs_string);
-			len = charset_handler->length(&tc);
+                        len = charset_handler->length(&tc);
 
             child.op->next(t);
             if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string-length is more than 1");
@@ -1228,8 +1230,8 @@ PPFnSubstring::~PPFnSubstring()
 
     if(is_length)
     {
-    	delete length_child.op;
-    	length_child.op = NULL;
+        delete length_child.op;
+        length_child.op = NULL;
     }
 }
 
@@ -1308,7 +1310,7 @@ void PPFnSubstring::do_next(tuple &t)
         }
         tc = atomize(str_child.get(t));
         if (!is_string_type(tc.get_atomic_type()))
-        	throw XQUERY_EXCEPTION2(XPTY0004, "1st argument of fn:substring is not a string");
+                throw XQUERY_EXCEPTION2(XPTY0004, "1st argument of fn:substring is not a string");
         str_child.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:substring as 1st argument is more than 1");
 

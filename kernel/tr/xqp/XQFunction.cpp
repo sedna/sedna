@@ -199,4 +199,10 @@ namespace sedna
         {"", "get-property",  1,  1, 0xFF, "!se!get-property", false, &resultOne, &l2pFnSeGetProperty},
         {"", "", 0, 0, 0xFF, "", false, &resultOne} // dummy record to mark the end
     };
+
+    XQFunction cryptoFunctions[] =
+    {
+        {"", "sha1",  1,  1, 0xFF, "!crypto!sha1", false, &resultOne, &l2pFnCryptoSha1},
+        {"", "", 0, 0, 0xFF, "", false, &resultOne} // dummy record to mark the end
+    };
 }

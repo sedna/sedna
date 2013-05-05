@@ -120,6 +120,7 @@ public:
     virtual void visit(PPTest* op);
     virtual void visit(PPConst* op);
     virtual void visit(PPDDO* op);
+    virtual void visit(PPDigest* op);
     virtual void visit(PPSXptr* op);
     virtual void visit(PPDocInCol* op);
     virtual void visit(PPExtFunCall* op);

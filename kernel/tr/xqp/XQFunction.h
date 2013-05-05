@@ -69,6 +69,7 @@ namespace sedna
     extern XQFunction xqueryFunctions[];
     extern XQFunction sqlFunctions[];
     extern XQFunction seFunctions[];
+    extern XQFunction cryptoFunctions[];
 }
 
 #endif

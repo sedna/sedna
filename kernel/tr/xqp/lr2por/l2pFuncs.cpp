@@ -42,6 +42,8 @@
 #include "tr/executor/xqops/PPTest.h"
 #include "tr/executor/xqops/PPNodeComparison.h"
 #include "tr/executor/xqops/PPSQL.h"
+#include "tr/executor/xqops/PPDigest.h"
+
 
 PPOpIn l2pFnAbs(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
@@ -1602,6 +1604,15 @@ PPOpIn l2pFnSeGetProperty(dynamic_context *dyn_cxt, const operation_info &opi, a
     PPOpIn res;
 
     res = PPOpIn(new PPFnGetProperty(dyn_cxt, opi, params[0]), 1);
+
+    return res;
+}
+
+PPOpIn l2pFnCryptoSha1(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
+{
+    PPOpIn res;
+
+    res = PPOpIn(new PPDigest(dyn_cxt, opi, params[0]), 1);
 
     return res;
 }
