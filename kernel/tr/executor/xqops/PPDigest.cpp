@@ -10,11 +10,13 @@
 
 #include "tr/executor/xqops/PPDigest.h"
 #include "tr/executor/base/visitor/PPVisitor.h"
-#include "tr/executor/base/crypto/sha1.h"
+#include "tr/executor/base/crypto/crypto.h"
 
 PPDigest::PPDigest(dynamic_context *_cxt_,
                    operation_info _info_,
+                   const char* _digest_name_,
                    PPOpIn _child_) : PPIterator(_cxt_, _info_, "PPDigest"),
+                                     digest_name(_digest_name_),
                                      child(_child_)
 {
 }
@@ -63,8 +65,9 @@ void PPDigest::do_next(tuple &t)
                 throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the argument. Argument contains more than one item in {http://sedna.org/crypto}::sha1.");
             }
 
-            Sha1 digest = Sha1();
-            t.copy(digest.get(&in_str));
+            scoped_ptr<Digest> digest = DigestFactory::create(digest_name);
+            //TODO: throw exception if digest not found
+            t.copy(digest->get(&in_str));
         }
     } else {
         first_time = true;
@@ -74,7 +77,7 @@ void PPDigest::do_next(tuple &t)
 
 PPIterator* PPDigest::do_copy(dynamic_context *_cxt_)
 {
-    PPDigest *res = new PPDigest(_cxt_, info, child);
+    PPDigest *res = new PPDigest(_cxt_, info, digest_name, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

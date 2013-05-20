@@ -140,5 +140,6 @@ PPOpIn l2pFnSqlRollback(dynamic_context *dyn_cxt, const operation_info &opi, arr
 PPOpIn l2pFnSeCheckpoint(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnSeGetProperty(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 PPOpIn l2pFnCryptoSha1(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
+PPOpIn l2pFnCryptoMd5(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params);
 
 #endif

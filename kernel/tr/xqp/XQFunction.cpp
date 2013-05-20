@@ -203,6 +203,7 @@ namespace sedna
     XQFunction cryptoFunctions[] =
     {
         {"", "sha1",  1,  1, 0xFF, "!crypto!sha1", false, &resultOne, &l2pFnCryptoSha1},
+        {"", "md5",  1,  1, 0xFF, "!crypto!md5", false, &resultOne, &l2pFnCryptoMd5},
         {"", "", 0, 0, 0xFF, "", false, &resultOne} // dummy record to mark the end
     };
 }
