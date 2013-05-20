@@ -1,5 +1,5 @@
 /*
- * File: sha1.c
+ * File: sha1.cpp
  * Copyright 2013 (C) ISP RAS
  * The Institute for System Programming of the Russian Academy of Sciences
  */
@@ -42,10 +42,9 @@
 #include "common/sedna.h"
 #include "tr/strings/strings.h"
 #include "tr/executor/base/crypto/sha1.h"
+#include "tr/executor/base/crypto/support.h"
 
 
-const unsigned char hex_value_to_char[16] = {'0','1','2','3','4','5','6','7','8','9',
-                                             'A','B','C','D','E','F'};
 /* constant table */
 static uint32_t _K[] = {0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6};
 
@@ -343,18 +342,6 @@ sha1_loop(struct Sha1::digest_ctxt * ctxt, const tuple_cell *tc)
     STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(sha1_loop_tmpl, tc, ctxt);
 }
 
-static inline uint8_t
-hex_encode_byte1(uint8_t byte)
-{
-    return (uint8_t) hex_value_to_char[((byte & 0xF0) >> 4)];
-}
-
-static inline uint8_t
-hex_encode_byte2(uint8_t byte)
-{
-    return (uint8_t) hex_value_to_char[(byte & 15)];
-}
-
 static void
 sha1_result(struct Sha1::digest_ctxt * ctxt, uint8_t *digest0)
 {
@@ -404,8 +391,8 @@ tuple_cell Sha1::get(tuple_cell* tc) {
     sha1_result(&ctxt, (uint8_t*) res);
 
     for (int i = 0; i < 20; i++) {
-        hex_res[2 * i] = hex_encode_byte1(res[i]);
-        hex_res[2 * i + 1] = hex_encode_byte2(res[i]);
+        hex_res[2 * i] = HEX_ENCODE_BYTE1(res[i]);
+        hex_res[2 * i + 1] = HEX_ENCODE_BYTE2(res[i]);
     }
 
     hex_res[SHA1_DIGEST_LEN * 2] = '\0';

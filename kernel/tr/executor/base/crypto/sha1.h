@@ -8,12 +8,11 @@
 #define _NETINET6_SHA1_H_
 
 #include "common/sedna.h"
-#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/crypto/crypto.h"
 
 #define SHA1_DIGEST_LEN 20
 
-
-class Sha1
+class Sha1: public Digest
 {
     public:
         struct digest_ctxt
@@ -45,6 +44,14 @@ class Sha1
         virtual ~Sha1();
 
         virtual tuple_cell get(tuple_cell *tc);
+};
+
+class Sha1DigestFactory: public DigestFactory
+{
+    public:
+        virtual Digest* create() const {
+            return new Sha1();
+        }
 };
 
 #endif   /* _NETINET6_SHA1_H_ */
