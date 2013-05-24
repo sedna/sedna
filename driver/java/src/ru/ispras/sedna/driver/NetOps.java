@@ -237,17 +237,25 @@ class NetOps {
 
     private static int readInt(BufferedInputStream bufInputStream)
             throws DriverException {
-        int call_res, integer;
+        int call_res, integer, total = 0;
         byte int_array[] = new byte[4];
 
         try {
-            call_res = bufInputStream.read(int_array, 0, 4);
-            if (call_res != 4) throw new DriverException(ErrorCodes.SE3007, "");
+            while(total < 4)  {
+                call_res = bufInputStream.read(int_array, total, 4 - total);
+                if (call_res == -1)
+                    break;
+                else
+                    total += call_res;
+            }
+
+            if (total != 4)
+                throw new DriverException(ErrorCodes.SE3007, "read " + total + " bytes, expected 4");
 
             integer = (((int_array[0] & 0xff) << 24)
                     | ((int_array[1] & 0xff) << 16)
                     | ((int_array[2] & 0xff) << 8) | (int_array[3] & 0xff));
-        }catch (IOException ioe) {
+        } catch (IOException ioe) {
             throw new DriverException(ErrorCodes.SE3007, ioe.toString());
         }
 
@@ -378,9 +386,9 @@ class NetOps {
             throws DriverException {
 
         NetOps.Message     msg   = new NetOps.Message();
-        NetOps.StringItem  sitem = new NetOps.StringItem();
+        NetOps.StringItem  sItem = new NetOps.StringItem();
         boolean gotTrace, gotDebug;
-        sitem.item = new StringBuffer();
+        sItem.item = new StringBuffer();
         StringBuffer debugInfo = new StringBuffer();
 
         ByteBuffer     byteBuf;
@@ -390,18 +398,18 @@ class NetOps {
         NetOps.readMsg(msg, is);
 
         gotDebug = NetOps.readDebugInfo(msg, is, debugInfo);
-        gotTrace = doTraceOutput && NetOps.readTrace(msg, is, sitem.item);
+        gotTrace = doTraceOutput && NetOps.readTrace(msg, is, sItem.item);
 
         if (msg.instruction == NetOps.se_ItemEnd) {
             /* If we got se_ItemEnd before se_ItemPart/se_ItemStart
              * it means that query returned empty xs:string. */
-            sitem.hasNextItem = true;
-            return sitem;
+            sItem.hasNextItem = true;
+            return sItem;
         }
         if (msg.instruction == NetOps.se_ResultEnd) {
-            if (!gotTrace) sitem.item = null;
-            sitem.hasNextItem = false;
-            return sitem;
+            if (!gotTrace) sItem.item = null;
+            sItem.hasNextItem = false;
+            return sItem;
         }
 
         while ((msg.instruction != NetOps.se_ItemEnd) && (msg.instruction != NetOps.se_ResultEnd)) {
@@ -416,27 +424,27 @@ class NetOps {
                 byteBuf = ByteBuffer.wrap(msg.body, 5, msg.length - 5);
                 csd.decode(byteBuf, charBuf, false);
 
-                sitem.item.ensureCapacity(charBuf.length());
+                sItem.item.ensureCapacity(charBuf.length());
 
                 try {
-                    sitem.item.append(charBuf.flip());
+                    sItem.item.append(charBuf.flip());
                 } catch (OutOfMemoryError ignore) {}
 
                 charBuf.clear();
             }
 
             NetOps.readMsg(msg, is);
-            if (doTraceOutput) NetOps.readTrace(msg, is, sitem.item);
+            if (doTraceOutput) NetOps.readTrace(msg, is, sItem.item);
         }
 
         if (msg.instruction == NetOps.se_ResultEnd) {
-            sitem.hasNextItem = false;
+            sItem.hasNextItem = false;
         }
 
         if (msg.instruction == NetOps.se_ItemEnd) {
-            sitem.hasNextItem = true;
+            sItem.hasNextItem = true;
         }
-        return sitem;
+        return sItem;
     }
 
     private static void writeInt(int i, BufferedOutputStream bufOutputStream)
