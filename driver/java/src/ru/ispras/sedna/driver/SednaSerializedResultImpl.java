@@ -9,22 +9,25 @@ package ru.ispras.sedna.driver;
 import java.io.*;
 
 class SednaSerializedResultImpl implements SednaSerializedResult {
-    BufferedInputStream bufInputStream;
-    boolean             hasNextItem;
-    OutputStream        outputStream;
-    StringBuffer        stringItem;
-    boolean             doTraceOutput;
+    private final BufferedInputStream sednaConnectionInputStream;
+    private boolean hasNextItem;
+    private final OutputStream sednaConnectionOutputStream;
+    private StringBuffer stringItem;
+    private final boolean doTraceOutput;
+    private final ResultInterceptor resultInterceptor;
 
     SednaSerializedResultImpl(StringBuffer stringItem,
                               boolean hasNextItem,
                               BufferedInputStream is,
                               OutputStream os,
-                              boolean doTraceOutput) {
-        this.bufInputStream = is;
-        this.outputStream   = os;
+                              boolean doTraceOutput,
+                              ResultInterceptor interceptor) {
+        this.sednaConnectionInputStream = is;
+        this.sednaConnectionOutputStream = os;
         this.stringItem     = stringItem;
         this.hasNextItem    = hasNextItem;
         this.doTraceOutput  = doTraceOutput;
+        this.resultInterceptor = interceptor;
     }
 
     public String next() throws DriverException {
@@ -40,12 +43,13 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
             if(this.hasNextItem) {
                 msg.instruction = NetOps.se_GetNextItem;
                 msg.length      = 0;
-                NetOps.writeMsg(msg, outputStream);
+                NetOps.writeMsg(msg, sednaConnectionOutputStream);
 
-                NetOps.StringItem sitem = NetOps.readStringItem(bufInputStream, doTraceOutput);
+                NetOps.StringItem sItem =
+                        NetOps.readStringItem(sednaConnectionInputStream, doTraceOutput, resultInterceptor);
 
-                this.stringItem  = sitem.item;
-                this.hasNextItem = sitem.hasNextItem;
+                this.stringItem  = sItem.item;
+                this.hasNextItem = sItem.hasNextItem;
             } else {
                 this.stringItem = null;
             }
@@ -72,12 +76,13 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
             if(this.hasNextItem) {
                 msg.instruction = NetOps.se_GetNextItem;
                 msg.length      = 0;
-                NetOps.writeMsg(msg, outputStream);
+                NetOps.writeMsg(msg, sednaConnectionOutputStream);
 
-                NetOps.StringItem sitem = NetOps.readStringItem(bufInputStream, doTraceOutput);
+                NetOps.StringItem sItem =
+                        NetOps.readStringItem(sednaConnectionInputStream, doTraceOutput, resultInterceptor);
 
-                this.stringItem  = sitem.item;
-                this.hasNextItem = sitem.hasNextItem;
+                this.stringItem  = sItem.item;
+                this.hasNextItem = sItem.hasNextItem;
             } else {
                 this.stringItem = null;
             }
