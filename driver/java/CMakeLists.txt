@@ -29,6 +29,8 @@ if (JAVA_DRIVER)
                         src/ru/ispras/sedna/driver/SednaConnection.java
                         src/ru/ispras/sedna/driver/SednaConnectionImpl.java
                         src/ru/ispras/sedna/driver/DatabaseManager.java
+                        src/ru/ispras/sedna/driver/ResultInterceptor.java
+                        src/ru/ispras/sedna/driver/DefaultResultInterceptor.java
                         ${CMAKE_CURRENT_BINARY_DIR}/src/ru/ispras/sedna/driver/Debug.java
                         ${CMAKE_CURRENT_BINARY_DIR}/src/ru/ispras/sedna/driver/ErrorCodes.java)
 

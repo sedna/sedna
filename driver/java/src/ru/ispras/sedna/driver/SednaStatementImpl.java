@@ -15,18 +15,20 @@ import java.lang.System;
  */
 class SednaStatementImpl implements SednaStatement {
 
-    private SednaSerializedResultImpl serializedResult = null;
-    private BufferedInputStream       bufInputStream;
-    private OutputStream              outputStream;
-    private boolean                   doTraceOutput;
+    private volatile SednaSerializedResultImpl serializedResult = null;
+    private final BufferedInputStream sednaConnectionInputStream;
+    private final OutputStream sednaConnectionOutputStream;
+    private final boolean doTraceOutput;
+    private volatile ResultInterceptor resultInterceptor;
 
 
-    SednaStatementImpl(OutputStream outputStream,
-                       BufferedInputStream bufInputStream,
+    SednaStatementImpl(OutputStream sednaConnectionOutputStream,
+                       BufferedInputStream sednaConnectionInputStream,
                        boolean doTraceOutput) {
-        this.outputStream   = outputStream;
-        this.bufInputStream = bufInputStream;
+        this.sednaConnectionOutputStream = sednaConnectionOutputStream;
+        this.sednaConnectionInputStream = sednaConnectionInputStream;
         this.doTraceOutput = doTraceOutput;
+        this.resultInterceptor = new DefaultResultInterceptor();
     }
 
     public boolean execute(InputStream in)
@@ -57,13 +59,13 @@ class SednaStatementImpl implements SednaStatement {
 
                 setQueryResultType(msg, resultType);
                 NetOps.writeInt(call_res, msg.body, 2);
-                NetOps.writeMsg(msg, outputStream);
+                NetOps.writeMsg(msg, sednaConnectionOutputStream);
             }
         }
 
         msg.instruction = NetOps.se_LongQueryEnd;
         msg.length      = 0;
-        NetOps.writeMsg(msg, outputStream);
+        NetOps.writeMsg(msg, sednaConnectionOutputStream);
 
         return executeResponseAnalyze(msg);
     }
@@ -94,12 +96,12 @@ class SednaStatementImpl implements SednaStatement {
                     NetOps.writeInt(bytes_to_send, msg.body, 2);
 
                     bytes_sent += bytes_to_send;
-                    NetOps.writeMsg(msg, outputStream);
+                    NetOps.writeMsg(msg, sednaConnectionOutputStream);
                 }
 
                 msg.instruction = NetOps.se_LongQueryEnd;
                 msg.length      = 0;
-                NetOps.writeMsg(msg, outputStream);
+                NetOps.writeMsg(msg, sednaConnectionOutputStream);
             } else {
                 msg.instruction = NetOps.se_Execute;
                 msg.length      = query_bytes.length + 6;
@@ -108,7 +110,7 @@ class SednaStatementImpl implements SednaStatement {
 
                 NetOps.writeInt(query_bytes.length, msg.body, 2);
                 System.arraycopy(query_bytes, 0, msg.body, 6, query_bytes.length);
-                NetOps.writeMsg(msg, outputStream);
+                NetOps.writeMsg(msg, sednaConnectionOutputStream);
             }
 
             return executeResponseAnalyze(msg);
@@ -120,52 +122,56 @@ class SednaStatementImpl implements SednaStatement {
 
     private boolean executeResponseAnalyze(NetOps.Message msg) throws DriverException {
         StringBuffer debugInfo = new StringBuffer();
-        boolean gotDebug;
 
-        NetOps.readMsg(msg, bufInputStream);
+        NetOps.readMsg(msg, sednaConnectionInputStream);
 
         /* Read debug information if any */
-        gotDebug = NetOps.readDebugInfo(msg, bufInputStream, debugInfo);
+        boolean gotDebug = NetOps.readDebugInfo(msg, sednaConnectionInputStream, debugInfo);
 
         if (msg.instruction == NetOps.se_QuerySucceeded) {
 
-            NetOps.StringItem sitem =
-                    NetOps.readStringItem(bufInputStream, this.doTraceOutput);
+            NetOps.StringItem sItem =
+                    NetOps.readStringItem(sednaConnectionInputStream, doTraceOutput, resultInterceptor);
 
-            this.serializedResult = new SednaSerializedResultImpl(sitem.item,
-                            sitem.hasNextItem,
-                            this.bufInputStream,
-                            this.outputStream,
-                            this.doTraceOutput);
+            serializedResult = new SednaSerializedResultImpl(sItem.item,
+                    sItem.hasNextItem,
+                    sednaConnectionInputStream,
+                    sednaConnectionOutputStream,
+                    doTraceOutput,
+                    resultInterceptor);
             return true;
         } else if ( msg.instruction == NetOps.se_QueryFailed  ||
-                    msg.instruction == NetOps.se_UpdateFailed ||
+                msg.instruction == NetOps.se_UpdateFailed ||
                     msg.instruction == NetOps.se_ErrorResponse ) {
 
             DriverException ex = new DriverException(
                     NetOps.getErrorInfo(msg.body, msg.length),
                     NetOps.getErrorCode(msg.body));
 
-            if (gotDebug) ex.setDebugInfo(debugInfo);
+            if (gotDebug) {
+                ex.setDebugInfo(debugInfo);
+            }
             throw ex;
         } else if (msg.instruction == NetOps.se_UpdateSucceeded) {
             return false;
         } else if (msg.instruction == NetOps.se_BulkLoadFileName) {
 
-            return NetOps.bulkLoad(new String(msg.body, 5, msg.length - 5), 
-                                   this.bufInputStream, 
-                                   this.outputStream);
+            return NetOps.bulkLoad(new String(msg.body, 5, msg.length - 5),
+                    sednaConnectionInputStream,
+                    sednaConnectionOutputStream);
 
         } else if (msg.instruction == NetOps.se_BulkLoadFromStream) {
 
-            return NetOps.bulkLoad(System.in, this.bufInputStream, this.outputStream);
+            return NetOps.bulkLoad(System.in, sednaConnectionInputStream, sednaConnectionOutputStream);
 
         }
         else {
             /* Unknown message from the server */
             DriverException ex = new DriverException(ErrorCodes.SE3008,
                                                      Integer.toString(msg.instruction));
-            if (gotDebug) ex.setDebugInfo(debugInfo);
+            if (gotDebug) {
+                ex.setDebugInfo(debugInfo);
+            }
             throw ex;
         }
     }
@@ -185,11 +191,11 @@ class SednaStatementImpl implements SednaStatement {
         byte query_bytes[] = queryText.getBytes();
 
 		System.arraycopy(query_bytes, 0, msg.body, 6, queryText.length());
-        NetOps.writeMsg(msg, outputStream);
-        NetOps.readMsg(msg, bufInputStream);
+        NetOps.writeMsg(msg, sednaConnectionOutputStream);
+        NetOps.readMsg(msg, sednaConnectionInputStream);
 
         if (msg.instruction == NetOps.se_BulkLoadFromStream) {
-            NetOps.bulkLoad(in, this.bufInputStream, this.outputStream);
+            NetOps.bulkLoad(in, this.sednaConnectionInputStream, this.sednaConnectionOutputStream);
         } else if (msg.instruction == NetOps.se_ErrorResponse ||
                    msg.instruction == NetOps.se_QueryFailed) {
             throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length),
@@ -199,10 +205,10 @@ class SednaStatementImpl implements SednaStatement {
         }
     }
 
-    public void loadDocument(String xmldoc, String doc_name)
+    public void loadDocument(String xmlDoc, String doc_name)
             throws DriverException, IOException {
             	
-        loadDocument(new ByteArrayInputStream(xmldoc.getBytes("utf8")), doc_name);
+        loadDocument(new ByteArrayInputStream(xmlDoc.getBytes("utf8")), doc_name);
     }
 
     public void loadDocument(InputStream in, String doc_name, String col_name)
@@ -210,13 +216,17 @@ class SednaStatementImpl implements SednaStatement {
         loadDocument(in, doc_name + "' '" + col_name);
     }
     
-    public void loadDocument(String xmldoc, String doc_name, String col_name)
+    public void loadDocument(String xmlDoc, String doc_name, String col_name)
             throws DriverException, IOException {
-        loadDocument(new ByteArrayInputStream(xmldoc.getBytes("utf8")), doc_name + "' '" + col_name);
+        loadDocument(new ByteArrayInputStream(xmlDoc.getBytes("utf8")), doc_name + "' '" + col_name);
     }
 
     public SednaSerializedResult getSerializedResult() {
         return this.serializedResult;
+    }
+
+    public synchronized void setResultInterceptor(ResultInterceptor interceptor) {
+        this.resultInterceptor = interceptor;
     }
 
     private void setQueryResultType(NetOps.Message message,

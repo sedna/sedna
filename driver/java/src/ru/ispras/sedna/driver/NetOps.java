@@ -79,6 +79,8 @@ class NetOps {
     /* Value session option switches  */
     final static int se_Query_Exec_Timeout             = 4;
 
+    private final static ByteBuffer EMPTY_BUFFER = ByteBuffer.allocate(0);
+
     /**
      * Bulk loads data to the server from the given input stream.
      * Sends se_BulkLoadEnd on the end in case of success.
@@ -378,11 +380,12 @@ class NetOps {
      * Reads complete item from the stream connected with server.
      * @param is connection stream with the server to read item from
      * @param doTraceOutput either read trace information or not
+     * @param interceptor callback implementation to handle result reading outside
      * @return {@link ru.ispras.sedna.driver.NetOps.StringItem} which encapsulates text representation of the item
      * and provides information if there is next item.
      * @throws DriverException if failed to get item or something wrong with connection
      */
-    static StringItem readStringItem(BufferedInputStream is, boolean doTraceOutput)
+    static StringItem readStringItem(BufferedInputStream is, boolean doTraceOutput, ResultInterceptor interceptor)
             throws DriverException {
 
         NetOps.Message     msg   = new NetOps.Message();
@@ -391,7 +394,6 @@ class NetOps {
         sItem.item = new StringBuffer();
         StringBuffer debugInfo = new StringBuffer();
 
-        ByteBuffer     byteBuf;
         CharBuffer     charBuf = CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
         CharsetDecoder csd = Charset.forName("utf8").newDecoder();
 
@@ -403,6 +405,7 @@ class NetOps {
         if (msg.instruction == NetOps.se_ItemEnd) {
             /* If we got se_ItemEnd before se_ItemPart/se_ItemStart
              * it means that query returned empty xs:string. */
+            interceptor.itemEnd();
             sItem.hasNextItem = true;
             return sItem;
         }
@@ -421,14 +424,16 @@ class NetOps {
             }
             if (msg.instruction == NetOps.se_ItemPart)
             {
-                byteBuf = ByteBuffer.wrap(msg.body, 5, msg.length - 5);
+                ByteBuffer byteBuf = interceptor.handle(ByteBuffer
+                        .wrap(msg.body, 5, msg.length - 5)
+                        .asReadOnlyBuffer());
+                if (byteBuf == null) {
+                    byteBuf = EMPTY_BUFFER;
+                }
                 csd.decode(byteBuf, charBuf, false);
 
                 sItem.item.ensureCapacity(charBuf.length());
-
-                try {
-                    sItem.item.append(charBuf.flip());
-                } catch (OutOfMemoryError ignore) {}
+                sItem.item.append(charBuf.flip());
 
                 charBuf.clear();
             }
@@ -437,6 +442,7 @@ class NetOps {
             if (doTraceOutput) NetOps.readTrace(msg, is, sItem.item);
         }
 
+        interceptor.itemEnd();
         if (msg.instruction == NetOps.se_ResultEnd) {
             sItem.hasNextItem = false;
         }
