@@ -19,8 +19,8 @@ class SednaStatementImpl implements SednaStatement {
     private final BufferedInputStream sednaConnectionInputStream;
     private final OutputStream sednaConnectionOutputStream;
     private final boolean doTraceOutput;
-    private volatile ResultInterceptor resultInterceptor;
-
+    private static final ResultInterceptor defaultInterceptor = new DefaultResultInterceptor();
+    private volatile ResultInterceptor resultInterceptor = defaultInterceptor;
 
     SednaStatementImpl(OutputStream sednaConnectionOutputStream,
                        BufferedInputStream sednaConnectionInputStream,
@@ -28,7 +28,6 @@ class SednaStatementImpl implements SednaStatement {
         this.sednaConnectionOutputStream = sednaConnectionOutputStream;
         this.sednaConnectionInputStream = sednaConnectionInputStream;
         this.doTraceOutput = doTraceOutput;
-        this.resultInterceptor = new DefaultResultInterceptor();
     }
 
     public boolean execute(InputStream in)
@@ -227,6 +226,10 @@ class SednaStatementImpl implements SednaStatement {
 
     public synchronized void setResultInterceptor(ResultInterceptor interceptor) {
         this.resultInterceptor = interceptor;
+    }
+
+    public void resetResultInterceptor() {
+        setResultInterceptor(defaultInterceptor);
     }
 
     private void setQueryResultType(NetOps.Message message,

@@ -192,48 +192,59 @@ public interface SednaStatement {
 
 
     /**
-     * Interceptors provide custom result processing logic.
+     * Set result interceptor. Interceptors provide custom result processing logic.
      * Use cases include: filtration, aggregation, redirect output to the file, etc.
+     * New interceptor will be in effect from the next query execution (call to one
+     * of the <code>execute()</code> methods).
+     * <br/>
+     * <br/>
      * For example:
      *
      * <pre>
-     *      SednaConnection con = DatabaseManager.getConnection("localhost", "x", "SYSTEM", "MANAGER");
-     *      con.begin();
-     *      SednaStatement st = con.createStatement();
+     * SednaConnection con = DatabaseManager.getConnection("localhost", "x", "SYSTEM", "MANAGER");
+     * con.begin();
+     * SednaStatement st = con.createStatement();
      *
-     *      final FileChannel out = new FileOutputStream("/tmp/result").getChannel();
+     * final FileChannel out = new FileOutputStream("/tmp/result").getChannel();
      *
-     *      // next() will return empty result every time, actual result
-     *      // will be redirected into file
-     *      ResultInterceptor interceptor = new ResultInterceptor() {
-     *          private final ByteBuffer empty = ByteBuffer.allocate(0);
+     * // next() will return empty result every time, actual result
+     * // will be redirected into the file
+     * ResultInterceptor interceptor = new ResultInterceptor() {
+     *     private final ByteBuffer empty = ByteBuffer.allocate(0);
      *
-     *          public ByteBuffer handle(ByteBuffer res) {
-     *              try {
-     *                  out.write(res);
-     *              } catch (IOException ignore) {
-     *                  //Never! Never! do exception handling this way in your code :)
-     *              }
-     *              return empty;
-     *          }
-     *      };
+     *     public ByteBuffer handle(ByteBuffer res) {
+     *         try {
+     *             out.write(res);
+     *         } catch (IOException ignore) {
+     *             //Never! Never! do exception handling this way in your code :)
+     *         }
+     *         return empty;
+     *     }
+     * };
      *
-     *      st.setResultInterceptor(interceptor);
+     * st.setResultInterceptor(interceptor);
      *
-     *      // execute XQuery
-     *      boolean res = st.execute("for $i in (1 to 1000) return $i");
+     * // execute XQuery
+     * boolean res = st.execute("for $i in (1 to 1000) return $i");
      *
-     *      if (res) {
-     *          SednaSerializedResult pr = st.getSerializedResult();
-     *          item = pr.next();
-     *          while (item != null) {
-     *              item = pr.next();
-     *          }
-     *      }
-     *      con.close();
+     * if (res) {
+     *     SednaSerializedResult pr = st.getSerializedResult();
+     *     item = pr.next();
+     *     while (item != null) {
+     *         item = pr.next();
+     *     }
+     * }
+     * con.close();
      *</pre>
      *
      * @see ru.ispras.sedna.driver.ResultInterceptor
      */
     public void setResultInterceptor(ResultInterceptor interceptor);
+
+    /**
+     * Sets default result interceptor.
+     * @see ru.ispras.sedna.driver.ResultInterceptor
+     * @see SednaStatement#setResultInterceptor(ResultInterceptor)
+     */
+    public void resetResultInterceptor();
 }
