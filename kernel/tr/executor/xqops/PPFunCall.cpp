@@ -166,6 +166,7 @@ void PPFunCall::do_open()
 
     need_reopen    = false;
     is_body_opened = false;
+    is_in_arg_evaluation = false;
 }
 
 void PPFunCall::do_reopen()
@@ -214,11 +215,16 @@ void PPFunCall::do_close()
 void PPFunCall::do_next(tuple &t)
 {
     try {
+        is_in_arg_evaluation = false;
         do_next_impl(t);
+        is_in_arg_evaluation = false;
     } catch (SednaXQueryException &ex) {
-        const function_declaration& fd = fn_id.first->get_func_decl(fn_id.second);
-        const xquery_stack_frame_info frame(info.query_line, info.query_col, fd.func_name);
-        ex.add_frame(frame);
+        if (!is_in_arg_evaluation) {
+            const function_declaration& fd = fn_id.first->get_func_decl(fn_id.second);
+            const xquery_stack_frame_info frame(info.query_line, info.query_col, fd.func_name);
+            ex.add_frame(frame);
+        }
+        is_in_arg_evaluation = false;
         throw ex;
     }
 }
@@ -241,9 +247,7 @@ void PPFunCall::do_next_impl(tuple &t)
         args = new fun_arg*[args_num];
 
         for (i = 0; i < args_num; i++)
-            args[i] = new fun_arg(&(fd.args[i]),
-                                    ch_arr[i].op,
-                                    i + 1);
+            args[i] = new fun_arg(&(fd.args[i]), ch_arr[i].op, i + 1);
 
         /*
          * here we need to create new variable context for our execution
@@ -259,7 +263,7 @@ void PPFunCall::do_next_impl(tuple &t)
         {
             var_cxt->producers[i].type = pt_lazy_complex;
             var_cxt->producers[i].op = this;
-            var_cxt->producers[i].cvc = se_new complex_var_consumption;
+            var_cxt->producers[i].cvc = new complex_var_consumption;
             var_cxt->producers[i].tuple_pos = 0;
         }
 
@@ -275,7 +279,7 @@ void PPFunCall::do_next_impl(tuple &t)
         is_body_opened = true;
 
         /* arg_num == 0 means function return value */
-        body_fcr = se_new fun_conv_rules(&(fd.ret_st), body, 0);
+        body_fcr = new fun_conv_rules(&(fd.ret_st), body, 0);
     }
 
     if (need_reopen)
@@ -292,7 +296,7 @@ void PPFunCall::do_next_impl(tuple &t)
 
 PPIterator* PPFunCall::do_copy(dynamic_context *_cxt_)
 {
-    PPFunCall *res = se_new PPFunCall(_cxt_, info, ch_arr, fn_id);
+    PPFunCall *res = new PPFunCall(_cxt_, info, ch_arr, fn_id);
 
     for (unsigned i = 0; i < args_num; i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
@@ -309,7 +313,9 @@ var_c_id PPFunCall::do_register_consumer(var_dsc dsc)
 
 void PPFunCall::do_next(tuple &t, var_dsc dsc, var_c_id id)
 {
+    is_in_arg_evaluation = true;
     args[dsc]->next(t, var_cxt->producers[dsc].cvc->at(id));
+    is_in_arg_evaluation = false;
 }
 
 void PPFunCall::do_reopen(var_dsc dsc, var_c_id id)
