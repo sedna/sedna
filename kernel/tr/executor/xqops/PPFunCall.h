@@ -54,7 +54,7 @@ public:
             int _arg_num_): fcr(_st_, _child_, _arg_num_), 
                             seq_filled(false) 
     {
-        s = se_new sequence(1); 
+        s = new sequence(1);
     }
     
     ~fun_arg() { 
@@ -79,6 +79,7 @@ protected:
 
     bool need_reopen;
     bool is_body_opened;
+    bool is_in_arg_evaluation;
 
     inline void reinit_consumer_table();
 
