@@ -659,6 +659,7 @@ void PPExplainVisitor::visit(PPDDO* op)
 void PPExplainVisitor::visit(PPDigest* op)
 {
     insertOperationElement("PPDigest", left, parent, op);
+    insertAttributeHelper("function-name", XNULL, left, op->get_function_name());
 }
 
 void PPExplainVisitor::visit(PPSXptr* op)

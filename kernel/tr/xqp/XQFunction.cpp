@@ -204,6 +204,7 @@ namespace sedna
     {
         {"", "sha1",  1,  1, 0xFF, "!crypto!sha1", false, &resultOne, &l2pFnCryptoSha1},
         {"", "md5",  1,  1, 0xFF, "!crypto!md5", false, &resultOne, &l2pFnCryptoMd5},
+        {"", "hash",  2,  2, 0xFF, "!crypto!hash", false, &resultOne, &l2pFnCryptoHash},
         {"", "", 0, 0, 0xFF, "", false, &resultOne} // dummy record to mark the end
     };
 }

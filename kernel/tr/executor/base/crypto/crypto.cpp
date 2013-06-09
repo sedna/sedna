@@ -18,8 +18,8 @@ typedef map<string, DigestFactory*> factory_map;
 
 static factory_map initialize_factories_map() {
     factory_map m;
-    m["md5"] = new Md5DigestFactory();
-    m["sha1"] = new Sha1DigestFactory();
+    m[MD5_DIGEST_NAME] = new Md5DigestFactory();
+    m[SHA1_DIGEST_NAME] = new Sha1DigestFactory();
     return m;
 }
 

@@ -47,7 +47,7 @@ class scoped_ptr {
 
     /* This implementation of scoped pointer does DELETE old object on assignment  */
     scoped_ptr<T>& operator= (T* ptr) throw() {
-        U_ASSERT(p != ptr);
+        U_ASSERT(p == NULL || p != ptr);
         Deallocator::deallocate(p);
         p = ptr;
         return *this;

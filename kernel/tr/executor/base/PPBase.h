@@ -19,6 +19,7 @@
 #include "tr/tr_globals.h"
 
 
+#define CRYPTO_MODULE_NAMESPACE "http://sedna.org/crypto"
 
 /*******************************************************************************
  * List of classes used
