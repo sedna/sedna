@@ -5,6 +5,7 @@
 
 #include "l2pFuncs.h"
 #include "tr/executor/base/PPOperations.h"
+#include "tr/executor/base/crypto/crypto.h"
 #include "tr/tr_globals.h"
 
 #include "tr/executor/xqops/PPNumericFuncs.h"
@@ -1612,7 +1613,7 @@ PPOpIn l2pFnCryptoSha1(dynamic_context *dyn_cxt, const operation_info &opi, arr_
 {
     PPOpIn res;
 
-    res = PPOpIn(new PPDigest(dyn_cxt, opi, "sha1", params[0]), 1);
+    res = PPOpIn(new PPDigest(dyn_cxt, opi, SHA1_DIGEST_NAME, params[0]), 1);
 
     return res;
 }
@@ -1621,7 +1622,16 @@ PPOpIn l2pFnCryptoMd5(dynamic_context *dyn_cxt, const operation_info &opi, arr_o
 {
     PPOpIn res;
 
-    res = PPOpIn(new PPDigest(dyn_cxt, opi, "md5", params[0]), 1);
+    res = PPOpIn(new PPDigest(dyn_cxt, opi, MD5_DIGEST_NAME, params[0]), 1);
+
+    return res;
+}
+
+PPOpIn l2pFnCryptoHash(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
+{
+    PPOpIn res;
+
+    res = PPOpIn(new PPDigest(dyn_cxt, opi, params[1], params[0]), 1);
 
     return res;
 }

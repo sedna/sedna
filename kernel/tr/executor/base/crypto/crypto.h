@@ -10,6 +10,8 @@
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
 
+#define SHA1_DIGEST_NAME  "sha1"
+#define MD5_DIGEST_NAME   "md5"
 
 class Digest
 {

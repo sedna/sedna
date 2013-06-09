@@ -94,13 +94,13 @@ void PPIndexScan::do_close()
 }
 
 
-#define SET_EOS_AND_EXIT		    {								\
-                                        first_time = true;			\
-                                        t.set_eos();				\
-                                        return;	                    \
+#define SET_EOS_AND_EXIT            {                               \
+                                        first_time = true;          \
+                                        t.set_eos();                \
+                                        return;                     \
                                     }
 
-#define DEREF_AND_SET				CHECKP(res);					\
+#define DEREF_AND_SET               CHECKP(res);                                    \
                                     t.copy(tuple_cell::node(*(xptr*)(XADDR(res)))); \
                                     res = *(xptr*)(XADDR(res));
 

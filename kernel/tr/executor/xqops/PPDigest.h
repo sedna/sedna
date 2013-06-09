@@ -15,6 +15,7 @@ class PPDigest : public PPIterator
 {
 private:
     const char* digest_name;
+    PPOpIn name_child;
     PPOpIn child;
     bool first_time;
 
@@ -32,7 +33,12 @@ public:
                     operation_info _info_,
                     const char* _digest_name_,
                     PPOpIn _child_);
+    PPDigest(dynamic_context *_cxt_,
+                    operation_info _info_,
+                    PPOpIn _name_child_,
+                    PPOpIn _child_);
     virtual ~PPDigest();
+    const char* get_function_name();
 };
 
 #endif /* __PPDIGEST_H */

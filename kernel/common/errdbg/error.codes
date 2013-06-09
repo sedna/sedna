@@ -1763,3 +1763,6 @@ sedna-err:SE2042
 sedna-err:SE2043
 
    Too long attribute value.
+sedna-err:SE2044
+
+   No hash function with this name
