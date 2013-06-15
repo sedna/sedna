@@ -173,7 +173,6 @@ template <class Iterator>
 static inline void
 md5_loop_tmpl(Iterator &start, const Iterator &end, struct Md5::digest_ctxt* ctxt)
 {
-        unsigned int gap, i;
         uint64_t len = 0;
 
         while (start < end) {
