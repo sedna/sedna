@@ -174,7 +174,7 @@ md5_loop_tmpl(Iterator &start, const Iterator &end, struct md5_digest_ctxt* ctxt
         uint64_t len = 0;
 
         while (start < end) {
-            size_t i = 0;
+            uint8_t i = 0;
 
             for (i = 0; i < MD5_BUFLEN && start < end; ++i, ++start ) {
                 ctxt->md5_buf[i] = (uint8_t) *start;
