@@ -239,8 +239,8 @@ sha1_init(sha1_ctxt * ctxt)
 static void
 sha1_pad(sha1_ctxt * ctxt)
 {
-        size_t          padlen;                 /* pad length in bytes */
-        size_t          padstart;
+        uint8_t          padlen;                 /* pad length in bytes */
+        uint8_t          padstart;
 
         PUTPAD(0x80);
 
@@ -283,10 +283,10 @@ void
 sha1_loop(sha1_ctxt* ctxt, const uint8_t *input0, size_t len)
 {
         const uint8_t *input;
-        size_t gaplen;
-        size_t gapstart;
-        size_t off;
-        size_t copysiz;
+        uint8_t gaplen;
+        uint8_t gapstart;
+        uint8_t off;
+        uint8_t copysiz;
 
         input = (const uint8_t *) input0;
         off = 0;
@@ -303,7 +303,7 @@ sha1_loop(sha1_ctxt* ctxt, const uint8_t *input0, size_t len)
                 COUNT %= 64;
                 ctxt->c.b64[0] += copysiz * 8;
                 if (COUNT % 64 == 0)
-                        sha1_step(ctxt);
+                    sha1_step(ctxt);
                 off += copysiz;
         }
 }
