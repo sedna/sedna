@@ -285,7 +285,7 @@ sha1_loop(sha1_ctxt* ctxt, const uint8_t *input0, size_t len)
         const uint8_t *input;
         uint8_t gaplen;
         uint8_t gapstart;
-        uint8_t off;
+        size_t off;
         uint8_t copysiz;
 
         input = (const uint8_t *) input0;
@@ -296,7 +296,7 @@ sha1_loop(sha1_ctxt* ctxt, const uint8_t *input0, size_t len)
                 gapstart = COUNT % 64;
                 gaplen = 64 - gapstart;
 
-                copysiz = (gaplen < len - off) ? gaplen : len - off;
+                copysiz = (gaplen < len - off) ? gaplen : (uint8_t) (len - off);
                 memmove(&ctxt->m.b8[gapstart], &input[off], copysiz);
 
                 COUNT += copysiz;
