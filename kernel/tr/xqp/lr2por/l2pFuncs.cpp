@@ -1627,7 +1627,43 @@ PPOpIn l2pFnCryptoMd5(dynamic_context *dyn_cxt, const operation_info &opi, arr_o
     return res;
 }
 
-PPOpIn l2pFnCryptoHash(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
+PPOpIn l2pFnCryptoSha224(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
+{
+    PPOpIn res;
+
+    res = PPOpIn(new PPDigest(dyn_cxt, opi, SHA224_DIGEST_NAME, params[0]), 1);
+
+    return res;
+}
+
+PPOpIn l2pFnCryptoSha512(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
+{
+    PPOpIn res;
+
+    res = PPOpIn(new PPDigest(dyn_cxt, opi, SHA512_DIGEST_NAME, params[0]), 1);
+
+    return res;
+}
+
+PPOpIn l2pFnCryptoSha384(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
+{
+    PPOpIn res;
+
+    res = PPOpIn(new PPDigest(dyn_cxt, opi, SHA384_DIGEST_NAME, params[0]), 1);
+
+    return res;
+}
+
+PPOpIn l2pFnCryptoSha256(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
+{
+    PPOpIn res;
+
+    res = PPOpIn(new PPDigest(dyn_cxt, opi, SHA256_DIGEST_NAME, params[0]), 1);
+
+    return res;
+}
+
+PPOpIn l2pFnCryptoDigest(dynamic_context *dyn_cxt, const operation_info &opi, arr_of_PPOpIn &params)
 {
     PPOpIn res;
 

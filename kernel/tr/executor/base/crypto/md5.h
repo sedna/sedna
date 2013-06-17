@@ -37,49 +37,35 @@
 #define _NETINET6_MD5_H_
 
 #include "common/sedna.h"
-#include "tr/executor/base/crypto/crypto.h"
+#include "tr/executor/base/crypto/internal.h"
 
 #define MD5_BUFLEN      64
 #define MD5_DIGEST_LEN  16
 
-class Md5: public Digest
+typedef struct md5_digest_ctxt
 {
-    public:
-        struct digest_ctxt
-        {
-            union
-            {
-                uint32_t          md5_state32[4];
-                uint8_t           md5_state8[16];
-            } md5_st;
+    union
+    {
+        uint32_t          md5_state32[4];
+        uint8_t           md5_state8[16];
+    } md5_st;
 
-            union
-            {
-                uint64_t          md5_count64;
-                uint8_t           md5_count8[8];
-            }  md5_count;
+    union
+    {
+        uint64_t          md5_count64;
+        uint8_t           md5_count8[8];
+    }  md5_count;
 
-            unsigned int          md5_i;
-            uint8_t               md5_buf[MD5_BUFLEN];
-        } md5_ctxt;
+    unsigned int          md5_i;
+    uint8_t               md5_buf[MD5_BUFLEN];
+} md5_ctxt;
 
-    private:
-        digest_ctxt ctxt;
-
-    public:
-        Md5();
-
-        virtual ~Md5();
-
-        virtual tuple_cell get(tuple_cell *tc);
-};
-
-class Md5DigestFactory: public DigestFactory
+class Md5: public DigestImpl<md5_ctxt, MD5_DIGEST_LEN>
 {
-    public:
-        virtual Digest* create() const {
-            return new Md5();
-        }
+    protected:
+        virtual void init(md5_ctxt* context);
+        virtual void update(md5_ctxt* context, const tuple_cell* tc);
+        virtual void finish(uint8_t digest[], md5_ctxt* context);
 };
 
 #endif   /* ! _NETINET6_MD5_H_ */
