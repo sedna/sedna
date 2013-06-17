@@ -312,16 +312,16 @@ template <class Iterator>
 static inline void
 sha1_loop_tmpl(Iterator &start, const Iterator &end, sha1_ctxt* ctxt)
 {
-        size_t          gaplen;
-        size_t          gapstart;
-        size_t          copysiz;
+        uint8_t         gaplen;
+        uint8_t         gapstart;
+        uint8_t         copysiz;
 
         while (start < end)
         {
                 gapstart = COUNT % 64;
                 gaplen = 64 - gapstart;
 
-                size_t i = 0;
+                uint8_t i = 0;
                 for (i = 0; i < gaplen && start < end; ++i, ++start ) {
                     ctxt->m.b8[gapstart + i] = (uint8_t) *start;
                 }
@@ -331,7 +331,7 @@ sha1_loop_tmpl(Iterator &start, const Iterator &end, sha1_ctxt* ctxt)
                 COUNT %= 64;
                 ctxt->c.b64[0] += copysiz * 8;
                 if (COUNT % 64 == 0)
-                        sha1_step(ctxt);
+                    sha1_step(ctxt);
         }
 }
 
