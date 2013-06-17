@@ -42,7 +42,6 @@
 #include "common/sedna.h"
 #include "tr/strings/strings.h"
 #include "tr/executor/base/crypto/sha1.h"
-#include "tr/executor/base/crypto/support.h"
 
 
 /* constant table */
@@ -83,7 +82,7 @@ do { \
 
 
 void
-sha1_step(struct Sha1::digest_ctxt * ctxt)
+sha1_step(sha1_ctxt * ctxt)
 {
         uint32_t                a,
                                 b,
@@ -95,7 +94,7 @@ sha1_step(struct Sha1::digest_ctxt * ctxt)
         uint32_t                tmp;
 
 #ifndef BIG_ENDIAN_ORDER
-        struct Sha1::digest_ctxt tctxt;
+        sha1_ctxt tctxt;
 
         memmove(&tctxt.m.b8[0], &ctxt->m.b8[0], 64);
         ctxt->m.b8[0] = tctxt.m.b8[3];
@@ -228,7 +227,7 @@ sha1_step(struct Sha1::digest_ctxt * ctxt)
 /*------------------------------------------------------------*/
 
 static void
-sha1_init(struct Sha1::digest_ctxt * ctxt)
+sha1_init(sha1_ctxt * ctxt)
 {
         H(0) = 0x67452301;
         H(1) = 0xefcdab89;
@@ -238,7 +237,7 @@ sha1_init(struct Sha1::digest_ctxt * ctxt)
 }
 
 static void
-sha1_pad(struct Sha1::digest_ctxt * ctxt)
+sha1_pad(sha1_ctxt * ctxt)
 {
         size_t          padlen;                 /* pad length in bytes */
         size_t          padstart;
@@ -281,7 +280,7 @@ sha1_pad(struct Sha1::digest_ctxt * ctxt)
 }
 
 void
-sha1_loop(struct Sha1::digest_ctxt* ctxt, const uint8_t *input0, size_t len)
+sha1_loop(sha1_ctxt* ctxt, const uint8_t *input0, size_t len)
 {
         const uint8_t *input;
         size_t gaplen;
@@ -311,7 +310,7 @@ sha1_loop(struct Sha1::digest_ctxt* ctxt, const uint8_t *input0, size_t len)
 
 template <class Iterator>
 static inline void
-sha1_loop_tmpl(Iterator &start, const Iterator &end, struct Sha1::digest_ctxt* ctxt)
+sha1_loop_tmpl(Iterator &start, const Iterator &end, sha1_ctxt* ctxt)
 {
         size_t          gaplen;
         size_t          gapstart;
@@ -337,13 +336,13 @@ sha1_loop_tmpl(Iterator &start, const Iterator &end, struct Sha1::digest_ctxt* c
 }
 
 static void
-sha1_loop(struct Sha1::digest_ctxt * ctxt, const tuple_cell *tc)
+sha1_loop(sha1_ctxt * ctxt, const tuple_cell *tc)
 {
     STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(sha1_loop_tmpl, tc, ctxt);
 }
 
 static void
-sha1_result(struct Sha1::digest_ctxt * ctxt, uint8_t *digest0)
+sha1_result(sha1_ctxt * ctxt, uint8_t *digest0)
 {
         uint8_t    *digest;
 
@@ -375,27 +374,14 @@ sha1_result(struct Sha1::digest_ctxt * ctxt, uint8_t *digest0)
 #endif
 }
 
-Sha1::Sha1() {
-    ctxt = digest_ctxt();
-    sha1_init(&ctxt);
+void Sha1::init(sha1_ctxt* context) {
+    return sha1_init(context);
 }
 
-Sha1::~Sha1() {
+void Sha1::update(sha1_ctxt* context, const tuple_cell* tc) {
+    return sha1_loop(context, tc);
 }
 
-tuple_cell Sha1::get(tuple_cell* tc) {
-    char res[SHA1_DIGEST_LEN];
-    char hex_res[SHA1_DIGEST_LEN * 2 + 1];
-
-    sha1_loop(&ctxt, tc);
-    sha1_result(&ctxt, (uint8_t*) res);
-
-    for (int i = 0; i < 20; i++) {
-        hex_res[2 * i] = HEX_ENCODE_BYTE1(res[i]);
-        hex_res[2 * i + 1] = HEX_ENCODE_BYTE2(res[i]);
-    }
-
-    hex_res[SHA1_DIGEST_LEN * 2] = '\0';
-
-    return tuple_cell::atomic_deep(xs_hexBinary, hex_res);
+void Sha1::finish(uint8_t digest[], sha1_ctxt* context) {
+    return sha1_result(context, digest);
 }

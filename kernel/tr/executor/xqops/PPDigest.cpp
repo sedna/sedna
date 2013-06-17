@@ -126,10 +126,10 @@ void PPDigest::do_next(tuple &t)
                 res_digest_name = tc.get_str_mem();
             }
 
-            scoped_ptr<Digest> digest = DigestFactory::create(res_digest_name);
+            scoped_ptr<Digest> digest = Digest::create(res_digest_name);
             if (digest.isnull()) {
                 std::string normalizedName = trimAndLower(std::string(res_digest_name));
-                digest = DigestFactory::create(normalizedName.c_str());
+                digest = Digest::create(normalizedName.c_str());
                 if (digest.isnull()) {
                     throw XQUERY_EXCEPTION2(SE2044, std::string(res_digest_name).c_str());
                 }

@@ -37,8 +37,6 @@
 #include "common/sedna.h"
 #include "tr/strings/strings.h"
 #include "tr/executor/base/crypto/md5.h"
-#include "tr/executor/base/crypto/support.h"
-
 
 #define md5_sta         md5_st.md5_state32[0]
 #define md5_stb         md5_st.md5_state32[1]
@@ -155,10 +153,10 @@ static const uint8_t md5_paddat[MD5_BUFLEN] = {
         0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-static void md5_calc(uint8_t *, Md5::digest_ctxt *);
+static void md5_calc(uint8_t *, md5_digest_ctxt *);
 
 static void
-md5_init(Md5::digest_ctxt *ctxt)
+md5_init(md5_digest_ctxt *ctxt)
 {
         ctxt->md5_n = 0;
         ctxt->md5_i = 0;
@@ -171,7 +169,7 @@ md5_init(Md5::digest_ctxt *ctxt)
 
 template <class Iterator>
 static inline void
-md5_loop_tmpl(Iterator &start, const Iterator &end, struct Md5::digest_ctxt* ctxt)
+md5_loop_tmpl(Iterator &start, const Iterator &end, struct md5_digest_ctxt* ctxt)
 {
         uint64_t len = 0;
 
@@ -195,13 +193,13 @@ md5_loop_tmpl(Iterator &start, const Iterator &end, struct Md5::digest_ctxt* ctx
 }
 
 static void
-md5_loop(struct Md5::digest_ctxt * ctxt, const tuple_cell *tc)
+md5_loop(struct md5_digest_ctxt * ctxt, const tuple_cell *tc)
 {
     STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(md5_loop_tmpl, tc, ctxt);
 }
 
 static void
-md5_loop(Md5::digest_ctxt *ctxt, const uint8_t *input, unsigned len)
+md5_loop(md5_digest_ctxt *ctxt, const uint8_t *input, unsigned len)
 {
         unsigned int gap, i;
 
@@ -227,7 +225,7 @@ md5_loop(Md5::digest_ctxt *ctxt, const uint8_t *input, unsigned len)
 }
 
 static void
-md5_pad(Md5::digest_ctxt *ctxt)
+md5_pad(md5_digest_ctxt *ctxt)
 {
         unsigned int gap;
 
@@ -265,7 +263,7 @@ md5_pad(Md5::digest_ctxt *ctxt)
 }
 
 static void
-md5_result(uint8_t *digest, Md5::digest_ctxt *ctxt)
+md5_result(uint8_t *digest, md5_digest_ctxt *ctxt)
 {
         /* 4 byte words */
 #ifndef BIG_ENDIAN_ORDER
@@ -295,7 +293,7 @@ static uint32_t X[16];
 #endif
 
 static void
-md5_calc(uint8_t *b64, Md5::digest_ctxt *ctxt)
+md5_calc(uint8_t *b64, md5_digest_ctxt *ctxt)
 {
         uint32_t          A = ctxt->md5_sta;
         uint32_t          B = ctxt->md5_stb;
@@ -449,28 +447,16 @@ md5_calc(uint8_t *b64, Md5::digest_ctxt *ctxt)
         ctxt->md5_std += D;
 }
 
-Md5::Md5() {
-    ctxt = digest_ctxt();
-    md5_init(&ctxt);
+
+void Md5::init(md5_digest_ctxt* context) {
+    return md5_init(context);
 }
 
-Md5::~Md5() {
+void Md5::update(md5_digest_ctxt* context, const tuple_cell* tc) {
+    return md5_loop(context, tc);
 }
 
-tuple_cell Md5::get(tuple_cell* tc) {
-    char res[MD5_DIGEST_LEN];
-    char hex_res[MD5_DIGEST_LEN * 2 + 1];
-
-    md5_loop(&ctxt, tc);
-    md5_pad(&ctxt);
-    md5_result((uint8_t*) res, &ctxt);
-
-    for (int i = 0; i < MD5_DIGEST_LEN; i++) {
-        hex_res[2 * i] = HEX_ENCODE_BYTE1(res[i]);
-        hex_res[2 * i + 1] = HEX_ENCODE_BYTE2(res[i]);
-    }
-
-    hex_res[MD5_DIGEST_LEN * 2] = '\0';
-
-    return tuple_cell::atomic_deep(xs_hexBinary, hex_res);
+void Md5::finish(uint8_t digest[], md5_digest_ctxt* context) {
+    md5_pad(context);
+    return md5_result(digest, context);
 }

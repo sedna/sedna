@@ -204,7 +204,11 @@ namespace sedna
     {
         {"", "sha1",  1,  1, 0xFF, "!crypto!sha1", false, &resultOne, &l2pFnCryptoSha1},
         {"", "md5",  1,  1, 0xFF, "!crypto!md5", false, &resultOne, &l2pFnCryptoMd5},
-        {"", "hash",  2,  2, 0xFF, "!crypto!hash", false, &resultOne, &l2pFnCryptoHash},
+        {"", "sha224",  1,  1, 0xFF, "!crypto!sha224", false, &resultOne, &l2pFnCryptoSha224},
+        {"", "sha256",  1,  1, 0xFF, "!crypto!sha256", false, &resultOne, &l2pFnCryptoSha256},
+        {"", "sha512",  1,  1, 0xFF, "!crypto!sha512", false, &resultOne, &l2pFnCryptoSha512},
+        {"", "sha384",  1,  1, 0xFF, "!crypto!sha384", false, &resultOne, &l2pFnCryptoSha384},
+        {"", "digest",  2,  2, 0xFF, "!crypto!digest", false, &resultOne, &l2pFnCryptoDigest},
         {"", "", 0, 0, 0xFF, "", false, &resultOne} // dummy record to mark the end
     };
 }
