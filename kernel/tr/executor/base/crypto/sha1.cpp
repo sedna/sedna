@@ -229,6 +229,7 @@ sha1_step(sha1_ctxt * ctxt)
 static void
 sha1_init(sha1_ctxt * ctxt)
 {
+	memset(ctxt, 0, sizeof(sha1_ctxt));
         H(0) = 0x67452301;
         H(1) = 0xefcdab89;
         H(2) = 0x98badcfe;
