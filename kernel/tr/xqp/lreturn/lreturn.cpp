@@ -1045,7 +1045,8 @@ namespace sedna
 
             off_this.isCached = false;
 
-            ignoreVariables(off_this, 1);
+            //Remove context from the list of bound variables
+            bound_vars.pop_back();
 
             // check if we use last and/or position in expression (needed for qep generation)
             n.use_last = off_pe.use_last;
@@ -2063,7 +2064,7 @@ namespace sedna
                 // if candidate failed, the whole predicate use position().
                 // for example: element/element[position() = (1 to ./test/element)] - in this
                 // case checkIfPosConjunct returns non null (since it doesn't check context
-                // dependency), but cadidate failed since it->use_cxt will be true.
+                // dependency), but candidate failed since it->use_cxt will be true.
                 it->use_pos = cand || it->use_pos;
 
                 if (!others_and.expr)
