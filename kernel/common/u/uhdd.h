@@ -9,28 +9,27 @@
 #include "common/u/u.h"
 #include "common/u/usecurity.h"
 
-
 #ifdef _WIN32
 
 /* UShareMode */
-#define U_SHARE_READ			FILE_SHARE_READ
-#define U_SHARE_WRITE			FILE_SHARE_WRITE
+#define U_SHARE_READ                    FILE_SHARE_READ
+#define U_SHARE_WRITE                   FILE_SHARE_WRITE
 /* UAccess */
-#define U_WRITE					GENERIC_WRITE
-#define U_READ					GENERIC_READ
-#define U_READ_WRITE			(GENERIC_READ | GENERIC_WRITE)
-#define U_ALL_ACCESS            GENERIC_ALL
+#define U_WRITE                         GENERIC_WRITE
+#define U_READ                          GENERIC_READ
+#define U_READ_WRITE                    (GENERIC_READ | GENERIC_WRITE)
+#define U_ALL_ACCESS                    GENERIC_ALL
 /* uCreateFile/UOpenFile error return value */
-#define U_INVALID_FD			INVALID_HANDLE_VALUE
+#define U_INVALID_FD                    INVALID_HANDLE_VALUE
 /* UFlag (for create/open) */
-#define U_WRITE_THROUGH			FILE_FLAG_WRITE_THROUGH
-#define U_NO_BUFFERING			FILE_FLAG_NO_BUFFERING
+#define U_WRITE_THROUGH                 FILE_FLAG_WRITE_THROUGH
+#define U_NO_BUFFERING                  FILE_FLAG_NO_BUFFERING
 /* UFlag (for setting file pointer) */
-#define U_FILE_BEGIN			FILE_BEGIN
-#define U_FILE_END				FILE_END
-#define U_FILE_CURRENT			FILE_CURRENT
+#define U_FILE_BEGIN                    FILE_BEGIN
+#define U_FILE_END                      FILE_END
+#define U_FILE_CURRENT                  FILE_CURRENT
 
-#define U_INVALID_DIR			INVALID_HANDLE_VALUE
+#define U_INVALID_DIR                   INVALID_HANDLE_VALUE
 
 typedef HANDLE UFile;
 typedef DWORD UAccess;
@@ -41,7 +40,7 @@ typedef HANDLE UDir;
  * Should be used to check total path length where appropriate.
  * WIN32 template "tmp.XXXXXXXX.XXX" 
  */
-#define SE_MAX_TMP_FILE_NAME    (16)
+#define SE_MAX_TMP_FILE_NAME            (16)
 
 #else
 
@@ -49,41 +48,41 @@ typedef HANDLE UDir;
 #include <sys/types.h>
 
 /* UShareMode */
-#define U_SHARE_READ			0
-#define U_SHARE_WRITE			0
+#define U_SHARE_READ                    0
+#define U_SHARE_WRITE                   0
 /* UAccess */
-#define U_WRITE					O_WRONLY
-#define U_READ					O_RDONLY
-#define U_READ_WRITE			O_RDWR
-#define U_ALL_ACCESS            O_RDWR
+#define U_WRITE                         O_WRONLY
+#define U_READ                          O_RDONLY
+#define U_READ_WRITE                    O_RDWR
+#define U_ALL_ACCESS                    O_RDWR
 /* uCreateFile/UOpenFile error return value */
-#define U_INVALID_FD			(-1)
+#define U_INVALID_FD                    (-1)
 /* UFlag (for create/open) */
 
 #if (defined(DARWIN) || defined(FreeBSD))
-#define U_WRITE_THROUGH         O_FSYNC
-#define U_NO_BUFFERING          O_FSYNC
+#define U_WRITE_THROUGH                 O_FSYNC
+#define U_NO_BUFFERING                  O_FSYNC
 #else /* Linux */
-#define U_WRITE_THROUGH         O_SYNC
+#define U_WRITE_THROUGH                 O_SYNC
 /* !!! It has been found that there are some problems with
    !!! O_DIRECT flag in Linux, so it has been temporary substituted wih
    !!! the O_SYNC flag */
-/* #define U_NO_BUFFERING          O_DIRECT */
-#define U_NO_BUFFERING          O_SYNC
+/* #define U_NO_BUFFERING               O_DIRECT */
+#define U_NO_BUFFERING                  O_SYNC
 #endif /* FreeBSD && Mac OS */
 
 /* UFlag (for setting file pointer) */
-#define U_FILE_BEGIN			SEEK_SET
-#define U_FILE_END				SEEK_END
-#define U_FILE_CURRENT			SEEK_CUR
+#define U_FILE_BEGIN                    SEEK_SET
+#define U_FILE_END                      SEEK_END
+#define U_FILE_CURRENT                  SEEK_CUR
 
-#define U_INVALID_DIR			NULL
+#define U_INVALID_DIR                   NULL
 
 /* Defines maximum length of the temporary file name.
  * Should be used to check total path length where appropriate.
  * *NIX  template "tmpXXXXXX"
  */
-#define SE_MAX_TMP_FILE_NAME    (9)
+#define SE_MAX_TMP_FILE_NAME            (9)
 
 typedef int UFile;
 typedef int UAccess;
@@ -200,12 +199,12 @@ extern "C"
 
     int uFindClose(UDir dir, sys_call_error_fun fun);
 
-	/*
-	 * Flushes the buffers of a specified file and causes all buffered data to
-     * be written to a file. Actually uses fsync() and FlushFileBuffers().
-	 * If the function succeeds, the return value is 1.
-     * If the function fails, the return value is zero (0).
-	 */
+/*
+ * Flushes the buffers of a specified file and causes all buffered data to
+ * be written to a file. Actually uses fsync() and FlushFileBuffers().
+ * If the function succeeds, the return value is 1.
+ * If the function fails, the return value is zero (0).
+*/
     int uFlushBuffers(UFile fd, sys_call_error_fun fun);
 
 #ifdef __cplusplus
