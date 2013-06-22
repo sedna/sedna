@@ -523,7 +523,7 @@ int sm_registering(USOCKET s, char* msg_buf)
     special_mode = (msg_buf[off] == 1);
     off += sizeof(char);
 
-    d_printf3("Listener: register SM pid: %d, name: %s", sm_pid, db_name);
+    d_printf3("Listener: register SM pid: %d, name: %s\n", sm_pid, db_name);
 
     /* Trying to Register in shared memory */
     string db_name_str = string(db_name);
