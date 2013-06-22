@@ -10,12 +10,12 @@
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
 
-#define SHA1_DIGEST_NAME     "sha1"
+#define SHA1_DIGEST_NAME     "sha-1"
 #define MD5_DIGEST_NAME      "md5"
-#define SHA256_DIGEST_NAME   "sha256"
-#define SHA224_DIGEST_NAME   "sha224"
-#define SHA512_DIGEST_NAME   "sha512"
-#define SHA384_DIGEST_NAME   "sha384"
+#define SHA256_DIGEST_NAME   "sha-256"
+#define SHA224_DIGEST_NAME   "sha-224"
+#define SHA512_DIGEST_NAME   "sha-512"
+#define SHA384_DIGEST_NAME   "sha-384"
 
 class Digest
 {
