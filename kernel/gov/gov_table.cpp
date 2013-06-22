@@ -275,12 +275,11 @@ void info_table::erase_database(const database_id& db_id)
 void info_table::put_all_free_sids_in_ids_table()
 {
     int i=0;
-    d_printf1("put free ids\n");
 
-    for (i = 0; i< MAX_SESSIONS_NUMBER; i++)
+    for (i = 0; i < MAX_SESSIONS_NUMBER; i++)
         if (((gov_config_struct*)gov_shared_mem)->sess_vars[i].idfree == 2)
         {
-            d_printf1("erase session\n");
+            d_printf2("erase session: %d\n", i);
             this->wait_erase_session(i);
         }
 }
