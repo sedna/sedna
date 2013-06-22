@@ -2,7 +2,7 @@
 
 <!-- Configuration file for Sedna database.
      Change values and rename this file into sednaconf.xml.
-     Note! Don't forget to change <sedna_data> value!
+     Note! Don't forget to change sedna_data value!
  -->
 <sednaconf>
 
