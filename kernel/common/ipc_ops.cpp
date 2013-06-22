@@ -279,7 +279,7 @@ void get_sednaconf_values(gov_header_struct* cfg)
 
     if (fs != NULL)
     {
-        d_printf2("sedna_cfg_file=%s\n", sedna_cfg_file);
+        d_printf2("sedna config file=%s\n", sedna_cfg_file);
 
         while (true)
         {
@@ -294,48 +294,76 @@ void get_sednaconf_values(gov_header_struct* cfg)
     }
 }
 
+/*
+ * Note: This function returns a pointer to a substring of the original string.
+ * If the given string was allocated dynamically, the caller must not overwrite
+ * that pointer with the returned value, since the original pointer must be
+ * deallocated using the same allocator with which it was allocated.  The return
+ * value must NOT be deallocated using free() etc.
+*/
+static char *strtrim(char *str)
+{
+    char *end;
+
+    // Trim leading space
+    while(isspace(*str)) str++;
+
+    if(*str == 0)  // All spaces?
+        return str;
+
+    // Trim trailing space
+    end = str + strlen(str) - 1;
+    while(end > str && isspace(*end)) end--;
+
+    // Write new null terminator
+    *(end+1) = 0;
+
+    return str;
+}
+
 
 /*
- * The following methods fills given buffer with the sedna_data path.
+ * The following methods fills in given buffer with the sedna_data path.
  * They MUST not throw exception and should use fprintf(stderr, " ... ") to
  * log out error message.
  * The reason why we need this method is sedna soft fault mechanism, which
  * can be triggred at the very begining of any sedna process when
  * SEDNA_DATA variable is not set.
  */
-static void get_sedna_data_path(const char* cfg_text, char* buf)
+static int get_sedna_data_path(const char* cfg_text, char* dst)
 {
-      const char* beg, *fin;
-      const char* sedna_data_open_tag  = "<sedna_data>";
-      const char* sedna_data_close_tag = "</sedna_data>";
-      unsigned short value_shift = (unsigned short)strlen(sedna_data_open_tag);
-      std::string save_buf(buf);
+    char temp[U_MAX_PATH + 1];
+    const char* beg, *fin;
+    const char* sedna_data_open_tag  = "<sedna_data>";
+    const char* sedna_data_close_tag = "</sedna_data>";
+    const unsigned short tag_shift = 12; // (unsigned short)strlen(sedna_data_open_tag);
 
-      beg = strstr(cfg_text, sedna_data_open_tag);
-      fin = strstr(cfg_text, sedna_data_close_tag);
+    beg = strstr(cfg_text, sedna_data_open_tag);
+    fin = strstr(cfg_text, sedna_data_close_tag);
 
-      d_printf2("cfg_text=%s\n", cfg_text);
-      if (beg == NULL || fin == NULL) return;
+    if (beg == NULL || fin == NULL) {
+        fprintf(stderr, "'sedna_data' parameter value not found in sednaconf.xml. Going to use the default SEDNA_DATA value.\n");
+        return 0;
+    }
 
-      memcpy(buf, beg + value_shift, fin - beg + value_shift);
-      buf[fin - beg + value_shift] = '\0';
+    beg += tag_shift;
 
-      std::string tmp(buf);
-      tmp = trim(tmp);
+    if (beg >= fin || fin - beg > U_MAX_PATH) {
+        fprintf(stderr, "'sedna_data' parameter too long in sednaconf.xml. Going to use the default SEDNA_DATA value.\n");
+        return 0;
+    }
 
-      if(tmp.length() > U_MAX_PATH)
-      {
-          fprintf(stderr, "Path in the 'sedna_data' parameter is too long in sednaconf.xml. Going to use default value.\n");
-          strcpy(buf, save_buf.c_str());
-      }
-      else
-          strcpy(buf, tmp.c_str());
+    memcpy(temp, beg, fin - beg);
+    temp[fin - beg] = '\0';
+    strcpy(dst, strtrim(temp));
+    return 1;
 }
 
 int set_sedna_data(char* sd_buf, sys_call_error_fun fun)
 {
     char proc_buf[U_MAX_PATH + 1];
     char sedna_cfg_file[U_MAX_PATH + 1];
+
     FILE* fs;
     char buf[1024];
     size_t size;
@@ -344,11 +372,13 @@ int set_sedna_data(char* sd_buf, sys_call_error_fun fun)
 
     uGetImageProcPath(proc_buf, fun);
     if (proc_buf[0] == '\0')
-    {   fprintf(stderr, "Can't get process path to set sedna data\n");
-    return 0;
+    {
+        fprintf(stderr, "Can't get process path to set sedna data\n");
+        return 0;
     }
 
-    strcpy(sd_buf, proc_buf);  /// Copy default SEDNA_DATA value
+    d_printf2("process image path=%s\n", proc_buf);
+    strcpy(sd_buf, proc_buf);  // Copy part of the default SEDNA_DATA value
     strcpy(sedna_cfg_file, proc_buf);
 
 #ifdef _WIN32
@@ -371,7 +401,7 @@ int set_sedna_data(char* sd_buf, sys_call_error_fun fun)
 
     if (fs != NULL)
     {
-        d_printf2("sedna_cfg_file=%s\n", sedna_cfg_file);
+        d_printf2("sedna config file path=%s\n", sedna_cfg_file);
         while (true)
         {
             size = fread(buf, sizeof(char), 1024, fs);
@@ -390,7 +420,5 @@ int set_sedna_data(char* sd_buf, sys_call_error_fun fun)
     }
 
     d_printf2("sedna data path retrieved=%s\n", sd_buf);
-
     return 1;
 }
-
