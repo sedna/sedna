@@ -111,9 +111,9 @@ void PPReturn::do_next(tuple &t)
         if (source.is_eos())
         {
             t.set_eos();
-            first_time = true;			// reopens automatically
+            first_time = true;          // reopens automatically
             pos = 0;                    // reopens automatically
-            reinit_consumer_table();	// reopens automatically
+            reinit_consumer_table();    // reopens automatically
             return;
         }
 
