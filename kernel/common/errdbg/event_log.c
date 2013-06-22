@@ -12,7 +12,6 @@
 #include "common/u/uhdd.h"
 
 
-
 #define SE_EVENT_LOG_FILENAME          "event.log"
 #define SE_EVENT_LOG_FILENAME_BACKUP   "event-old.log"
 #define SE_EVENT_LOG_FILENAME_BU_BASE  "event-"
@@ -257,7 +256,7 @@ static int __event_log_write_hdr(int elevel,
 static void __event_log_check_output_stream()
 {
     struct stat st;
-	int el_cur_file_size = 0;
+    int el_cur_file_size = 0;
 
 event_log_init_file:
     if (!el_ostr)
@@ -286,9 +285,9 @@ event_log_init_file:
     }
 
     if (fstat(fileno(el_ostr), &st) == 0)
-		el_cur_file_size = st.st_size;
+        el_cur_file_size = st.st_size;
     else
-		el_cur_file_size = 0;
+        el_cur_file_size = 0;
 
     if (el_cur_file_size >= event_log_recommended_size)
     {
@@ -364,18 +363,18 @@ event_log_init_file:
 
 static void __event_log_dump_str_replacing_newlines(const char * str, const char * replace)
 {
-	const char * i=NULL;
-	size_t replace_sz=strlen(replace);
-	while(1)
-	{
-		size_t sz;
-		i=strchr(str,'\n');
-		sz=i?i-str:strlen(str);
-		fwrite(str,1,sz,el_ostr);
-		if(!i)break;
-		fwrite(replace,1,replace_sz,el_ostr);
-		str+=sz+1;
-	}
+        const char * i=NULL;
+        size_t replace_sz=strlen(replace);
+        while(1)
+        {
+                size_t sz;
+                i=strchr(str,'\n');
+                sz=i?i-str:strlen(str);
+                fwrite(str,1,sz,el_ostr);
+                if(!i)break;
+                fwrite(replace,1,replace_sz,el_ostr);
+                str+=sz+1;
+        }
 }
 
 static void __event_log_write_short_msg()
@@ -395,13 +394,13 @@ static void __event_log_write_short_msg()
                                 el_msg->funcname);
     if (res == -1) return;
 
-	/*
-	res = fprintf(el_ostr, ": %s\n", el_msg->content);
+        /*
+        res = fprintf(el_ostr, ": %s\n", el_msg->content);
     if (res == -1) return;
     else el_cur_file_size += res; */
-	fprintf(el_ostr,": ");
-	__event_log_dump_str_replacing_newlines(el_msg->content, SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH);
-	fprintf(el_ostr,"\n");
+        fprintf(el_ostr,": ");
+        __event_log_dump_str_replacing_newlines(el_msg->content, SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH);
+        fprintf(el_ostr,"\n");
     fflush(el_ostr);
 }
 
@@ -422,13 +421,13 @@ static void __event_log_write_long_msg_start()
                                 el_msg->funcname);
     if (res == -1) return;
 
-	/*
-	res = fprintf(el_ostr, ": %s", el_msg->content);
+        /*
+        res = fprintf(el_ostr, ": %s", el_msg->content);
     if (res == -1) return;
     else el_cur_file_size += res;
-	*/
-	fprintf(el_ostr, ": ");
-	__event_log_dump_str_replacing_newlines(el_msg->content, SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH);
+        */
+        fprintf(el_ostr, ": ");
+        __event_log_dump_str_replacing_newlines(el_msg->content, SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH);
 }
 
 static bool __event_log_write_long_msg_next_end()
@@ -436,23 +435,23 @@ static bool __event_log_write_long_msg_next_end()
     int res = 0;
     if (el_ostr)
     {
-		__event_log_dump_str_replacing_newlines(el_msg->content, SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH);
-		res=0;
-		if(el_msg->type == SE_EVENT_LOG_LONG_MSG_END)
-		{
-			fprintf(el_ostr,"\n");
-			fflush(el_ostr);
-		}
+                __event_log_dump_str_replacing_newlines(el_msg->content, SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH);
+                res=0;
+                if(el_msg->type == SE_EVENT_LOG_LONG_MSG_END)
+                {
+                        fprintf(el_ostr,"\n");
+                        fflush(el_ostr);
+                }
 
-		/*
+                /*
         if (el_msg->type == SE_EVENT_LOG_LONG_MSG_END)
         {
-			res = fprintf(el_ostr, "%s\n", el_msg->content);
+                        res = fprintf(el_ostr, "%s\n", el_msg->content);
             fflush(el_ostr);
         }
         else
             res = fprintf(el_ostr, "%s", el_msg->content);
-			*/
+                        */
 
         if (res != -1) el_cur_file_size += res;
     }
@@ -849,8 +848,8 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
 
     if (!set_sedna_data(buf, NULL))
     {
-      fprintf(stderr, "Can't set sedna data to write sedna fault information\n");
-      return U_INVALID_FD;
+        fprintf(stderr, "Can't set sedna data to write sedna fault information\n");
+        return U_INVALID_FD;
     }
 
 #ifdef _WIN32
@@ -861,16 +860,16 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
 
     if (uMkDir(buf, NULL, NULL) == 0)
     {
-       fprintf(stderr, "Cannot create data directory for soft fault logs\n");
-       return U_INVALID_FD;
+        fprintf(stderr, "Cannot create data directory for soft fault logs\n");
+        return U_INVALID_FD;
     }
 
     strcat(buf, SE_LAST_SOFT_FAULT_DIR);
 
     if (uMkDir(buf, NULL, NULL) == 0)
     {
-       fprintf(stderr, "Cannot create directory for soft fault logs\n");
-       return U_INVALID_FD;
+        fprintf(stderr, "Cannot create directory for soft fault logs\n");
+        return U_INVALID_FD;
     }
 
 #ifdef _WIN32
@@ -880,8 +879,7 @@ UFile sedna_soft_fault_log_fh(int component, const char *suffix)
 #endif
 
     strcat(buf, str);
-    if (suffix)
-    	strcat(buf, suffix);
+    if (suffix) strcat(buf, suffix);
     strcat(buf, u_itoa(uGetCurrentProcessId(__sys_call_error), buf_pid, 10));
     strcat(buf, ".log");
 
@@ -940,10 +938,10 @@ void sedna_soft_fault(int  component)
 {
     SEDNA_SOFT_FAULT_BASE_MSG;
 
-	sedna_soft_fault_log("Sedna soft fault without details", component);
+    sedna_soft_fault_log("Sedna soft fault without details", component);
 
 #ifdef SE_MEMORY_TRACK
-        DumpUnfreed(component);
+    DumpUnfreed(component);
 #endif
 
     SEDNA_SOFT_FAULT_FINALIZER;
