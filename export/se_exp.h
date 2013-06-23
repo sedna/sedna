@@ -1,6 +1,7 @@
 /*
- * File:  se_exp.h
- * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File: se_exp.h
+ * Copyright (C) 2013 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #ifndef _SE_EXP_H

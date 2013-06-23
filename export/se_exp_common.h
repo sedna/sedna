@@ -1,6 +1,7 @@
 /*
- * File:  se_exp_common.h
- * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File: se_exp_common.h
+ * Copyright (C) 2013 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
 
 #ifndef _SE_EXP_COMMON_H
@@ -13,20 +14,20 @@
 
 
 #ifndef _WIN32
-#define SE_EXP_PATH_SEP '/'
+#define SE_EXP_PATH_SEP            '/'
 #else
-#define SE_EXP_PATH_SEP '\\'
+#define SE_EXP_PATH_SEP            '\\'
 #endif
 
 
-#define STR_BUF_INIT_SIZE 500
-#define PATH_BUF_SIZE 1024
-#define Q_BUF_INIT_SIZE 1
-#define RESULT_PORTION_SIZE 1024 //TO HOLD BL QUERIES
-#define DOCS_FILENAME_SIZE 20
-#define RF_PORTION_SIZE 512
-#define DELIMITER "&\n"   //se_trn style "\n\\"
-#define PATH_SIZE 1100    // depends on ARG_SIZE
+#define STR_BUF_INIT_SIZE          500
+#define PATH_BUF_SIZE              1024
+#define Q_BUF_INIT_SIZE            1
+#define RESULT_PORTION_SIZE        1024    //TO HOLD BL QUERIES
+#define DOCS_FILENAME_SIZE         20
+#define RF_PORTION_SIZE            512
+#define DELIMITER                  "&\n"   //se_trn style "\n\\"
+#define PATH_SIZE                  1100    // depends on ARG_SIZE
 
 #define EXP_LOG_FILE_NAME          "export_log.txt"
 #define IMP_LOG_FILE_NAME          "import_log.txt"
@@ -39,22 +40,22 @@
 #define DB_SECURITY_DOC_NAME_TMP   "$db_security_data_exp"
 
 #define CHECK_FULL_TEXT_SEARCH     "create_ftindexes.xquery"
-#define CHECK_SECURITY			   "$db_security_data.xml"
+#define CHECK_SECURITY             "$db_security_data.xml"
 
-#define SEDNA_FEATURE_ENABLED				1
-#define SEDNA_FEATURE_DISABLED				0
+#define SEDNA_FEATURE_ENABLED       1
+#define SEDNA_FEATURE_DISABLED      0
 
 typedef struct str_buf_t {
-	char *buf;
-	size_t size;
-	size_t d_size;
+        char *buf;
+        size_t size;
+        size_t d_size;
 } str_buf_t;
 
 
 typedef struct qbuf_t {
-	char **buf;
-	size_t size;
-	size_t d_size;
+        char **buf;
+        size_t size;
+        size_t d_size;
 } qbuf_t;
 
 extern int exp_verbose;

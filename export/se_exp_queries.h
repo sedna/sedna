@@ -1,11 +1,12 @@
 /*
- * File:  se_exp_queries.c
- * Copyright (C) 2010 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * File: se_exp_queries.h
+ * Copyright (C) 2013 ISP RAS
+ * The Institute for System Programming of the Russian Academy of Sciences
  */
-
 
 #ifndef _SE_EXP_QUERIES_H
 #define _SE_EXP_QUERIES_H
+
 
 extern const char load_docs_query[];
 extern const char exp_docs_query[];
