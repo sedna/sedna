@@ -10,6 +10,7 @@
 \usepackage{multirow}      % Allows inserting tables
 \usepackage{ifpdf}         % Package for conditionals in TeX
 \newcommand{\TocAt}[6]{}   % To avoid processing \TocAt by LaTeX
+\usepackage[T1]{fontenc}
 
 \title{Sedna Programmer's Guide}
 \date{}
@@ -2030,8 +2031,11 @@ Parameter name & Values & Description \\
 indent & "yes" or "no" & Output indented \\
   & (default yes) & \\
 \hline
-cdata-section-elements & Element list & Text within specified elements \\
- & e.g. 'name;data' & appears within CDATA section \\
+cdata-section-elements & Element list & Text within elements is \\
+ & e.g. 'name;data' & output as a CDATA section \\
+\hline
+character-map & String-to-string map & Character and its string \\
+& e.g. '\&gt;=>' & substitution \\
 \hline
 \end{tabular}
 
@@ -2050,6 +2054,28 @@ declare option se:output "indent=yes; cdata-section-elements=script";
 <x><script>K&amp;R C</script><b>element</b></x>
 \end{verbatim}
 
+The \verb!character-map! parameters define a list of characters (strings) and
+corresponding string substitutions. Mapping is applied to the characters
+(strings) that actually appear in a text or attribute node after other any
+other serialization operations such as escaping or Unicode Normalization are
+applied  If a character (or string) is mapped, then it is not subjected to XML
+escaping.
+
+\begin{note}
+Using a character map can result in non-well-formed documents if the string
+contains XML-significant characters. For example, it is possible to create
+documents containing unmatched start and end tags, references to entities that
+are not declared, or attributes that contain tags or unescaped quotation marks.
+\end{note}
+
+The following example generates an XML tag:
+
+\begin{verbatim}
+declare option se:character-map "&gt;=>";
+declare option se:character-map "&lt;=<";
+concat("<" ,"text", "/>")
+\end{verbatim}
+
 As mentioned above, you may omit the Sedna namespace declaration:
 \begin{verbatim}
 declare option se:output "indent=yes; cdata-section-elements=script";
@@ -2063,9 +2089,6 @@ This query is evaluated as follows:
   <b>element</b>
 </x>
 \end{verbatim}
-
-
-
 
 
 %===============================================================================
