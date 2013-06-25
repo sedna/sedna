@@ -306,9 +306,9 @@ The \verb!resultType! parameter is either \verb!ResultType.XML! or
 \subsubsection{Results}
 \label{sec:results}
 
-The \verb!SednaSerializedResult! interface represents the result of the
-statement evaluation. Application can obtain the result using the
-\verb!getSerializedResult! method of the \verb!SednaStatement! interface.
+The \verb!SednaSerializedResult! interface represents query execution result.
+Application can obtain result using the \verb!getSerializedResult! method of the
+\verb!SednaStatement! interface.
 
 \begin{verbatim}
  public SednaSerializedResult getSerializedResult()
@@ -320,6 +320,12 @@ retrieve descriptive schema command the result is a sequence with an item that
 is a descriptive schema represented as a string. The result of the XQuery
 statement evaluation is retrieved as a sequence of items, where every item is
 represented as a string.
+
+\begin{note}
+Current Sedna version supports only sequential statements execution within one
+connection. If application executes statement, it cannot iterate over the result
+of the previous statement any more.
+\end{note}
 
 Application can use the \verb!next! methods of the \verb!SednaSerializedResult!
 interface to iterate over the result sequence:
@@ -341,12 +347,25 @@ The method writes an item of the result sequence to some output stream using
 1 if the result sequence has ended. It throws \verb!DriverException! in the case
 of error.
 
-Please, notice, that in the current version of the Sedna DBMS application has to
-execute statements and use the results of their execution sequentially. To
-explain this note, suppose application execute a statement, obtains a result of
-that statement execution and iterates over this result. If, after that,
-application executes next statement, it cannot iterate over the result of the
-previous statement any more.
+Both \verb!next()! methods prefetch and cache in memory (as \verb!String!
+object) each result item. In some cases results can not be processed in this way
+(e.g. query that returns hundred gygabytes document). \verb!SednaStatement!
+interface provides method to set custom result handler:
+
+\begin{verbatim}
+ void setResultInterceptor(ResultInterceptor interceptor)
+\end{verbatim}
+
+and the method to remove result interceptor:
+
+\begin{verbatim}
+ public void resetResultInterceptor()
+\end{verbatim}
+
+With a custom result handler application has direct access to the data being
+returned by the Sedna server. Application therefore may decide to redirect it
+completely to a file, transform, filter, etc. For details and example of the
+\verb!ResultInterceptor! see API javadocs.
 
 
 %===============================================================================
