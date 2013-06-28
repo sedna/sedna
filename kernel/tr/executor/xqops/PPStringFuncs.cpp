@@ -64,7 +64,7 @@ void PPFnConcat::do_close()
         ch_arr[i].op->close();
 }
 
-void PPFnConcat::do_next(tuple &t)
+void PPFnConcat::do_next(xqp_tuple &t)
 {
 
     if (!first_time)
@@ -187,7 +187,7 @@ void PPFnStringJoin::do_close()
     separator.op -> close();
 }
 
-void PPFnStringJoin::do_next(tuple &t)
+void PPFnStringJoin::do_next(xqp_tuple &t)
 {
     if (!first_time)
     {
@@ -321,7 +321,7 @@ void PPFnStartsEndsWith::do_close()
     prefix.op -> close();
 }
 
-void PPFnStartsEndsWith::do_next(tuple &t)
+void PPFnStartsEndsWith::do_next(xqp_tuple &t)
 {
     if (!first_time)
     {
@@ -469,7 +469,7 @@ void PPFnString2CodePoints::do_close()
     child.op->close();
 }
 
-void PPFnString2CodePoints::do_next (tuple &t)
+void PPFnString2CodePoints::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -557,7 +557,7 @@ void PPFnCodePoints2String::do_close()
     child.op->close();
 }
 
-void PPFnCodePoints2String::do_next (tuple &t)
+void PPFnCodePoints2String::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -668,7 +668,7 @@ void PPFnTranslate::do_close()
         trans_str.op->close();
 }
 
-void PPFnTranslate::do_next (tuple &t)
+void PPFnTranslate::do_next (xqp_tuple &t)
 {
         if (first_time)
         {
@@ -839,7 +839,7 @@ static inline tuple_cell byte_based_substring(const tuple_cell *tc, int64_t star
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 
-void PPFnSubsBeforeAfter::do_next(tuple &t)
+void PPFnSubsBeforeAfter::do_next(xqp_tuple &t)
 {
     if (handler) // the same as '!first_time'
     {
@@ -991,7 +991,7 @@ void PPFnChangeCase::do_close()
         str.op->close();
 }
 
-void PPFnChangeCase::do_next (tuple &t)
+void PPFnChangeCase::do_next (xqp_tuple &t)
 {
         if (first_time)
         {
@@ -1072,7 +1072,7 @@ void PPFnStringLength::do_close()
     child.op->close();
 }
 
-void PPFnStringLength::do_next (tuple &t)
+void PPFnStringLength::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -1149,7 +1149,7 @@ void PPFnNormalizeSpace::do_close()
     child.op->close();
 }
 
-void PPFnNormalizeSpace::do_next (tuple &t)
+void PPFnNormalizeSpace::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -1259,7 +1259,7 @@ void PPFnSubstring::do_close()
 
 }
 
-void PPFnSubstring::do_next(tuple &t)
+void PPFnSubstring::do_next(xqp_tuple &t)
 {
     int64_t start_pos = 0;
     int64_t length = 0;
@@ -1421,7 +1421,7 @@ void PPFnNormalizeUnicode::do_close()
     first_time = true;
 }
 
-void PPFnNormalizeUnicode::do_next(tuple &t)
+void PPFnNormalizeUnicode::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

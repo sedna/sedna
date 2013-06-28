@@ -153,7 +153,7 @@ void auth_for_query(counted_ptr<db_entity> dbe)
             aqtree->open();
             is_qep_opened = true;
 
-            tuple t = tuple(1);
+            xqp_tuple t = xqp_tuple(1);
             aqtree->next(t);
 
             if (!t.cells[0].is_light_atomic())
@@ -263,7 +263,7 @@ void auth_for_load_module(const char* module_name)
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -352,7 +352,7 @@ void auth_for_drop_module(const char* mod_name)
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -433,7 +433,7 @@ void auth_for_rename_collection(const char* old_name, const char* new_name)
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -679,7 +679,7 @@ void auth_for_create_document(const char* doc_name)
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -784,7 +784,7 @@ void auth_for_load_document(const char* doc_name)
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -889,7 +889,7 @@ void auth_for_create_collection(const char* coll_name)
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -983,7 +983,7 @@ void auth_for_create_document_collection(const char* doc_name, const char *coll_
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -1054,7 +1054,7 @@ void auth_for_load_document_collection(const char* doc_name, const char *coll_na
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -1140,7 +1140,7 @@ void auth_for_create_index(const char* ind_name, const char *obj_name, bool is_c
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -1250,7 +1250,7 @@ void auth_for_create_ftindex(const char* ind_name, const char *obj_name, bool is
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -1357,7 +1357,7 @@ void auth_for_create_trigger(const char *trg_name)
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -1459,7 +1459,7 @@ void auth_for_drop_object(const char* obj_name, const char *obj_type, bool just_
         aqtree->open();
         is_qepsubtree_opened = true;
 
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
         aqtree->next(t);
 
         aqtree->close();
@@ -1573,7 +1573,7 @@ void auth_for_create_user(const char* name, const char* passwd)
 
     try
     {
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
 
         tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = tr_globals::client->disable_output();
@@ -1677,7 +1677,7 @@ void auth_for_drop_user(const char* name)
 
     try
     {
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
 
         tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = tr_globals::client->disable_output();
@@ -1770,7 +1770,7 @@ void auth_for_alter_user(const char* name, const char* passwd)
 
     try
     {
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
 
         tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = tr_globals::client->disable_output();
@@ -1866,7 +1866,7 @@ void auth_for_create_role(const char* name)
 
     try
     {
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
 
         tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = tr_globals::client->disable_output();
@@ -1956,7 +1956,7 @@ void auth_for_drop_role(const char* name)
 
     try
     {
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
 
         tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = tr_globals::client->disable_output();
@@ -2071,7 +2071,7 @@ void auth_for_grant_role(const char* name, const char *grantee)
 
     try
     {
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
 
         tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = tr_globals::client->disable_output();
@@ -2221,7 +2221,7 @@ void auth_for_grant_privilege(const char* name, const char *obj_name, const char
 
     try
     {
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
 
         tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = tr_globals::client->disable_output();
@@ -2351,7 +2351,7 @@ void auth_for_revoke_privilege(const char* name, const char *obj_name, const cha
 
     try
     {
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
 
         tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = tr_globals::client->disable_output();
@@ -2448,7 +2448,7 @@ void auth_for_revoke_role(const char* name, const char *grantee)
 
     try
     {
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
 
         tr_globals::internal_auth_switch = BLOCK_AUTH_CHECK;
         output_enabled = tr_globals::client->disable_output();

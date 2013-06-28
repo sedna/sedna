@@ -54,7 +54,7 @@ void PPSXptr::do_close()
     s = NULL;
 }
 
-void PPSXptr::do_next (tuple &t)
+void PPSXptr::do_next (xqp_tuple &t)
 {
     if(atomic_mode) {
         child.op->next(t);
@@ -161,7 +161,7 @@ int PPSXptr::compare_less (xptr v1, xptr v2, const void *Udata)
     return xptr_compare(res1, res2);
 }
 
-int PPSXptr::get_size (tuple& t, const void * Udata)
+int PPSXptr::get_size (xqp_tuple& t, const void * Udata)
 {
     return sizeof(xptr);
 }
@@ -173,11 +173,11 @@ xptr get_xptr(const tuple_cell & c) {
 }
 
 inline static
-void get_tuple(tuple & c, xptr x) {
+void get_tuple(xqp_tuple & c, xptr x) {
     c.copy(isTmpBlock(x) ? tuple_cell::node_indir(x) : tuple_cell::node(x));
 }
 
-void PPSXptr::serialize (tuple& t, xptr v1, const void *Udata)
+void PPSXptr::serialize (xqp_tuple& t, xptr v1, const void *Udata)
 {
     CHECK_TIMER_FLAG;
     xptr node = get_xptr(t.cells[0]);
@@ -192,7 +192,7 @@ void PPSXptr::serialize (tuple& t, xptr v1, const void *Udata)
 #endif /* ALIGNMENT_REQUIRED */
 }
 
-void PPSXptr::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void *Udata)
+void PPSXptr::serialize_2_blks (xqp_tuple& t, xptr& v1, shft size1, xptr& v2, const void *Udata)
 {
     xptr node = get_xptr(t.cells[0]);
     CHECKP(v1);
@@ -203,7 +203,7 @@ void PPSXptr::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const 
     memcpy(XADDR(v2), ((char*)&node) + size1, sizeof(xptr) - size1);
 }
 
-void PPSXptr::deserialize (tuple& t, xptr& v1, const void *Udata)
+void PPSXptr::deserialize (xqp_tuple& t, xptr& v1, const void *Udata)
 {
     CHECK_TIMER_FLAG;
     CHECKP(v1);
@@ -217,7 +217,7 @@ void PPSXptr::deserialize (tuple& t, xptr& v1, const void *Udata)
     get_tuple(t, node);
 }
 
-void PPSXptr::deserialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void *Udata)
+void PPSXptr::deserialize_2_blks (xqp_tuple& t, xptr& v1, shft size1, xptr& v2, const void *Udata)
 {
     xptr node;
     CHECKP(v1);

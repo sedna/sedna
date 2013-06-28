@@ -152,8 +152,8 @@ private:
                                   //e.g. for {position() < 1} conjunct we'll have 
                                   //OCC_GENERAL_LESS condition
 
-    tuple *cur_tuple;
-    tuple data;
+    xqp_tuple *cur_tuple;
+    xqp_tuple data;
     PPPredRange range;
 
     bool first_time;              //as-is, we call next() for the first time
@@ -190,13 +190,13 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
     virtual var_c_id do_register_consumer(var_dsc dsc);
-    virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
+    virtual void do_next  (xqp_tuple &t, var_dsc dsc, var_c_id id);
     virtual void do_reopen(var_dsc dsc, var_c_id id);
     virtual void do_close (var_dsc dsc, var_c_id id);
 
@@ -249,11 +249,11 @@ private:
 
     arr_of_comp_cond conditions;  //types of comparison operations in conjunts
                                   //e.g. position() < 1 corresponds to OCC_VALUE_LESS
-    tuple data;
-    tuple *cur_tuple;
+    xqp_tuple data;
+    xqp_tuple *cur_tuple;
     int pos;
     var_dsc pos_dsc;              //returns current position (int64_t) of the source child
-    var_dsc lst_dsc;              //returns last source child tuple through this variable
+    var_dsc lst_dsc;              //returns last source child xqp_tuple through this variable
     sequence *s;
 
     PPPredRange range;
@@ -288,13 +288,13 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
     virtual var_c_id do_register_consumer(var_dsc dsc);
-    virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
+    virtual void do_next  (xqp_tuple &t, var_dsc dsc, var_c_id id);
     virtual void do_reopen(var_dsc dsc, var_c_id id);
     virtual void do_close (var_dsc dsc, var_c_id id);
 

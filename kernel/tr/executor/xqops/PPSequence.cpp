@@ -59,7 +59,7 @@ void PPSequence::do_close()
     it = 0;
 }
 
-void PPSequence::do_next(tuple &t)
+void PPSequence::do_next(xqp_tuple &t)
 {
     while (it < ch_arr.size())
     {

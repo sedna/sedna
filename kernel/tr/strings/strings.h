@@ -402,7 +402,7 @@ class TokenizerResult
 {
 public:
     virtual ~TokenizerResult() {};
-	virtual void get_next_result(tuple& t)=0;
+	virtual void get_next_result(xqp_tuple& t)=0;
 };
 
 
@@ -414,7 +414,7 @@ protected:
 public:
 	//FIXME: length souldn't be int
 	virtual str_off_t length (tuple_cell *tc) = 0;
-	virtual void transtale (tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str) = 0;
+	virtual void transtale (xqp_tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str) = 0;
 	virtual CharCounter* new_char_counter() = 0;
 	virtual void free_char_counter(CharCounter *) = 0;
 	virtual tuple_cell toupper(const tuple_cell *tc) = 0;
@@ -424,8 +424,8 @@ public:
 	virtual unicode_cp_iterator *get_unicode_cp_iterator(const tuple_cell *tc) = 0;
 	virtual unicode_cp_iterator *get_unicode_cp_iterator(const char * tc) = 0;
 
-	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4) = 0;
-	virtual void matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;
+	virtual void replace (xqp_tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4) = 0;
+	virtual void matches (xqp_tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;
 	virtual TokenizerResult* tokenize ( tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;
 	virtual bool matches (const tuple_cell *tc, const char *regex) = 0;
 	virtual bool matches (const char *tc, const char *regex) = 0;

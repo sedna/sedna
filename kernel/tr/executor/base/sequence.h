@@ -35,9 +35,9 @@ public:
     public:
         iterator() : pos(-1), s(NULL) {}
 
-        tuple operator*() 
+        xqp_tuple operator*()
         { 
-            tuple res(s->tuple_size); 
+            xqp_tuple res(s->tuple_size);
             s->get(res, *this);
             return res;
         }
@@ -92,15 +92,15 @@ public:
     iterator end() { return iterator(seq_size, this); }
 
     // returns 0 - if success, 1 - if block limit is exhausted
-    virtual int  add(const tuple &t);
-    virtual void get(tuple &t, const iterator& it);
-    virtual void get(tuple &t, int pos);
+    virtual int  add(const xqp_tuple &t);
+    virtual void get(xqp_tuple &t, const iterator& it);
+    virtual void get(xqp_tuple &t, int pos);
 
     int  get_tuple_size() const { return tuple_size; }
 
-    virtual tuple operator[](int i)
+    virtual xqp_tuple operator[](int i)
     { 
-        tuple res(tuple_size); 
+        xqp_tuple res(tuple_size);
         get(res, i);
         return res;
     }

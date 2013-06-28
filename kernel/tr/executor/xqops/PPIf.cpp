@@ -63,7 +63,7 @@ void PPIf::do_close()
     else_child.op->close();
 }
 
-void PPIf::do_next(tuple &t)
+void PPIf::do_next(xqp_tuple &t)
 {
     if (data_child == NULL)
     {

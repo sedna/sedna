@@ -119,7 +119,7 @@ ExtFunction *ExtFunction::copy()
 	return se_new ExtFunction(fcxt, this->fn_ptr);
 }
 
-SEDNA_SEQUENCE_ITEM *ExtFunction::make_item(const tuple &t)
+SEDNA_SEQUENCE_ITEM *ExtFunction::make_item(const xqp_tuple &t)
 {
 	if (t.cells_number != 1)
 		throw USER_EXCEPTION2(SE1003, "bad tuple_cells count (in external function's arguments)");
@@ -157,7 +157,7 @@ SEDNA_SEQUENCE_ITEM *ExtFunction::make_item(const tuple &t)
 
 SEDNA_SEQUENCE_ITEM *ExtFunction::get_ef_seq(const PPOpIn &inp)
 {
-	tuple t(inp.ts);
+	xqp_tuple t(inp.ts);
 
 	inp.op->next(t);
 	if (t.is_eos())
@@ -250,7 +250,7 @@ void ExtFunction::result_clear()
 	while (result != NULL)
 		result_skip();
 }
-void ExtFunction::result_peek(tuple &t)
+void ExtFunction::result_peek(xqp_tuple &t)
 {
 	if (result == NULL)
 	{
@@ -276,7 +276,7 @@ void ExtFunction::result_peek(tuple &t)
 		break;
 	}
 }
-void ExtFunction::result_next(tuple &t)
+void ExtFunction::result_next(xqp_tuple &t)
 {
 	result_peek(t);
 	result_skip();

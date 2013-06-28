@@ -52,7 +52,7 @@ void PPUnion::do_close()
     child2.op->close();
 }
 
-void PPUnion::do_next (tuple &t)
+void PPUnion::do_next (xqp_tuple &t)
 {
     if (tug_first)
     {

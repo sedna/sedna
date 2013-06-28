@@ -45,7 +45,7 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t) ; 
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
 
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
@@ -57,11 +57,11 @@ public:
     virtual ~PPDDO();
 
     static int compare_less (xptr v1,xptr v2, const void * Udata);
-    static int get_size (tuple& t, const void * Udata);
-    static void serialize (tuple& t,xptr v1, const void * Udata);
-    static void serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
-    static void deserialize (tuple &t, xptr& v1, const void * Udata);
-    static void deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
+    static int get_size (xqp_tuple& t, const void * Udata);
+    static void serialize (xqp_tuple& t,xptr v1, const void * Udata);
+    static void serialize_2_blks (xqp_tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
+    static void deserialize (xqp_tuple &t, xptr& v1, const void * Udata);
+    static void deserialize_2_blks (xqp_tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
 };
 
 #endif /* _PPDDO_H */

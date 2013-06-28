@@ -109,7 +109,7 @@ void get_casted_value(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_type
 {
     if (child.op)
     {
-        tuple t(1);
+        xqp_tuple t(1);
         child.op->next(t);
         if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Value argument of index-scan is not a single sequence.");
 
@@ -145,12 +145,12 @@ void PPIndexScan::initialize()
     idx_type = idc->get_keytype();
 }
 
-void PPIndexScan::do_next(tuple& t)
+void PPIndexScan::do_next(xqp_tuple& t)
 {
     (this->*next_fun)(t);
 }
 
-void PPIndexScan::next_eq(tuple &t)
+void PPIndexScan::next_eq(xqp_tuple &t)
 {
     if (first_time) {
         tuple_cell current_key;
@@ -190,7 +190,7 @@ void PPIndexScan::next_eq(tuple &t)
     }
 }
 
-void PPIndexScan::next_lt_le(tuple &t)
+void PPIndexScan::next_lt_le(xqp_tuple &t)
 {
     bool is_left_bound = false;
     tuple_cell current_key;
@@ -219,7 +219,7 @@ void PPIndexScan::next_lt_le(tuple &t)
     }
 }
 
-void PPIndexScan::next_between(tuple &t)
+void PPIndexScan::next_between(xqp_tuple &t)
 {
     tuple_cell current_key;
     if (first_time) {

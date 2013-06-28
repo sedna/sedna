@@ -163,7 +163,7 @@ void PPGeneralComparison::do_close()
 	seq2.op->close();
 }
 
-void PPGeneralComparison::do_next (tuple &t)
+void PPGeneralComparison::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -539,7 +539,7 @@ void PPLMGeneralComparison::do_accept(PPVisitor &v)
 }
 
 
-void PPNEQGeneralComparison::do_next (tuple &t)
+void PPNEQGeneralComparison::do_next (xqp_tuple &t)
 {
 	if (first_time)
     {
@@ -548,9 +548,9 @@ void PPNEQGeneralComparison::do_next (tuple &t)
 		if (!eos_reached2) seq2.op->reopen();
 		eos_reached2 = false;
 		eos_reached1 = false;
-		tuple cont1(seq1.ts);
-		tuple cont2(seq2.ts);
-		tuple * cont[2]={&cont1,&cont2};
+		xqp_tuple cont1(seq1.ts);
+		xqp_tuple cont2(seq2.ts);
+		xqp_tuple * cont[2]={&cont1,&cont2};
 		PPOpIn * seq[2]={&seq1,&seq2};
 		bool seq_end[2]={false,false};
 		bool two_diffs_exist[2]={false,false};
@@ -657,7 +657,7 @@ void PPNEQGeneralComparison::do_next (tuple &t)
     }
 }
 
-void PPEQLGeneralComparison::do_next (tuple &t)
+void PPEQLGeneralComparison::do_next (xqp_tuple &t)
 {
 	if (first_time)
     {
@@ -667,11 +667,11 @@ void PPEQLGeneralComparison::do_next (tuple &t)
 		if (!eos_reached2) seq2.op->reopen();
 		eos_reached2 = false;
 		eos_reached1 = false;
-		tuple cont1(seq1.ts);
-		tuple cont2(seq2.ts);
+		xqp_tuple cont1(seq1.ts);
+		xqp_tuple cont2(seq2.ts);
 		seq1.op->next(cont1);
 		sequence seq(1);
-		tuple at_tup(1);
+		xqp_tuple at_tup(1);
 		seq2.op->next(cont2);
 		if (cont2.is_eos())
 		{
@@ -729,7 +729,7 @@ void PPEQLGeneralComparison::do_next (tuple &t)
     }
 }
 
-void PPLMGeneralComparison::do_next (tuple &t)
+void PPLMGeneralComparison::do_next (xqp_tuple &t)
 {
  	if (first_time)
     {
@@ -754,11 +754,11 @@ void PPLMGeneralComparison::do_next (tuple &t)
 		if (!eos_reached2) seq2.op->reopen();
 		eos_reached2 = false;
 		eos_reached1 = false;
-		tuple cont1(seq1.ts);
-		tuple cont2(seq2.ts);
+		xqp_tuple cont1(seq1.ts);
+		xqp_tuple cont2(seq2.ts);
 		seq1.op->next(cont1);
 		sequence seq(1);
-		tuple at_tup(1);
+		xqp_tuple at_tup(1);
 		seq2.op->next(cont2);
 		if (cont2.is_eos())
 		{

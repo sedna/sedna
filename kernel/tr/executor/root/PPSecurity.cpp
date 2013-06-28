@@ -50,7 +50,7 @@ void PPCreateUser::do_close()
 void PPCreateUser::do_execute()
 {
     tuple_cell tc_user, tc_passwd;
-    tuple t(1);
+    xqp_tuple t(1);
 
     username.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
@@ -112,7 +112,7 @@ void PPDropUser::do_close()
 void PPDropUser::do_execute()
 {
     tuple_cell tc_user;
-    tuple t(1);
+    xqp_tuple t(1);
 
     username.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
@@ -169,7 +169,7 @@ void PPAlterUser::do_close()
 void PPAlterUser::do_execute()
 {
     tuple_cell tc_user, tc_passwd;
-    tuple t(1);
+    xqp_tuple t(1);
 
     username.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
@@ -231,7 +231,7 @@ void PPCreateRole::do_close()
 void PPCreateRole::do_execute()
 {
     tuple_cell tc_role;
-    tuple t(1);
+    xqp_tuple t(1);
 
     rolename.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
@@ -282,7 +282,7 @@ void PPDropRole::do_close()
 void PPDropRole::do_execute()
 {
     tuple_cell tc_role;
-    tuple t(1);
+    xqp_tuple t(1);
 
     rolename.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
@@ -340,7 +340,7 @@ void PPGrantRole::do_close()
 void PPGrantRole::do_execute()
 {
     tuple_cell tc_role, tc_grantee;
-    tuple t(1);
+    xqp_tuple t(1);
 
     role.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
@@ -440,7 +440,7 @@ void PPGrantRevokePriv::do_close()
 void PPGrantRevokePriv::do_execute()
 {
     tuple_cell tc_name, tc_grantee;
-    tuple t(1);
+    xqp_tuple t(1);
 
     name.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
@@ -537,7 +537,7 @@ void PPRevokeRole::do_close()
 void PPRevokeRole::do_execute()
 {
     tuple_cell tc_role, tc_grantee;
-    tuple t(1);
+    xqp_tuple t(1);
 
     role.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);

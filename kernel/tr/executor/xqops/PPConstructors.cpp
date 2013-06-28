@@ -41,7 +41,7 @@ using namespace std;
 static
 tuple_cell getNameTuple(const PPOpIn &qname, bool quietly)
 {
-    tuple name(qname.ts);
+    xqp_tuple name(qname.ts);
 
     qname.op->next(name);
     if (name.is_eos() || name.cells_number != 1)
@@ -89,9 +89,9 @@ xsd::NCName getNCNameParameter(const PPOpIn &ncname, bool quietly)
 
 void getAtomicSequence(const char * direct_content, PPOpIn content, sequence * a) {
     if (direct_content != NULL) {
-        a->add(tuple(tuple_cell::atomic(xs_string, strcpy((char *) malloc(strlen(direct_content) + 1), direct_content))));
+        a->add(xqp_tuple(tuple_cell::atomic(xs_string, strcpy((char *) malloc(strlen(direct_content) + 1), direct_content))));
     } else {
-        tuple value(content.ts);
+        xqp_tuple value(content.ts);
         content.op->next(value);
 
         while (!value.is_eos()) {
@@ -99,7 +99,7 @@ void getAtomicSequence(const char * direct_content, PPOpIn content, sequence * a
                 throw USER_EXCEPTION2(SE1003, "in PPConstructor");
             }
 
-            a->add(tuple(cast(atomize(value.cells[0]), xs_string)));
+            a->add(xqp_tuple(cast(atomize(value.cells[0]), xs_string)));
 
             content.op->next(value);
         };
@@ -267,7 +267,7 @@ Node PPConstructor::getVirtualRoot()
 
 class ProperNamespace {
   private:
-    tuple contentIterator;
+    xqp_tuple contentIterator;
     PPOpIn * contentProducer;
     dynamic_context * cxt;
 
@@ -399,7 +399,7 @@ void PPElementConstructor::do_close()
     content.op->close();
 }
 
-void PPElementConstructor::do_next (tuple &t)
+void PPElementConstructor::do_next (xqp_tuple &t)
 {
     if (first_time) {
         first_time = false;
@@ -432,7 +432,7 @@ void PPElementConstructor::do_next (tuple &t)
         constructorContext.producer = producer.get();
 
         /* Process content nodes */
-        tuple contentTuple(content.ts); /* Content iterator, used throughout the function */
+        xqp_tuple contentTuple(content.ts); /* Content iterator, used throughout the function */
         content.op->next(contentTuple);
         while (!contentTuple.is_eos()) {
             tuple_cell tc = contentTuple.cells[0];
@@ -594,7 +594,7 @@ xmlns_ptr swizzle_context_namespace(StaticallyKnownNamespaces * skn, xmlns_ptr n
 };
 
 
-void PPAttributeConstructor::do_next (tuple &t)
+void PPAttributeConstructor::do_next (xqp_tuple &t)
 {
     if (first_time) {
         first_time = false;
@@ -755,7 +755,7 @@ void PPNamespaceConstructor::do_close()
     if (at_value==NULL) content.op->close();
 }
 
-void PPNamespaceConstructor::do_next (tuple &t)
+void PPNamespaceConstructor::do_next (xqp_tuple &t)
 {
     if (first_time) {
         first_time = false;
@@ -839,7 +839,7 @@ void PPCommentConstructor::do_close()
     if (at_value==NULL) content.op->close();
 }
 
-void PPCommentConstructor::do_next (tuple &t)
+void PPCommentConstructor::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -976,7 +976,7 @@ void PPPIConstructor::do_close()
     if (at_value==NULL) content.op->close();
 }
 
-void PPPIConstructor::do_next (tuple &t)
+void PPPIConstructor::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -1102,7 +1102,7 @@ void PPTextConstructor::do_close()
     if (at_value==NULL) content.op->close();
 }
 
-void PPTextConstructor::do_next (tuple &t)
+void PPTextConstructor::do_next (xqp_tuple &t)
 {
     tuple_cell result = tuple_cell::eos();
 
@@ -1194,7 +1194,7 @@ void PPDocumentConstructor::do_close()
     content.op->close();
 }
 
-void PPDocumentConstructor::do_next (tuple &t)
+void PPDocumentConstructor::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -1208,7 +1208,7 @@ void PPDocumentConstructor::do_next (tuple &t)
         constructorContext.producer = producer.get();
 
         /* Process content nodes */
-        tuple contentTuple(content.ts); /* Content iterator, used throughout the function */
+        xqp_tuple contentTuple(content.ts); /* Content iterator, used throughout the function */
         content.op->next(contentTuple);
 
         while (!contentTuple.is_eos()) {

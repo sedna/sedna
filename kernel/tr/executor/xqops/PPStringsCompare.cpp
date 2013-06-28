@@ -75,7 +75,7 @@ void PPFnCompare::do_close()
     if(collation_child.op) collation_child.op->close();
 }
 
-void PPFnCompare::do_next(tuple &t)
+void PPFnCompare::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

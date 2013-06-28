@@ -44,7 +44,7 @@ void PPConst::do_accept(PPVisitor &v)
     v.visit (this);
 }
 
-void PPConst::do_next(tuple &t)
+void PPConst::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

@@ -138,7 +138,7 @@ void PPOrderBy::do_close()
     release_ss();
 }
 
-void PPOrderBy::do_next (tuple &t)
+void PPOrderBy::do_next (xqp_tuple &t)
 {
 
     if (first_time)
@@ -158,9 +158,9 @@ void PPOrderBy::do_next (tuple &t)
         }
 
         int i;
-        tuple data_tuple(data_size);
-        tuple sort_tuple(sort_size);
-        tuple source(child.ts);
+        xqp_tuple data_tuple(data_size);
+        xqp_tuple sort_tuple(sort_size);
+        xqp_tuple source(child.ts);
 
         for (i = 0; i < sort_size; i++) types.at(i).initialized = false;
 
@@ -354,7 +354,7 @@ void PPSTuple::do_close()
     }
 }
 
-void PPSTuple::do_next(tuple &t)
+void PPSTuple::do_next(xqp_tuple &t)
 {
     if (!i)
     {
@@ -374,7 +374,7 @@ void PPSTuple::do_next(tuple &t)
                 {
                     sequence* st = se_new sequence(1);
                     seq_ptrs.push_back(st); /// Save pointer. Memory will be freed in PPStuple.close().
-                    tuple prev_lt(1);
+                    xqp_tuple prev_lt(1);
                     prev_lt.copy(t.cells[i]);
                     st -> add(prev_lt);
                     while (!lt.is_eos())
@@ -476,7 +476,7 @@ void PPSLet::do_close()
     if(s != NULL) s = NULL;
 }
 
-void PPSLet::do_next(tuple &t)
+void PPSLet::do_next(xqp_tuple &t)
 {
     if (need_reopen)
     {
@@ -516,7 +516,7 @@ var_c_id PPSLet::do_register_consumer(var_dsc dsc)
     return cvc.size() - 1;
 }
 
-void PPSLet::do_next(tuple &t, var_dsc dsc, var_c_id id)
+void PPSLet::do_next(xqp_tuple &t, var_dsc dsc, var_c_id id)
 {
     producer &p = cxt->get_var_producer(dsc, var_cxt);
     complex_var_consumption &cvc = *(p.cvc);

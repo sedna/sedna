@@ -17,7 +17,7 @@ class PPQueryRoot : public PPQueryEssence
 {
 private:
     PPOpIn child;
-    tuple data;
+    xqp_tuple data;
     dynamic_context *cxt;
     bool first;
 
@@ -48,7 +48,7 @@ class PPSubQuery : public PPQueryEssence
 private:
     PPOpIn child;
     lock_mode lmode;
-    tuple data;
+    xqp_tuple data;
     dynamic_context *cxt;
 
     virtual void do_open();
@@ -64,7 +64,7 @@ public:
 
     /* Returns true if successfuly got next item,
      * false - if result is over. */
-    bool next(tuple &t);
+    bool next(xqp_tuple &t);
     bool supports_next() { return true; }
     bool is_update() { return false; }
 };

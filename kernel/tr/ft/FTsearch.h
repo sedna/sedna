@@ -108,7 +108,7 @@ private:
 	virtual xptr get_next_doc();
 	virtual int rewind();
 	PPOpIn* op;
-	tuple t;
+	xqp_tuple t;
 };
 class CreationSednaDataSource : public  SednaDataSource
 {
@@ -261,7 +261,7 @@ public:
     void set_dtsSearchAnyWords(bool v);
     void set_dtsSearchAllWords(bool v);
 
-	void get_next_result(tuple &t);
+	void get_next_result(xqp_tuple &t);
 };
 
 //strict variant (with sort by relevance)
@@ -271,7 +271,7 @@ class SednaSearchJob2 : public SednaSearchJobBase {
 		 //TODO: add highlight?
 		   SednaSearchJob2();
 		   void set_field_weights(tuple_cell& fw);
-		   void get_next_result(tuple &t);
+		   void get_next_result(xqp_tuple &t);
 		   void set_max_results(long max_results);
 		   //void reopen();
 		   virtual ~SednaSearchJob2();

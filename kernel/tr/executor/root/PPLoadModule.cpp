@@ -134,8 +134,8 @@ public:
             );
     }
 private:
-    tuple_cell  tc;
-    tuple       t;
+    tuple_cell tc;
+    xqp_tuple t;
 };
 
 struct Client_file_closer:

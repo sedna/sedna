@@ -43,7 +43,7 @@ void PPFnDateTimeFuncNoParam::do_close()
 {
 }
 
-void PPFnDateTimeFuncNoParam::do_next (tuple &t)
+void PPFnDateTimeFuncNoParam::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -130,7 +130,7 @@ void PPFnDateTimeFunc::do_close()
     child.op->close();
 }
 
-void PPFnDateTimeFunc::do_next (tuple &t)
+void PPFnDateTimeFunc::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -394,7 +394,7 @@ void PPFnDateTimeFunc2Params::do_close()
     child2.op->close();
 }
 
-void PPFnDateTimeFunc2Params::do_next (tuple &t)
+void PPFnDateTimeFunc2Params::do_next (xqp_tuple &t)
 {
 
     if (first_time)

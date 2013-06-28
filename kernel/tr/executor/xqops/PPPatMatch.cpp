@@ -211,7 +211,7 @@ void PPPatMatch::do_accept(PPVisitor &v)
 
 
 static inline 
-tuple_cell check_string_argument(tuple &t, PPOpIn &seq, bool is_empty_allowed, PPPatMatch::patmatch_type pmt, int arg_num)
+tuple_cell check_string_argument(xqp_tuple &t, PPOpIn &seq, bool is_empty_allowed, PPPatMatch::patmatch_type pmt, int arg_num)
 {
     seq.op->next(t);
     if(t.is_eos()) 
@@ -228,7 +228,7 @@ tuple_cell check_string_argument(tuple &t, PPOpIn &seq, bool is_empty_allowed, P
     return res;
 }
 
-void PPPatMatch::do_next (tuple &t)
+void PPPatMatch::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -280,7 +280,7 @@ void PPPatMatch::do_next (tuple &t)
     }
 }
 
-void PPPatMatch::tokenize (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)
+void PPPatMatch::tokenize (xqp_tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)
 {
 	tuple_cell tc=tuple_cell::make_sure_light_atomic(*t2);
 	tuple_cell tflags = tuple_cell::eos();
@@ -290,7 +290,7 @@ void PPPatMatch::tokenize (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3
 	tknzr = charset_handler->tokenize(t1, &tc, &tflags);
 }
 
-void PPPatMatch::matches (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)
+void PPPatMatch::matches (xqp_tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)
 {
 	tuple_cell tc=tuple_cell::make_sure_light_atomic(*t2);
 	tuple_cell tflags = tuple_cell::eos();
@@ -300,7 +300,7 @@ void PPPatMatch::matches (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,
 	charset_handler->matches(t, t1, &tc, &tflags);
 }
 
-void PPPatMatch::replace (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)
+void PPPatMatch::replace (xqp_tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)
 {
 	tuple_cell tc=tuple_cell::make_sure_light_atomic(*t2);
 	tuple_cell tf=tuple_cell::make_sure_light_atomic(*t3);

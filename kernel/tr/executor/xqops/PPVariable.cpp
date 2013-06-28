@@ -42,7 +42,7 @@ void PPVariable::do_close()
     // nothing to do
 }
 
-void PPVariable::do_next (tuple &t)
+void PPVariable::do_next (xqp_tuple &t)
 {
     var_prod->op->next(t, dsc, id);
 }
@@ -90,7 +90,7 @@ void PPGlobalVariable::do_close()
     dsc.first->get_global_var_producer(dsc.second).op->close(dsc.second, id);
 }
 
-void PPGlobalVariable::do_next (tuple &t)
+void PPGlobalVariable::do_next (xqp_tuple &t)
 {
     dsc.first->get_global_var_producer(dsc.second).op->next(t, dsc.second, id);
 }

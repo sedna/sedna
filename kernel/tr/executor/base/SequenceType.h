@@ -103,8 +103,8 @@ inline bool is_same_or_derived(xmlscm_type t1, xmlscm_type t2)
 }
 
 bool        type_matches_single(const tuple_cell& tc, const st_item_type& it);
-bool        type_matches(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached, const sequence_type& st);
-inline bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const sequence_type& st)
+bool        type_matches(const PPOpIn &child, sequence *s, xqp_tuple &t, bool &eos_reached, const sequence_type& st);
+inline bool type_matches(const PPOpIn &child, xqp_tuple &t, bool &eos_reached, const sequence_type& st)
 {
     return type_matches(child, NULL, t, eos_reached, st);
 }

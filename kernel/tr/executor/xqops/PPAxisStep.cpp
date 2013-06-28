@@ -586,7 +586,7 @@ void PPAxisStep::do_accept(PPVisitor &v)
     v.pop();
 }
 
-void PPAxisStep::do_next(tuple& t)
+void PPAxisStep::do_next(xqp_tuple& t)
 {
     Node currentNode = indirectionDereferenceCP(currentNodeIndir);
 

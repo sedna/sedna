@@ -52,7 +52,7 @@ void PPFnEmpty::do_close()
     child.op->close();
 }
 
-void PPFnEmpty::do_next (tuple &t)
+void PPFnEmpty::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -126,7 +126,7 @@ void PPFnExists::do_close()
     child.op->close();
 }
 
-void PPFnExists::do_next (tuple &t)
+void PPFnExists::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -204,7 +204,7 @@ void PPFnItemAt::do_close()
     pos_child.op->close();
 }
 
-void PPFnItemAt::do_next(tuple &t)
+void PPFnItemAt::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -270,12 +270,12 @@ void PPFnItemAt::do_accept(PPVisitor &v)
 class DV_Serializer: public ITupleSerializer
 {
 public:
-    size_t serialize(const tuple &t, void *buf);
-    void deserialize(tuple &t, void *buf, size_t size);
+    size_t serialize(const xqp_tuple &t, void *buf);
+    void deserialize(xqp_tuple &t, void *buf, size_t size);
     int compare(void *buf1, size_t size1, void *buf2, size_t size2);
 };
 
-size_t DV_Serializer::serialize(const tuple &t, void *buf)
+size_t DV_Serializer::serialize(const xqp_tuple &t, void *buf)
 {
     CHECK_TIMER_FLAG;
     tuple_cell tc = t.cells[0];
@@ -283,7 +283,7 @@ size_t DV_Serializer::serialize(const tuple &t, void *buf)
     return sizeof(tuple_cell);
 }
 
-void DV_Serializer::deserialize(tuple &t, void* buf, size_t size)
+void DV_Serializer::deserialize(xqp_tuple &t, void* buf, size_t size)
 {
     CHECK_TIMER_FLAG;
     tuple_cell tc;
@@ -295,7 +295,7 @@ int DV_Serializer::compare(void* buf1, size_t size1, void* buf2, size_t size2)
 {
     CHECK_TIMER_FLAG;
     tuple_cell tc1, tc2;
-    tuple tmp(1);
+    xqp_tuple tmp(1);
 
     deserialize(tmp, buf1, size1);
     tc1 = tmp.cells[0];
@@ -384,7 +384,7 @@ void PPFnDistinctValues::do_close()
     handler = NULL;
 }
 
-inline void PPFnDistinctValues::make_heavy_atomic(tuple &t)
+inline void PPFnDistinctValues::make_heavy_atomic(xqp_tuple &t)
 {
     if (t.cells[0].get_type() == tc_light_atomic_var_size) {
         xptr txt_ptr = txt_data.append(t.cells[0]);
@@ -411,7 +411,7 @@ int PPFnDistinctValues::compare_tc(tuple_cell tc1, tuple_cell tc2)
     }
 }
 
-void PPFnDistinctValues::do_next(tuple &t)
+void PPFnDistinctValues::do_next(xqp_tuple &t)
 {
     if (!handler) // the same as 'first_time'
     {
@@ -569,7 +569,7 @@ void PPFnIndexOf::do_close()
     handler = NULL;
 }
 
-void PPFnIndexOf::do_next(tuple &t)
+void PPFnIndexOf::do_next(xqp_tuple &t)
 {
     if (!handler) // the same as 'first_time'
     {
@@ -694,7 +694,7 @@ void PPFnReverse::do_close()
     s = NULL;
 }
 
-void PPFnReverse::do_next (tuple &t)
+void PPFnReverse::do_next (xqp_tuple &t)
 {
     if(first_time)
     {
@@ -802,7 +802,7 @@ void PPFnSubsequence::do_close()
     if(is_length) length_child.op->close();
 }
 
-void PPFnSubsequence::do_next(tuple &t)
+void PPFnSubsequence::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -933,7 +933,7 @@ void PPFnRemove::do_close()
     pos_child.op->close();
 }
 
-void PPFnRemove::do_next(tuple &t)
+void PPFnRemove::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -1042,7 +1042,7 @@ void PPFnInsertBefore::do_close()
     ins_child.op->close();
 }
 
-void PPFnInsertBefore::do_next(tuple &t)
+void PPFnInsertBefore::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -1150,7 +1150,7 @@ void PPFnZeroOrOne::do_close()
     child.op->close();
 }
 
-void PPFnZeroOrOne::do_next (tuple &t)
+void PPFnZeroOrOne::do_next (xqp_tuple &t)
 {
     if(first_time)
     {
@@ -1159,7 +1159,7 @@ void PPFnZeroOrOne::do_next (tuple &t)
         if (!t.is_eos())
         {
             first_time = false;
-			tuple temp(child.ts);
+			xqp_tuple temp(child.ts);
             child.op->next(temp);
             /* 
              * Error code description: 
@@ -1227,7 +1227,7 @@ void PPFnOneOrMore::do_close()
     child.op->close();
 }
 
-void PPFnOneOrMore::do_next (tuple &t)
+void PPFnOneOrMore::do_next (xqp_tuple &t)
 {
     child.op->next(t);
     if (t.is_eos()) 
@@ -1294,7 +1294,7 @@ void PPFnExactlyOne::do_close()
     child.op->close();
 }
 
-void PPFnExactlyOne::do_next (tuple &t)
+void PPFnExactlyOne::do_next (xqp_tuple &t)
 {
     if(first_time)
     {
@@ -1302,7 +1302,7 @@ void PPFnExactlyOne::do_next (tuple &t)
         child.op->next(t);
         if(t.is_eos()) throw XQUERY_EXCEPTION2(FORG0005, "Empty sequence is not allowed in fn:exactly-one.");
 
-        tuple temp(child.ts);
+        xqp_tuple temp(child.ts);
         child.op->next(temp);
         if(!temp.is_eos()) throw XQUERY_EXCEPTION2(FORG0005, "More than one item is not allowed in fn:exactly-one.");
     }

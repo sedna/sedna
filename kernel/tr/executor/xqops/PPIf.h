@@ -15,7 +15,7 @@ class PPIf : public PPIterator
 protected:
     PPOpIn if_child, then_child, else_child;
     PPIterator *data_child;
-    tuple if_data;
+    xqp_tuple if_data;
 
     bool eos_reached;
 
@@ -23,7 +23,7 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);

@@ -30,7 +30,7 @@ static inline void serialize_string(const tuple_cell& tc, void* dest)
     *((char*)dest + sizeof(bool) + length_ser) = '\0';
 }
 
-size_t TupleSerializer::serialize(const tuple& t, void* buf)
+size_t TupleSerializer::serialize(const xqp_tuple& t, void* buf)
 {
     bit_set bs(header -> size());
     memcpy((char *)buf, init_pos, sizeof(int64_t));
@@ -112,7 +112,7 @@ size_t TupleSerializer::serialize(const tuple& t, void* buf)
     return offset;
 }
 
-void TupleSerializer::deserialize(tuple& t, void* buf, size_t size)
+void TupleSerializer::deserialize(xqp_tuple& t, void* buf, size_t size)
 {
     int64_t pos;
     memcpy(&pos, buf, sizeof(int64_t));
@@ -232,7 +232,7 @@ int TupleSerializer::compare(void* buf1, size_t size1, void* buf2, size_t size2)
                         int64_t position1, position2;
                         get_deserialized_value(&position1, (char *)buf1, xs_integer);
                         get_deserialized_value(&position2, (char *)buf2, xs_integer);
-                        tuple t(length);
+                        xqp_tuple t(length);
                         sort -> get(t, position1);
                         tuple_cell tc = t.cells[i];
                         sort -> get(t, position2);

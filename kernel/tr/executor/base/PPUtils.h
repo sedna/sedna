@@ -46,18 +46,18 @@ inline tuple_cell atomize(const tuple_cell& t)
 tuple_cell effective_boolean_value(const tuple_cell &t);
 tuple_cell effective_boolean_value(const sequence *s);
 
-tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value);
-tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos);
+tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, xqp_tuple &t, bool &eos_reached, bool &is_numeric, double &value);
+tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, xqp_tuple &t, bool &eos_reached, int pos);
 
 
-inline tuple_cell predicate_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos)
+inline tuple_cell predicate_boolean_value(const PPOpIn &child, xqp_tuple &t, bool &eos_reached, int pos)
 {
 	U_ASSERT(pos > 0);
 	return predicate_and_effective_boolean_value(child, t, eos_reached, pos);
 }
 
 
-inline tuple_cell effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached)
+inline tuple_cell effective_boolean_value(const PPOpIn &child, xqp_tuple &t, bool &eos_reached)
 {
 	return predicate_and_effective_boolean_value(child, t, eos_reached, 0);
 }

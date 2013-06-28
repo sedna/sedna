@@ -71,7 +71,7 @@ public:
 
     XDMSerializer();
 
-    virtual void serialize(tuple &t);
+    virtual void serialize(xqp_tuple &t);
 };
 
 class XMLSerializer : public XDMSerializer {

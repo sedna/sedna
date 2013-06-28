@@ -206,7 +206,7 @@ void PPSubQuery::do_accept(PPVisitor &v)
     v.pop();
 }
 
-bool PPSubQuery::next(tuple &t)
+bool PPSubQuery::next(xqp_tuple &t)
 {
     if (executor_globals::profiler_mode)
     {

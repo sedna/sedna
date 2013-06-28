@@ -54,7 +54,7 @@ void PPDropModule::do_accept(PPVisitor &v)
 void PPDropModule::do_execute()
 {
     tuple_cell tc;
-    tuple t(1);
+    xqp_tuple t(1);
     module_name.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
 

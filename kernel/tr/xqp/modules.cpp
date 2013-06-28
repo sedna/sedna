@@ -34,7 +34,7 @@ char *get_module(const char *module_uri)
         tree_built = true;
 
         tuple_cell tc;
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
 
         tree->open();
         tree_opened = true;

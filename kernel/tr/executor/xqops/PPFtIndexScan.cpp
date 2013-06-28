@@ -132,7 +132,7 @@ void PPFtIndexScan::do_close()
 	
 }
 
-void PPFtIndexScan::do_next(tuple &t)
+void PPFtIndexScan::do_next(xqp_tuple &t)
 {
     if (first_time)
 	{
@@ -446,7 +446,7 @@ void PPFtIndexScan2::do_close()
 #endif
 }
 
-void PPFtIndexScan2::do_next(tuple &t)
+void PPFtIndexScan2::do_next(xqp_tuple &t)
 {
 	if (first_time)
 	{

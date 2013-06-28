@@ -264,7 +264,7 @@ void PPFnSQLConnect::do_close()
 //copied from PPConstructors.cpp
 static const char *getStringParameter(PPOpIn content, const char *err_pref)
 {
-    tuple value(content.ts);
+    xqp_tuple value(content.ts);
     content.op->next(value);
     sequence at_vals(1);
     if (value.is_eos())
@@ -296,7 +296,7 @@ static const char *getStringParameter(PPOpIn content, const char *err_pref)
     return executor_globals::tmp_op_str_buf.c_str();
 }
 
-void PPFnSQLConnect::do_next(tuple &t)
+void PPFnSQLConnect::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -449,12 +449,12 @@ void PPFnSQLExecute::do_close()
         arr[i].op->close();
 }
 
-void PPFnSQLExecute::do_next(tuple &t)
+void PPFnSQLExecute::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
         first_time = false;
-        tuple tmp(1);
+        xqp_tuple tmp(1);
         tuple_cell tmp_cell;
 
         arr[0].op->next(tmp);
@@ -608,12 +608,12 @@ void PPFnSQLPrepare::do_close()
     if (has_options)
         options.op->close();
 }
-void PPFnSQLPrepare::do_next(tuple &t)
+void PPFnSQLPrepare::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
         SQLHandle *handle;
-        tuple tmp(1);
+        xqp_tuple tmp(1);
         //tuple_cell tmp_cell;
 
         first_time = false;
@@ -715,11 +715,11 @@ void PPFnSQLClose::do_close()
 {
     connection.op->close();
 }
-void PPFnSQLClose::do_next(tuple &t)
+void PPFnSQLClose::do_next(xqp_tuple &t)
 {
     int handle_id;
     SQLHandle *handle;
-    tuple tmp(1);
+    xqp_tuple tmp(1);
     tuple_cell tmp_cell;
 
     connection.op->next(tmp);
@@ -799,10 +799,10 @@ void PPFnSQLCommit::do_close()
 {
     connection.op->close();
 }
-void PPFnSQLCommit::do_next(tuple &t)
+void PPFnSQLCommit::do_next(xqp_tuple &t)
 {
     SQLHandle *handle;
-    tuple tmp(1);
+    xqp_tuple tmp(1);
     tuple_cell tmp_cell;
 
     connection.op->next(tmp);
@@ -879,10 +879,10 @@ void PPFnSQLRollback::do_close()
 {
     connection.op->close();
 }
-void PPFnSQLRollback::do_next(tuple &t)
+void PPFnSQLRollback::do_next(xqp_tuple &t)
 {
     SQLHandle *handle;
-    tuple tmp(1);
+    xqp_tuple tmp(1);
     tuple_cell tmp_cell;
 
     connection.op->next(tmp);

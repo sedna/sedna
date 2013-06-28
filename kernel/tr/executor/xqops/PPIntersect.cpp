@@ -60,7 +60,7 @@ void PPIntersect::do_close()
 }
 
 
-void PPIntersect::do_next (tuple &t)
+void PPIntersect::do_next (xqp_tuple &t)
 {
     if(need_reopen_first)   {child1.op->reopen(); need_reopen_first = false;}
     if(need_reopen_second)  {child2.op->reopen(); need_reopen_second = false;}

@@ -24,9 +24,9 @@
 void insert_before(PPOpIn arg2, PPOpIn arg1)
 {
     // Creating the first sequence (different validity tests+ indirection deref)
-    tuple t(arg1.ts);
+    xqp_tuple t(arg1.ts);
     xptr_sequence arg1seq;
-    tuple t2(arg2.ts);
+    xqp_tuple t2(arg2.ts);
     xptr_sequence arg2seq;
     arg1.op->next(t);
     descript_sequence arg3seq(2);
@@ -76,7 +76,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
                 xptr indir=nodeGetIndirection(node);
                 if (is_node_persistent(node))
                 {
-                    tuple tup(2);
+                    xqp_tuple tup(2);
                     tup.copy(tuple_cell::node(node),tuple_cell((int64_t)(arg2seq.size())));
                     arg3seq.add(tup);
                 }
@@ -262,9 +262,9 @@ cycle1:
 void insert_following(PPOpIn arg2, PPOpIn arg1)
 {
     // Creating the first sequence (different validity tests+ indirection deref)
-    tuple t(arg1.ts);
+    xqp_tuple t(arg1.ts);
     xptr_sequence arg1seq;
-    tuple t2(arg2.ts);
+    xqp_tuple t2(arg2.ts);
     xptr_sequence arg2seq;
     descript_sequence arg3seq(2);
     arg1.op->next(t);
@@ -315,7 +315,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
                 xptr indir=nodeGetIndirection(node);
                 if (is_node_persistent(node))
                 {
-                    tuple tup(2);
+                    xqp_tuple tup(2);
                     tup.copy(tuple_cell::node(node),tuple_cell((int64_t)(arg2seq.size())));
                     arg3seq.add(tup);
                 }
@@ -493,11 +493,11 @@ cycle1:
 void insert_to(PPOpIn arg2, PPOpIn arg1)
 {
     // Creating the first sequence (different validity tests+ indirection deref)
-    tuple t(arg1.ts);
+    xqp_tuple t(arg1.ts);
     xptr_sequence arg1seq;
     //xptr_sequence arg1seq_tmp;
     descript_sequence arg3seq(2);
-    tuple t2(arg2.ts);
+    xqp_tuple t2(arg2.ts);
     xptr_sequence arg2seq;
     //bool ch_auth=is_auth_check_needed(INSERT_STATEMENT);
     arg1.op->next(t);
@@ -552,7 +552,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
                 xptr indir=nodeGetIndirection(node);
                 if (is_node_persistent(node))
                 {
-                    tuple tup(2);
+                    xqp_tuple tup(2);
                     tup.copy(tuple_cell::node(node),tuple_cell((int64_t)(arg2seq.size())));
                     arg3seq.add(tup);
                 }

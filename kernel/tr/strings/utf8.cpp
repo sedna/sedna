@@ -132,7 +132,7 @@ static inline mapent *me_bsearch(mapent *map_arr, int size, int c)
 }
 
 template <class Iterator>
-static inline void utf8_translate_proc(const Iterator &start, const Iterator &end, tuple &t, mapent *map_arr, int map_len)
+static inline void utf8_translate_proc(const Iterator &start, const Iterator &end, xqp_tuple &t, mapent *map_arr, int map_len)
 {
 	utf8_iterator<Iterator> arg_it(start);
 
@@ -162,7 +162,7 @@ static inline void utf8_translate_proc(const Iterator &start, const Iterator &en
 	t.copy(out_it.get_tuple_cell());
 }
 
-void CharsetHandler_utf8::transtale (tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str)
+void CharsetHandler_utf8::transtale (xqp_tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str)
 {
 	const str_off_t _map_len = length(map_str);
 	U_ASSERT(_map_len >= 0 && _map_len < INT_MAX);
@@ -431,7 +431,7 @@ static int get_pcre_flags(tuple_cell *t)
 
 //TODO!!!!: use some sort of output buffer!
 template <class Iterator>
-static inline void utf8_replace(const Iterator &start, const Iterator &end, tuple &t, const PcrePattern &re, tuple_cell *t3, tuple_cell *t4)
+static inline void utf8_replace(const Iterator &start, const Iterator &end, xqp_tuple &t, const PcrePattern &re, tuple_cell *t3, tuple_cell *t4)
 {
 	int match_flags = PCRE_NO_UTF8_CHECK;
 
@@ -443,7 +443,7 @@ static inline void utf8_replace(const Iterator &start, const Iterator &end, tupl
 	t.copy(out_it.get_tuple_cell());
 }
 
-void CharsetHandler_utf8::replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4)
+void CharsetHandler_utf8::replace (xqp_tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4)
 {
 	try
 	{
@@ -470,7 +470,7 @@ void CharsetHandler_utf8::replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tup
 }
 
 template<class Iterator>
-static inline void utf8_matches (const Iterator &start, const Iterator &end, tuple &t, const PcrePattern &re, tuple_cell *t3)
+static inline void utf8_matches (const Iterator &start, const Iterator &end, xqp_tuple &t, const PcrePattern &re, tuple_cell *t3)
 {
 	int match_flags = PCRE_NO_UTF8_CHECK;
 	PcreMatcher<Iterator, typename Iterator::off_t> matcher(re);
@@ -478,7 +478,7 @@ static inline void utf8_matches (const Iterator &start, const Iterator &end, tup
 	t.copy(tuple_cell::atomic(matcher.matches(start, end, start, match_flags)));
 }
 
-void CharsetHandler_utf8::matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3)
+void CharsetHandler_utf8::matches (xqp_tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3)
 {
 	try
 	{
@@ -518,10 +518,10 @@ public:
 		if (m.matches(x, x+1, x, PCRE_NO_UTF8_CHECK))
 			throw USER_EXCEPTION(FORX0003);
 	}
-	virtual void get_next_result(tuple& t);
+	virtual void get_next_result(xqp_tuple& t);
 };
 template <class Iterator>
-void utf8_tokenize_result<Iterator>::get_next_result(tuple& t)
+void utf8_tokenize_result<Iterator>::get_next_result(xqp_tuple& t)
 {
 	if (pos >= end)
 	{

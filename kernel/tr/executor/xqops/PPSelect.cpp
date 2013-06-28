@@ -45,7 +45,7 @@ PPSelect::PPSelect(dynamic_context *_cxt_,
                    arr_of_var_dsc _var_dscs_,
                    PPOpIn _source_child_,
                    PPOpIn _data_child_,
-                   tuple _source_) : PPVarIterator(_cxt_, _info_, "PPSelect"),
+                   xqp_tuple _source_) : PPVarIterator(_cxt_, _info_, "PPSelect"),
                                      var_dscs(_var_dscs_),
                                      source_child(_source_child_),
                                      data_child(_data_child_),
@@ -98,7 +98,7 @@ void PPSelect::do_close()
     data_child.op->close();
 }
 
-void PPSelect::do_next(tuple &t)
+void PPSelect::do_next(xqp_tuple &t)
 {
     while (true)
     {
@@ -152,7 +152,7 @@ var_c_id PPSelect::do_register_consumer(var_dsc dsc)
     return cxt->get_var_producer(dsc, var_cxt).svc->size() - 1;
 }
 
-void PPSelect::do_next(tuple &t, var_dsc dsc, var_c_id id)
+void PPSelect::do_next(xqp_tuple &t, var_dsc dsc, var_c_id id)
 {
     producer &p = cxt->get_var_producer(dsc, var_cxt);
 

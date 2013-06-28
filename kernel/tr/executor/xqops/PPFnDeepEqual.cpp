@@ -208,7 +208,7 @@ void PPFnDeepEqual::do_close()
     handler = NULL;
 }
 
-void PPFnDeepEqual::do_next (tuple &t)
+void PPFnDeepEqual::do_next (xqp_tuple &t)
 {
     if (!handler)
     {
@@ -237,8 +237,8 @@ void PPFnDeepEqual::do_next (tuple &t)
 		if (!eos_reached2) child2.op->reopen();
 		eos_reached2 = false;
 		eos_reached1 = false;
-		tuple cont1(child1.ts);
-		tuple cont2(child2.ts);
+		xqp_tuple cont1(child1.ts);
+		xqp_tuple cont2(child2.ts);
 		child1.op->next(cont1);
 		child2.op->next(cont2);
 		while (!cont1.is_eos() && !cont2.is_eos())

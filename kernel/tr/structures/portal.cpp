@@ -159,11 +159,11 @@ bool VirtualNodeIterator::next() {
 }
 
 static inline
-tuple create_tuple(const tuple_cell tc) { tuple t(1); t.copy(tc); return t; }
+xqp_tuple create_tuple(const tuple_cell tc) { xqp_tuple t(1); t.copy(tc); return t; }
 
 static
-tuple create_schema_tuple(const schema_node_xptr snode) {
-    return tuple(tuple_cell::atomic_portal(snode));
+xqp_tuple create_schema_tuple(const schema_node_xptr snode) {
+    return xqp_tuple(tuple_cell::atomic_portal(snode));
 };
 
 
@@ -228,26 +228,26 @@ void VirtualElementProducer::processAtomics()
     textAccum.clear();
 
     if (!text_is_null(ts)) {
-        seq->add(tuple(tuple_cell::atomic_any_text(xs_string, ts)));
+        seq->add(xqp_tuple(tuple_cell::atomic_any_text(xs_string, ts)));
         force_get_child(snode, xsd::QName(), text);
     }
 }
 
 tuple_cell VirtualElementProducer::addAtomic(const tuple_cell& node)
 {
-    textAccum.add(tuple(node));
+    textAccum.add(xqp_tuple(node));
 
     return tuple_cell::eos();
 }
 
 inline static
-tuple string_tuple_from_text(const text_source_t value) {
+xqp_tuple string_tuple_from_text(const text_source_t value) {
     tuple_cell t(tuple_cell::atomic_any_text(xs_string, value));
 
     if (t.is_eos()) {
-        return tuple(tuple_cell::atomic_deep(xs_string, ""));
+        return xqp_tuple(tuple_cell::atomic_deep(xs_string, ""));
     } else {
-        return tuple(t);
+        return xqp_tuple(t);
     }
 }
 
@@ -327,7 +327,7 @@ tuple_cell VirtualElementProducer::addPI(const xsd::NCName& name, const text_sou
 tuple_cell VirtualElementProducer::addText(const text_source_t value)
 {
     if (!text_is_null(value)) {
-        textAccum.add(tuple(tuple_cell::atomic_any_text(xs_string, value)));
+        textAccum.add(xqp_tuple(tuple_cell::atomic_any_text(xs_string, value)));
     }
 
     return tuple_cell::eos();

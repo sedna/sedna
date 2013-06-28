@@ -43,7 +43,7 @@ void PPFnColAvailable::do_close()
     col_name_op.op->close();
 }
 
-void PPFnColAvailable::do_next(tuple &t)
+void PPFnColAvailable::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

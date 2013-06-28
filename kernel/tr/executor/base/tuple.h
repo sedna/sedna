@@ -690,24 +690,24 @@ public:
 
 
 
-struct tuple
+struct xqp_tuple
 {
     int cells_number;	// number of cells in the array
     tuple_cell *cells;	// array of cells
     bool eos;			// is eos?
 
-    tuple() : cells_number(0), cells(NULL), eos(true) {}
-    tuple(int _n_) : cells_number(_n_), eos(false) { cells = se_new tuple_cell[_n_]; }
-    tuple(const tuple &t);
+    xqp_tuple() : cells_number(0), cells(NULL), eos(true) {}
+    xqp_tuple(int _n_) : cells_number(_n_), eos(false) { cells = se_new tuple_cell[_n_]; }
+    xqp_tuple(const xqp_tuple &t);
 
-    explicit tuple(const tuple_cell tc) : cells_number(1), eos(false) {
+    explicit xqp_tuple(const tuple_cell tc) : cells_number(1), eos(false) {
         cells = se_new tuple_cell[1];
         this->copy(tc);
     }
 
-    tuple &operator=(const tuple& t);
+    xqp_tuple &operator=(const xqp_tuple& t);
 
-    void copy(const tuple &t)
+    void copy(const xqp_tuple &t)
     {
         eos = t.eos;
         if (!eos) for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
@@ -725,7 +725,7 @@ struct tuple
         cells[0] = tc1;
         cells[1] = tc2;
     }
-    void copy(const tuple &t, const tuple_cell &tc)
+    void copy(const xqp_tuple &t, const tuple_cell &tc)
     {
         eos = false;
         if (t.cells_number + 1 != cells_number)
@@ -733,7 +733,7 @@ struct tuple
         for (int i = 0; i < t.cells_number; i++) cells[i] = t.cells[i];
         cells[cells_number - 1] = tc;
     }
-    void copy(const tuple &t, const tuple_cell &tc1, const tuple_cell &tc2)
+    void copy(const xqp_tuple &t, const tuple_cell &tc1, const tuple_cell &tc2)
     {
         eos = false;
         if (t.cells_number + 2 != cells_number)
@@ -742,15 +742,15 @@ struct tuple
         cells[cells_number - 2] = tc1;
         cells[cells_number - 1] = tc2;
     }
-    void copy(const tuple &s1, const tuple &s2, const arr_of_int_pairs &order)
+    void copy(const xqp_tuple &s1, const xqp_tuple &s2, const arr_of_int_pairs &order)
     {
         eos = false;
         if (s1.cells_number + s2.cells_number != cells_number)
             throw USER_EXCEPTION2(SE1003, "Cannot construct tuple from two tuples (size mismatch)");
-        const tuple* arr[2] = {&s1, &s2};
+        const xqp_tuple* arr[2] = {&s1, &s2};
         for (int i = 0; i < cells_number; i++) cells[i] = arr[order[i].first - 1]->cells[order[i].second - 1];
     }
-    ~tuple() { clear(); }
+    ~xqp_tuple() { clear(); }
     void clear()
     {
 		if (cells != NULL) delete [] cells;

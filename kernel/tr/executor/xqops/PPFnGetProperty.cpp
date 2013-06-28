@@ -43,7 +43,7 @@ void PPFnGetProperty::do_close()
     child.op->close();
 }
 
-void PPFnGetProperty::do_next(tuple &t)
+void PPFnGetProperty::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

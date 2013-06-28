@@ -32,7 +32,7 @@ type_error(const char* message,
 }
 
 
-void fun_conv_rules::next(tuple &t)
+void fun_conv_rules::next(xqp_tuple &t)
 {
     INCREASE_STACK_DEPTH
     CHECK_STACK_DEPTH
@@ -93,7 +93,7 @@ void fun_arg::reopen()
     s->clear();
 }
 
-void fun_arg::next(tuple /*out*/ &t, var_c_id /*out*/ &id)
+void fun_arg::next(xqp_tuple /*out*/ &t, var_c_id /*out*/ &id)
 {
     if (id < s->size())
     {
@@ -212,7 +212,7 @@ void PPFunCall::do_close()
     }
 }
 
-void PPFunCall::do_next(tuple &t)
+void PPFunCall::do_next(xqp_tuple &t)
 {
     try {
         is_in_arg_evaluation = false;
@@ -229,7 +229,7 @@ void PPFunCall::do_next(tuple &t)
     }
 }
 
-void PPFunCall::do_next_impl(tuple &t)
+void PPFunCall::do_next_impl(xqp_tuple &t)
 {
     /* here we need to create new body by cloning the old one
      *
@@ -311,7 +311,7 @@ var_c_id PPFunCall::do_register_consumer(var_dsc dsc)
     return cvc.size() - 1;
 }
 
-void PPFunCall::do_next(tuple &t, var_dsc dsc, var_c_id id)
+void PPFunCall::do_next(xqp_tuple &t, var_dsc dsc, var_c_id id)
 {
     is_in_arg_evaluation = true;
     args[dsc]->next(t, var_cxt->producers[dsc].cvc->at(id));

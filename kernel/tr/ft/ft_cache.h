@@ -142,7 +142,7 @@ private:
 	FtWordsScanner** scanners;
 public:
 	ftc_scan_words_result(ftc_index_t idx, const char* from);
-	void get_next_result(tuple &t);
+	void get_next_result(xqp_tuple &t);
 	~ftc_scan_words_result();
 };
 

@@ -32,7 +32,7 @@ public:
         child->reopen(); num = 0; 
     }
     
-    void next(tuple &t);
+    void next(xqp_tuple &t);
 };
 
 /* Function argument */
@@ -47,7 +47,7 @@ public:
     bool is_filled() { return seq_filled; }
     sequence *get_sequence() { return s; }
     void reopen();
-    void next(tuple /*out*/ &t, var_c_id /*out*/ &id);
+    void next(xqp_tuple /*out*/ &t, var_c_id /*out*/ &id);
 
     fun_arg(const sequence_type *_st_, 
             PPIterator *_child_, 
@@ -87,17 +87,17 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
     virtual var_c_id do_register_consumer(var_dsc dsc);
-    virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
+    virtual void do_next  (xqp_tuple &t, var_dsc dsc, var_c_id id);
     virtual void do_reopen(var_dsc dsc, var_c_id id);
     virtual void do_close (var_dsc dsc, var_c_id id);
 
-    void do_next_impl (tuple &t);
+    void do_next_impl (xqp_tuple &t);
 public:    
     PPFunCall(dynamic_context *_cxt_,
               operation_info _info_,

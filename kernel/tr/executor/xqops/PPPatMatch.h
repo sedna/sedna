@@ -33,7 +33,7 @@ public:
 
 private:
 	TokenizerResult* tknzr;
-    typedef void (PPPatMatch::*t_comp_fun)(tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
+    typedef void (PPPatMatch::*t_comp_fun)(xqp_tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
 
     PPOpIn seq1;
 	PPOpIn seq2;
@@ -45,14 +45,14 @@ private:
 
     t_comp_fun comp_fun;
 	void cf_choice(void);
-	void matches (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
-	void tokenize (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
-	void replace (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
+	void matches (xqp_tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
+	void tokenize (xqp_tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
+	void replace (xqp_tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
 
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);

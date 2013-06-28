@@ -62,7 +62,7 @@ void PPVarDecl::do_close()
     s = NULL;
 }
 
-void PPVarDecl::do_next(tuple &t)
+void PPVarDecl::do_next(xqp_tuple &t)
 {
 	throw USER_EXCEPTION2(SE1003, "PPVarDecl::do_next");
 }
@@ -97,7 +97,7 @@ var_c_id PPVarDecl::do_register_consumer(var_dsc dsc)
     }
 }
 
-void PPVarDecl::do_next(tuple &t, var_dsc dsc, var_c_id id)
+void PPVarDecl::do_next(xqp_tuple &t, var_dsc dsc, var_c_id id)
 {
     global_producer &p = cxt->get_global_var_producer(dsc);
     complex_var_consumption &cvc = p.cvc;

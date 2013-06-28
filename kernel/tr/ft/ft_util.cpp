@@ -167,7 +167,7 @@ default:
 	}
 }
 
-void FtHighlighter::get_next_result(tuple &t)
+void FtHighlighter::get_next_result(xqp_tuple &t)
 {
 	switch (impl)
 	{
@@ -243,7 +243,7 @@ void FtHighlighter::get_next_result(tuple &t)
 				sj->get_next_result(t);
 				if (!t.is_eos())
 				{
-					tuple tmp(1);
+					xqp_tuple tmp(1);
 					sj->get_next_result(tmp);
 					if (!tmp.is_eos())
 					{

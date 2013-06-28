@@ -45,7 +45,7 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
@@ -60,8 +60,8 @@ public:
     virtual ~PPSubsMatch();
 	
     /* Factories for Substring Matching */
-	template <class a, class b> static void contains(a& it1, a&it1end, b& it2, b& it2end, tuple &t);
-	template <class b> static void contains (b &it2, b &it2end, const tuple_cell *tcptr1, tuple &t);
+	template <class a, class b> static void contains(a& it1, a&it1end, b& it2, b& it2end, xqp_tuple &t);
+	template <class b> static void contains (b &it2, b &it2end, const tuple_cell *tcptr1, xqp_tuple &t);
     template <class a, class b> static  int  contains (a& it1, b& it2,str_off_t l1,str_off_t l2);
 	
 	static PPSubsMatch* PPFnContains(dynamic_context *_cxt_, 

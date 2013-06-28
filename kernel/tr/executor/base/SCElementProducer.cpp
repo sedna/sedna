@@ -139,7 +139,7 @@ tuple_cell SCElementProducer::addAtomic(const tuple_cell& atomic)
         throw USER_EXCEPTION(SE2020);
     }
 
-    textAccum->add(tuple(atomic));
+    textAccum->add(xqp_tuple(atomic));
 
     return tuple_cell::eos();
 }

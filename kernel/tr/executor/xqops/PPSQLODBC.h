@@ -177,7 +177,7 @@ public:
 	virtual void execute_query (const char *query, int query_len, PPOpIn *options);
 	virtual void execute_prepared(arr_of_PPOpIn params);
 	virtual void close_query();
-	virtual void fetch(tuple &t, IElementProducer * producer);
+	virtual void fetch(xqp_tuple &t, IElementProducer * producer);
 	virtual int  update_row_count();
 
 	virtual bool is_query_active();

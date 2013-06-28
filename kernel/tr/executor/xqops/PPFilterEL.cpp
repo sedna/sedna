@@ -63,7 +63,7 @@ void PPFilterEL::do_close()
     s = NULL;
 }
 
-void PPFilterEL::do_next (tuple &t)
+void PPFilterEL::do_next (xqp_tuple &t)
 {
         
     if (!pos)

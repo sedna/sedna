@@ -17,7 +17,7 @@ update_history::update_history() : ssr()
 
 inline void update_history::add_node(const update_type ut, const xptr node)
 {
-	tuple t(2);
+	xqp_tuple t(2);
 	t.cells[0] = tuple_cell::unsafenode(node);
 	t.cells[1] = tuple_cell::atomic((int64_t)ut);
 	this->ssr.add(t);
@@ -48,7 +48,7 @@ void update_history::get_update_sequences(xptr_sequence **inserted, xptr_sequenc
 	*updated = new xptr_sequence();
 	*deleted = new xptr_sequence();
 
-	tuple t(3);
+	xqp_tuple t(3);
 	xptr cur_node = XNULL;
 
     update_type first_ut = ut_invalid;

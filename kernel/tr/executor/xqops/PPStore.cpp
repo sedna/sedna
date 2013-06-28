@@ -51,7 +51,7 @@ void PPStore::do_close()
     s = NULL;
 }
 
-void PPStore::do_next (tuple &t)
+void PPStore::do_next (xqp_tuple &t)
 {
     if (pos < eos_pos) s->get(t, pos++);
     else

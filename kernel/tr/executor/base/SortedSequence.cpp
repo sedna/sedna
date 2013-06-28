@@ -83,7 +83,7 @@ SortedSequence::~SortedSequence()
 //Interface methods
 //*******************************************************************
 
-void SortedSequence::add(const tuple& t)
+void SortedSequence::add(const xqp_tuple& t)
 {
     if (finalized)
     {
@@ -134,7 +134,7 @@ void SortedSequence::sort()
     buildHeapFromChains();
 }
 
-void SortedSequence::next(tuple &t)
+void SortedSequence::next(xqp_tuple &t)
 {
     if (heapEmpty())
     {

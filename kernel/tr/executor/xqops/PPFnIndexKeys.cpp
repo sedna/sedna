@@ -66,7 +66,7 @@ void PPFnIndexKeys::initialize()
     index = idc->get_backend();
 }
 
-void PPFnIndexKeys::do_next(tuple& t)
+void PPFnIndexKeys::do_next(xqp_tuple& t)
 {
     if (first_time) {
         tuple_cell current_key;
