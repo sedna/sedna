@@ -58,7 +58,7 @@ void PPExcept::do_close()
     child2.op->close();
 }
 
-void PPExcept::do_next (tuple &t)
+void PPExcept::do_next (xqp_tuple &t)
 {
     if(need_reopen_second)  {child2.op->reopen(); need_reopen_second = false;}
     

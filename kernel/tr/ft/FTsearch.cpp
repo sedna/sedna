@@ -265,7 +265,7 @@ xptr SednaDataSource::filenameToRecord(const char *dest)
 
 int SednaDataSource::getNextDoc(dtsInputStream& dest)
 {
-	/*tuple t(1);
+	/*xqp_tuple t(1);
 	seq->op->next(t);
 		//Preliminary node analysis
    if (t.is_eos())
@@ -639,7 +639,7 @@ void *SednaSearchJob::ThreadFunc( void* lpParam )
 	return 0;
 }
 
-void SednaSearchJob::get_next_result(tuple &t)
+void SednaSearchJob::get_next_result(xqp_tuple &t)
 {
 	if (dtth==NULL)
 	{
@@ -1213,7 +1213,7 @@ void SednaSearchJob2::set_field_weights(tuple_cell& fw)
 	this->dts_job.fieldWeights = this->field_weights;
 }
 
-void SednaSearchJob2::get_next_result(tuple &t)
+void SednaSearchJob2::get_next_result(xqp_tuple &t)
 {
 	if (!dts_results)
 	{

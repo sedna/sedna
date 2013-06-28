@@ -134,7 +134,7 @@ void PPFnUriEncoding::do_close()
     child.op->close();
 }
 
-void PPFnUriEncoding::do_next (tuple &t)
+void PPFnUriEncoding::do_next (xqp_tuple &t)
 {
     if(first_time)
     {
@@ -268,7 +268,7 @@ void PPFnResolveUri::do_close()
     if(!is_base_static) base.op->reopen();    
 }
 
-void PPFnResolveUri::do_next (tuple &t)
+void PPFnResolveUri::do_next (xqp_tuple &t)
 {
     if(first_time)
     {

@@ -253,7 +253,7 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
 }
 
 
-inline void get_next(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached, int &pos)
+inline void get_next(const PPOpIn &child, sequence *s, xqp_tuple &t, bool &eos_reached, int &pos)
 {
     if(s == NULL)
     {
@@ -277,7 +277,7 @@ inline void get_next(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reach
 //If this pointer is not NULL and sequence is not empty then
 //tuples from it are proceeded before tuples from the PPOpIn!
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-bool type_matches(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached, const sequence_type& st)
+bool type_matches(const PPOpIn &child, sequence *s, xqp_tuple &t, bool &eos_reached, const sequence_type& st)
 {
     int pos = 0;
     eos_reached = false;

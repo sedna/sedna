@@ -52,7 +52,7 @@ void PPTuple::do_close()
     i = 0;
 }
 
-void PPTuple::do_next(tuple &t)
+void PPTuple::do_next(xqp_tuple &t)
 {
     if (!i)
     {

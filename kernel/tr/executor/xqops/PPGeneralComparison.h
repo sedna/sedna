@@ -11,7 +11,7 @@
 #include "tr/executor/base/tuple.h"
 #include "tr/executor/base/PPUtils.h"
 
-inline tuple_cell getAtomizedCell(tuple& tup)
+inline tuple_cell getAtomizedCell(xqp_tuple& tup)
 {
 	if (!(tup.cells_number==1 )) throw XQUERY_EXCEPTION2(XPTY0004, "Name argument of Constructor is not a single atomic value");
 	return atomize(tup.cells[0]);
@@ -41,7 +41,7 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
@@ -146,7 +146,7 @@ public:
     }
 
 private:
-    virtual void do_next (tuple &t);
+    virtual void do_next (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
 	virtual PPIterator* do_copy(dynamic_context *_cxt_);
 };
@@ -163,7 +163,7 @@ public:
                            PPOpIn _seq2_); 
 
 private:
-    virtual void do_next (tuple &t);
+    virtual void do_next (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
 	virtual PPIterator* do_copy(dynamic_context *_cxt_);
 };
@@ -179,7 +179,7 @@ public:
                            PPOpIn _seq1_,
                            PPOpIn _seq2_);
 private:
-    virtual void do_next (tuple &t);
+    virtual void do_next (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
 	virtual PPIterator* do_copy(dynamic_context *_cxt_);
 };

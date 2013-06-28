@@ -56,7 +56,7 @@ void PPCreateDocument::do_accept(PPVisitor &v)
 void PPCreateDocument::do_execute()
 {
     tuple_cell tc;
-    tuple t(1);
+    xqp_tuple t(1);
     name.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
 
@@ -121,7 +121,7 @@ void PPCreateCollection::do_accept(PPVisitor &v)
 void PPCreateCollection::do_execute()
 {
     tuple_cell tc;
-    tuple t(1);
+    xqp_tuple t(1);
     name.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
 
@@ -194,7 +194,7 @@ void PPCreateDocumentInCollection::do_accept(PPVisitor &v)
 void PPCreateDocumentInCollection::do_execute()
 {
     tuple_cell tc, tc_document, tc_collection;
-    tuple t(1);
+    xqp_tuple t(1);
 
     document.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);

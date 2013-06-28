@@ -57,9 +57,9 @@ void PPTest::do_close()
 {
     seq.op->close();
 }
-void PPTest::do_next (tuple &t)
+void PPTest::do_next (xqp_tuple &t)
 {
-	tuple t1(seq.ts);
+	xqp_tuple t1(seq.ts);
 	seq.op->next(t1);
 	//Preliminary node analysis
 	if (t1.is_eos())

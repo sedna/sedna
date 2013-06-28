@@ -95,7 +95,7 @@ static std::string trimAndLower(const std::string& str)
     return res;
 }
 
-void PPDigest::do_next(tuple &t)
+void PPDigest::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

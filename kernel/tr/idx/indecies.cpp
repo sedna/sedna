@@ -289,8 +289,8 @@ private:
 public:
     idx_serializer(xmlscm_type t) { key_type = t; }
 
-    size_t serialize(const tuple &t, void *buf);
-    void deserialize(tuple &t, void *buf, size_t size);
+    size_t serialize(const xqp_tuple &t, void *buf);
+    void deserialize(xqp_tuple &t, void *buf, size_t size);
     int compare(void *buf1, size_t size1, void *buf2, size_t size2);
 };
 
@@ -319,7 +319,7 @@ index_cell_xptr create_index(index_descriptor_t* index_dsc)
     idx_serializer *serializer = new idx_serializer(index_dsc -> keytype);
     SortedSequence *ss = new SortedSequence(serializer);
 
-    tuple tup(2);
+    xqp_tuple tup(2);
 
     // ALGORITHM: indexing data
 
@@ -480,7 +480,7 @@ void drop_index (const char *index_title)
 * Functions needed by sorted sequence implementation
 */
 
-size_t idx_serializer::serialize(const tuple &t, void *buf)
+size_t idx_serializer::serialize(const xqp_tuple &t, void *buf)
 {
     CHECK_TIMER_FLAG;
 
@@ -544,7 +544,7 @@ tuple_cell idx_serializer::get_tc(void* buf, xmlscm_type type, shft size)
     }
 }
 
-void idx_serializer::deserialize(tuple& t, void* buf, size_t size)
+void idx_serializer::deserialize(xqp_tuple& t, void* buf, size_t size)
 {
     CHECK_TIMER_FLAG;
 

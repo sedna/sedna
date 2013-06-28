@@ -93,7 +93,7 @@ void PPReturn::do_close()
     data_child.op->close();
 }
 
-void PPReturn::do_next(tuple &t)
+void PPReturn::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -157,7 +157,7 @@ var_c_id PPReturn::do_register_consumer(var_dsc dsc)
     return svc.size() - 1;
 }
 
-void PPReturn::do_next(tuple &t, var_dsc dsc, var_c_id id)
+void PPReturn::do_next(xqp_tuple &t, var_dsc dsc, var_c_id id)
 {
     producer &p = cxt->get_var_producer(dsc, var_cxt);
 

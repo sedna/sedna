@@ -684,7 +684,7 @@ public:
 	void scan_prefix(ftc_index_t ftc_idx, const char *prefix) {
 		ftc_index_data *id = ftc_index_data::get(ftc_idx);
 		ftc_scan_words_result swr(ftc_idx, prefix);
-		tuple t(1); //FIXME: copying to typle may be avoided
+		xqp_tuple t(1); //FIXME: copying to typle may be avoided
 		int prefix_len = strlen(prefix);
 		bool require_nostem_mark = false;
 		if (ftc_get_fts_data(ftc_idx)->stem_type == ftst_both)
@@ -964,7 +964,7 @@ ftc_scan_words_result::ftc_scan_words_result(ftc_index_t idx, const char* from) 
 
 }
 
-void ftc_scan_words_result::get_next_result(tuple &t)
+void ftc_scan_words_result::get_next_result(xqp_tuple &t)
 {
 	const char *minw = NULL;
 	for (int i = 0; i < nscanners; i++)

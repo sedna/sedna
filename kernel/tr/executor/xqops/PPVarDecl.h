@@ -17,7 +17,7 @@ protected:
     int v_dsc;
 
     PPOpIn child;
-    tuple source;
+    xqp_tuple source;
 
     bool need_to_check_type;
     sequence_type st;
@@ -30,13 +30,13 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
     virtual var_c_id do_register_consumer(var_dsc dsc);
-    virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
+    virtual void do_next  (xqp_tuple &t, var_dsc dsc, var_c_id id);
     virtual void do_reopen(var_dsc dsc, var_c_id id);
     virtual void do_close (var_dsc dsc, var_c_id id);
 

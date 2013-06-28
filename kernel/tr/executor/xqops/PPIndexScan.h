@@ -51,7 +51,7 @@ index_scan_condition2string(index_scan_condition isc)
 class PPIndexScan : public PPIterator
 {
 protected:
-    typedef void (PPIndexScan::*t_next_fun)(tuple &t);
+    typedef void (PPIndexScan::*t_next_fun)(xqp_tuple &t);
 
     PPOpIn index_name, child, child2;
     index_scan_condition isc;
@@ -68,10 +68,10 @@ protected:
     t_next_fun next_fun;
     bool first_time;
 
-    void next_eq     (tuple &t);
-    void next_lt_le  (tuple &t);
-    void next_gt_ge  (tuple &t);
-    void next_between(tuple &t);
+    void next_eq     (xqp_tuple &t);
+    void next_lt_le  (xqp_tuple &t);
+    void next_gt_ge  (xqp_tuple &t);
+    void next_between(xqp_tuple &t);
 
     /* This is the common initialization function for all next interators */
     void initialize   ();
@@ -82,7 +82,7 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);

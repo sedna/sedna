@@ -55,7 +55,7 @@ void PPDropDocument::do_accept(PPVisitor &v)
 void PPDropDocument::do_execute()
 {
     tuple_cell tc;
-    tuple t(1);
+    xqp_tuple t(1);
     name.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
 
@@ -117,7 +117,7 @@ void PPDropCollection::do_accept(PPVisitor &v)
 void PPDropCollection::do_execute()
 {
     tuple_cell tc;
-    tuple t(1);
+    xqp_tuple t(1);
     name.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
 
@@ -187,7 +187,7 @@ void PPDropDocumentInCollection::do_accept(PPVisitor &v)
 void PPDropDocumentInCollection::do_execute()
 {
     tuple_cell tc, tc_document, tc_collection;
-    tuple t(1);
+    xqp_tuple t(1);
 
     document.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);

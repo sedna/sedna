@@ -104,7 +104,7 @@ void sorted_sequence::lazy_sort()
 	//seq_size=get_size_in_mem();
 	finalized=true;
 }
-void sorted_sequence::next(tuple& t)
+void sorted_sequence::next(xqp_tuple &t)
 {
 	//t.set_eos();
 	if (!top)
@@ -170,7 +170,7 @@ void sorted_sequence::next(tuple& t)
 		top=nxt;
 	}
 }
-void sorted_sequence::add(tuple& p)
+void sorted_sequence::add(xqp_tuple& p)
 {
 	if (finalized)
 		throw USER_EXCEPTION2(SE1003, "Failed to add item to already sorted sequence");
@@ -681,13 +681,13 @@ xptr sorted_sequence::get_data(int pos)
 	int md=pos % PTR_BLK_SIZE;
 	return ptr_blk_arr[ps]+(md*sizeof(data_ptr)+sizeof(seq_blk_hdr));
 }
- tuple sorted_sequence::get(const iterator& it)
+xqp_tuple sorted_sequence::get(const iterator& it)
  {
 	 return get(it.pos);
  }
- tuple sorted_sequence::get(int pos)
+xqp_tuple sorted_sequence::get(int pos)
  {
-	 tuple t(1);
+	 xqp_tuple t(1);
 	 int ps=pos/PTR_BLK_SIZE;
 	 int md=pos % PTR_BLK_SIZE;
 	 CHECKP(ptr_blk_arr[ps]);
@@ -759,7 +759,7 @@ reinit_vars:
 
  }
 
- void sorted_sequence::get(tuple& t, int pos)
+ void sorted_sequence::get(xqp_tuple& t, int pos)
  {
 	 int ps=pos/PTR_BLK_SIZE;
 	 int md=pos % PTR_BLK_SIZE;

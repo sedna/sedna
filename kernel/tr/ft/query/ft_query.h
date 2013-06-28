@@ -256,7 +256,7 @@ public:
 	void set_filter_el(bool _filter_el) { filter_el = _filter_el; }
 
 	//FIXME: make 1 function with options?
-	void get_next_result(tuple &t);
+	void get_next_result(xqp_tuple &t);
 	int64_t count_results(); //can only be used instead of get_next_result()
 
 	//FIXME: rigth now these 2 functions can only be used with get_next_result_hl

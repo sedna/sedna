@@ -60,7 +60,7 @@ void PPLast::do_close()
     s = NULL;
 }
 
-void PPLast::do_next (tuple &t)
+void PPLast::do_next (xqp_tuple &t)
 {
     if(last_computed) 
     {
@@ -90,7 +90,7 @@ var_c_id PPLast::do_register_consumer(var_dsc dsc)
     return svc.size() - 1;
 }
 
-void PPLast::do_next(tuple &t, var_dsc dsc, var_c_id id)
+void PPLast::do_next(xqp_tuple &t, var_dsc dsc, var_c_id id)
 {  
     producer &p = cxt->get_var_producer(dsc, var_cxt);
 

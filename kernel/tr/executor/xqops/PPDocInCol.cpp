@@ -54,7 +54,7 @@ void PPDocInCol::do_close()
     doc_name_op.op->close();
 }
 
-void PPDocInCol::do_next(tuple &t)
+void PPDocInCol::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

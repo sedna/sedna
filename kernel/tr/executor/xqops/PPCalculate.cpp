@@ -54,7 +54,7 @@ void PPCalculate::do_close()
         ch_arr->at(i).op->close();
 }
 
-void PPCalculate::do_next(tuple &t)
+void PPCalculate::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

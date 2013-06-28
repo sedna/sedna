@@ -97,7 +97,7 @@ void PPFtHighlight::do_close()
 	}
 }
 
-void PPFtHighlight::do_next(tuple &t)
+void PPFtHighlight::do_next(xqp_tuple &t)
 {
 	if (first_time)
 	{

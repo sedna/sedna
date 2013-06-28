@@ -87,7 +87,7 @@ void PPFtIndexDict::do_close()
 
 }
 
-void PPFtIndexDict::do_next(tuple &t)
+void PPFtIndexDict::do_next(xqp_tuple &t)
 {
     if (first_time)
 	{

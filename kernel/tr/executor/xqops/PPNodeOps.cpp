@@ -48,7 +48,7 @@ void PPFnName::do_close()
     child.op->close();
 }
 
-void PPFnName::do_next (tuple &t)
+void PPFnName::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -137,7 +137,7 @@ void PPFnLocalName::do_close()
     child.op->close();
 }
 
-void PPFnLocalName::do_next (tuple &t)
+void PPFnLocalName::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -227,7 +227,7 @@ void PPFnNamespaceUri::do_close()
     child.op->close();
 }
 
-void PPFnNamespaceUri::do_next (tuple &t)
+void PPFnNamespaceUri::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -316,7 +316,7 @@ void PPFnNumber::do_close()
     child.op->close();
 }
 
-void PPFnNumber::do_next(tuple &t)
+void PPFnNumber::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -410,7 +410,7 @@ void PPFnRoot::do_close()
     child.op->close();
 }
 
-void PPFnRoot::do_next (tuple &t)
+void PPFnRoot::do_next (xqp_tuple &t)
 {
     if (first_time)
     {

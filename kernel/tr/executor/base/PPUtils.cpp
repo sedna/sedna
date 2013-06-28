@@ -143,7 +143,7 @@ tuple_cell predicate_boolean_value(const tuple_cell &t, int pos)
 	    return effective_boolean_value(t);
 }
 
-tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value)
+tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, xqp_tuple &t, bool &eos_reached, bool &is_numeric, double &value)
 {
 	is_numeric = false;
 
@@ -186,7 +186,7 @@ tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bo
     throw XQUERY_EXCEPTION2(SE1003, "Impossible case in predicate_numeric_or_boolean_value");
 }
 
-tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos)
+tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, xqp_tuple &t, bool &eos_reached, int pos)
 {
     child.op->next(t);
 
@@ -336,7 +336,7 @@ tuple_cell get_name_from_PPOpIn(const PPOpIn& name,
                                 bool check_uri_constraints,
                                 int error_code)
 {
-    tuple t(1);
+    xqp_tuple t(1);
     
     name.op->next(t);
 

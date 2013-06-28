@@ -86,7 +86,7 @@ void PPFnMaxMin::do_close()
     handler = NULL;
 }
 
-void PPFnMaxMin::do_next(tuple &t)
+void PPFnMaxMin::do_next(xqp_tuple &t)
 {
     if (!handler) // the same as 'first_time'
     {
@@ -258,7 +258,7 @@ void PPFnSumAvg::do_close()
     first_time = true;
 }
 
-void PPFnSumAvg::do_next(tuple &t)
+void PPFnSumAvg::do_next(xqp_tuple &t)
 {
     
     if (first_time)
@@ -389,7 +389,7 @@ void PPFnCount::do_close()
     first_time = true;
 }
 
-void PPFnCount::do_next(tuple &t)
+void PPFnCount::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

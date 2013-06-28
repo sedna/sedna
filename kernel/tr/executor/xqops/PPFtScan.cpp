@@ -122,7 +122,7 @@ void PPFtScan::do_close()
     
 }
 
-void PPFtScan::do_next(tuple &t)
+void PPFtScan::do_next(xqp_tuple &t)
 {
         if (first_time)
     {

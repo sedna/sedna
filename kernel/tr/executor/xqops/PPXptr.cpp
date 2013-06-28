@@ -43,7 +43,7 @@ void PPXptr::do_close()
     // nothing to do
 }
 
-void PPXptr::do_next (tuple &t)
+void PPXptr::do_next (xqp_tuple &t)
 {
     if (first_time)
     {

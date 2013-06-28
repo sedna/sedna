@@ -53,7 +53,7 @@ void PPFnResolveQName::do_close()
     child_elem.op->close();
 }
 
-void PPFnResolveQName::do_next(tuple &t)
+void PPFnResolveQName::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -162,7 +162,7 @@ void PPFnQName::do_close()
     child_qname.op->close();
 }
 
-void PPFnQName::do_next(tuple &t)
+void PPFnQName::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -257,7 +257,7 @@ void PPFnPrefixFromQName::do_close()
     child.op->close();
 }
 
-void PPFnPrefixFromQName::do_next (tuple &t)
+void PPFnPrefixFromQName::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -347,7 +347,7 @@ void PPFnLocalNameFromQName::do_close()
     child.op->close();
 }
 
-void PPFnLocalNameFromQName::do_next (tuple &t)
+void PPFnLocalNameFromQName::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -431,7 +431,7 @@ void PPFnNamespaceUriFromQName::do_close()
     child.op->close();
 }
 
-void PPFnNamespaceUriFromQName::do_next (tuple &t)
+void PPFnNamespaceUriFromQName::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -523,7 +523,7 @@ void PPFnNamespaceUriForPrefix::do_close()
     child_element.op->close();
 }
 
-void PPFnNamespaceUriForPrefix::do_next(tuple &t)
+void PPFnNamespaceUriForPrefix::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -639,7 +639,7 @@ void PPFnInScopePrefixes::do_close()
     namespaces = NULL;
 }
 
-void PPFnInScopePrefixes::do_next (tuple &t)
+void PPFnInScopePrefixes::do_next (xqp_tuple &t)
 {
     if (pos < 0)
     {

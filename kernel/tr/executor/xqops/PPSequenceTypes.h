@@ -30,7 +30,7 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
@@ -67,7 +67,7 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
@@ -103,7 +103,7 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
@@ -140,7 +140,7 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
@@ -168,7 +168,7 @@ protected:
     PPOpIn source_child;
     PPOpIn default_child;
     arr_of_PPOpIn cases;
-    tuple source;
+    xqp_tuple source;
 
     PPOpIn* effective_case;  //The effective case in a typeswitch expression is the first case clause 
                              //such that the value of the operand expression matches the SequenceType 
@@ -191,13 +191,13 @@ private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
     
     virtual var_c_id do_register_consumer(var_dsc dsc);
-    virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
+    virtual void do_next  (xqp_tuple &t, var_dsc dsc, var_c_id id);
     virtual void do_reopen(var_dsc dsc, var_c_id id);
     virtual void do_close (var_dsc dsc, var_c_id id);
 

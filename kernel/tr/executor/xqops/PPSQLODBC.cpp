@@ -460,7 +460,7 @@ void SQLODBCExecutor::execute_query (const char *query, int query_len, PPOpIn *o
 //TODO - rename to smth like getAtomicOrNullParameter
 tuple_cell getStringOrNullParameter(PPOpIn content)
 {
-	tuple value(content.ts);
+	xqp_tuple value(content.ts);
 	content.op->next(value);
 	if (value.is_eos())
 	{
@@ -640,7 +640,7 @@ void SQLODBCExecutor::close_query()
 //TODO - this is not good to limit strings from SQL connection this way
 #define MAX_ATTR_LENGTH 65535
 
-void SQLODBCExecutor::fetch(tuple &t, IElementProducer * producer)
+void SQLODBCExecutor::fetch(xqp_tuple &t, IElementProducer * producer)
 {
 	SQLRETURN rc;
 	rc = SQLODBCBase::fSQLFetch(hstmt);
@@ -957,7 +957,7 @@ SQLConnection*	SQLODBCDriver::new_connection(const char *connect_str, int connec
 
 	if (options != NULL)
 	{
-		tuple t(1);
+		xqp_tuple t(1);
 		//TODO - later there may be some options which should be set before connnecting
 		while (1)
 		{

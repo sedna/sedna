@@ -149,7 +149,7 @@ const char* PPNumericFuncs::error()
     else throw USER_EXCEPTION2(SE1003, "Impossible case in PPNumericFuncs::error");
 }
 
-void PPNumericFuncs::do_next (tuple &t)
+void PPNumericFuncs::do_next (xqp_tuple &t)
 {
     
     
@@ -263,7 +263,7 @@ tuple_cell PPFnRoundHalfToEven::round_half_to_even(const tuple_cell& tc, int64_t
     }
 }
 
-void PPFnRoundHalfToEven::do_next(tuple &t)
+void PPFnRoundHalfToEven::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

@@ -66,7 +66,7 @@ class SortedSequence
         size_t size; //Size of the current element in chain
         void add(void *buf, size_t size);
         void setEnd(); //Ends writing to chain and initializes value and size fields
-        void next();  //Writing next tuple to value and it's size to field size
+        void next();  //Writing next xqp_tuple to value and it's size to field size
         inline bool empty()
         {
             return toRead == 0;
@@ -151,9 +151,9 @@ public:
 
     static void freeBlockPool();
 
-    void add(const tuple &t);
+    void add(const xqp_tuple &t);
     void sort();
-    void next(tuple &t);
+    void next(xqp_tuple &t);
     void clear();
 };
 

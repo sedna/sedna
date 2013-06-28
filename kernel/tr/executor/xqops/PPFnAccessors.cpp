@@ -46,7 +46,7 @@ void PPFnNodeName::do_close()
     child.op->close();
 }
 
-void PPFnNodeName::do_next (tuple &t)
+void PPFnNodeName::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -126,7 +126,7 @@ void PPFnNilled::do_close()
     child.op->close();
 }
 
-void PPFnNilled::do_next (tuple &t)
+void PPFnNilled::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -206,7 +206,7 @@ void PPFnString::do_close()
     child.op->close();
 }
 
-void PPFnString::do_next (tuple &t)
+void PPFnString::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -288,7 +288,7 @@ void PPFnData::do_close()
     child.op->close();
 }
 
-void PPFnData::do_next (tuple &t)
+void PPFnData::do_next (xqp_tuple &t)
 {
     child.op->next(t);
 
@@ -349,7 +349,7 @@ void PPFnBaseURI::do_close()
     child.op->close();
 }
 
-void PPFnBaseURI::do_next (tuple &t)
+void PPFnBaseURI::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -428,7 +428,7 @@ void PPFnDocumentURI::do_close()
     child.op->close();
 }
 
-void PPFnDocumentURI::do_next (tuple &t)
+void PPFnDocumentURI::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -501,7 +501,7 @@ void PPFnStaticBaseUri::do_reopen()       { first_time = true; }
 
 void PPFnStaticBaseUri::do_close()        { }
 
-void PPFnStaticBaseUri::do_next (tuple &t)
+void PPFnStaticBaseUri::do_next (xqp_tuple &t)
 {
 
     if(first_time)
@@ -559,7 +559,7 @@ void PPFnDefaultCollation::do_reopen()        { first_time = true; }
 
 void PPFnDefaultCollation::do_close()        { }
 
-void PPFnDefaultCollation::do_next (tuple &t)
+void PPFnDefaultCollation::do_next (xqp_tuple &t)
 {
     if(first_time)
     {

@@ -53,7 +53,7 @@ void PPDropTrigger::do_accept(PPVisitor &v)
 void PPDropTrigger::do_execute()
 {
     tuple_cell tc;
-    tuple t(1);
+    xqp_tuple t(1);
     trigger_name.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);
 

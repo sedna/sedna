@@ -302,7 +302,7 @@ static int ss_compare (xptr v1, xptr v2, const void *_data)
 	return 0;
 }
 
-static int ss_get_size (tuple& t, const void * _data)
+static int ss_get_size (xqp_tuple& t, const void * _data)
 {
 	ss_data *data = (ss_data*)_data;
 	size_t serialized_size = 0;
@@ -313,7 +313,7 @@ static int ss_get_size (tuple& t, const void * _data)
 	return (int)serialized_size;
 }
 
-static void ss_serialize (tuple& t, xptr v1, const void *_data)
+static void ss_serialize (xqp_tuple& t, xptr v1, const void *_data)
 {
 	ss_data *data = (ss_data*)_data;
 	int sz = ss_get_size(t, _data);
@@ -329,7 +329,7 @@ static void ss_serialize (tuple& t, xptr v1, const void *_data)
 	memcpy(XADDR(v1), data->buf, sz);
 }
 
-static void ss_serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void *_data)
+static void ss_serialize_2_blks (xqp_tuple& t, xptr& v1, shft size1, xptr& v2, const void *_data)
 {
 	ss_data *data = (ss_data*)_data;
 	int sz = ss_get_size(t, _data);
@@ -351,7 +351,7 @@ static void ss_serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const
 	memcpy(XADDR(v2), data->buf+size1, sz - size1);
 }
 
-static void ss_deserialize (tuple& t, xptr& v1, const void *_data)
+static void ss_deserialize (xqp_tuple& t, xptr& v1, const void *_data)
 {
 	ss_data *data = (ss_data*)_data;
 	U_ASSERT(t.cells_number == data->n);
@@ -359,7 +359,7 @@ static void ss_deserialize (tuple& t, xptr& v1, const void *_data)
 		data->sort_types[i]->deserialize_tc(t.cells[i], &v1, data);
 }
 
-static void ss_deserialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void *_data)
+static void ss_deserialize_2_blks (xqp_tuple& t, xptr& v1, shft size1, xptr& v2, const void *_data)
 {
 	//FIXME
 	ss_deserialize(t, v1, _data);
@@ -393,7 +393,7 @@ sorted_sequence *sequence_sorter::create_sorted_sequence(int n, tc_sort_type **s
 	return ss;
 }
 
-void sequence_sorter::add(tuple &t)
+void sequence_sorter::add(xqp_tuple &t)
 {
 	U_ASSERT(ss != NULL);
 	ss->add(t);

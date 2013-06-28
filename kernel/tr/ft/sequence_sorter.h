@@ -96,7 +96,7 @@ public:
 	//returned sequence  should then be freed using delete
 	sorted_sequence *create_sorted_sequence(int n, tc_sort_type **sort_types, const int *sort_inds);
 	sorted_sequence *get_sorted_sequence() { return ss; }
-	void add(tuple &t);
+	void add(xqp_tuple &t);
 private:
 	struct ss_data data;
 	sorted_sequence *ss;

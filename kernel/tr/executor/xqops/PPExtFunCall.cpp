@@ -50,7 +50,7 @@ void PPExtFunCall::do_close ()
 	func->result_clear();
 }
 
-void PPExtFunCall::do_next(tuple &t)
+void PPExtFunCall::do_next(xqp_tuple &t)
 {
 	if (first_time)
 	{

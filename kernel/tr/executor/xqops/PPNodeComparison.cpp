@@ -85,16 +85,16 @@ PPNodeComparison::~PPNodeComparison()
 	seq2.op = NULL;
 }
 
-void PPNodeComparison::do_next (tuple &t)
+void PPNodeComparison::do_next (xqp_tuple &t)
 {
         
     if (first_time)
     {
         first_time = false;
 		//0. operands loading
-		tuple t1(seq1.ts);
+		xqp_tuple t1(seq1.ts);
 		seq1.op->next(t1);
-		tuple t2(seq2.ts);
+		xqp_tuple t2(seq2.ts);
 		seq2.op->next(t2);
 		
 		//1. operands verify

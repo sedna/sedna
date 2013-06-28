@@ -39,7 +39,7 @@ public:
 	~FtHighlighter();
 	void set_options(const char *options);
 	void set_request(tuple_cell &tc);
-	void get_next_result(tuple &t);
+	void get_next_result(xqp_tuple &t);
 };
 
 #endif

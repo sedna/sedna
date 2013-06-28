@@ -700,7 +700,7 @@ const int ssr_n = 2;
 tc_sort_type *ssr_types[ssr_n] = {&st_uint64_desc::inst, &st_uint64::inst};
 const int ssr_inds[ssr_n] = {0, 1};
 
-void FtQueryProcessor::get_next_result(tuple &t)
+void FtQueryProcessor::get_next_result(xqp_tuple &t)
 {
 	if (query == NULL)
 	{
@@ -748,7 +748,7 @@ void FtQueryProcessor::get_next_result(tuple &t)
 
 				while (!r.eos())
 				{
-					tuple t(3);
+					xqp_tuple t(3);
 					uint64_t res = r.read_uint();
 					r.read_bytes((char*)scores_buf, sizeof(ft_float) * query->score_count);
 
@@ -765,11 +765,11 @@ void FtQueryProcessor::get_next_result(tuple &t)
 				ss1->lazy_sort();
 
 				ssr.create_sorted_sequence(ssr_n, ssr_types, ssr_inds);
-				tuple pred_rt(3);
+				xqp_tuple pred_rt(3);
 				pred_rt.set_eos();
 				while (true)
 				{
-					tuple rt(3);
+					xqp_tuple rt(3);
 					ss1->next(rt);
 
 					if (!pred_rt.is_eos())
@@ -779,7 +779,7 @@ void FtQueryProcessor::get_next_result(tuple &t)
                                                        || !(pred_rt.cells[0].get_node() == rt.cells[0].get_node() || nid_cmp_effective(pred_rt.cells[0].get_node(),rt.cells[0].get_node())==-2)
                                                        || pred_rt.cells[1].get_xs_integer() > rt.cells[1].get_xs_integer())
 						{
-							tuple t(2);
+							xqp_tuple t(2);
 							t.cells[0] = pred_rt.cells[1];
 							t.cells[1] = pred_rt.cells[2];
 							ssr.add(t);
@@ -798,7 +798,7 @@ void FtQueryProcessor::get_next_result(tuple &t)
 				ssr.create_sorted_sequence(ssr_n, ssr_types, ssr_inds);
 				while (!r.eos())
 				{
-					tuple t(2);
+					xqp_tuple t(2);
 					uint64_t res = r.read_uint();
 					r.read_bytes((char*)scores_buf, sizeof(ft_float) * query->score_count);
 
@@ -820,7 +820,7 @@ void FtQueryProcessor::get_next_result(tuple &t)
 	{
 		if (ss != NULL)
 		{
-			tuple res(ssr_n);
+			xqp_tuple res(ssr_n);
 			ss->next(res);
 			if (res.is_eos())
 			{

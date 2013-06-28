@@ -27,7 +27,7 @@ public:
     SequenceReader(tuple_cell t) : s(t.get_portal().p), pos(t.get_index()) { U_ASSERT(t.get_atomic_type() == se_sequence_element); };
 
     inline void next() { pos++; };
-    inline void get(tuple &t) { t.copy((*s)[pos]); };
+    inline void get(xqp_tuple &t) { t.copy((*s)[pos]); };
     inline tuple_cell getCell() { return (*s)[pos].cells[0]; };
     inline bool sameSequence(const sequence * t) { return t == s; };
 };

@@ -16,7 +16,7 @@
 void delete_undeep(PPOpIn arg)
 {
     // Creating the first sequence (different validity tests+ indirection deref)
-    tuple t(arg.ts);
+    xqp_tuple t(arg.ts);
     xptr_sequence argseq;
     arg.op->next(t);
     while (!t.is_eos())
@@ -121,7 +121,7 @@ void delete_deep(PPOpIn arg)
     }
     }
     }*/
-    tuple t(arg.ts);
+    xqp_tuple t(arg.ts);
     xptr_sequence argseq;
     arg.op->next(t);
     while (!t.is_eos())

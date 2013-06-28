@@ -138,7 +138,7 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
 {
     if(state == RS_EMPTY) return state;
     
-    tuple t(conjunct.ts);
+    xqp_tuple t(conjunct.ts);
     
     if(is_occ_value(occ))
     {
@@ -618,7 +618,7 @@ void PPPred1::do_close()
     data_child.op->close();
 }
                                                                           
-void PPPred1::do_next(tuple &t)
+void PPPred1::do_next(xqp_tuple &t)
 {
     if(need_reopen)
     {
@@ -773,7 +773,7 @@ var_c_id PPPred1::do_register_consumer(var_dsc dsc)
     return cxt->get_var_producer(dsc, var_cxt).svc->size() - 1;
 }
 
-void PPPred1::do_next(tuple &t, var_dsc dsc, var_c_id id)                     
+void PPPred1::do_next(xqp_tuple &t, var_dsc dsc, var_c_id id)
 {
     producer &p = cxt->get_var_producer(dsc, var_cxt);
 
@@ -929,7 +929,7 @@ void PPPred2::do_close()
     s = NULL;
 }
 
-void PPPred2::do_next(tuple &t)
+void PPPred2::do_next(xqp_tuple &t)
 {
     if(need_reopen)
     {
@@ -1085,7 +1085,7 @@ var_c_id PPPred2::do_register_consumer(var_dsc dsc)
     return cxt->get_var_producer(dsc, var_cxt).svc->size() - 1;
 }
 
-void PPPred2::do_next(tuple &t, var_dsc dsc, var_c_id id)
+void PPPred2::do_next(xqp_tuple &t, var_dsc dsc, var_c_id id)
 {
     producer &p = cxt->get_var_producer(dsc, var_cxt);
 

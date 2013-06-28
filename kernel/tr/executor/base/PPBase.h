@@ -120,15 +120,15 @@ struct PPOpIn
 
     PPOpIn(PPIterator *_op_, int _ts_) : op(_op_), ts(_ts_) {}
     PPOpIn() : op(NULL), ts(0) {}
-    tuple_cell &get(tuple &t) { return t.cells[0]; }
-    tuple_cell &get(tuple &t) const { return t.cells[0]; }
+    tuple_cell &get(xqp_tuple &t) { return t.cells[0]; }
+    tuple_cell &get(xqp_tuple &t) const { return t.cells[0]; }
 };
 
 /* Array of PPOpIn */
 typedef std::vector<PPOpIn>                     arr_of_PPOpIn;
 
 /* Array of tuple pointers */
-typedef std::vector<tuple*>                     arr_of_tuple_pointer;
+typedef std::vector<xqp_tuple*>                     arr_of_tuple_pointer;
 
 /* Array of var descriptors */
 typedef std::vector<var_dsc>                    arr_of_var_dsc;
@@ -206,7 +206,7 @@ protected:
     
     /* 
      * Backs up  __current_physop pointer when operation is called from 
-     * the parent operation by next(tuple& t)
+     * the parent operation by next(xqp_tuple& t)
      */
     PPIterator* __current_physop_backup;
 
@@ -214,7 +214,7 @@ private:
     virtual void        do_open    ()         = 0;
     virtual void        do_reopen  ()         = 0;
     virtual void        do_close   ()         = 0;
-    virtual void        do_next    (tuple &t) = 0;
+    virtual void        do_next    (xqp_tuple &t) = 0;
     virtual PPIterator* do_copy(dynamic_context *_cxt_) = 0;
     virtual void        do_accept  (PPVisitor &v) = 0;
 
@@ -250,7 +250,7 @@ public:
     inline void        close   ()                   { do_close();  }
     
     /* Saves next portion of the result of this operation in t */
-    inline void        next    (tuple &t) 
+    inline void        next    (xqp_tuple &t)
     { 
         if(executor_globals::profiler_mode)
         {
@@ -335,14 +335,14 @@ class PPVarIterator : public PPIterator
 protected:
     /* 
      * Backs up __current_physop pointer when operation is called from the descendant 
-     * variable consumer operation by next(tuple &t, var_dsc dsc, var_c_id id)
+     * variable consumer operation by next(xqp_tuple &t, var_dsc dsc, var_c_id id)
      */
     PPIterator* __current_physop_backup_var;
 
 private:
     /* Register consumer of the variable dsc */
     virtual var_c_id do_register_consumer(var_dsc dsc) = 0;
-    virtual void do_next(tuple &t, var_dsc dsc, var_c_id id) = 0;
+    virtual void do_next(xqp_tuple &t, var_dsc dsc, var_c_id id) = 0;
     virtual void do_reopen(var_dsc dsc, var_c_id id) = 0;
     virtual void do_close(var_dsc dsc, var_c_id id) = 0;
 
@@ -353,7 +353,7 @@ public:
         return do_register_consumer(dsc); 
     } 
     /* Get next value of the variable by id */    
-    inline void next(tuple &t, var_dsc dsc, var_c_id id) 
+    inline void next(xqp_tuple &t, var_dsc dsc, var_c_id id)
     { 
         CHECK_TIMER_FLAG;
         SET_CURRENT_PP_VAR(this);

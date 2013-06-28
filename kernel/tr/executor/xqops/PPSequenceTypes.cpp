@@ -50,7 +50,7 @@ void PPCast::do_close()
     child.op->close();
 }
 
-void PPCast::do_next (tuple &t)
+void PPCast::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -140,7 +140,7 @@ void PPCastable::do_close()
     child.op->close();
 }
 
-void PPCastable::do_next (tuple &t)
+void PPCastable::do_next (xqp_tuple &t)
 {
     bool res;
     if (first_time)
@@ -227,9 +227,9 @@ void PPInstanceOf::do_close()
     child.op->close();
 }
 
-bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const sequence_type& st);
+bool type_matches(const PPOpIn &child, xqp_tuple &t, bool &eos_reached, const sequence_type& st);
 
-void PPInstanceOf::do_next (tuple &t)
+void PPInstanceOf::do_next (xqp_tuple &t)
 {
         
     if (first_time)
@@ -315,7 +315,7 @@ void PPTreat::do_close()
     s = NULL;
 }
 
-void PPTreat::do_next(tuple &t)
+void PPTreat::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -453,7 +453,7 @@ void PPTypeswitch::do_close()
     delete s;
 }
 
-void PPTypeswitch::do_next(tuple &t)
+void PPTypeswitch::do_next(xqp_tuple &t)
 {
     if (first_time)
     {
@@ -525,7 +525,7 @@ var_c_id PPTypeswitch::do_register_consumer(var_dsc dsc)
     return cvc.size() - 1;
 }
 
-void PPTypeswitch::do_next(tuple &t, var_dsc dsc, var_c_id id)                    
+void PPTypeswitch::do_next(xqp_tuple &t, var_dsc dsc, var_c_id id)
 {
     producer &p = cxt->get_var_producer(dsc, var_cxt);
     complex_var_consumption &cvc = *(p.cvc);

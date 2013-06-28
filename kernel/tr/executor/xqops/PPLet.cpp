@@ -88,7 +88,7 @@ void PPLet::do_close()
     s = NULL;
 }
 
-void PPLet::do_next(tuple &t)
+void PPLet::do_next(xqp_tuple &t)
 {
     if (need_reopen)
     {
@@ -139,7 +139,7 @@ var_c_id PPLet::do_register_consumer(var_dsc dsc)
     return cvc.size() - 1;
 }
 
-void PPLet::do_next(tuple &t, var_dsc dsc, var_c_id id)
+void PPLet::do_next(xqp_tuple &t, var_dsc dsc, var_c_id id)
 {
     producer &p = cxt->get_var_producer(dsc, var_cxt);
     complex_var_consumption &cvc = *(p.cvc);

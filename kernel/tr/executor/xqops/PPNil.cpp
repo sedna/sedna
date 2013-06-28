@@ -29,7 +29,7 @@ void PPNil::do_close()
 {
 }
 
-void PPNil::do_next(tuple &t)
+void PPNil::do_next(xqp_tuple &t)
 {
     t.set_eos();
 }

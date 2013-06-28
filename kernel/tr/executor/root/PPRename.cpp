@@ -89,7 +89,7 @@ void PPRename::do_execute()
         
         case(PP_RENAME_COLLECTION):
         {
-            tuple t(child.ts);
+            xqp_tuple t(child.ts);
             child.op->next(t);
             if (t.is_eos()) 
                 throw USER_EXCEPTION2(XPTY0004, "Empty old-name is given in rename collection.");

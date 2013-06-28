@@ -48,7 +48,7 @@ private:
     std::string function_name;
 
 	SEDNA_SEQUENCE_ITEM *result;
-	SEDNA_SEQUENCE_ITEM *make_item(const tuple &t);
+	SEDNA_SEQUENCE_ITEM *make_item(const xqp_tuple &t);
 	SEDNA_SEQUENCE_ITEM *get_ef_seq(const PPOpIn &inp);
 	void make_ef_args(SEDNA_EF_ARGS &args, const arr_of_PPOpIn &arr);
 	void clear_ef_args(SEDNA_EF_ARGS &args);
@@ -63,8 +63,8 @@ public:
 	void invoke(const arr_of_PPOpIn &arr);
 	void result_skip();
 	void result_clear();
-	void result_peek(tuple &t);
-	void result_next(tuple &t);
+	void result_peek(xqp_tuple &t);
+	void result_next(xqp_tuple &t);
 };
 
 class ExtFunctionManager

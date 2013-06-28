@@ -765,7 +765,7 @@ xptr trigger_cell_object::execute_trigger_action(xptr parameter_new, xptr parame
         qep_tree = mapIter->second.at(i).action_qep_tree;
         qep_parameters = &(mapIter->second.at(i).parameters);
         set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-        tuple t = tuple(1);
+        xqp_tuple t = xqp_tuple(1);
 
         // We should only get a subquery here; actually it's checked on sema
         U_ASSERT(dynamic_cast<PPSubQuery *>(qep_tree) != NULL);

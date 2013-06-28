@@ -39,7 +39,7 @@ void PPFnTrue::do_close()
 {
 }
 
-void PPFnTrue::do_next (tuple &t)
+void PPFnTrue::do_next (xqp_tuple &t)
 {
     if (first_time) 
     {
@@ -94,7 +94,7 @@ void PPFnFalse::do_close()
 {
 }
 
-void PPFnFalse::do_next (tuple &t)
+void PPFnFalse::do_next (xqp_tuple &t)
 {
     if (first_time) 
     {
@@ -160,7 +160,7 @@ void PPFnNot::do_close()
     child.op->close();
 }
 
-void PPFnNot::do_next (tuple &t)
+void PPFnNot::do_next (xqp_tuple &t)
 {
         
     if (first_time)
@@ -234,7 +234,7 @@ void PPFnBoolean::do_close()
     child.op->close();
 }
 
-void PPFnBoolean::do_next (tuple &t)
+void PPFnBoolean::do_next (xqp_tuple &t)
 {
     if (first_time)
     {

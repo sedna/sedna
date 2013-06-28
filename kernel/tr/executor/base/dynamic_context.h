@@ -85,7 +85,7 @@ struct producer
     simple_var_consumption *svc;
     complex_var_consumption *cvc;
     unsigned tuple_pos;
-    tuple *t;
+    xqp_tuple *t;
 
     producer();
     ~producer();

@@ -16,7 +16,7 @@ PPSpaceSequence::PPSpaceSequence(dynamic_context *_cxt_,
                                                       isAtomized(_isAtomized_)
 {
 	space=false;
-	int_tup=tuple(1);
+	int_tup=xqp_tuple(1);
 	int_tup.set_eos();
 }
 
@@ -38,7 +38,7 @@ PPIterator* PPSpaceSequence::do_copy(dynamic_context *_cxt_)
     return res;
 }
 
-void PPSpaceSequence::do_next(tuple &t)
+void PPSpaceSequence::do_next(xqp_tuple &t)
 {
 	if (!int_tup.is_eos())
 	{

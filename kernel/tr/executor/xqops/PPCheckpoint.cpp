@@ -35,7 +35,7 @@ void PPCheckpoint::do_close()
     // nothing to do
 }
 
-void PPCheckpoint::do_next (tuple &t)
+void PPCheckpoint::do_next (xqp_tuple &t)
 {
      t.set_eos();
 

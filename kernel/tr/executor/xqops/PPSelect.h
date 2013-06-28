@@ -17,9 +17,9 @@ private:
 
     PPOpIn source_child;
     PPOpIn data_child;
-    tuple data;
-    tuple source;
-    tuple *cur_tuple;
+    xqp_tuple data;
+    xqp_tuple source;
+    xqp_tuple *cur_tuple;
 
     sequence_type st; // type to check in 'every' and 'some'
 
@@ -35,19 +35,19 @@ private:
              arr_of_var_dsc _var_dscs_,
              PPOpIn _source_child_,
              PPOpIn _data_child_,
-             tuple _source_);
+             xqp_tuple _source_);
 
 private:
     virtual void do_open   ();
     virtual void do_reopen ();
     virtual void do_close  ();
-    virtual void do_next   (tuple &t);
+    virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
     
     virtual PPIterator* do_copy(dynamic_context *_cxt_);
 
     virtual var_c_id do_register_consumer(var_dsc dsc);
-    virtual void do_next  (tuple &t, var_dsc dsc, var_c_id id);
+    virtual void do_next  (xqp_tuple &t, var_dsc dsc, var_c_id id);
     virtual void do_reopen(var_dsc dsc, var_c_id id);
     virtual void do_close (var_dsc dsc, var_c_id id);
 

@@ -45,7 +45,7 @@ void PPDmStringValue::do_close()
     child.op->close();
 }
 
-void PPDmStringValue::do_next (tuple &t)
+void PPDmStringValue::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
@@ -122,7 +122,7 @@ void PPDmTypedValue::do_close()
     child.op->close();
 }
 
-void PPDmTypedValue::do_next (tuple &t)
+void PPDmTypedValue::do_next (xqp_tuple &t)
 {
     if (first_time)
     {

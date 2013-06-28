@@ -74,7 +74,7 @@ void PPBulkLoad::do_accept(PPVisitor &v)
 void PPBulkLoad::do_execute()
 {
     tuple_cell tc, tc_filename, tc_document, tc_collection;
-    tuple t(1);
+    xqp_tuple t(1);
 
     filename.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION(SE1071);

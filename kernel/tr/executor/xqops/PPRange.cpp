@@ -23,7 +23,7 @@ PPRange::PPRange(dynamic_context *_cxt_,
 int64_t
 PPRange::getIntFromOp(PPOpIn & op)
 {
-    tuple t(1);
+    xqp_tuple t(1);
     op.op->next(t);
 
     if (t.is_eos())	{
@@ -80,7 +80,7 @@ void PPRange::do_close()
     end_op.op->close();
 }
 
-void PPRange::do_next(tuple &t)
+void PPRange::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

@@ -64,7 +64,7 @@ void PPFnDocAvailable::do_close()
     }
 }
 
-void PPFnDocAvailable::do_next(tuple &t)
+void PPFnDocAvailable::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

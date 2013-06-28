@@ -209,9 +209,9 @@ char* tuple_cell::copy_string(char *buf, size_t n) const
 }
 
 
-tuple::tuple(const tuple& t)
+xqp_tuple::xqp_tuple(const xqp_tuple& t)
 {
-    //d_printf1("tuple::tuple(const tuple &t) begin\n");
+    //d_printf1("xqp_tuple::xqp_tuple(const xqp_tuple &t) begin\n");
 
     eos = t.eos;
     cells_number = t.cells_number;
@@ -222,12 +222,12 @@ tuple::tuple(const tuple& t)
         for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
     }
 
-    //d_printf1("tuple::tuple(const tuple &t) end\n");
+    //d_printf1("xqp_tuple::xqp_tuple(const xqp_tuple &t) end\n");
 }
 
-tuple& tuple::operator=(const tuple& t)
+xqp_tuple& xqp_tuple::operator=(const xqp_tuple& t)
 {
-    //d_printf1("tuple::operator=(const tuple& t) begin\n");
+    //d_printf1("xqp_tuple::operator=(const xqp_tuple& t) begin\n");
 
     clear();
 
@@ -240,12 +240,12 @@ tuple& tuple::operator=(const tuple& t)
         for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
     }
 
-    //d_printf1("tuple::operator=(const tuple& t) end\n");
+    //d_printf1("xqp_tuple::operator=(const xqp_tuple& t) end\n");
 
     return *this;
 }
 
-void tuple::print() const
+void xqp_tuple::print() const
 {
     d_printf3("Tuple: eos = %d; cells_number = %d\n", eos, cells_number);
     for (int i = 0; i < cells_number; i++)

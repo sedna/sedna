@@ -67,7 +67,7 @@ void PPFnError::do_close()
 
 
 
-void PPFnError::do_next (tuple &t)
+void PPFnError::do_next (xqp_tuple &t)
 {
         
     tuple_cell err_name_tc; // eos by default
@@ -178,7 +178,7 @@ void PPFnTrace::do_close()
     label_child.op->close();
 }
 
-void PPFnTrace::do_next(tuple &t)
+void PPFnTrace::do_next(xqp_tuple &t)
 {
     if (first_time)
     {

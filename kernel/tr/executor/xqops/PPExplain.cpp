@@ -64,7 +64,7 @@ insertPrologDeclaration(const char* name,
     return tmp;
 }
 
-void PPExplain::do_next (tuple &t)
+void PPExplain::do_next (xqp_tuple &t)
 {
     if(first_time)
     {

@@ -45,7 +45,7 @@ void PPSeqChecker::do_close()
     child.op->close();
 }
 
-void PPSeqChecker::do_next (tuple &t)
+void PPSeqChecker::do_next (xqp_tuple &t)
 {
     child.op->next(t);
     tuple_cell tc = child.get(t);

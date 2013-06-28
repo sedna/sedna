@@ -28,7 +28,7 @@ PPSubsMatch::PPSubsMatch(dynamic_context *_cxt_,
     }
 }
 
-template <class a, class b> void PPSubsMatch::contains(a& it1, a&it1end, b& it2, b& it2end, tuple &t)
+template <class a, class b> void PPSubsMatch::contains(a& it1, a&it1end, b& it2, b& it2end, xqp_tuple &t)
 {
 	int res = PPSubsMatch::contains<a,b>(it1,it2,it1end-it1,it2end-it2);
 	if (res<0)
@@ -43,7 +43,7 @@ template <class a, class b> void PPSubsMatch::contains(a& it1, a&it1end, b& it2,
 	}
 }
 
-template <class b> void PPSubsMatch::contains(b &it2, b &it2end, const tuple_cell *tcptr1, tuple &t)
+template <class b> void PPSubsMatch::contains(b &it2, b &it2end, const tuple_cell *tcptr1, xqp_tuple &t)
 {
 	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(PPSubsMatch::contains, tcptr1, it2, it2end, t);
 }
@@ -86,15 +86,15 @@ void PPSubsMatch::error(const char* msg)
 }
 
 
-void PPSubsMatch::do_next (tuple &t)
+void PPSubsMatch::do_next (xqp_tuple &t)
 {
     if (first_time)
     {
 
 		first_time = false;
-		tuple t1(seq1.ts);
+		xqp_tuple t1(seq1.ts);
 		seq1.op->next(t1);
-		tuple t2(seq2.ts);
+		xqp_tuple t2(seq2.ts);
 		seq2.op->next(t2);
 
 		tuple_cell t1c= t1.cells[0];

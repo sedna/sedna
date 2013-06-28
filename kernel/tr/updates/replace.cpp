@@ -21,7 +21,7 @@ void replace(PPOpIn arg)
 {
     xptr node, tmp_node, attr_node;
     schema_node_xptr scm_node;
-    tuple t(arg.ts);
+    xqp_tuple t(arg.ts);
 
     xptr_sequence arg1seq;        // Indirection of nodes which are going to be replaced
     xptr_sequence arg1seq_tmp;    // Nodes which are going to be replaced
@@ -71,7 +71,7 @@ void replace(PPOpIn arg)
                     /* Case (2) - fill up sequence with nodes to replace with */
                     if (is_node_persistent(node))
                     {
-                        tuple tup(2);
+                        xqp_tuple tup(2);
                         tup.copy(tuple_cell::node(node),tuple_cell((int64_t)(arg2seq.size())));
                         arg3seq.add(tup);
                     }
@@ -150,7 +150,7 @@ void replace(PPOpIn arg)
     int ctr=0;
     do
     {
-        tuple tup(2);
+        xqp_tuple tup(2);
         /* arg3seq will contain pairs: node -> int, namely
         * node to be replaced -> place in sequence of nodes to replace with */
         tup.copy(tuple_cell::node(indirectionDereferenceCP(*it)),tuple_cell((int64_t)ctr));
@@ -173,7 +173,7 @@ void replace(PPOpIn arg)
     do
     {
         node = (*it3).cells[0].get_node();
-        tuple t = (*it3);
+        xqp_tuple t = (*it3);
         t.cells[0].set_safenode(node);
         ++it3;
         arg4seq.add(t);

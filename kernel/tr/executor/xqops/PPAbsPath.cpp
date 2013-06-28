@@ -135,7 +135,7 @@ void PPAbsPath::do_close()
     if (name.op) name.op->close();
 }
 
-void PPAbsPath::do_next(tuple &t)
+void PPAbsPath::do_next(xqp_tuple &t)
 {
     if (root == XNULL && determine_root())
     {

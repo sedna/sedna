@@ -17,11 +17,11 @@
 #define GET_FREE_SPACE(p) (shft)((uint32_t)PAGE_SIZE - ((XADDR_INT(p)) & PAGE_REVERSE_BIT_MASK))
 
 typedef int (*compare_fn)(xptr v1,xptr v2, const void *);
-typedef int (*get_size_fn)(tuple& t, const void *);
-typedef void (*serialize_fn)(tuple& t,xptr v1, const void *);
-typedef void (*serialize_2_blks_fn)(tuple& t,xptr& v1,shft size1,xptr& v2, const void *);
-typedef void (*deserialize_fn)(tuple&,xptr& v1, const void *);
-typedef void (*deserialize_2_blks_fn)(tuple& t,xptr& v1,shft size1,xptr& v2, const void *);
+typedef int (*get_size_fn)(xqp_tuple& t, const void *);
+typedef void (*serialize_fn)(xqp_tuple& t, xptr v1, const void *);
+typedef void (*serialize_2_blks_fn)(xqp_tuple& t, xptr& v1,shft size1,xptr& v2, const void *);
+typedef void (*deserialize_fn)(xqp_tuple&,xptr& v1, const void *);
+typedef void (*deserialize_2_blks_fn)(xqp_tuple& t,xptr& v1,shft size1,xptr& v2, const void *);
 
 #ifndef _data_ptr_
 #define _data_ptr_
@@ -103,8 +103,8 @@ public:
 
     public:
 
-        tuple operator*() { return s->get(pos); }
-        tuple operator[](int i) { return s->get(i); }
+        xqp_tuple operator*() { return s->get(pos); }
+        xqp_tuple operator[](int i) { return s->get(i); }
 
 
         iterator& operator ++() { pos++; return *this; }
@@ -188,17 +188,17 @@ public:
 		return iterator(seq_size, this);
 	}
 
-    void add(tuple &p);
-    tuple get(const iterator& it);
-    tuple get(int pos);
-	void get(tuple& t, int pos);
-    tuple operator[](int i)
+    void add(xqp_tuple &p);
+    xqp_tuple get(const iterator& it);
+    xqp_tuple get(int pos);
+	void get(xqp_tuple& t, int pos);
+    xqp_tuple operator[](int i)
     {
         return get(i);
     }
     void sort();
 	void lazy_sort();
-	void next(tuple& t);
+	void next(xqp_tuple& t);
 	inline static void  get_val(xptr ptr,xptr& val)
 	{
 		CHECKP(ptr);

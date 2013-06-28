@@ -61,7 +61,7 @@ void sequence::init_blks()
     blk_arr.push_back(eblk);
 }
 
-int sequence::add(const tuple &t)
+int sequence::add(const xqp_tuple &t)
 {
     if (seq_size++ < tuples_in_memory)
     {
@@ -139,13 +139,13 @@ int sequence::add(const tuple &t)
     return 0;
 }
 
-void sequence::get(tuple &t, const iterator& it)
+void sequence::get(xqp_tuple &t, const iterator& it)
 {
     if (this != it.s) throw USER_EXCEPTION2(SE1003, "Wrong iterator passed to sequence::get");
     get(t, it.pos);
 }
 
-void sequence::get(tuple &t, int pos)
+void sequence::get(xqp_tuple &t, int pos)
 {
     t.eos = false;
     bool cleared = false;
@@ -236,7 +236,7 @@ void sequence::copy(sequence* s, iterator _begin, iterator _end)
 
     clear();
 
-    tuple t(tuple_size);
+    xqp_tuple t(tuple_size);
     for (iterator it = _begin; it != _end; it++)
     {
         s->get(t, it);

@@ -13,13 +13,13 @@ class PPSpaceSequence : public PPSequence
 {
 protected:
 	static tuple_cell space_tup;
-	tuple int_tup;
+	xqp_tuple int_tup;
 	bool space;
 	bool isAtomized;
 
 private:
 	virtual PPIterator* do_copy(dynamic_context *_cxt_);
-	virtual void do_next   (tuple &t);
+	virtual void do_next   (xqp_tuple &t);
     virtual void do_accept (PPVisitor &v);
 
 public:    
