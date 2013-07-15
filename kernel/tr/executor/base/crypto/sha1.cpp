@@ -42,7 +42,7 @@
 #include "common/sedna.h"
 #include "tr/strings/strings.h"
 #include "tr/executor/base/crypto/sha1.h"
-
+#include "tr/executor/base/xs_binary.h"
 
 /* constant table */
 static uint32_t _K[] = {0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6};
@@ -336,10 +336,25 @@ sha1_loop_tmpl(Iterator &start, const Iterator &end, sha1_ctxt* ctxt)
         }
 }
 
+template <class Iterator>
+static inline void
+sha1_base64_loop_tmpl(Iterator &start, const Iterator &end, sha1_ctxt* ctxt, const tuple_cell *tc)
+{
+        uint64_t b64len = xs_base64Binary_length(tc);
+        Base64ForwardIterator<Iterator> b64start(start, end);
+        const Base64ConstIterator<Iterator> b64end(end, b64len);
+        sha1_loop_tmpl < Base64Iterator<Iterator> > (b64start, b64end, ctxt);
+}
+
 static void
 sha1_loop(sha1_ctxt * ctxt, const tuple_cell *tc)
 {
-    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(sha1_loop_tmpl, tc, ctxt);
+        xmlscm_type in_type = tc->get_atomic_type();
+        if (in_type == xs_base64Binary) {
+            STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(sha1_base64_loop_tmpl, tc, ctxt, tc);
+        } else {
+            STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(sha1_loop_tmpl, tc, ctxt);
+        }
 }
 
 static void

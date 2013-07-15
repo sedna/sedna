@@ -47,20 +47,6 @@ const unsigned char b64_value_to_char[64] =  {'A','B','C','D','E','F','G','H','I
                                               'y','z','0','1','2','3','4','5','6','7',
                                               '8','9','+','/'};
 
-const unsigned char b64_char_to_value[123] = {'_','_','_','_','_','_','_','_','_','_',      //0x
-                                              '_','_','_','_','_','_','_','_','_','_',      //1x
-                                              '_','_','_','_','_','_','_','_','_','_',      //2x
-                                              '_','_','_','_','_','_','_','_','_','_',      //3x
-                                              '_','_','_', 62,'_','_','_', 63, 52, 53,      //4x
-                                               54, 55, 56, 57, 58, 59, 60, 61,'_','_',      //5x
-                                              '_','_','_','_','_', 0 , 1 , 2 , 3 , 4 ,      //6x
-                                               5 , 6 , 7 , 8 , 9 , 10, 11, 12, 13, 14,      //7x
-                                               15, 16, 17, 18, 19, 20, 21, 22, 23, 24,      //8x
-                                               25,'_','_','_','_','_','_', 26, 27, 28,      //9x
-                                               29, 30, 31, 32, 33, 34, 35, 36, 37, 38,      //10x
-                                               39, 40, 41, 42, 43, 44, 45, 46, 47, 48,      //11x
-                                               49, 50, 51};                                 //12x
-
 /// Alphabet mapping for hexBinary representation:
 
 const unsigned char hex_value_to_char[16]  = {'0','1','2','3','4','5','6','7','8','9',
@@ -76,7 +62,7 @@ inline unsigned char hex_char_to_value(unsigned char c)
 
 inline bool is_b64_char(unsigned char c)
 {
-    return c <= 122 && b64_char_to_value[c] != '_';
+    return c <= 122 && b64_char_to_value[c] != '_' && c != '=';
 }
 
 inline bool is_b16_char(unsigned char c)
@@ -143,7 +129,7 @@ static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Ite
     {
         value = *start;
         /* Some versions of GCC are going crazy here. Don't 
-           optimize it removing temp variable. */
+           optimize it by removing temp variable. */
         int temp = IS_BYTE_HEX_ALLOWED(value);
         if( temp == 0 ) 
         {
@@ -157,7 +143,7 @@ static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Ite
     
     while(start < end && IS_WHITESPACE(*start)) { start++; }
 
-    if(start == end && !(counter & 1)) (*valid) = true; //chech evenness at last;
+    if(start == end && !(counter & 1)) (*valid) = true; //check evenness at last;
 }
 
 tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
@@ -181,23 +167,43 @@ tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
 
+struct b64_properties {
+    bool valid;
+    uint64_t length;
+    uint64_t binary_length;
+    bool canonical;
+};
 
 template <class Iterator>
-static inline void check_constraints_for_xs_base64Binary(Iterator &start, const Iterator &end, stmt_str_buf &res, bool *valid)
+static inline void xs_base64Binary_to_canonical_form(Iterator &start, const Iterator &end, stmt_str_buf &res) {
+    while(start < end) {
+        unsigned char value = *start;
+        if(!IS_WHITESPACE(value)) {
+            res << value;
+        }
+        ++start;
+    }
+}
+
+template <class Iterator>
+static inline void check_constraints_for_xs_base64Binary(Iterator &start, const Iterator &end,
+                                                         b64_properties* b64, const bool canonical)
 {
-    (*valid) = false;
+    b64->valid = false;
+    b64->canonical = true;
 
     unsigned char value = 0;
     unsigned char last_saved_char = 0;
-    int counter = 0;
-    int type_of_tail = 0;
+    uint64_t bytes_counter = 0;
+    uint8_t type_of_tail = 0;
+    uint8_t number_of_pads = 0;
     bool tail_reached = false;
     
     while(start < end)
     {
         value = *start;
 
-        if(!IS_WHITESPACE(value)) 
+        if(!IS_WHITESPACE(value))
         {  
             if( (tail_reached || !is_b64_char(value)) && value != '=' ) return;
             
@@ -208,39 +214,72 @@ static inline void check_constraints_for_xs_base64Binary(Iterator &start, const 
                 else
                 {
                     tail_reached = true;
-                    type_of_tail = (counter & 3);                                  //type of tail must be either 3 ("=") or 2 ("==").
+                    type_of_tail = (bytes_counter & 3); //type of tail must be either 3 ("=") or 2 ("==").
                     switch(type_of_tail)
                     {
-                       case 3 : if(!is_b16_char(last_saved_char)) return; break;   //previous char must be from the b16 char-set.
-                       case 2 : if(!is_b04_char(last_saved_char)) return; break;   //previous char must be from the b04 char-set.
+                       case 3 : if(!is_b16_char(last_saved_char)) return;
+                                number_of_pads = 1;
+                                break;
+                       case 2 : if(!is_b04_char(last_saved_char)) return;
+                                number_of_pads = 2;
+                                break;
                        default: return;
                     }
                 }
             }
 
-            res << value;
-            ++counter;
+            ++bytes_counter;
             last_saved_char = value;
+        }
+        else
+        {
+            if (canonical) return; //whitespaces are not allowed in canonical form
+            b64->canonical = false;
         }
         
         start++;
     }
 
-    if((counter & 3) == 0) (*valid) = true;
+    if ( (bytes_counter & 3) == 0 )
+    {
+        b64->valid = true;
+        b64->length = bytes_counter;
+        b64->binary_length = (bytes_counter / 4) * 3 - number_of_pads;
+    }
 }
 
 
-tuple_cell cast_string_type_to_xs_base64Binary(const tuple_cell &c)
+tuple_cell cast_string_type_to_xs_base64Binary(const tuple_cell &tc)
 { 
-    bool valid;
-    stmt_str_buf res;
+    b64_properties b64;
 
-    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(check_constraints_for_xs_base64Binary, &c, res, &valid);
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(check_constraints_for_xs_base64Binary, &tc, &b64, false);
     
-    if(!valid) throw XQUERY_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:base64Binary type.");
-    tuple_cell rc = res.get_tuple_cell();
-    rc.set_xtype(xs_base64Binary);
-    return rc;
+    if (!b64.valid) throw XQUERY_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:base64Binary type.");
+
+    tuple_cell res_tc;
+    if (!b64.canonical)
+    {
+        stmt_str_buf res;
+        STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(xs_base64Binary_to_canonical_form, &tc, res);
+        res_tc = res.get_tuple_cell();
+    } else {
+        res_tc = tc;
+    }
+    res_tc.set_xtype(xs_base64Binary);
+    return res_tc;
+}
+
+uint64_t xs_base64Binary_length(const tuple_cell *tc, uint64_t *length)
+{
+    b64_properties b64;
+
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(check_constraints_for_xs_base64Binary, tc, &b64, true);
+
+    if (!b64.valid) throw XQUERY_EXCEPTION2(FORG0001, "The value does not conform to the canonical xs:base64Binary type.");
+    if (length != NULL) (*length) = b64.length;
+
+    return b64.binary_length;
 }
 
 

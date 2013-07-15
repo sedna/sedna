@@ -106,10 +106,11 @@ void PPDigest::do_next(xqp_tuple &t)
             first_time = false;
             tuple_cell in_str = atomize(child.get(t));
 
-            if(!is_string_type(in_str.get_atomic_type())) {
+            xmlscm_type in_type = in_str.get_atomic_type();
+            if(!is_string_type(in_type) && in_type != xs_base64Binary) {
                 throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid type of the argument in {"CRYPTO_MODULE_NAMESPACE"}::") +
                                                   get_function_name() +
-                                                  " (xs_string/derived/promotable is expected).").c_str());
+                                                  " (string (derived/promotable) or base64 binary type is expected).").c_str());
             }
 
             child.op->next(t);
