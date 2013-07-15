@@ -37,6 +37,7 @@
 #include "common/sedna.h"
 #include "tr/strings/strings.h"
 #include "tr/executor/base/crypto/md5.h"
+#include "tr/executor/base/xs_binary.h"
 
 #define md5_sta         md5_st.md5_state32[0]
 #define md5_stb         md5_st.md5_state32[1]
@@ -192,10 +193,25 @@ md5_loop_tmpl(Iterator &start, const Iterator &end, struct md5_digest_ctxt* ctxt
         ctxt->md5_n = len * 8;         /* byte to bit */
 }
 
+template <class Iterator>
+static inline void
+md5_base64_loop_tmpl(Iterator &start, const Iterator &end, struct md5_digest_ctxt* ctxt, uint64_t len)
+{
+        Base64ForwardIterator<Iterator> b64start(start, end);
+        const Base64ConstIterator<Iterator> b64end(end, len);
+        md5_loop_tmpl < Base64Iterator<Iterator> > (b64start, b64end, ctxt);
+}
+
 static void
 md5_loop(struct md5_digest_ctxt * ctxt, const tuple_cell *tc)
 {
-    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(md5_loop_tmpl, tc, ctxt);
+        xmlscm_type in_type = tc->get_atomic_type();
+        if (in_type == xs_base64Binary) {
+            uint64_t b64len = xs_base64Binary_length(tc);
+            STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(md5_base64_loop_tmpl, tc, ctxt, b64len);
+        } else {
+            STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(md5_loop_tmpl, tc, ctxt);
+        }
 }
 
 static void

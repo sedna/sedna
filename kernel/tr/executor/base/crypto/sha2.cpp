@@ -36,6 +36,7 @@
 #include "common/sedna.h"
 #include "tr/strings/strings.h"
 #include "tr/executor/base/crypto/sha2.h"
+#include "tr/executor/base/xs_binary.h"
 
 /*
  * UNROLLED TRANSFORM LOOP NOTE:
@@ -466,11 +467,27 @@ SHA256_Update_tmpl(Iterator &start, const Iterator &end, SHA256_CTX* context)
     }
 }
 
+template <class Iterator>
+static inline void
+SHA256_Base64_Update_tmpl(Iterator &start, const Iterator &end, SHA256_CTX* ctxt, uint64_t len)
+{
+        Base64ForwardIterator<Iterator> b64start(start, end);
+        const Base64ConstIterator<Iterator> b64end(end, len);
+        SHA256_Update_tmpl < Base64Iterator<Iterator> > (b64start, b64end, ctxt);
+}
+
 static void
 SHA256_Update(SHA256_CTX* ctxt, const tuple_cell *tc)
 {
-    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(SHA256_Update_tmpl, tc, ctxt);
+        xmlscm_type in_type = tc->get_atomic_type();
+        if (in_type == xs_base64Binary) {
+            uint64_t b64len = xs_base64Binary_length(tc);
+            STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(SHA256_Base64_Update_tmpl, tc, ctxt, b64len);
+        } else {
+            STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(SHA256_Update_tmpl, tc, ctxt);
+        }
 }
+
 
 static void
 SHA256_Last(SHA256_CTX *context)
@@ -771,11 +788,27 @@ SHA512_Update_tmpl(Iterator &start, const Iterator &end, SHA512_CTX* context)
     }
 }
 
+template <class Iterator>
+static inline void
+SHA512_Base64_Update_tmpl(Iterator &start, const Iterator &end, SHA512_CTX* ctxt, uint64_t len)
+{
+        Base64ForwardIterator<Iterator> b64start(start, end);
+        const Base64ConstIterator<Iterator> b64end(end, len);
+        SHA512_Update_tmpl < Base64Iterator<Iterator> > (b64start, b64end, ctxt);
+}
+
 static void
 SHA512_Update(SHA512_CTX* ctxt, const tuple_cell *tc)
 {
-    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(SHA512_Update_tmpl, tc, ctxt);
+        xmlscm_type in_type = tc->get_atomic_type();
+        if (in_type == xs_base64Binary) {
+            uint64_t b64len = xs_base64Binary_length(tc);
+            STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(SHA512_Base64_Update_tmpl, tc, ctxt, b64len);
+        } else {
+            STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(SHA512_Update_tmpl, tc, ctxt);
+        }
 }
+
 
 static void
 SHA512_Last(SHA512_CTX *context)
@@ -869,7 +902,7 @@ SHA384_Init(SHA384_CTX *context)
 static void
 SHA384_Update(SHA384_CTX* ctxt, const tuple_cell *tc)
 {
-    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(SHA512_Update_tmpl, tc, (SHA512_CTX *) ctxt);
+    SHA512_Update((SHA512_CTX *) ctxt, tc);
 }
 
 static void
@@ -913,7 +946,7 @@ SHA224_Init(SHA224_CTX *context)
 static void
 SHA224_Update(SHA224_CTX* ctxt, const tuple_cell *tc)
 {
-    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(SHA256_Update_tmpl, tc, (SHA256_CTX *) ctxt);
+    SHA256_Update((SHA256_CTX*) ctxt, tc);
 }
 
 static void

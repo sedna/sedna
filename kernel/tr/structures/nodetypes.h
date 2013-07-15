@@ -168,6 +168,10 @@ inline bool is_fixed_size_type(xmlscm_type xtype)
     return (xs_dateTime <= xtype && xtype <= xs_boolean) ||
            (xs_nonPositiveInteger <= xtype && xtype <= xs_positiveInteger);
 }
+inline bool is_binary_type(xmlscm_type xtype)
+{
+    return (xtype == xs_base64Binary || xtype == xs_hexBinary);
+}
 inline bool is_primitive(xmlscm_type xtype)
 {
     return (xs_dateTime <= xtype && xtype <= xs_NOTATION);
