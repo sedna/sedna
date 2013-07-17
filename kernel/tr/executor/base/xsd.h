@@ -206,6 +206,7 @@ class QName {
     static QName createResolve(const char * prefixAndLocal, INamespaceMap * namespaces, bool quietly = false);
     static QName createUnchecked(xmlns_ptr ns, const char * local);
 
+    std::string toExpatQName();
     static QName bulkloadParse(const char * triplet);
 
     static inline QName getConstantQName(xmlns_ptr ns, const char * name) { return QName(ns, name); };

@@ -78,7 +78,7 @@ void ft_index_cell_object::serialize_data(se_simplestream &stream)
     stream.write_string(index_title);
     stream.write(&ftype, sizeof(ft_index_type));
     stream.write(&impl, sizeof(ft_index_impl));
-	stream.write_string(stemming);
+    stream.write_string(stemming);
     stream.write(&fts_data, sizeof(struct FtsData));
 
     stream.write_string(object->toLRString().c_str());
@@ -98,8 +98,8 @@ void ft_index_cell_object::serialize_data(se_simplestream &stream)
         {
             stream.write(&marker, sizeof(uint8_t));
             stream.write(&tmp->obj->cm, sizeof(ft_index_type));
-            stream.write_string(tmp->obj->local);
-            stream.write(&tmp->obj->ns_pers, sizeof(xmlns_ptr_pers));
+            std::string qname = tmp->obj->getQName().toExpatQName();
+            stream.write_string(qname.c_str());
 
             tmp = custom_tree->rb_successor(tmp);
         }
@@ -112,8 +112,7 @@ void ft_index_cell_object::serialize_data(se_simplestream &stream)
 void ft_index_cell_object::deserialize_data(se_simplestream &stream)
 {
     uint8_t marker = 1;
-    xmlns_ptr_pers ct_ns;
-    char* ct_local;
+    char* ct_name;
     ft_index_type ct_cm;
     char* obj_str = NULL;
     se_size_t len;
@@ -124,8 +123,8 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
     stream.read_string(SSTREAM_SAVED_LENGTH, index_title);
     stream.read(&ftype, sizeof(ft_index_type));
     stream.read(&impl, sizeof(ft_index_type));
-	stemming = (char *) cat_malloc(this, stream.read_string_len());
-	stream.read_string(SSTREAM_SAVED_LENGTH, stemming);
+    stemming = (char *) cat_malloc(this, stream.read_string_len());
+    stream.read_string(SSTREAM_SAVED_LENGTH, stemming);
     stream.read(&fts_data, sizeof(struct FtsData));
 
     if ((len = stream.read_string_len()) != 0)
@@ -147,12 +146,11 @@ void ft_index_cell_object::deserialize_data(se_simplestream &stream)
     custom_tree = (marker == 0) ? NULL : ft_custom_tree_t::init();
     while (marker != 0) {
         stream.read(&ct_cm, sizeof(ft_index_type));
-        ct_local = new char[stream.read_string_len()];
-        stream.read_string(SSTREAM_SAVED_LENGTH, ct_local);
-        stream.read(&ct_ns, sizeof(xmlns_ptr_pers));
+        ct_name = new char[stream.read_string_len()];
+        stream.read_string(SSTREAM_SAVED_LENGTH, ct_name);
 
-        custom_tree->put(new ft_custom_cell(ct_ns, xsd::QName::createNsN(xmlns_touch(ct_ns), ct_local, true), ct_cm));
-        delete [] ct_local;
+        custom_tree->put(new ft_custom_cell(xsd::QName::bulkloadParse(ct_name), ct_cm));
+        delete [] ct_name;
 
         stream.read(&marker, sizeof(uint8_t));
     }
@@ -209,7 +207,8 @@ ft_index_cell_xptr create_ft_index(
         ft_index_template_t::iterator tmp=_templ->begin();
         while (tmp!=_templ->end())
         {
-            idc->custom_tree->put(new ft_custom_cell(_schemaroot->xmlns_register(tmp->first.getXmlNs()), tmp->first, tmp->second));
+            _schemaroot->xmlns_register(tmp->first.getXmlNs());
+            idc->custom_tree->put(new ft_custom_cell(tmp->first, tmp->second));
             tmp++;
         }
     }

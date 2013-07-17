@@ -326,6 +326,25 @@ QName QName::bulkloadParse(const char* triplet)
     return xsd::QName(xmlns_touch_len(ns, uri, uri_len), name, name_len);
 }
 
+std::string QName::toExpatQName()
+{
+    std::ostringstream oss(std::ios::out | std::ios::binary);
+
+    if (emptyUri()) {
+        oss << getLocalName();
+    } else {
+        const char * prefix = getPrefix();
+
+        if (*prefix != '\0') {
+            oss << getUri() << ">" << prefix << ">" << getLocalName();
+        } else {
+            oss << getUri() << ">" << getLocalName();
+        }
+    }
+
+    return oss.str();
+};
+
 /* QName is stored as (qname PREFIX URI LOCAL_NAME) */
 
 void QName::toLR(std::ostream& os, const xsd::AnyURI uri, const xsd::NCName prefix, const xsd::NCName local)
