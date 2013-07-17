@@ -66,20 +66,20 @@ enum ft_stem_type
 
 struct ft_custom_cell
 {
-    xmlns_ptr_pers ns_pers;
-    mutable xmlns_ptr ns_local;
+    xmlns_ptr ns_local;
     char* local;
     ft_index_type cm;
 
     inline xmlns_ptr get_xmlns() const {
-        if ((ns_local != NULL_XMLNS) || (ns_pers == XNULL)) return ns_local;
-        else return ns_local = xmlns_touch(ns_pers);
+        return ns_local;
     }
+
+    inline xsd::QName getQName() const { return xsd::QName::createUnchecked(ns_local, local); }
 
     inline ft_custom_cell() : ns_local(NULL_XMLNS) {};
 
-    inline ft_custom_cell(xmlns_ptr_pers _ns, xsd::QName qname, ft_index_type _cm) :
-            ns_pers(_ns), ns_local(qname.getXmlNs()), local(NULL), cm(_cm)
+    inline ft_custom_cell(xsd::QName qname, ft_index_type _cm) :
+            ns_local(qname.getXmlNs()), local(NULL), cm(_cm)
     {
         local = new char[strlen(qname.getLocalName()) + 1];
         strcpy(local, qname.getLocalName());
