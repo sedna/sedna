@@ -2762,6 +2762,58 @@ The available \verb!names! are as follows:
 
 
 %===============================================================================
+%             XQuery Options and Extensions: General Hashing Functions
+%===============================================================================
+\subsubsection{General Hashing Functions}
+
+Sedna provides built-in functions that perform standard hashing algorithms:
+\verb!md5!, \verb!sha-1!, \verb!sha-224!, \verb!sha-256!, \verb!sha-384!,
+\verb!sha-512!. Functions accept string (xs:string or derived/promotable) or
+binary (xs:base64Binary) data and return hash in the hex binary representation.
+All hashing functions are assigned to the \url{http://sedna.org/crypto}
+namespace.
+
+\begin{verbatim}
+declare namespace hash = 'http://sedna.org/crypto';
+hash:digest($value as xs:string or xs:base64Binary,
+            $algorithm as xs:string) as xs:hexBinary
+\end{verbatim}
+
+Computes digest of the given \verb!$value!, using the specified
+\verb!$algorithm!. The specified values may be of type xs:string or
+xs:base64Binary. The following algorihms are supported: \verb!md5!,
+\verb!sha-1!, \verb!sha-224!, \verb!sha-256!, \verb!sha-384!, \verb!sha-512!
+For example:
+
+\begin{verbatim}
+declare namespace hash = 'http://sedna.org/crypto';
+hash:digest("", "md5")
+\end{verbatim}
+
+returns \verb!D41D8CD98F00B204E9800998ECF8427E!.
+
+\begin{verbatim}
+declare namespace hash = 'http://sedna.org/crypto';
+hash:md5($value as xs:string or xs:base64Binary) as xs:hexBinary
+hash:sha1($value as xs:string or xs:base64Binary) as xs:hexBinary
+hash:sha224($value as xs:string or xs:base64Binary) as xs:hexBinary
+hash:sha256($value as xs:string or xs:base64Binary) as xs:hexBinary
+hash:sha384($value as xs:string or xs:base64Binary) as xs:hexBinary
+hash:sha512($value as xs:string or xs:base64Binary) as xs:hexBinary
+\end{verbatim}
+
+Algorithm-specific digest functions. For example:
+
+\begin{verbatim}
+declare namespace hash = 'http://sedna.org/crypto';
+hash:sha1("SXZhbiBTaGNoZWtsZWlu" cast as xs:base64Binary)
+\end{verbatim}
+
+returns \verb!C777B3E1AEB0D6D3FF07E8ADEFE841F933C09648! - \verb!SHA-1! hash for
+the base64-encoded data.
+
+
+%===============================================================================
 %                               Update Language
 %===============================================================================
 \subsection{Update Language}
