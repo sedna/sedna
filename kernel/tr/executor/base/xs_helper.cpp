@@ -456,35 +456,24 @@ double round_half_to_even_double(double d, int64_t precision)
         d = d < 0 ? (s = -1, -d) : (s = 1, d);
         double f = modf(d, &i);
 
-        m_f = modf(f * y, &m_i);
+        if (y == 1) {
+            m_i = i;
+            i = 0;
+            m_f = f;
+        } else {
+            m_f = modf(f * y, &m_i);
+        }
 
         if (m_f == 0.5)
         {
-            if (m_i == 0)
+            if (((int64_t)m_i % 2) == 1)
             {
-                if (((int64_t)i % 2) == 1)
-                {
-                    i += 1;
-                }
-            }
-            else
-            {
-                if (((int64_t)m_i % 2) == 1)
-                {
-                    m_i += 1;
-                }
+                m_i += 1;
             }
         }
         else if (m_f > 0.5)
         {
-            if (m_i == 0)
-            {
-                i += 1;
-            }
-            else
-            {
-                m_i += 1;
-            }
+            m_i += 1;
         }
 
         return s * (i + m_i / y);

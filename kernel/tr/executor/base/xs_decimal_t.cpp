@@ -443,35 +443,24 @@ xs_decimal_t xs_decimal_t::round_half_to_even(int64_t precision) const
 
         xs_decimal_t f = modf(d, &i);
 
-        m_f = modf(f * y, &m_i);
+        if (y != 1) {
+            m_f = modf(f * y, &m_i);
+        } else {
+            m_f = f;
+            m_i = i;
+            i.set((int64_t)0);
+        }
 
         if (m_f == xs_decimal_t(0.5))
         {
-            if (m_i.is_zero()) 
+            if ((m_i.get_int() % 2) == 1)
             {
-                if ((i.get_int() % 2) == 1) 
-                {
-                    i = i + xs_decimal_t((int64_t)1);
-                }
-            }
-            else
-            {
-                if ((m_i.get_int() % 2) == 1) 
-                {
-                    m_i = m_i + xs_decimal_t((int64_t)1);
-                }
+                m_i = m_i + xs_decimal_t((int64_t)1);
             }
         }
         else if (m_f > xs_decimal_t(0.5))
         {
-            if (m_i.is_zero()) 
-            {
-                i = i + xs_decimal_t((int64_t)1);
-            }
-            else
-            {
-                m_i = m_i + xs_decimal_t((int64_t)1);
-            }
+            m_i = m_i + xs_decimal_t((int64_t)1);
         }
 
         return xs_decimal_t((int64_t)s) * (i + m_i / y);
