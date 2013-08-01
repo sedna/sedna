@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
 
         printf("\nEXPORTING DATA (path=%s host=%s database=%s)\n",path,host,db_name);
         // until the export transaction succed
-        while ((export_status=export(path,host,db_name,login,password))==SE_EXP_RB_ERROR) {
+        while ((export_status=export(path,host,db_name,login,password,exp_ro,exp_idx_skip))==SE_EXP_RB_ERROR) {
             printf("\nEXPORT TRANSACTION HAS BEEN ROLLED BACK\nTRYING AGAIN...\n");
         }
         //export_status=export(path,host,db_name,login,password);
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
     } else if (!strcmp(command,"restore")) {
         printf("\nRESTORING DATA (path=%s host=%s database=%s)\n",path,host,db_name);
         // restore means to restore all data + security information
-        if (import(path,host,db_name,login,password,1)!=0) {
+        if (import(path,host,db_name,login,password,1,exp_idx_skip)!=0) {
             printf("\nRESTORING FAILED\n");
             exit(-1);
         } else {
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
     } else {
         printf("\nIMPORTING DATA (path=%s host=%s database=%s)\n",path,host,db_name);
         // import means to restore all data except security information
-        if (import(path,host,db_name,login,password,0)!=0) {
+        if (import(path,host,db_name,login,password,0,exp_idx_skip)!=0) {
             printf("\nIMPORT FAILED\n");
             exit(-1);
         } else {

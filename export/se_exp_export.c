@@ -10,7 +10,7 @@
 
 
 // function exports data from database to the specified directory
-int export(const char * path,const char *url,const char *db_name,const char *login,const char *password) {
+int export(const char * path,const char *url,const char *db_name,const char *login,const char *password,int ro, int idx_skip) {
     struct SednaConnection conn = SEDNA_CONNECTION_INITIALIZER;
     qbuf_t exp_docs = {NULL,0,0};
     qbuf_t load_docs = {NULL,0,0};
@@ -43,8 +43,20 @@ int export(const char * path,const char *url,const char *db_name,const char *log
     FTRACE((log,"done\n"));
 
     value = SEDNA_AUTOCOMMIT_OFF;
-    SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
+    if ((res = SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int))) != SEDNA_SET_ATTRIBUTE_SUCCEEDED) {
+        ETRACE((log,"ERROR: failed to turn off autocommit mode\n%s\n", SEgetLastErrorMsg(&conn)));
+        goto exp_error_no_conn;
+    }
 
+    if (ro) {
+        FTRACE((log,"Enabling read-only mode..."));
+        value = SEDNA_READONLY_TRANSACTION;
+        if ((res = SEsetConnectionAttr(&conn, SEDNA_ATTR_CONCURRENCY_TYPE, (void*)&value, sizeof(int))) != SEDNA_SET_ATTRIBUTE_SUCCEEDED) {
+            ETRACE((log,"ERROR: failed to turn on read-only mode\n%s\n", SEgetLastErrorMsg(&conn)));
+            goto exp_error_no_conn;
+        }
+        FTRACE((log,"done\n"));
+    }
 
     FTRACE((log,"Determining features to export..."));
     ft_search_feature = check_sedna_feature(&conn, check_ft_enabled_query, log);
@@ -77,13 +89,17 @@ int export(const char * path,const char *url,const char *db_name,const char *log
     }
     FTRACE((log,"...done (%"PRIuMAX" statements)\n", (uintmax_t)create_colls.d_size));
 
-    FTRACE((log,"Constructing create indexes script"));
-    if ((export_status = fill_qbuf(&conn,&create_indexes, create_indexes_query, log))!=SE_EXP_SUCCEED) {
-        goto exp_error;
+    if (!idx_skip) {
+        FTRACE((log,"Constructing create indexes script"));
+        if ((export_status = fill_qbuf(&conn,&create_indexes, create_indexes_query, log))!=SE_EXP_SUCCEED) {
+            goto exp_error;
+        }
+        FTRACE((log,"...done (%"PRIuMAX" statements)\n", (uintmax_t)create_indexes.d_size));
+    } else {
+        FTRACE((log,"Indices export skipped (-idx-skip on)\n"));
     }
-    FTRACE((log,"...done (%"PRIuMAX" statements)\n", (uintmax_t)create_indexes.d_size));
 
-    if (ft_search_feature == SEDNA_FEATURE_ENABLED) {
+    if (!idx_skip && ft_search_feature == SEDNA_FEATURE_ENABLED) {
         FTRACE((log,"Constructing create full-text search indexes script"));
         if ((export_status = fill_qbuf(&conn,&create_ftindexes, create_ftindexes_query, log))!=SE_EXP_SUCCEED) {
             goto exp_error;
@@ -146,10 +162,8 @@ int export(const char * path,const char *url,const char *db_name,const char *log
     sprintf(strbuf,"%s%s",path,CR_INDEXES_QUERY_FILE);
     write_xquery_script(&create_indexes,strbuf);
 
-    if (ft_search_feature == SEDNA_FEATURE_ENABLED) {
-        sprintf(strbuf,"%s%s",path,CR_FTINDEXES_QUERY_FILE);
-        write_xquery_script(&create_ftindexes,strbuf);
-    }
+    sprintf(strbuf,"%s%s",path,CR_FTINDEXES_QUERY_FILE);
+    write_xquery_script(&create_ftindexes,strbuf);
 
     /*sprintf(strbuf,"%s%s",path,CR_SEC_QUERY_FILE);
       write_xquery_script(&create_sec,strbuf); */
