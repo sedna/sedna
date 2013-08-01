@@ -12,6 +12,7 @@ int import(const char *path,
            const char *db_name,
            const char *login,
            const char *password,
-           int sec_import);
+           int sec_import,
+           int idx_skip);
 
 #endif /* _SE_EXP_IMPORT_H */

@@ -11,6 +11,8 @@ int export(const char *path,
            const char *url,
            const char *db_name,
            const char *login,
-           const char *password);
+           const char *password,
+           int ro,
+           int idx_skip);
 
 #endif /* _SE_EXP_EXPORT_H */

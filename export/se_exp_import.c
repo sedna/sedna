@@ -86,7 +86,7 @@ int restore_security(struct SednaConnection *conn, FILE* log) {
 // function imports data from path to the specified data base
 // se_import defines weather to import security information
 // if se_import equals to 1 it is rquired that the database is empty
-int import(const char *path,const char *url,const char *db_name,const char *login,const char *password, int sec_import) {
+int import(const char *path,const char *url,const char *db_name,const char *login,const char *password, int sec_import, int idx_skip) {
   struct SednaConnection conn = SEDNA_CONNECTION_INITIALIZER;
   char strbuf[PATH_SIZE];
   char *cr_col_query = NULL;
@@ -163,11 +163,12 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
     if ((cr_col_query = read_query(strbuf))==NULL)
         goto imp_error;
 
-    sprintf(strbuf,"%s%s",path,CR_INDEXES_QUERY_FILE);
-    if ((cr_indexes_query = read_query(strbuf))==NULL)
-        goto imp_error;
-
-    if (check_feature_to_import(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
+    if (!idx_skip) {
+        sprintf(strbuf,"%s%s",path,CR_INDEXES_QUERY_FILE);
+        if ((cr_indexes_query = read_query(strbuf))==NULL)
+            goto imp_error;
+    }
+    if (!idx_skip && check_feature_to_import(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
         sprintf(strbuf,"%s%s",path,CR_FTINDEXES_QUERY_FILE);
         if ((cr_ftindexes_query = read_query(strbuf))==NULL)
             goto imp_error;
@@ -220,15 +221,19 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
     }
     FTRACE((log,"done\n"));
 
-    FTRACE((log,"Creating indexes..."));
-    if (strlen(cr_indexes_query)==0)
-        FTRACE((log,"(no indexes in the database)..."));
-    else
-        if (execute_multiquery(&conn,cr_indexes_query,log)!=0)
-            goto imp_error;
-    FTRACE((log,"done\n"));
+    if (!idx_skip) {
+        FTRACE((log,"Creating indexes..."));
+        if (strlen(cr_indexes_query)==0)
+            FTRACE((log,"(no indexes in the database)..."));
+        else
+            if (execute_multiquery(&conn,cr_indexes_query,log)!=0)
+                goto imp_error;
+        FTRACE((log,"done\n"));
+    } else {
+        FTRACE((log,"Indices creation skipped (-idx-skip on)\n"));
+    }
 
-    if (check_feature_to_import(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
+    if (!idx_skip && check_feature_to_import(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
         if (ft_search_feature != SEDNA_FEATURE_ENABLED) {
             ETRACE((log,"WARNING: full-text search feature in target Sedna database is disabled.\n"));
         } else {
