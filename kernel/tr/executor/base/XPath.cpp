@@ -386,7 +386,7 @@ string PathExpression::toXPathString() const
         return result;
     }
 
-    return string();
+    return string(".");
 }
 
 namespaces_map PathExpression::getDefinedNamespaces() const
