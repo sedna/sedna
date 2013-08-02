@@ -837,13 +837,14 @@ details.
 \verb!TRANSACTION_READ_ONLY! \verb!(\ro for set, \upd for unset)! - transactions
 are run as \verb!READ-ONLY! when set. When unset, transactions are run as
 \verb!UPDATE!-transactions. By default transactions are run as \verb!UPDATE! -
-transactions.
+transactions (see details on the \verb!SEDNA_ATTR_CONCURRENCY_TYPE! connection
+attribute in the ``Sedna Programmer's guide'').
 
 \verb!LOG_LESS_MODE (\ll for set, \fl for unset)! - when set, every following
 bulkload will be less logged and checkpoint will be made on every commit. When
 unset, every following bulkload will be fully logged. By default transactions
 are run in full log mode. This option should be used with care (see details
-about \verb!SEDNA_LOG_AMOUNT! connection attribute in ``Sedna Programmer's
+on the \verb!SEDNA_LOG_AMOUNT! connection attribute in the ``Sedna Programmer's
 guide'').
 
 \verb!QUERY_TIMEOUT=<time in seconds>! - when set, every query execution will be
@@ -893,9 +894,12 @@ options:
   -verbose on/off     verbose output (default off)
   -host host          hostname of the machine with Sedna running
                       (default localhost)
+  -ro on/off          run export transaction in read-only mode
+                      (default off)
   -port-number port   socket listening port  (default 5050)
   -name name          user name
   -pswd password      user password
+  -idx-skip on/off    skip indices (default off)
    command            export | restore | import
    db-name            database name
    path               path to exported/imported data
@@ -905,6 +909,8 @@ There are three commands to manipulate data with \verb!se_exp!. They are
 \verb!export!, \verb!restore! and \verb!import!. Below we describe each of these
 commands in details.
 
+Option \verb!-idx-skip! is used to skip export (import/restore) of indices.
+Both, value and full-text indices are skipped if this option is turned on.
 
 \subsubsection*{Export}
 
@@ -935,6 +941,14 @@ user names and passwords).
 Exported data created by \verb!se_exp! is transaction consistent, that is,
 updates to the database while \verb!se_exp! is running will not be in the
 exported data.
+
+By default \verb!se_exp export! puts read-lock on the database (all internal
+export utility transactions run in the default \verb!UPDATE! mode). All future
+transactions that execute updates will be blocked until export is finished. To
+prevent such behavior \verb!-ro on! (run all internal export transactions in
+the \verb!READ-ONLY! mode) option can be used (see details on the
+\verb!SEDNA_ATTR_CONCURRENCY_TYPE! connection attribute in the ``Sedna
+Programmer's guide'').
 
 To specify which database server \verb!se_exp! should contact, use the command
 line options \verb!-host host!. The default host is the local host. As Sedna
