@@ -259,11 +259,17 @@ return fn:concat($den_decl,\n\
 
 const char create_ftindexes_query[] = "\
 for $i in doc('$ftindexes')/ftindexes/ftindex\n\
-let $cust := <dummy>{(for $t in $i/template[position() < last()]\n\
-               return fn:concat(\"('\", $t/@element_name, \"' '\", $t/@ft_type, \"'),\"),\n\
-               for $t in $i/template[position() = last()]\n\
-               return fn:concat(\"('\", $t/@element_name, \"' '\", $t/@ft_type, \"')\"))}</dummy>/text()\n\
-return fn:concat(\"CREATE FULL-TEXT INDEX '\", $i/@name,\n\
+let $nl := '&#10;'\n\
+let $den_uri := $i/default-element-namespace/@uri\n\
+let $den_decl := if ($den_uri) then fn:concat(\"declare default element namespace '\", $den_uri, \"';\", $nl) else ()\n\
+let $ns_decls := fn:string-join(for $ns in $i/namespace\n\
+                                return fn:concat(\"declare namespace \", $ns/@prefix, \"='\", $ns/@uri, \"';\"), $nl)\n\
+let $cust := fn:string-join(for $t in $i/template\n\
+                            let $prefix := if (fn:string-length($t/@ns_prefix)) then fn:concat($t/@ns_prefix, ':') else ''\n\
+                            return fn:concat(\"('\", $prefix, $t/@element_name, \"', '\", $t/@ft_type, \"')\"), ', ')\n\
+return fn:concat($den_decl,\n\
+                 $ns_decls, $nl,\n\
+                 \"CREATE FULL-TEXT INDEX '\", $i/@name,\n\
                  \"' ON \", $i/@object_type, \"('\", $i/@object_name, \"')\", \"/\", $i/@on_path,\n\
                  \" TYPE '\", $i/@ft_type, \"'\",\n\
                  if (empty($cust)) then \"\" else fn:concat(\" (\", $cust, \")\"),\n\
