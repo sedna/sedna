@@ -336,7 +336,7 @@ std::string QName::toExpatQName()
         const char * prefix = getPrefix();
 
         if (*prefix != '\0') {
-            oss << getUri() << ">" << prefix << ">" << getLocalName();
+            oss << getUri() << ">" << getLocalName() << ">" << prefix;
         } else {
             oss << getUri() << ">" << getLocalName();
         }
