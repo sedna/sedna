@@ -26,6 +26,7 @@ namespace xpath {
 typedef std::map<std::string, std::string> namespaces_map;
 typedef std::pair<std::string, std::string> namespaces_map_item;
 typedef std::map<std::string, std::string>::iterator namespaces_map_iter;
+typedef std::map<std::string, std::string>::const_iterator namespaces_map_const_iter;
 
 enum Axis
 {

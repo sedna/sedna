@@ -339,7 +339,6 @@ void NodeTest::getDefinedNamespaces(namespaces_map& res) const
 
     if (nsPrefix != NULL && nsUri != NULL) {
         res.insert(namespaces_map_item(std::string(nsPrefix), std::string(nsUri)));
-
     }
 }
 
