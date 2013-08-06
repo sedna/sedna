@@ -245,6 +245,30 @@ get_errors(xptr node,const char* /* title */)
 }
 
 static void
+serialize_namespaces_table(const xpath::namespaces_map& namespaces, const xptr& parent)
+{
+    xptr namespaces_left = XNULL;
+
+    for (xpath::namespaces_map_const_iter iter = namespaces.begin(); iter != namespaces.end(); ++iter) {
+        const char* element_name = "namespace";
+        if (iter->first.empty()){
+            element_name = "default-element-namespace";
+        }
+
+        if (namespaces_left == XNULL) {
+            namespaces_left = insert_element_i(XNULL,XNULL,parent,element_name,xs_untyped,NULL_XMLNS);
+        } else {
+            namespaces_left = insert_element_i(namespaces_left,XNULL,XNULL,element_name,xs_untyped,NULL_XMLNS);
+        }
+
+        if (!iter->first.empty()) {
+            insert_attribute_value(XNULL, namespaces_left, "prefix", iter->first.c_str());
+        }
+        insert_attribute_value(XNULL, namespaces_left, "uri", iter->second.c_str());
+    }
+}
+
+static void
 get_indexes (xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"indexes",xs_untyped,NULL_XMLNS);
@@ -285,26 +309,7 @@ get_indexes (xptr node,const char* /* title */)
         dsc.key->getDefinedNamespaces(namespaces);
         node = insert_attribute_i(node,XNULL,XNULL,"by_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
 
-        xptr namespaces_left = XNULL;
-        const xptr namespaces_parent = left;
-
-        for (xpath::namespaces_map_iter iter = namespaces.begin(); iter != namespaces.end(); ++iter) {
-            const char* element_name = "namespace";
-            if (iter->first.empty()){
-                element_name = "default-element-namespace";
-            }
-
-            if (namespaces_left == XNULL) {
-                namespaces_left = insert_element_i(XNULL,XNULL,namespaces_parent,element_name,xs_untyped,NULL_XMLNS);
-            } else {
-                namespaces_left = insert_element_i(namespaces_left,XNULL,XNULL,element_name,xs_untyped,NULL_XMLNS);
-            }
-
-            if (!iter->first.empty()){
-                insert_attribute_value(XNULL, namespaces_left, "prefix", iter->first.c_str());
-            }
-            insert_attribute_value(XNULL, namespaces_left, "uri", iter->second.c_str());
-        }
+        serialize_namespaces_table(namespaces, left);
     }
 }
 
@@ -372,7 +377,7 @@ static void
 get_ftindexes (xptr node,const char* /* title */)
 {
     xptr parent = insert_element_i(XNULL,XNULL,node,"ftindexes",xs_untyped,NULL_XMLNS);
-    xptr left=XNULL;
+    xptr left = XNULL;
 
     local_lock_mrg->put_lock_on_db();
     ft_index_cell_cptr ic = XNULL;
@@ -383,49 +388,52 @@ get_ftindexes (xptr node,const char* /* title */)
     {
         ic = it.get_object();
 
-        if (left==XNULL)
-        {
+        if (left == XNULL) {
             left = insert_element_i(XNULL,XNULL,parent,"ftindex",xs_untyped,NULL_XMLNS);
-        }
-        else
+        } else {
             left = insert_element_i(left,XNULL,XNULL,"ftindex",xs_untyped,NULL_XMLNS);
+        }
 
-        xptr node= insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic,ic->index_title,strlen(ic->index_title),NULL_XMLNS);
-		node     = insert_attribute_i(node,XNULL,XNULL,"index_type",xs_untypedAtomic,ic->impl_str(),strlen(ic->impl_str()),NULL_XMLNS);
-        node     = insert_attribute_i(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(ic->is_doc)?"document":"collection",(ic->is_doc)?8:10,NULL_XMLNS);
-        node     = insert_attribute_i(node,XNULL,XNULL,"object_name",xs_untypedAtomic,ic->doc_name,strlen(ic->doc_name),NULL_XMLNS);
+        xptr node = insert_attribute_i(XNULL,XNULL,left,"name",xs_untypedAtomic,ic->index_title,strlen(ic->index_title),NULL_XMLNS);
+        node = insert_attribute_i(node,XNULL,XNULL,"index_type",xs_untypedAtomic,ic->impl_str(),strlen(ic->impl_str()),NULL_XMLNS);
+        node = insert_attribute_i(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(ic->is_doc)?"document":"collection",(ic->is_doc)?8:10,NULL_XMLNS);
+        node = insert_attribute_i(node,XNULL,XNULL,"object_name",xs_untypedAtomic,ic->doc_name,strlen(ic->doc_name),NULL_XMLNS);
 
         print_ft_type_name(ic->ftype,buf);
         node = insert_attribute_i(node,XNULL,XNULL,"ft_type",xs_untypedAtomic,buf, strlen(buf),NULL_XMLNS);
 
-        std::string str  = ic->object->toXPathString();
+        std::string str = ic->object->toXPathString();
+        xpath::namespaces_map namespaces = ic->object->getDefinedNamespaces();
         node = insert_attribute_i(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str.c_str(),str.length(),NULL_XMLNS);
 
-		op_str_buf tbuf;
-		ic->write_options_str(&tbuf);
-		if (tbuf.get_size() > 0)
-			node = insert_attribute_i(node,XNULL,XNULL,"options",xs_untypedAtomic,tbuf.c_str(),tbuf.get_size(),NULL_XMLNS);
+        op_str_buf tbuf;
+        ic->write_options_str(&tbuf);
+        if (tbuf.get_size() > 0)
+            node = insert_attribute_i(node,XNULL,XNULL,"options",xs_untypedAtomic,tbuf.c_str(),tbuf.get_size(),NULL_XMLNS);
 
-		xptr cleft = XNULL;
+        xptr cleft = XNULL;
         if (ic->ftype == ft_customized_value && ic->custom_tree != NULL)
         {
             ft_custom_tree_t::sedna_rbtree_entry* cdc=ic->custom_tree->rb_minimum(ic->custom_tree->root);
-            while (cdc!=NULL)
+            while (cdc != NULL)
             {
-                ft_custom_cell* cc=cdc->obj;
-                if (cleft == XNULL)
-                {
+                ft_custom_cell* cc = cdc->obj;
+
+                if (cleft == XNULL) {
                     cleft = insert_element_i(XNULL,XNULL,left,"template",xs_untyped,NULL_XMLNS);
-                }
-                else
+                } else {
                     cleft = insert_element_i(cleft,XNULL,XNULL,"template",xs_untyped,NULL_XMLNS);
+                }
 
-                xptr node =insert_attribute_i(XNULL,XNULL,cleft,"element_name",xs_untypedAtomic,cc->local,strlen(cc->local),NULL_XMLNS);
+                xptr node = insert_attribute_i(XNULL,XNULL,cleft,"element_name",xs_untypedAtomic,cc->local,strlen(cc->local),NULL_XMLNS);
 
-                if (cc->get_xmlns()!=NULL_XMLNS)
+                if (cc->get_xmlns() != NULL_XMLNS)
                 {
-                    node=insert_attribute_i(node,XNULL,XNULL,"ns_prefix",xs_untypedAtomic,cc->get_xmlns()->prefix,strlen(cc->get_xmlns()->prefix),NULL_XMLNS);
-                    node=insert_attribute_i(node,XNULL,XNULL,"ns_uri",xs_untypedAtomic,cc->get_xmlns()->uri,strlen(cc->get_xmlns()->uri),NULL_XMLNS);
+                    const char* nsPrefix = cc->get_xmlns()->prefix;
+                    const char* nsUri = cc->get_xmlns()->uri;
+                    node = insert_attribute_i(node,XNULL,XNULL,"ns_prefix",xs_untypedAtomic,nsPrefix,strlen(nsPrefix),NULL_XMLNS);
+                    node = insert_attribute_i(node,XNULL,XNULL,"ns_uri",xs_untypedAtomic,nsUri,strlen(nsUri),NULL_XMLNS);
+                    namespaces.insert(xpath::namespaces_map_item(std::string(nsPrefix), std::string(nsUri)));
                 }
 
                 print_ft_type_name(cc->cm,buf);
@@ -434,7 +442,9 @@ get_ftindexes (xptr node,const char* /* title */)
             }
         }
 
-		ic->serialize_info(cleft, left);
+        ic->serialize_info(cleft, left);
+
+        serialize_namespaces_table(namespaces, left);
     }
 }
 #endif /* SE_ENABLE_FTSEARCH */
