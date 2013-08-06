@@ -17,7 +17,6 @@
 #include "tr/log/log.h"
 #include "tr/structures/schema.h"
 #include "tr/executor/fo/casting_operations.h"
-//#include "indexes.h"
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/btree/btree.h"
 #include "tr/cat/catstore.h"
@@ -100,7 +99,6 @@ void ft_index_cell_object::serialize_data(se_simplestream &stream)
             stream.write(&tmp->obj->cm, sizeof(ft_index_type));
             std::string qname = tmp->obj->getQName().toExpatQName();
             stream.write_string(qname.c_str());
-
             tmp = custom_tree->rb_successor(tmp);
         }
     }
