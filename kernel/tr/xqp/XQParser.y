@@ -3253,6 +3253,10 @@ createExpr:
         {
             $$ = new ASTCreateFtIndex(@$, $4, $6, $8, NULL, $11);
         }
+    |   CREATE FULLTEXT INDEX exprSingle ON pathExpr TYPE StringLiteral expr WITH OPTIONS exprSingle
+        {
+            $$ = new ASTCreateFtIndex(@$, $4, $6, $8, $9, $12);
+        }
     |   CREATE FULLTEXT INDEX exprSingle ON pathExpr TYPE StringLiteral expr
         {
             $$ = new ASTCreateFtIndex(@$, $4, $6, $8, $9);
