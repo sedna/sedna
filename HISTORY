@@ -3,25 +3,59 @@
                         Changes Log & Release Notes
 
 =============================================================================
+Release 3.6
+Release date: ?
+=============================================================================
+
+   - Java driver:
+         * set query execution timeout,
+         * result interception API (Sedna Programmer's Guide,
+           section 1.1.4 Results)
+   - New functions:
+         * fn:index-keys($title) - returns all distinct index keys (Sedna
+           Programmer's Guide, section 2.2.2 Value Indices Functions),
+         * fn:doc-available($doc, $col) - checks if the document is available
+           in the collection (Sedna Programmer's Guide, section 2.5.2 Managing
+           Collections),
+         * hash functions: sha1, sha2 (256, 512, 384, 224), md5 (Sedna
+           Programmer's Guide, section 2.2.7 General Hashing Functions)
+   - Export/import utility:
+     (Sedna Administration Guide, section 2.5.1 Export/Import Utility)
+         * export read-only mode support (do not lock database while export is
+           running),
+         * ignore indices option (do not export/import value and full-text
+           indices).
+
+   - Bug fixes, small improvements and performance optimizations, including:
+     stack traceback for the query execution runtime errors, se_exp fixed to
+     export/import correctly indices with namespaces, etc.
+
+   Important note:
+
+   Databases created with previous versions of Sedna will not work properly
+   with Sedna 3.6. Please, use Sedna import/export utility to migrate your
+   data to Sedna 3.6 (see Sedna Administration Guide, section 2.5.1).
+
+=============================================================================
 Release 3.5
 Release date: 2011-11-28
 =============================================================================
 
    - Native implementation of full-text indices. Now dtSearch is not
      necessary to create and query full-text indices. For details refer to
-	 the Sedna Programmer's Guide, Managing Full-Text Indices section.
+     the Sedna Programmer's Guide, Managing Full-Text Indices section.
    - CDATA section formatting is now saved for text nodes in direct element
      constructors and can be saved during bulk load using special option:
 
-		 declare option se:bulk-load "cdata-section-preserve=yes";
+         declare option se:bulk-load "cdata-section-preserve=yes";
 
-	 (see Sedna Programmer's Guide, section Bulk Load for further details)
+     (see Sedna Programmer's Guide, section Bulk Load for further details)
    - XQuery serialization output option 'cdata-section-elements' is now
      supported. It specifies list of elements names. Content of these
-	 elementsis serialized wrapped in CDATA.
+     elementsis serialized wrapped in CDATA.
    - New 'listen-address' Sedna server option. This option specifies an
      address that Sedna server will accept clients connections on. It can be
-	 specified as IP numeric value or host name.
+     specified as IP numeric value or host name.
 
      NOTE: the default value for this option is localhost and it makes Sedna
      operate NOT in the same way it did before. Check Administration Guide,
@@ -47,8 +81,8 @@ Release date: 2010-09-24
      supported platforms.
    - CMake cross-platform, open-source build system is now used to build
      Sedna on all supported platforms (e.g. Visual Studio project can be
-	 generated on Windows). See INSTALL file for details on configuration
-	 and installation process.
+     generated on Windows). See INSTALL file for details on configuration
+     and installation process.
    - libedit support on FreeBSD: Sedna Terminal (se_term) on FreeBSD is now
      enhanced with auto-completion, history and advanced editing facilities.
    - Storage Manager IO optimization: significant increase of bulk load
@@ -57,11 +91,11 @@ Release date: 2010-09-24
      disk space.
    - Reduced log mode (LOG_LESS_MODE) behaviour changed: transaction enters
      exclusive mode (there are no other concurrent transactions possible)
-	 when log-less mode is turned on. For details refer to the Programmer's
-	 Guide, C API LOG_LESS_MODE connection option description.
+     when log-less mode is turned on. For details refer to the Programmer's
+     Guide, C API LOG_LESS_MODE connection option description.
    - Sedna C library naming scheme changed on Unix-like platforms. There are
      three versions of library are available now: libsedna.so (dynamic),
-	 libsedna.a (static), libsedna_pic.a (static with PIC enabled).
+     libsedna.a (static), libsedna_pic.a (static with PIC enabled).
    - System document $modules returned. It can be used to list names of all
      available modules.
    - Linux kernel 2.4 support dropped.
