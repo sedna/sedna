@@ -15,20 +15,23 @@
 
 using namespace std;
 
-typedef map<string, DigestFactory*> factory_map;
+template<typename T> Digest * createInstance() { return new T; }
 
-static factory_map initialize_factories_map() {
+typedef map<string, Digest*(*)()> factory_map;
+
+static factory_map create_map()
+{
     factory_map m;
-    m[MD5_DIGEST_NAME] = new DigestFactoryImpl<Md5>();
-    m[SHA1_DIGEST_NAME] = new DigestFactoryImpl<Sha1>();
-    m[SHA256_DIGEST_NAME] = new DigestFactoryImpl<Sha256>();
-    m[SHA224_DIGEST_NAME] = new DigestFactoryImpl<Sha224>();
-    m[SHA512_DIGEST_NAME] = new DigestFactoryImpl<Sha512>();
-    m[SHA384_DIGEST_NAME] = new DigestFactoryImpl<Sha384>();
+    m[MD5_DIGEST_NAME] = &createInstance<Md5>;
+    m[SHA1_DIGEST_NAME] = &createInstance<Sha1>;
+    m[SHA256_DIGEST_NAME] = &createInstance<Sha256>;
+    m[SHA224_DIGEST_NAME] = &createInstance<Sha224>;
+    m[SHA384_DIGEST_NAME] = &createInstance<Sha384>;
+    m[SHA512_DIGEST_NAME] = &createInstance<Sha512>;
     return m;
 }
 
-static const factory_map factories = initialize_factories_map();
+factory_map factories = create_map();
 
 Digest* Digest::create(const char* name)
 {
@@ -36,6 +39,6 @@ Digest* Digest::create(const char* name)
     if (pos == factories.end()) {
         return NULL;
     } else {
-        return pos->second->create();
+        return pos->second();
     }
 }
