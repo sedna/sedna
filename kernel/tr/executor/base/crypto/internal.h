@@ -38,19 +38,4 @@ class DigestImpl: public Digest
         }
 };
 
-class DigestFactory
-{
-    public:
-        virtual Digest* create() const = 0;
-};
-
-template < typename T >
-class DigestFactoryImpl: public DigestFactory
-{
-    public:
-        virtual Digest* create() const {
-            return new T();
-        }
-};
-
 #endif /* ! __CRYPTO_SUPPORT_H */
