@@ -272,5 +272,5 @@ return fn:concat($den_decl,\n\
                  \"CREATE FULL-TEXT INDEX '\", $i/@name,\n\
                  \"' ON \", $i/@object_type, \"('\", $i/@object_name, \"')\", \"/\", $i/@on_path,\n\
                  \" TYPE '\", $i/@ft_type, \"'\",\n\
-                 if (empty($cust)) then \"\" else fn:concat(\" (\", $cust, \")\"),\n\
+                 if ($cust=\"\") then \"\" else fn:concat(\" (\", $cust, \")\"),\n\
                  \" WITH OPTIONS '\", $i/@options, \"'\")";
