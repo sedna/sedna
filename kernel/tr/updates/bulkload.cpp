@@ -271,7 +271,7 @@ class SchemaParser : public IElementProducer {
         parent(_parent), level(0), nextChildNamespaceCount(0), schemaNode(_schemaNode),
         textCount(0), commentCount(0), piCount(0), count(0)
     {
-        parent->nodeStatistics.push_back(0);
+        parent->nodeStatistics.push_back(1);
     }
 
     SchemaParser(SchemaParser * _parentParser, schema_node_cptr _schemaNode) :
@@ -312,7 +312,7 @@ class SchemaParser : public IElementProducer {
                     result->schemaNode->add_child(NULL_XMLNS, NULL, xml_namespace);
                 }
 
-                count += nextChildNamespaceCount;
+                result->count += nextChildNamespaceCount;
                 nextChildNamespaceCount = 0;
             }
 
