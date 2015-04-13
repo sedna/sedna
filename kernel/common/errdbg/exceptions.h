@@ -424,11 +424,11 @@ inline SednaUserException __user_exception2(const char *file, const char *func, 
                             details)), 
             SednaUserException(file, func, line, details, code)); }
 
-inline SednaUserExceptionFnError __user_exception_fnerror(const char *file, const char *func, int line, const char *err_name, const char* err_descr) {
+inline SednaUserExceptionFnError __user_exception_fnerror(const char *file, const char *func, int line, const char *err_msg, const char *err_name, const char* err_descr) {
     return (elog(EL_ERROR, ("(%s) %s", 
                             err_name, 
                             err_descr)), 
-            SednaUserExceptionFnError(file, func, line, err_name, err_descr)); }
+            SednaUserExceptionFnError(file, func, line, err_msg, err_name, err_descr)); }
 
 inline SednaUserEnvException __user_env_exception(const char *file, const char *func, int line, const char *msg, bool rollback) {
     return (elog(EL_ERROR, ("(%s) %s Details: %s", 
