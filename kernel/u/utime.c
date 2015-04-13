@@ -12,15 +12,29 @@
 #include <time.h> 
 #endif
 
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
 ex_time_t uGetTime()
 {
 #ifdef _WIN32
     U_ASSERT(false);
 #else
-    clock_t timer;
-    struct timespec t;
-    clock_gettime(CLOCK_REALTIME, &t);
-    return (t.tv_sec + t.tv_nsec / 1000000) / (60*60*24);
+    struct timespec ts;
+#ifdef __MACH__ // OS X does not have clock_gettime, so using clock_get_time
+    clock_serv_t cclock;
+    mach_timespec_t mts;
+    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+    clock_get_time(cclock, &mts);
+    mach_port_deallocate(mach_task_self(), cclock);
+    ts.tv_sec = mts.tv_sec;
+    ts.tv_nsec = mts.tv_nsec;
+#else
+    clock_gettime(CLOCK_REALTIME, &ts);
+#endif
+    return (ts.tv_sec + ts.tv_nsec / 1000000) / (60*60*24);
 #endif
 }
 
@@ -78,4 +92,3 @@ utm getLocalTime()
 }
 
 #endif /* _UTIME_H */
-
