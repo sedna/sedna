@@ -1,6 +1,22 @@
+# check for FlexLexer.h
+if (NOT USING_PREGEN_LEXER)
+    find_path(FLEXLEXER_PATH "FlexLexer.h")
+endif (NOT USING_PREGEN_LEXER)
+
+# if we haven't found FlexLexer.h or we are using our own lexer files, use our
+# own FlexLexer.h as well
+if (NOT FLEXLEXER_PATH)
+    message(STATUS "FlexLexer.h file is not found or isn't needed -- using the
+        one from ${CMAKE_SOURCE_DIR}/libs/compat/flex")
+    include_directories(${CMAKE_SOURCE_DIR}/libs/compat/flex)
+else (NOT FLEXLEXER_PATH)
+    message(STATUS "Found FlexLexer.h in -- ${FLEXLEXER_PATH}")
+    include_directories(BEFORE ${FLEXLEXER_PATH})
+endif (NOT FLEXLEXER_PATH)
+
 # additional sub-libraries
 # set(lib_SUBDIRS xqp auth cat executor crmutils idx locks log mo nid pstr rcv strings structures updates vmm bstrie btree)
-set(lib_SUBDIRS vmm nid pstr strings log xqp mo structures cat executor crmutils btree bstrie)
+set(lib_SUBDIRS xqp vmm nid pstr strings log mo structures cat executor crmutils btree bstrie)
 
 # add ftsearch
 # if (ENABLE_FTSEARCH)
@@ -20,9 +36,9 @@ set(lib_SUBDIRS vmm nid pstr strings log xqp mo structures cat executor crmutils
 #     list(APPEND lib_SUBDIRS triggers)
 # endif (ENABLE_TRIGGERS)
 # 
-# # additional include directories for xqp relative paths
-# include_directories(${CMAKE_CURRENT_BINARY_DIR}/xqp) # because we use relative paths to generated files there
-# include_directories(${CMAKE_CURRENT_SOURCE_DIR}/xqp) # because we use relative paths there
+# additional include directories for xqp relative paths
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/xqp) # because we use relative paths to generated files there
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/xqp) # because we use relative paths there
 
 # dtsearch paths and definitions
 # if (ENABLE_DTSEARCH)
@@ -41,21 +57,6 @@ foreach (SUB ${lib_SUBDIRS})
     ADD_SUBFOLDER_SRC(trn_SRC ${SUB})
 endforeach (SUB ${lib_SUBDIRS})
 SET_SOURCES(trn_SRC 1)
-
-# check for FlexLexer.h
-# if (NOT USING_PREGEN_LEXER)
-#     find_path(FLEXLEXER_PATH "FlexLexer.h")
-# endif (NOT USING_PREGEN_LEXER)
-
-# if we haven't found FlexLexer.h or we are using our own lexer files, use our
-# own FlexLexer.h as well
-# if (NOT FLEXLEXER_PATH)
-#     message(STATUS "FlexLexer.h file is not found or isn't needed -- using the
-#         one from ${CMAKE_SOURCE_DIR}/libs/compat/flex")
-#     include_directories(${CMAKE_SOURCE_DIR}/libs/compat/flex)
-# else (NOT FLEXLEXER_PATH)
-#     message(STATUS "Found FlexLexer.h in -- ${FLEXLEXER_PATH}")
-# endif (NOT FLEXLEXER_PATH)
 
 # libraries to link
 set(common_libs common expat pcre ${sysaux_LIB})

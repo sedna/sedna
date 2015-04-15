@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 #include "common/errdbg/event_log.h"
-#include "common/errdbg/error_codes.h"
+//#include "common/errdbg/error_codes.h" //TODO: should it really be here? If yes, need to fix build sequence
 #include "common/errdbg/errors.h"
 
 #ifdef __cplusplus

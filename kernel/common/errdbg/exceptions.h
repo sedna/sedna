@@ -389,7 +389,7 @@ void sedna_soft_fault(const char* s, int  component);
 
 #ifdef    USER_EXCEPTION_FNERROR
 #undef    USER_EXCEPTION_FNERROR
-#define   USER_EXCEPTION_FNERROR(err_name, err_descr) __user_exception_fnerror(__FILE__, __SE_FUNCTION__, __LINE__, err_name, err_descr)
+#define   USER_EXCEPTION_FNERROR(err_name, err_descr) __user_exception_fnerror(__FILE__, __SE_FUNCTION__, __LINE__, err_msg, err_name, err_descr)
 #endif /* USER_EXCEPTION_FNERROR */
 
 #ifdef    USER_ENV_EXCEPTION
