@@ -108,11 +108,11 @@ void PPFnError::do_next (tuple &t)
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
     }
 
-
+    const char *err_msg = "Sedna user exception"; // NOTE: not sure TODO: form correct err_msg
     const char *err_name = err_name_tc.is_eos() ? "FOER0000" : err_name_tc.get_xs_qname().getLocalName();
     const char *err_descr = err_descr_tc.is_eos() ? NULL : err_descr_tc.get_str_mem();
 
-    throw USER_EXCEPTION_FNERROR(err_name, err_descr);
+    throw USER_EXCEPTION_FNERROR(err_msg, err_name, err_descr);
 }
 
 PPIterator* PPFnError::do_copy(dynamic_context *_cxt_)
