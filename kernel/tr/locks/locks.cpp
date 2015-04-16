@@ -6,12 +6,13 @@
 #include "common/sedna.h"
 #include <string>
 #include <string.h>
+#include <common/xptr/sm_vmm_data.h>
 
 #include "tr/vmm/vmm.h"
 #include "tr/locks/locks.h"
-#include "common/lm_base.h"
-#include "common/utils.h"
-#include "common/SSMMsg.h"
+#include "common/lockmantypes.h"
+//#include "common/utils.h" // TODO: why do we need it
+#include "common/ssmmsg/SSMMsg.h"
 #include "tr/tr_globals.h"
 #include "common/errdbg/d_printf.h"
 #include "tr/tr_common_funcs.h"
@@ -100,6 +101,27 @@ static char getCharFromResource(resource_kind kind)
     return c;
 }
 
+// This needed for debug purposes only (elog).
+static const char *lock_mode_legend(lock_mode mode) {
+    switch (mode)
+    {
+        case NULL_LOCK:
+            return "Null lock";
+        case lm_s:
+            return "Shared (lm_s)";
+        case lm_x:
+            return "Exclusive (lm_x)";
+        case lm_is:
+            return "Intention shared (lm_is)";
+        case lm_ix:
+            return "Intention exclusive (lm_ix)";
+        case lm_six:
+            return "Shared and intention exclusive (lm_six)";
+        default:
+            throw SYSTEM_EXCEPTION("Unexpected lock mode");
+    }
+};
+
 void LocalLockMgr::Init_LocalLockMgr(SSMMsg* _sm_server_)
 {
     sm_server = _sm_server_;
@@ -114,7 +136,7 @@ void LocalLockMgr::put_lock_on_document(const char *name)
     if (strlen(name) > (MAX_RESOURCE_NAME_LENGTH - 1))
         throw USER_EXCEPTION(SE4702);
 
-    obtain_lock(tr_globals::db_name, LM_DATABASE, true);
+    obtain_lock(tr_globals::databaseOptions.databaseName.c_str(), LM_DATABASE, true);
     obtain_lock(name, LM_DOCUMENT);
 }
 
@@ -123,7 +145,7 @@ void LocalLockMgr::put_lock_on_collection(const char *name)
     if (strlen(name) > (MAX_RESOURCE_NAME_LENGTH - 1))
         throw USER_EXCEPTION(SE4702);
 
-    obtain_lock(tr_globals::db_name, LM_DATABASE, true);
+    obtain_lock(tr_globals::databaseOptions.databaseName.c_str(), LM_DATABASE, true);
     obtain_lock(name, LM_COLLECTION);
 }
 
@@ -132,7 +154,7 @@ void LocalLockMgr::put_lock_on_index(const char *name)
     if (strlen(name) > (MAX_RESOURCE_NAME_LENGTH - 1))
         throw USER_EXCEPTION(SE4702);
 
-    obtain_lock(tr_globals::db_name, LM_DATABASE, true);
+    obtain_lock(tr_globals::databaseOptions.databaseName.c_str(), LM_DATABASE, true);
     obtain_lock(name, LM_INDEX);
 }
 
@@ -141,16 +163,16 @@ void LocalLockMgr::put_lock_on_trigger(const char *name)
     if (strlen(name) > (MAX_RESOURCE_NAME_LENGTH - 1))
         throw USER_EXCEPTION(SE4702);
 
-    obtain_lock(tr_globals::db_name, LM_DATABASE, true);
+    obtain_lock(tr_globals::databaseOptions.databaseName.c_str(), LM_DATABASE, true);
     obtain_lock(name, LM_TRIGGER);
 }
 
 void LocalLockMgr::put_lock_on_db()
 {
-    if (strlen(tr_globals::db_name) > (MAX_RESOURCE_NAME_LENGTH - 1))
+    if (tr_globals::databaseOptions.databaseName.length() > (MAX_RESOURCE_NAME_LENGTH - 1))
         throw USER_EXCEPTION(SE4702);
 
-    obtain_lock(tr_globals::db_name, LM_DATABASE);
+    obtain_lock(tr_globals::databaseOptions.databaseName.c_str(), LM_DATABASE);
 }
 
 void LocalLockMgr::obtain_lock(const char* name, resource_kind kind,
@@ -164,29 +186,28 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind,
 
     sm_msg_struct msg;
 
-    msg.cmd = 3;
+    msg.cmd = msg_lock_object;
     msg.trid = tr_globals::trid;
     msg.sid = tr_globals::sid;
 
-    if (intention_mode == false)
-        msg.data.data[0] = ((mode == lm_s) ? 's' : 'x');
-    else
-        msg.data.data[0] = ((mode == lm_s) ? 'r' : 'w'); //'r' intention read; 'w' intention write
+// NOTE: TODO: need to check that code using locks doesn't rely on previous version assumptions
+//             (that "intention" has more priority than the real lock mode)
+    msg.data.lock.mode = mode;
+    msg.data.lock.rkind = kind;
 
-    msg.data.data[1] = getCharFromResource(kind);
-
-    strcpy((msg.data.data) + 2, name);
+    strcpy(msg.data.lock.name, name);
 
     if (sm_server->send_msg(&msg) != 0)
         throw USER_EXCEPTION(SE3034);
 
-    int result = msg.data.data[0];
-    if (intention_mode == false)
-        elog(EL_DBG, ("[LTRK] Going to lock '%s' (%c) with mode=%c, result is %d", name, msg.data.data[1], ((mode == 1) ? 's': 'x'), result));
-    else
-        elog(EL_DBG, ("[LTRK] Going to lock '%s' (%c) with intention mode=%s, result is %d", name, msg.data.data[1], ((mode == 1) ? "is" : "ix"), result));
+    int result = msg.data.lock.result;
+    elog(EL_DBG, ("[LTRK] Going to lock '%s' (%c) with mode=%d, result is %d",
+            name,
+            getCharFromResource(kind),
+            lock_mode_legend(mode),
+            result));
 
-    switch (msg.data.data[0])
+    switch (result)
     {
         case '0':
         {
@@ -214,16 +235,15 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind,
             throw USER_EXCEPTION(SE4703);
         default:
         {
-            d_printf2("Unknown reply from Lock Manager: %c\n", msg.data.data[0]);
+            d_printf2("Unknown reply from Lock Manager: %c\n", result);
             throw USER_EXCEPTION(SE4704);
             break;
         }
     }
-    if (intention_mode == false)
-        elog(EL_DBG, ("[LTRK] Resource '%s' (%c) has been locked with mode=%c.", name, msg.data.data[1], ((mode == 1) ? 's': 'x')));
-    else
-        elog(EL_DBG, ("[LTRK] Resource '%s' (%c) has been locked with intention mode=%s.", name, msg.data.data[1], ((mode == 1) ? "is" : "ix")));
-
+    elog(EL_DBG, ("[LTRK] Resource '%s' (%c) has been locked with mode=%c.",
+            name,
+            getCharFromResource(msg.data.lock.rkind),
+            lock_mode_legend(mode)));
 }
 
 void LocalLockMgr::release()
@@ -232,7 +252,7 @@ void LocalLockMgr::release()
         return; // we don't need to release any locks for ro-transaction
 
     sm_msg_struct msg;
-    msg.cmd = 4;
+    msg.cmd = msg_release_locks;
     msg.trid = tr_globals::trid;
 
     if (sm_server->send_msg(&msg) != 0)
@@ -247,15 +267,15 @@ void LocalLockMgr::release_resource(const char* name, resource_kind kind)
         return; // we don't need to release any locks for ro-transaction
 
     sm_msg_struct msg;
-    msg.cmd = 5;
+    msg.cmd = msg_unlock_object;
     msg.trid = tr_globals::trid;
 
-    msg.data.data[1] = getCharFromResource(kind);
+    msg.data.lock.rkind = kind;
 
-    strcpy((msg.data.data) + 2, name);
+    strcpy(msg.data.lock.name, name);
 
     if (sm_server->send_msg(&msg) != 0)
         throw USER_EXCEPTION(SE3034);
 
-    elog(EL_DBG, ("[LTRK] Resource '%s' (%c) has been released.", name, msg.data.data[1]));
+    elog(EL_DBG, ("[LTRK] Resource '%s' (%c) has been released.", name, getCharFromResource(kind)));
 }
