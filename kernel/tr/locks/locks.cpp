@@ -102,7 +102,7 @@ static char getCharFromResource(resource_kind kind)
 }
 
 // This needed for debug purposes only (elog).
-static const char *lock_mode_legend(lock_mode mode) {
+static const char *getNameFromLockMode(lock_mode mode) {
     switch (mode)
     {
         case NULL_LOCK:
@@ -204,7 +204,7 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind,
     elog(EL_DBG, ("[LTRK] Going to lock '%s' (%c) with mode=%d, result is %d",
             name,
             getCharFromResource(kind),
-            lock_mode_legend(mode),
+            getNameFromLockMode(mode),
             result));
 
     switch (result)
@@ -243,7 +243,7 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind,
     elog(EL_DBG, ("[LTRK] Resource '%s' (%c) has been locked with mode=%c.",
             name,
             getCharFromResource(msg.data.lock.rkind),
-            lock_mode_legend(mode)));
+            getNameFromLockMode(mode)));
 }
 
 void LocalLockMgr::release()
