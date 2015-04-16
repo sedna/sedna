@@ -9,6 +9,7 @@
  *
  */
 
+#include "common/sedna.h"
 #include "common/llcommon/llMain.h"
 #include "tr/rcv/logican.h"
 

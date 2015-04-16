@@ -1,8 +1,6 @@
 #ifndef __RCV_TEST_TR_H__
 #define __RCV_TEST_TR_H__
 
-#include "common/rcv_test.h"
-
 #ifdef RCV_TEST_CRASH
 #define TEST_AFTER_RCV
 #endif

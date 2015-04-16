@@ -8,7 +8,7 @@
  */
 
 #include "tr/updates/updates.h"
-#include "common/XptrHash.h"
+#include "common/xptr/XptrHash.h"
 
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
@@ -34,7 +34,6 @@
 #include "tr/ft/ft_index_data.h"
 #endif
 
-#include "common/tr_debug.h"
 #include "tr/executor/base/XPath.h"
 #include "tr/idx/indecies.h"
 

@@ -16,8 +16,8 @@ endif (NOT FLEXLEXER_PATH)
 
 # additional sub-libraries
 # set(lib_SUBDIRS xqp auth cat executor crmutils idx locks log mo nid pstr rcv strings structures updates vmm bstrie btree)
-# set(lib_SUBDIRS  locks rcv updates)
-set(lib_SUBDIRS xqp vmm nid pstr strings log mo structures cat executor crmutils btree bstrie auth idx locks)
+# set(lib_SUBDIRS  rcv updates)
+set(lib_SUBDIRS xqp vmm nid pstr strings log mo structures cat executor crmutils btree bstrie auth idx locks rcv)
 
 # add ftsearch
 # if (ENABLE_FTSEARCH)
