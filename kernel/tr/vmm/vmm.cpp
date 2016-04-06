@@ -183,43 +183,77 @@ void vmm_preliminary_call(lsize_t layer_size)
 
     global_memory_mapping = get_global_memory_mapping();
 
-    if (__vmm_check_region(layer_size, &LAYER_ADDRESS_SPACE_START_ADDR,
-            &LAYER_ADDRESS_SPACE_SIZE, false, NULL) != 1)
-        throw SYSTEM_ENV_EXCEPTION("Cannot map vmm region in transaction!");
+	//TODO: incase of windows try reservation 5 times
+	#ifdef _WIN32
+	int current_retry = 0;
+	bool map_error = false;
+    while (true) {	
+	#endif
+		if (__vmm_check_region(layer_size, &LAYER_ADDRESS_SPACE_START_ADDR,
+				&LAYER_ADDRESS_SPACE_SIZE, false, NULL) != 1)
+			throw SYSTEM_ENV_EXCEPTION("Cannot map vmm region in transaction!");
 
-    /*
-     * At this point we have reserved the whole layer on Linux, but have it
-     * freed on Windows.
-     *
-     * There is a chance that kernel will load some library between unmap
-     * and map-of-null-pages calls. So these are "solutions":
-     *
-     * On Linux we can employ mmap-over-mmap technique, which seems to be
-     * supported on most platforms.
-     *
-     * For Windows, however, it seems impossible since we cannot do MapViewOfFile
-     * over reserved memory. We could try to postpone VirtualFree until later,
-     * but we perhaps will gain nothing, since we do null-page remapping only
-     * several instructions later. Another idea is to do VirtualFree-MapViewOfFile
-     * calls with page granularity instead of the whole layer.
-     */
-    U_ASSERT(LAYER_ADDRESS_SPACE_SIZE == layer_size);
+		/*
+		 * At this point we have reserved the whole layer on Linux, but have it
+		 * freed on Windows.
+		 *
+		 * There is a chance that kernel will load some library between unmap
+		 * and map-of-null-pages calls. So these are "solutions":
+		 *
+		 * On Linux we can employ mmap-over-mmap technique, which seems to be
+		 * supported on most platforms.
+		 *
+		 * For Windows, however, it seems impossible since we cannot do MapViewOfFile
+		 * over reserved memory. We could try to postpone VirtualFree until later,
+		 * but we perhaps will gain nothing, since we do null-page remapping only
+		 * several instructions later. Another idea is to do VirtualFree-MapViewOfFile
+		 * calls with page granularity instead of the whole layer.
+		 */
+		U_ASSERT(LAYER_ADDRESS_SPACE_SIZE == layer_size);
 
-    LAYER_ADDRESS_SPACE_START_ADDR_INT = (uintptr_t)LAYER_ADDRESS_SPACE_START_ADDR;
-    LAYER_ADDRESS_SPACE_BOUNDARY_INT = LAYER_ADDRESS_SPACE_START_ADDR_INT + layer_size;
-    LAYER_ADDRESS_SPACE_BOUNDARY = (void *)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+		LAYER_ADDRESS_SPACE_START_ADDR_INT = (uintptr_t)LAYER_ADDRESS_SPACE_START_ADDR;
+		LAYER_ADDRESS_SPACE_BOUNDARY_INT = LAYER_ADDRESS_SPACE_START_ADDR_INT + layer_size;
+		LAYER_ADDRESS_SPACE_BOUNDARY = (void *)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
 
-    mapped_pages = new bit_set(LAYER_ADDRESS_SPACE_SIZE / PAGE_SIZE); // constructor zeroes it
-    mtrBlocks = new bit_set(LAYER_ADDRESS_SPACE_SIZE / PAGE_SIZE); // constructor zeroes it
+		mapped_pages = new bit_set(LAYER_ADDRESS_SPACE_SIZE / PAGE_SIZE); // constructor zeroes it
+		mtrBlocks = new bit_set(LAYER_ADDRESS_SPACE_SIZE / PAGE_SIZE); // constructor zeroes it
 
-    uintptr_t cur;
-    for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT;
-        cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-        cur += (uint32_t)PAGE_SIZE)
-    {
-        if (_uvmm_map((void*)cur, 0, &global_memory_mapping, access_null) == -1)
-            throw USER_EXCEPTION(SE1031);
-    }
+		uintptr_t cur;	
+		for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT;
+			cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+			cur += (uint32_t)PAGE_SIZE)
+		{
+			if (_uvmm_map((void*)cur, 0, &global_memory_mapping, access_null) == -1) 
+			{
+				//throw USER_EXCEPTION(SE1031);
+				map_error = true
+				break;
+			}
+		}
+	
+	
+	#ifdef _WIN32
+		++current_retry;
+		if (map_error == true && current_retry < 5) {		    
+		    uintptr_t curend = cur - (uint32_t)PAGE_SIZE;	
+			for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT;
+				cur < curend;
+				cur += (uint32_t)PAGE_SIZE)
+			{
+				_uvmm_unmap((void*)cur);
+			}
+		   
+		    elog(EL_ERROR, ("MapViewOfFileEx failed retry d%", current_retry));
+            continue;
+        }	
+		else if (map_error == true && current_retry >= 5) {
+		   throw USER_EXCEPTION(SE1031);		
+		}
+						
+		break;
+	}
+	#endif	
+
 
     elog(EL_DBG,  ("preliminary call: layer address space start addr = 0x%"PRIXPTR, LAYER_ADDRESS_SPACE_START_ADDR_INT));
     elog(EL_DBG,  ("preliminary call: layer address space size = 0x%x", LAYER_ADDRESS_SPACE_SIZE));
