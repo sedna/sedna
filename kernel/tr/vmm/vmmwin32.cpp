@@ -45,9 +45,9 @@ int _uvmm_map(void *addr, ramoffs offs, UShMem * mapping, enum vmm_map_protectio
     );
 
     if (res == NULL) {
-        elog(EL_ERROR, ("MapViewOfFileEx failed, address = 0x%"PRIXPTR, (uintptr_t)addr));
+        elog(EL_DBG, ("MapViewOfFileEx failed, address = 0x%"PRIXPTR, (uintptr_t)addr));
         d_printf1("MapViewOfFileEx failed\n");
-        elog(EL_ERROR, ("Error %d; addr = 0x%"PRIXPTR, GetLastError(), (uintptr_t)(addr));
+        d_printf3("Error %d; addr = 0x%"PRIXPTR"\n", GetLastError(), (uintptr_t)(addr));
         return -1;
     }
 
@@ -61,7 +61,7 @@ int _uvmm_unmap(void *addr)
 
 int __vmm_check_region(lsize_t cur, void ** res_addr, lsize_t * segment_size,
         bool log, FILE * logfile)
-{	
+{
     *res_addr = VirtualAlloc(
         NULL,                      // system determines where to allocate the region
         cur + (uint32_t)PAGE_SIZE, // additional PAGE is used to perform aligning afterwards
