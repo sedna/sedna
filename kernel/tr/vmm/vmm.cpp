@@ -179,18 +179,16 @@ inline static void vmm_swap_unmap_unconditional(const xptr p) {
  */
 void vmm_preliminary_call(lsize_t layer_size)
 {
-    open_global_memory_mapping(SE4400);
+	int current_retry = 1;
+
+	open_global_memory_mapping(SE4400);
 
     global_memory_mapping = get_global_memory_mapping();
 
-	//TODO: incase of windows try reservation 5 times
-	#ifdef _WIN32
-	int current_retry = 0;
-	bool map_error = false;
-    while (true) {	
-	#endif
+	while (true) {
+
 		if (__vmm_check_region(layer_size, &LAYER_ADDRESS_SPACE_START_ADDR,
-				&LAYER_ADDRESS_SPACE_SIZE, false, NULL) != 1)
+			&LAYER_ADDRESS_SPACE_SIZE, false, NULL) != 1)
 			throw SYSTEM_ENV_EXCEPTION("Cannot map vmm region in transaction!");
 
 		/*
@@ -208,6 +206,15 @@ void vmm_preliminary_call(lsize_t layer_size)
 		 * but we perhaps will gain nothing, since we do null-page remapping only
 		 * several instructions later. Another idea is to do VirtualFree-MapViewOfFile
 		 * calls with page granularity instead of the whole layer.
+		 *
+		 * Update (April 7th 2016):
+		 * With Windows 10 the above is indeed an issue. Some of the time it works, some 
+		 * times it don't. Resulted in random behaviour for succesfull transactions.
+		 * It results in a ERROR_INVALID_ADDRESS error on the MapViewOfFileEx call.
+		 * 
+		 * The solution is an retry loop. Tests show that 1 retry is enough to recover 
+		 * from the ERROR_INVALID_ADDRESS error.(patch provided by Ivan Shcheklein).
+		 * 
 		 */
 		U_ASSERT(LAYER_ADDRESS_SPACE_SIZE == layer_size);
 
@@ -218,44 +225,46 @@ void vmm_preliminary_call(lsize_t layer_size)
 		mapped_pages = new bit_set(LAYER_ADDRESS_SPACE_SIZE / PAGE_SIZE); // constructor zeroes it
 		mtrBlocks = new bit_set(LAYER_ADDRESS_SPACE_SIZE / PAGE_SIZE); // constructor zeroes it
 
-		uintptr_t cur;	
+		uintptr_t cur;
+		bool success = true;
 		for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT;
 			cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
 			cur += (uint32_t)PAGE_SIZE)
 		{
-			if (_uvmm_map((void*)cur, 0, &global_memory_mapping, access_null) == -1) 
+			if (_uvmm_map((void*)cur, 0, &global_memory_mapping, access_null) == -1)
 			{
-				//throw USER_EXCEPTION(SE1031);
-				map_error = true
-				break;
+				success = false;
+				if (current_retry < 5)
+				{
+					uintptr_t undo_cur;
+					for (undo_cur = LAYER_ADDRESS_SPACE_START_ADDR_INT;
+						undo_cur < cur;
+						undo_cur += (uint32_t)PAGE_SIZE)
+					{
+						if (_uvmm_unmap((void*)undo_cur) == -1) 
+						{
+							throw USER_EXCEPTION(SE1031);
+						}
+					}
+
+					++current_retry;
+					elog(EL_WARN, ("preliminary call failed, retrying %d: layer address space size = 0x%x, "
+						"layer start address = 0x%" PRIXPTR
+						", failed address = 0x%" PRIXPTR,
+						current_retry, LAYER_ADDRESS_SPACE_SIZE, LAYER_ADDRESS_SPACE_START_ADDR_INT, cur));
+					break;
+				}
+				else 
+				{
+					throw USER_EXCEPTION(SE1031);
+				}
 			}
 		}
-	
-	
-	#ifdef _WIN32
-		++current_retry;
-		if (map_error == true && current_retry < 5) {		    
-		    uintptr_t curend = cur - (uint32_t)PAGE_SIZE;	
-			for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT;
-				cur < curend;
-				cur += (uint32_t)PAGE_SIZE)
-			{
-				_uvmm_unmap((void*)cur);
-			}
-		   
-		    elog(EL_ERROR, ("MapViewOfFileEx failed retry d%", current_retry));
-            continue;
-        }	
-		else if (map_error == true && current_retry >= 5) {
-		   throw USER_EXCEPTION(SE1031);		
-		}
-						
-		break;
+		
+		if (success) break;
 	}
-	#endif	
 
-
-    elog(EL_DBG,  ("preliminary call: layer address space start addr = 0x%"PRIXPTR, LAYER_ADDRESS_SPACE_START_ADDR_INT));
+    elog(EL_DBG,  ("preliminary call: layer address space start addr = 0x%" PRIXPTR, LAYER_ADDRESS_SPACE_START_ADDR_INT));
     elog(EL_DBG,  ("preliminary call: layer address space size = 0x%x", LAYER_ADDRESS_SPACE_SIZE));
 }
 
@@ -489,7 +498,7 @@ void vmm_determine_region(bool log)
 
     if (log) {
         if (0 == segment_size) fprintf(f_se_trn_log, "Nothing has been found\n");
-        else fprintf(f_se_trn_log, "\nvmm_determine_region:\nregion size (in pages) = %u\nsystem given addr = %"PRIxPTR"\n", segment_size / (uint32_t)PAGE_SIZE, (uintptr_t)res_addr);
+        else fprintf(f_se_trn_log, "\nvmm_determine_region:\nregion size (in pages) = %u\nsystem given addr = %" PRIxPTR "\n", segment_size / (uint32_t)PAGE_SIZE, (uintptr_t)res_addr);
         if (fclose(f_se_trn_log) != 0) printf("Can't close file se_trn_log\n");
     } else {
         if (0 == segment_size) {
