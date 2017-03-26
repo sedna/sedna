@@ -6,5 +6,5 @@ os:
 script: cmake
 branches:
   only:
-  -master
+  - master
 
