@@ -3,7 +3,11 @@ compiler:
 - gcc
 os:
 - linux
-script: cmake
+before_script:
+  - mkdir build
+  - cd build
+  - cmake ..
+script: make
 branches:
   only:
   - master
